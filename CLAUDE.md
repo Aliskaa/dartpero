@@ -282,7 +282,10 @@ par le composition root.
   `vite-plugin-pwa`. Tokens de la charte dans `src/index.css` (`@theme`), 3 polices
   `@fontsource` (sous-ensemble latin), icônes PWA générées, frontière hexagonale **vérifiée**
   par Biome. `dev` / `test` / `lint` / `typecheck` / `build` verts.
-- [ ] **Lot 1** — Domaine X01 pur + tests (bust, double in/out, legs/sets, checkouts, stats)
+- [x] **Lot 1** — Domaine X01 pur + tests. `Dart`/`Score`/ids, `Visit`/`Player`/`X01Config`,
+  journal d'événements, `x01Rules` (bust, double in/out, legs/sets, annulation), `checkout`
+  (suggestion + bogey numbers), `matchStats`. **60 tests verts**, `src/core/` sans le moindre
+  import externe. Aucune UI, aucune persistance.
 - [ ] **Lot 2** — Ports + use cases + adapters (Dexie, in-memory) + composition root
 - [ ] **Lot 3** — Écran match : saisie hybride, undo, checkout, wake lock, haptique
 - [ ] **Lot 4** — Profils joueurs, historique, stats, export/import JSON, charte graphique
@@ -327,6 +330,31 @@ d'accueil »** (Chrome iOS ne peut pas installer de PWA).
 un **null-object** qui ne casse rien.
 - **Icônes** : `npm run icons` (sharp) génère `public/icons/*` + `apple-touch-icon.png` +
 `favicon.svg` depuis `scripts/icon.svg`. `sharp` est une **devDependency**, hors bundle client.
+### Décisions du domaine (lot 1) — à ne pas défaire sans raison
+
+- **Le journal ne stocke QUE `MatchStarted` et `VisitRecorded`.** `LegWon` / `SetWon` /
+`MatchFinished` sont **déduits** par les règles et exposés en `MatchMilestone`, jamais
+persistés. Sinon annuler voudrait dire « retirer la dernière volée **et** les événements
+qu'elle a déclenchés » — exactement la classe de bug qu'on veut éliminer. Annuler = 
+`X01Rules.project(events.slice(0, -1))`, point.
+- **`VisitRecorded` ne porte pas de `playerId`** : à qui est le tour se déduit de la
+projection. Le journal ne peut donc pas être en désaccord avec les règles.
+- **`Visit` n'est pas stockée**, c'est un artefact de projection (issue, points marqués,
+restes avant/après recalculés à chaque rejeu).
+- **Le dossier `gameModes/` n'existe pas encore** : X01 est le seul mode de la v1, on ne
+généralise pas avant d'avoir un 2ᵉ mode réel (entraînement, lot 5). YAGNI assumé.
+- **Un bust annule aussi l'ouverture du `double in`** : la visite entière est annulée, donc
+le double d'ouverture aussi. Lecture délibérée, testée.
+- **Suggestion de checkout = heuristique, pas la table PDC.** La route proposée est toujours
+**valide et la plus courte**, et laisse un double usuel, mais elle peut différer de la table
+professionnelle (99 → `T20 S7 D16` chez nous, `T19 S10 D16` en table). Un test exhaustif
+vérifie que **tous** les restes de 2 à 170 hors bogey numbers ont une route correcte, et que
+les 7 bogey numbers sont exactement les bons.
+- **Conventions de stats** (choisies, documentées, testées) : les paliers sont **cumulatifs**
+(un 180 compte aussi en 140+/100+/60+) ; la moyenne *first 9* porte sur les **3 premières
+volées** de chaque leg ; une **tentative de double** = toute fléchette lancée depuis un reste
+qu'une seule fléchette peut clore (pair ≤ 40, ou 50).
+
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode
 **RSC** (React Server Components) et l'exécution d'actions serveur — Dartpéro est une SPA

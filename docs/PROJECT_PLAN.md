@@ -40,13 +40,27 @@ modélisée explicitement, car elle compte dans la moyenne et dans les tentative
 
 Le match **est** une liste d'événements ; l'état affiché en est la **projection**.
 
+**Le journal ne contient que des faits bruts** — décision prise au lot 1 :
+
 ```
-MatchStarted   { config, players, startingPlayer }
-VisitRecorded  { playerId, darts[], outcome }
-LegWon         { playerId, legIndex, dartsUsed }
-SetWon         { playerId, setIndex }
+MatchStarted   { config, playerIds[], startingPlayerIndex }
+VisitRecorded  { darts[] }
+```
+
+Tout le reste est **déduit** et exposé en `MatchMilestone`, jamais persisté :
+
+```
+LegWon         { playerId, legNumber, dartsUsed }
+SetWon         { playerId, setNumber }
 MatchFinished  { winnerId }
 ```
+
+Deux conséquences volontaires :
+- annuler, c'est `project(events.slice(0, -1))` — rien d'autre. Si le journal contenait
+  aussi les conséquences, il faudrait retirer « la dernière volée **et** ce qu'elle a
+  déclenché », soit précisément la classe de bug qu'on cherche à éliminer ;
+- `VisitRecorded` **ne porte pas de `playerId`** : à qui est le tour se déduit de la
+  projection, donc le journal ne peut pas contredire les règles.
 
 Bénéfices directs :
 - **Undo** = retirer le dernier `VisitRecorded` et rejouer la projection. Aucun état à
@@ -62,7 +76,7 @@ Bénéfices directs :
 | `x01Rules.projectMatch(events)` | Rejoue les événements → état courant (scores restants, joueur actif, legs/sets gagnés). |
 | `checkout.suggest(reste, dartsRestantes)` | Chemin conseillé. Retourne **« pas de finish »** sur les bogey numbers **169, 168, 166, 165, 163, 162, 159** et au-dessus de 170. |
 | `matchStats.compute(events)` | Moyenne 3 fléchettes, first 9, % doubles, 180/140+/100+/60+, meilleur leg, plus haut checkout. |
-| `gameModes/` | Couture *Strategy* : `X01Mode` en v1, les modes d'entraînement au lot 5. |
+| `gameModes/` | Couture *Strategy* — **pas encore créée** : X01 est le seul mode de la v1, on ne généralise qu'avec un 2ᵉ mode réel (lot 5). |
 
 ⚠️ Rappel de spécification : dans la moyenne, une volée *busted* marque **0 point** mais ses
 fléchettes **sont comptées**.
@@ -146,6 +160,12 @@ et une page « Dartpéro » s'affiche aux couleurs de la charte.
   meilleur leg.
 
 **Fini quand** : ~40 tests verts, `src/core/domain/` sans le moindre import externe.
+
+✅ **Fait — 60 tests verts.** Le test le plus utile du lot balaie **tous les restes de 2 à
+170** : il vérifie que chaque route proposée fait exactement le compte, tient en ≤ 3
+fléchettes, finit sur un double, et que la liste des restes sans solution est **exactement**
+les 7 bogey numbers. La suggestion reste une heuristique (route valide la plus courte,
+double usuel), pas la table PDC — voir les décisions du domaine dans `CLAUDE.md`.
 
 ---
 
