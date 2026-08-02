@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Charte « pub anglais / oche » — source de vérité : CLAUDE.md
+   Principe : le décor est un pub, le tableau reste un tableau.
+   Bois, laiton et feutre habillent le chrome ; ils ne passent JAMAIS
+   derrière un chiffre de score.
+   ------------------------------------------------------------------ */
+@theme {
+  --color-feutre: #0e1a13;
+  --color-ardoise: #16241b;
+  --color-chene: #5a3e24;
+  --color-laiton: #c9a227;
+  --color-craie: #f2e8d5;
+  --color-craie-vive: #ffffff;
+  --color-rouge-cible: #c1272d;
+  --color-vert-cible: #2e7d4f;
+
+  --font-display: "Alfa Slab One", ui-serif, Georgia, serif;
+  --font-score: "Oswald", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-feutre);
+    color: var(--color-craie);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* On tape debout, une fléchette dans l'autre main : pas de zoom accidentel. */
+    touch-action: manipulation;
+    overscroll-behavior-y: none;
+  }
+
+  /* Focus visible partout, y compris au clavier sur les grandes cibles tactiles. */
+  :focus-visible {
+    outline: 2px solid var(--color-laiton);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Le tapis de feutre : dégradé sourd + grain, aucune image à charger. */
+  .feutre-tapis {
+    background-color: var(--color-feutre);
+    background-image:
+      radial-gradient(120% 90% at 50% 0%, rgba(46, 125, 79, 0.12), transparent 62%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  }
+
+  /* Laiton poli : boutons primaires, médaillons. */
+  .laiton-poli {
+    background-image: linear-gradient(180deg, #e3c468 0%, var(--color-laiton) 46%, #9a7b1b 100%);
+    color: #1a1206;
+  }
+
+  /* Ardoise de pub : fond des panneaux secondaires (stats, listes). */
+  .ardoise-craie {
+    background-color: var(--color-ardoise);
+    border: 1px solid color-mix(in srgb, var(--color-chene) 70%, transparent);
+  }
+
+  /* Tous les chiffres qui changent en direct : largeur fixe, pas de danse. */
+  .chiffres {
+    font-family: var(--font-score);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+}
