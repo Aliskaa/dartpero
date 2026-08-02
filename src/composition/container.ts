@@ -6,22 +6,28 @@ import type { PlayerRepository } from '@/core/application/ports/driven/PlayerRep
 import type { Preferences } from '@/core/application/ports/driven/Preferences'
 import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import type { BuildVisitFromScore } from '@/core/application/ports/driving/BuildVisitFromScore'
+import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
 import type { GetMatchHistory } from '@/core/application/ports/driving/GetMatchHistory'
 import type { GetMatchState } from '@/core/application/ports/driving/GetMatchState'
 import type { GetMatchStats } from '@/core/application/ports/driving/GetMatchStats'
 import type { GetOngoingMatch } from '@/core/application/ports/driving/GetOngoingMatch'
+import type { GetPlayerStats } from '@/core/application/ports/driving/GetPlayerStats'
+import type { ManageBackup } from '@/core/application/ports/driving/ManageBackup'
 import type { ManagePlayers } from '@/core/application/ports/driving/ManagePlayers'
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
 import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVisit'
 import { BuildVisitFromScoreUseCase } from '@/core/application/use-cases/BuildVisitFromScoreUseCase'
+import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseCase'
 import { GetCheckoutSuggestionUseCase } from '@/core/application/use-cases/GetCheckoutSuggestionUseCase'
 import { GetMatchHistoryUseCase } from '@/core/application/use-cases/GetMatchHistoryUseCase'
 import { GetMatchStateUseCase } from '@/core/application/use-cases/GetMatchStateUseCase'
 import { GetMatchStatsUseCase } from '@/core/application/use-cases/GetMatchStatsUseCase'
 import { GetOngoingMatchUseCase } from '@/core/application/use-cases/GetOngoingMatchUseCase'
+import { GetPlayerStatsUseCase } from '@/core/application/use-cases/GetPlayerStatsUseCase'
+import { ManageBackupUseCase } from '@/core/application/use-cases/ManageBackupUseCase'
 import { ManagePlayersUseCase } from '@/core/application/use-cases/ManagePlayersUseCase'
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
@@ -76,7 +82,10 @@ export type Services = {
   readonly getMatchStats: GetMatchStats
   readonly getMatchHistory: GetMatchHistory
   readonly getOngoingMatch: GetOngoingMatch
+  readonly getPlayerStats: GetPlayerStats
+  readonly deleteMatch: DeleteMatch
   readonly managePlayers: ManagePlayers
+  readonly manageBackup: ManageBackup
   readonly previewVisit: PreviewVisit
   readonly buildVisitFromScore: BuildVisitFromScore
   readonly devices: Devices
@@ -97,7 +106,10 @@ export const createServices = ({
   getMatchStats: new GetMatchStatsUseCase(matches),
   getMatchHistory: new GetMatchHistoryUseCase(matches, players),
   getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
-  managePlayers: new ManagePlayersUseCase(players, ids),
+  getPlayerStats: new GetPlayerStatsUseCase(matches, players),
+  deleteMatch: new DeleteMatchUseCase(matches),
+  managePlayers: new ManagePlayersUseCase(players, ids, clock),
+  manageBackup: new ManageBackupUseCase(matches, players, clock),
   previewVisit: new PreviewVisitUseCase(),
   buildVisitFromScore: new BuildVisitFromScoreUseCase(),
   devices,

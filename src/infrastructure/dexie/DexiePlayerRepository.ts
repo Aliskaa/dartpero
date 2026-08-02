@@ -1,18 +1,28 @@
 import type { PlayerRepository } from '@/core/application/ports/driven/PlayerRepository'
 import type { Player } from '@/core/domain/entities/Player'
 import { PlayerId } from '@/core/domain/value-objects/ids'
+import { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import type { DartperoDatabase, StoredPlayer } from './database'
 
 const versPlayer = (stored: StoredPlayer): Player => ({
   id: PlayerId.of(stored.id),
   name: stored.name,
+  // La migration v2 remplit la couleur ; ce repli couvre une base écrite par
+  // une version encore plus ancienne qui n'aurait pas été migrée.
+  color: PlayerColor.of(stored.color ?? 'brique'),
+  createdAt: stored.createdAt ?? 0,
 })
 
 export class DexiePlayerRepository implements PlayerRepository {
   constructor(private readonly db: DartperoDatabase) {}
 
   async save(player: Player): Promise<void> {
-    await this.db.players.put({ id: player.id, name: player.name })
+    await this.db.players.put({
+      id: player.id,
+      name: player.name,
+      color: player.color,
+      createdAt: player.createdAt,
+    })
   }
 
   async findById(id: PlayerId): Promise<Player | null> {

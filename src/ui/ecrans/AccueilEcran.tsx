@@ -6,12 +6,14 @@ import { Button } from '@/ui/composants/commun/Button'
 import { Skeleton } from '@/ui/composants/commun/Etats'
 import { LogoHero } from '@/ui/composants/commun/Logo'
 import { Panneau } from '@/ui/composants/commun/Panneau'
+import { useProfils } from '@/ui/hooks/useJoueurs'
 import { nomJoueur } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const AccueilEcran = () => {
   const services = useServices()
   const navigate = useNavigate()
+  const profils = useProfils()
 
   const encours = useQuery({
     queryKey: ['matchEnCours'],
@@ -19,7 +21,9 @@ export const AccueilEcran = () => {
   })
 
   return (
-    <main className="feutre-tapis flex min-h-dvh flex-col gap-7 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))]">
+    // Le tapis et la barre du bas viennent du layout : l'écran ne pose que son
+    // propre rythme vertical.
+    <main className="flex flex-1 flex-col gap-7 px-5 pb-4 pt-[max(2rem,env(safe-area-inset-top))]">
       <LogoHero />
 
       {encours.isPending ? (
@@ -40,7 +44,11 @@ export const AccueilEcran = () => {
               const nom = nomJoueur(joueur.name)
               return (
                 <li key={joueur.playerId} className="flex items-center gap-3">
-                  <Avatar id={joueur.playerId} nom={nom} taille="sm" />
+                  <Avatar
+                    nom={nom}
+                    couleur={profils.get(joueur.playerId)?.color ?? null}
+                    taille="sm"
+                  />
                   <span className="min-w-0 flex-1 truncate text-craie">{nom}</span>
                   <span className="chiffres text-2xl font-bold leading-none text-craie-vive">
                     {joueur.remaining}

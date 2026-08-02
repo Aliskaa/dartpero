@@ -9,7 +9,7 @@ import { PaveFlechettes } from '@/ui/composants/match/PaveFlechettes'
 import { PaveRapide } from '@/ui/composants/match/PaveRapide'
 import { Tableau } from '@/ui/composants/match/Tableau'
 import { usePreference, useWakeLock } from '@/ui/hooks/useAppareil'
-import { useNomsJoueurs } from '@/ui/hooks/useJoueurs'
+import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useMatch } from '@/ui/hooks/useMatch'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
@@ -64,7 +64,7 @@ export const MatchEcran = () => {
   const identifiant = (matchId ?? '') as MatchId
   const services = useServices()
   const navigate = useNavigate()
-  const noms = useNomsJoueurs()
+  const profils = useProfils()
   const [rapide, setRapide] = usePreference(CLE_MODE_RAPIDE, false)
 
   const match = useMatch(identifiant)
@@ -127,7 +127,7 @@ export const MatchEcran = () => {
           resteAffiche={match.resteAffiche}
           dartsEnCours={match.dartsEnCours}
           suggestion={match.suggestion}
-          noms={noms}
+          profils={profils}
           moyennes={moyennes}
         />
 

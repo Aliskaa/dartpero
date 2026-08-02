@@ -24,12 +24,20 @@ export class InMemoryMatchRepository implements MatchRepository {
   }
 
   async listRecent(limit = 20): Promise<readonly MatchRecord[]> {
-    return [...this.records.values()]
-      .sort((a, b) => {
-        const parDate = b.updatedAt - a.updatedAt
-        if (parDate !== 0) return parDate
-        return (this.sequence.get(b.id) ?? 0) - (this.sequence.get(a.id) ?? 0)
-      })
-      .slice(0, limit)
+    const tous = await this.listAll()
+    return tous.slice(0, limit)
+  }
+
+  async listAll(): Promise<readonly MatchRecord[]> {
+    return [...this.records.values()].sort((a, b) => {
+      const parDate = b.updatedAt - a.updatedAt
+      if (parDate !== 0) return parDate
+      return (this.sequence.get(b.id) ?? 0) - (this.sequence.get(a.id) ?? 0)
+    })
+  }
+
+  async delete(id: MatchId): Promise<void> {
+    this.records.delete(id)
+    this.sequence.delete(id)
   }
 }

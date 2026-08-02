@@ -20,4 +20,10 @@ export interface MatchRepository {
   findById(id: MatchId): Promise<MatchRecord | null>
   /** Les matchs les plus récemment touchés d'abord. */
   listRecent(limit?: number): Promise<readonly MatchRecord[]>
+  /**
+   * Toute la base, sans limite : les statistiques de carrière et la sauvegarde
+   * JSON ne peuvent pas se contenter des vingt dernières parties.
+   */
+  listAll(): Promise<readonly MatchRecord[]>
+  delete(id: MatchId): Promise<void>
 }

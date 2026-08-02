@@ -30,4 +30,13 @@ export class DexieMatchRepository implements MatchRepository {
     const stored = await this.db.matches.orderBy('updatedAt').reverse().limit(limit).toArray()
     return stored.map(versRecord)
   }
+
+  async listAll(): Promise<readonly MatchRecord[]> {
+    const stored = await this.db.matches.orderBy('updatedAt').reverse().toArray()
+    return stored.map(versRecord)
+  }
+
+  async delete(id: MatchId): Promise<void> {
+    await this.db.matches.delete(id)
+  }
 }

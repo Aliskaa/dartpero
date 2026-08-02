@@ -225,7 +225,7 @@ export const NouvellePartieEcran = () => {
                         : 'border-chene/55 bg-feutre/60',
                     ].join(' ')}
                   >
-                    <Avatar id={joueur.id} nom={joueur.name} />
+                    <Avatar nom={joueur.name} couleur={joueur.color} />
                     <span
                       className={`min-w-0 flex-1 truncate font-score text-base uppercase tracking-wide ${
                         choisi ? 'text-craie-vive' : 'text-craie/75'

@@ -252,21 +252,26 @@ décision ouverte.
 src/
 ├─ core/
 │  ├─ domain/
-│  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, MatchId, PlayerId, LegId
-│  │  ├─ entities/        Visit, Leg, Set, Match, Player
-│  │  ├─ events/          MatchEvent (VisitRecorded, LegWon, MatchFinished…)
-│  │  └─ services/        x01Rules, checkout, matchStats, gameModes/
+│  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, PlayerColor, MatchId, PlayerId
+│  │  ├─ entities/        Visit, Match (X01Config), Player
+│  │  ├─ events/          MatchEvent (MatchStarted, VisitRecorded) · MatchMilestone
+│  │  └─ services/        x01Rules, checkout, dartSearch, scoring,
+│  │                      matchStats (une partie), careerStats (toutes)
 │  └─ application/
-│     ├─ ports/driving/   StartMatch, RecordVisit, UndoLastVisit, GetMatchState,
-│     │                   GetCheckoutSuggestion, GetPlayerStats, GetMatchHistory
+│     ├─ ports/driving/   StartMatch, RecordVisit, UndoLastVisit, PreviewVisit,
+│     │                   BuildVisitFromScore, GetMatchState, GetCheckoutSuggestion,
+│     │                   GetMatchStats, GetMatchHistory, GetOngoingMatch,
+│     │                   GetPlayerStats, DeleteMatch, ManagePlayers, ManageBackup
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
-│     │                   Announcer, Haptics, ScreenLock, Preferences
-│     └─ use-cases/
-├─ infrastructure/        dexie/ · speech/ · haptics/ · wakelock/ · system/
+│     │                   Haptics, ScreenLock, Preferences   (Announcer → lot 5)
+│     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
+├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
-├─ ui/                    composants/ (+ commun/) · ecrans/ · hooks/ · providers/
-└─ data/                  checkouts.json (table de finishes)
-tests/                    domain/ · use-cases/ · fakes/ · ui/
+├─ ui/                    composants/ (+ commun/, match/) · ecrans/ · hooks/ ·
+│                         providers/ · couleurs.ts (teintes) · labels.ts (français)
+└─ data/                  (vide : les checkouts sont calculés, pas tabulés)
+tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
+                          fakes/ · ui/ (+ gestes.ts)
 ```
 
 ---
@@ -319,8 +324,11 @@ par le composition root.
   (matières, relief, cible SVG, avatars, animations ciblées + `prefers-reduced-motion`),
   socle de composants communs, en-tête de match avec bouton retour, valeur réelle des touches
   hors simple, mode rapide qui projette le reste. **100 tests toujours verts, aucun modifié.**
-- [ ] **Lot 4** — Profils joueurs, historique, stats, export/import JSON, charte graphique
-- [ ] **Lot 5** — Entraînement solo + annonce vocale
+- [x] **Lot 4** — Profils joueurs (pseudo, **couleur choisie**, ancienneté), historique des
+  parties avec statut et suppression, statistiques de carrière en tableaux comparatifs classés,
+  **export / import JSON** de toute la base, écran Réglages, barre de navigation basse.
+  Migration Dexie **v1 → v2** testée. **135 tests verts.**
+- [ ] **Lot 5** — Entraînement solo + annonce vocale (port `Announcer`)
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 ---
@@ -522,6 +530,60 @@ n'est réimplémentée côté écran.
 Historique / Réglages), historique avec statut *en cours* / *terminée*, et surtout des stats
 en **tableau comparatif classé** plutôt qu'en cartes empilées — vaut aussi pour l'écran de
 résumé, où comparer quatre panneaux superposés est pénible.
+
+### Décisions du lot 4 (profils, historique, stats, sauvegarde)
+
+- **La couleur d'un profil est une teinte *symbolique*, pas un hex.** `PlayerColor` est un
+ensemble **fermé** de 8 noms (`brique`, `sapin`, `lagon`…) dans le domaine ; la traduction en
+pixels vit dans `src/ui/couleurs.ts`, et **là seulement**. Changer la charte ne touche donc
+aucune donnée persistée. Ensemble fermé volontairement : avec un sélecteur libre, deux joueurs
+choisissent deux bleus voisins qu'on ne distingue plus à 3 mètres.
+- **Sans couleur choisie, on prend la première libre** : créer quatre joueurs d'affilée donne
+quatre couleurs distinctes sans rien demander — « zéro friction au démarrage ».
+- **`Player` porte `createdAt`, qui vient du port `Clock`.** Jamais `Date.now()` : le domaine
+reste déterministe.
+- ⚠️ **Migration Dexie v1 → v2, et son test.** Les profils déjà en base n'ont ni couleur ni
+date ; sans migration `Player.create` les refuse à la lecture et l'utilisateur ouvre l'app mise
+à jour pour découvrir qu'il n'a plus personne. La migration leur distribue une couleur en
+tourniquet. `tests/infrastructure/dexieRepositories.test.ts` ouvre une **vraie base v1** puis la
+relit en v2 — c'est le genre de bug qui ne se voit qu'en production.
+- **`ManagePlayers.rename` est devenu `update(id, { name?, color? })`** (ISP : un seul point
+d'édition partielle). `createdAt` n'est jamais modifiable : c'est l'ancienneté, pas la dernière
+retouche.
+- ⚠️ **Les moyennes de carrière se recalculent depuis les totaux bruts, jamais en moyennant des
+moyennes** — faux dès que les parties n'ont pas la même longueur, et elles n'en ont jamais.
+C'est pourquoi `PlayerStats` expose désormais `first9Points` / `first9Darts` : sans les données
+brutes, l'agrégation serait condamnée à être fausse. `legsWon` (tout le match) s'ajoute à
+`legsWonInSet` (le set en cours).
+- **Une partie en cours compte dans les statistiques.** Ses fléchettes ont été lancées ;
+attendre la fin d'un leg pour voir sa moyenne bouger serait frustrant. Seul `matchesWon`
+distingue les parties terminées.
+- **L'import JSON fusionne, il ne remplace jamais** : un identifiant connu est écrasé, un
+inconnu s'ajoute, rien n'est effacé. Se tromper de fichier ne doit pas coûter une soirée de
+parties.
+- **Une entrée illisible est comptée puis ignorée**, pas propagée en exception : un fichier à
+moitié abîmé restaure quand même les cinquante parties saines. Les compteurs remontent dans
+`ImportReport` pour que l'UI le dise franchement.
+- **La validation de l'import passe par les fabriques du domaine** (`Dart.of`,
+`X01Config.create`, `PlayerColor.of`…). `backupSchema.ts` ne réécrit aucune règle, il traduit :
+un triple bull dans un fichier trafiqué est refusé par la même ligne de code que dans une
+partie.
+- **Lire et écrire un fichier reste dans l'UI, ce n'est pas un port.** `ManageBackup` ne
+manipule que des objets JavaScript — donc il est testable sans navigateur. Le `Blob`, le
+`URL.createObjectURL` et l'`<input type="file">` sont du DOM, au même titre qu'un `<input>` de
+formulaire, et vivent dans `ReglagesEcran`.
+- **La barre de navigation n'apparaît pas pendant une partie** (ni sur l'écran de
+configuration) : chaque pixel sert à jouer, et un onglet mal visé en pleine volée ferait perdre
+la saisie en cours. Elle est posée par un `LayoutPrincipal` sur les routes concernées.
+- **Chaque tableau de statistiques a son propre classement**, sur sa première colonne : on ne
+consulte pas ses stats entre potes, on regarde qui est devant — et le meilleur aux 180 n'est
+pas forcément celui qui finit le mieux. Le **meilleur leg** est le seul classement où *petit*
+vaut mieux que *grand*, et un joueur sans leg gagné n'a **pas** « 0 fléchette » : il n'a rien,
+sinon il serait premier.
+- **Suppression en deux temps** (profil comme partie) : un premier appui demande confirmation,
+un second agit. Pas de fenêtre modale, mais rien ne s'efface d'un doigt qui glisse. Supprimer
+un profil ne supprime pas ses parties — elles affichent « Joueur supprimé », comme décidé au
+lot 2.
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode

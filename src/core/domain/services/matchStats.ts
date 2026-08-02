@@ -12,6 +12,13 @@ export type PlayerStats = {
   readonly average3: number
   /** Moyenne sur les 3 premières volées de chaque leg (les « 9 premières fléchettes »). */
   readonly first9Average: number
+  /**
+   * Points et fléchettes bruts des 9 premières, exposés pour que les stats de
+   * carrière puissent agréger plusieurs matchs : faire la moyenne de moyennes
+   * donnerait un résultat faux dès que les legs n'ont pas la même longueur.
+   */
+  readonly first9Points: number
+  readonly first9Darts: number
   readonly count180: number
   /** Cumulatif : un 180 compte aussi dans les 140+, les 100+ et les 60+. */
   readonly count140plus: number
@@ -25,7 +32,10 @@ export type PlayerStats = {
   readonly bestLegDarts: number | null
   readonly highestCheckout: number
   readonly highestVisit: number
+  /** Legs gagnés dans le **set en cours** — ce qu'affiche le tableau. */
   readonly legsWonInSet: number
+  /** Legs gagnés sur **tout le match**, tous sets confondus. */
+  readonly legsWon: number
   readonly setsWon: number
 }
 
@@ -119,8 +129,12 @@ export const computeMatchStats = (state: MatchState): MatchStats => {
   }
 
   const meilleurLeg = new Map<PlayerId, number>()
+  const legsGagnes = new Map<PlayerId, number>()
   for (const milestone of state.milestones) {
     if (milestone.type !== 'LegWon') continue
+
+    legsGagnes.set(milestone.playerId, (legsGagnes.get(milestone.playerId) ?? 0) + 1)
+
     const actuel = meilleurLeg.get(milestone.playerId)
     if (actuel === undefined || milestone.dartsUsed < actuel) {
       meilleurLeg.set(milestone.playerId, milestone.dartsUsed)
@@ -138,6 +152,8 @@ export const computeMatchStats = (state: MatchState): MatchStats => {
         pointsScored: acc.pointsScored,
         average3: moyenne(acc.pointsScored, acc.dartsThrown),
         first9Average: moyenne(acc.first9Points, acc.first9Darts),
+        first9Points: acc.first9Points,
+        first9Darts: acc.first9Darts,
         count180: acc.count180,
         count140plus: acc.count140plus,
         count100plus: acc.count100plus,
@@ -149,6 +165,7 @@ export const computeMatchStats = (state: MatchState): MatchStats => {
         highestCheckout: acc.highestCheckout,
         highestVisit: acc.highestVisit,
         legsWonInSet: player.legsWonInSet,
+        legsWon: legsGagnes.get(player.playerId) ?? 0,
         setsWon: player.setsWon,
       }
     }),

@@ -20,22 +20,42 @@ describe('ManagePlayers', () => {
 
   it('nettoie les espaces autour du pseudo et refuse le vide', async () => {
     expect((await services.managePlayers.create('  Kevin  ')).name).toBe('Kevin')
+    expect((await services.managePlayers.create('Jean   Michel')).name).toBe('Jean Michel')
     await expect(services.managePlayers.create('   ')).rejects.toThrow(DomainError)
+    await expect(services.managePlayers.create('K'.repeat(21))).rejects.toThrow(DomainError)
   })
 
-  it('renomme sans changer l’identifiant', async () => {
+  it('donne une couleur distincte à chaque nouveau profil', async () => {
+    const noms = ['Kevin', 'Julien', 'Paul', 'Marc']
+    const couleurs: string[] = []
+    for (const nom of noms) couleurs.push((await services.managePlayers.create(nom)).color)
+
+    expect(new Set(couleurs).size).toBe(noms.length)
+  })
+
+  it('renomme sans changer l’identifiant, la couleur ni l’ancienneté', async () => {
     const kevin = await services.managePlayers.create('Kevin')
-    const renomme = await services.managePlayers.rename(kevin.id, 'Kéké')
+    const renomme = await services.managePlayers.update(kevin.id, { name: 'Kéké' })
 
     expect(renomme.id).toBe(kevin.id)
     expect(renomme.name).toBe('Kéké')
+    expect(renomme.color).toBe(kevin.color)
+    expect(renomme.createdAt).toBe(kevin.createdAt)
     expect(await services.managePlayers.listAll()).toEqual([renomme])
   })
 
-  it('refuse de renommer un profil inconnu', async () => {
-    await expect(services.managePlayers.rename(PlayerId.of('fantome'), 'X')).rejects.toThrow(
-      DomainError,
-    )
+  it('change la couleur sans toucher au pseudo', async () => {
+    const kevin = await services.managePlayers.create('Kevin', 'brique')
+    const repeint = await services.managePlayers.update(kevin.id, { color: 'prune' })
+
+    expect(repeint.color).toBe('prune')
+    expect(repeint.name).toBe('Kevin')
+  })
+
+  it('refuse de modifier un profil inconnu', async () => {
+    await expect(
+      services.managePlayers.update(PlayerId.of('fantome'), { name: 'X' }),
+    ).rejects.toThrow(DomainError)
   })
 
   it('supprime un profil', async () => {

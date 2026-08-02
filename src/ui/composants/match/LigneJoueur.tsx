@@ -1,7 +1,7 @@
 import { Crown } from 'lucide-react'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
-import type { PlayerId } from '@/core/domain/value-objects/ids'
+import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { couleurJoueur } from '@/ui/couleurs'
 import { moyenne as formatMoyenne } from '@/ui/labels'
@@ -78,8 +78,8 @@ const Jetons = ({
 }
 
 type Props = {
-  readonly id: PlayerId
   readonly nom: string
+  readonly couleur: PlayerColor | null
   readonly reste: number
   readonly actif: boolean
   readonly vainqueur: boolean
@@ -105,8 +105,8 @@ type Props = {
  * feutre sombre ; le bois, le laiton et la couleur du profil restent au cadre.
  */
 export const LigneJoueur = ({
-  id,
   nom,
+  couleur,
   reste,
   actif,
   vainqueur,
@@ -119,7 +119,7 @@ export const LigneJoueur = ({
   flechettes,
   echelle,
 }: Props) => {
-  const couleur = couleurJoueur(id)
+  const teinte = couleurJoueur(couleur)
   const bust = volee?.outcome === 'BUSTED'
   const sortie = volee?.outcome === 'CHECKOUT'
   /** Une issue absente signe une volée encore en train d'être saisie. */
@@ -139,7 +139,7 @@ export const LigneJoueur = ({
       {/* Le liseré du profil : la seule couleur libre de la ligne. */}
       <span
         aria-hidden="true"
-        style={{ backgroundColor: bust ? undefined : couleur.fond }}
+        style={{ backgroundColor: bust ? undefined : teinte.fond }}
         className={`absolute inset-y-0 left-0 w-1.5 ${bust ? 'bg-rouge-cible' : ''}`}
       />
 
@@ -156,7 +156,7 @@ export const LigneJoueur = ({
         </output>
 
         <p className="mt-1 flex min-w-0 max-w-full items-center gap-1.5">
-          <Avatar id={id} nom={nom} taille="xs" />
+          <Avatar nom={nom} couleur={couleur} taille="xs" />
           <span
             className={`truncate font-score text-xs font-bold uppercase tracking-wider ${
               actif ? 'text-laiton' : 'text-craie/70'

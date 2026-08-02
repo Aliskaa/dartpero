@@ -1,4 +1,4 @@
-import type { PlayerId } from '@/core/domain/value-objects/ids'
+import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { couleurJoueur, initiales } from '@/ui/couleurs'
 
 type Taille = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -12,8 +12,9 @@ const TAILLES: Record<Taille, string> = {
 }
 
 type Props = {
-  readonly id: PlayerId
   readonly nom: string
+  /** `null` quand le profil a été supprimé : la pastille passe en teinte de bois. */
+  readonly couleur: PlayerColor | null | undefined
   readonly taille?: Taille
   readonly className?: string
 }
@@ -23,16 +24,16 @@ type Props = {
  * est écrit juste à côté, la répéter au lecteur d'écran ne ferait que doubler
  * l'annonce — et casserait le nom accessible des boutons qui la contiennent.
  */
-export const Avatar = ({ id, nom, taille = 'md', className = '' }: Props) => {
-  const couleur = couleurJoueur(id)
+export const Avatar = ({ nom, couleur, taille = 'md', className = '' }: Props) => {
+  const teinte = couleurJoueur(couleur)
 
   return (
     <span
       aria-hidden="true"
       style={{
-        backgroundColor: couleur.fond,
-        color: couleur.texte,
-        borderColor: couleur.bord,
+        backgroundColor: teinte.fond,
+        color: teinte.texte,
+        borderColor: teinte.bord,
       }}
       className={[
         'inline-flex shrink-0 items-center justify-center rounded-full border-2',

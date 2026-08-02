@@ -21,3 +21,16 @@ export const dateCourte = (horodatage: number): string =>
     month: 'short',
     year: 'numeric',
   })
+
+/** Une partie se repère à sa soirée : la date seule ne suffit pas à distinguer. */
+export const dateHeure = (horodatage: number): string =>
+  new Date(horodatage).toLocaleString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+/** « 3 parties », « 1 partie » — l'accord au singulier revient partout. */
+export const pluriel = (nombre: number, singulier: string, pluriel = `${singulier}s`): string =>
+  `${nombre} ${nombre > 1 ? pluriel : singulier}`

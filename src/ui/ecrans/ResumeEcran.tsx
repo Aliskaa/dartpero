@@ -9,7 +9,7 @@ import { Cible } from '@/ui/composants/commun/Cible'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { StatTile } from '@/ui/composants/commun/StatTile'
-import { useNomsJoueurs } from '@/ui/hooks/useJoueurs'
+import { useProfils } from '@/ui/hooks/useJoueurs'
 import { moyenne, nomJoueur } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
@@ -30,7 +30,7 @@ export const ResumeEcran = () => {
   const identifiant = (matchId ?? '') as MatchId
   const services = useServices()
   const navigate = useNavigate()
-  const noms = useNomsJoueurs()
+  const profils = useProfils()
 
   const stats = useQuery({
     queryKey: ['matchResume', identifiant],
@@ -75,8 +75,8 @@ export const ResumeEcran = () => {
             <>
               <span className="relative mt-4 inline-flex">
                 <Avatar
-                  id={vainqueur.playerId}
-                  nom={nomJoueur(noms.get(vainqueur.playerId) ?? null)}
+                  nom={nomJoueur(profils.get(vainqueur.playerId)?.name ?? null)}
+                  couleur={profils.get(vainqueur.playerId)?.color ?? null}
                   taille="xl"
                   className="shadow-[0_0_40px_-8px_var(--color-laiton)]"
                 />
@@ -87,7 +87,7 @@ export const ResumeEcran = () => {
               </span>
 
               <h1 className="mt-4 font-display text-4xl text-craie-vive drop-shadow-[0_3px_0_rgba(0,0,0,0.6)]">
-                {nomJoueur(noms.get(vainqueur.playerId) ?? null)}
+                {nomJoueur(profils.get(vainqueur.playerId)?.name ?? null)}
               </h1>
               <p className="mt-1 font-score text-sm font-bold uppercase tracking-[0.3em] text-vert-cible">
                 Vainqueur
@@ -122,7 +122,8 @@ export const ResumeEcran = () => {
 
       <div className="flex flex-col gap-3">
         {joueurs.map((joueur) => {
-          const nom = nomJoueur(noms.get(joueur.playerId) ?? null)
+          const profil = profils.get(joueur.playerId)
+          const nom = nomJoueur(profil?.name ?? null)
           return (
             <Panneau
               key={joueur.playerId}
@@ -131,7 +132,7 @@ export const ResumeEcran = () => {
                  c'est la section qui est nommée, pas un intitulé de plus. */
               enTete={
                 <span className="flex min-w-0 items-center gap-2">
-                  <Avatar id={joueur.playerId} nom={nom} taille="sm" />
+                  <Avatar nom={nom} couleur={profil?.color ?? null} taille="sm" />
                   <span className="grave truncate font-score text-sm uppercase tracking-widest text-craie">
                     {nom}
                   </span>

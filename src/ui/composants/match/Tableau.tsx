@@ -1,4 +1,5 @@
 import { CircleOff, Target } from 'lucide-react'
+import type { Player } from '@/core/domain/entities/Player'
 import type { Visit } from '@/core/domain/entities/Visit'
 import type { MatchState } from '@/core/domain/services/x01Rules'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
@@ -11,7 +12,7 @@ type Props = {
   readonly resteAffiche: number
   readonly dartsEnCours: readonly Dart[]
   readonly suggestion: readonly Dart[] | null
-  readonly noms: ReadonlyMap<PlayerId, string>
+  readonly profils: ReadonlyMap<PlayerId, Player>
   readonly moyennes: ReadonlyMap<PlayerId, number>
 }
 
@@ -109,7 +110,7 @@ export const Tableau = ({
   resteAffiche,
   dartsEnCours,
   suggestion,
-  noms,
+  profils,
   moyennes,
 }: Props) => {
   const echelle = ECHELLES[Math.min(state.players.length, ECHELLES.length) - 1] ?? 'compact'
@@ -120,7 +121,8 @@ export const Tableau = ({
       <div className="flex flex-col gap-2">
         {state.players.map((joueur, index) => {
           const actif = index === state.currentPlayerIndex && state.winnerId === null
-          const nom = nomJoueur(noms.get(joueur.playerId) ?? null)
+          const profil = profils.get(joueur.playerId)
+          const nom = nomJoueur(profil?.name ?? null)
           const derniere = volees.get(joueur.playerId)
 
           // Tant que le joueur actif n'a pas planté sa première fléchette, sa
@@ -142,8 +144,8 @@ export const Tableau = ({
           return (
             <LigneJoueur
               key={`${joueur.playerId}-${derniere?.rang ?? 'debut'}`}
-              id={joueur.playerId}
               nom={nom}
+              couleur={profil?.color ?? null}
               reste={actif ? resteAffiche : joueur.remaining}
               actif={actif}
               vainqueur={state.winnerId === joueur.playerId}

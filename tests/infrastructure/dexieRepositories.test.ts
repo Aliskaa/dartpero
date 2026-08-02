@@ -1,8 +1,10 @@
+import Dexie from 'dexie'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { MatchRecord } from '@/core/application/ports/driven/MatchRepository'
 import { X01Config } from '@/core/domain/entities/Match'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import { PLAYER_COLORS } from '@/core/domain/value-objects/PlayerColor'
 import { DexieMatchRepository } from '@/infrastructure/dexie/DexieMatchRepository'
 import { DexiePlayerRepository } from '@/infrastructure/dexie/DexiePlayerRepository'
 import { createDatabase, type DartperoDatabase } from '@/infrastructure/dexie/database'
@@ -75,15 +77,55 @@ describe('Adapters Dexie (IndexedDB)', () => {
   describe('DexiePlayerRepository', () => {
     it('enregistre, relit, liste par pseudo et supprime', async () => {
       const repository = new DexiePlayerRepository(db)
-      await repository.save({ id: KEVIN, name: 'Kevin' })
-      await repository.save({ id: JULIEN, name: 'Julien' })
+      const kevin = { id: KEVIN, name: 'Kevin', color: 'brique', createdAt: 1000 } as const
+      const julien = { id: JULIEN, name: 'Julien', color: 'sapin', createdAt: 2000 } as const
 
-      expect(await repository.findById(KEVIN)).toEqual({ id: KEVIN, name: 'Kevin' })
+      await repository.save(kevin)
+      await repository.save(julien)
+
+      // La couleur et l'ancienneté font le tour complet, sinon changer de
+      // téléphone repeindrait tous les profils.
+      expect(await repository.findById(KEVIN)).toEqual(kevin)
       expect((await repository.listAll()).map((p) => p.name)).toEqual(['Julien', 'Kevin'])
 
       await repository.delete(KEVIN)
       expect(await repository.findById(KEVIN)).toBeNull()
       expect(await repository.listAll()).toHaveLength(1)
+    })
+  })
+
+  /**
+   * Le moment où l'on casse tout sans s'en rendre compte : la mise à jour de
+   * l'application sur un téléphone qui a déjà des profils. Sans migration, ces
+   * profils n'ont ni couleur ni date, `Player.create` les refuse à la lecture,
+   * et l'utilisateur ouvre l'app pour découvrir qu'il n'a plus personne.
+   */
+  describe('Migration v1 → v2', () => {
+    it('donne une couleur et une date aux profils déjà en base', async () => {
+      const nom = `dartpero-migration-${compteurBase}`
+
+      // Une base telle que la laissait le lot 2 : ni couleur, ni createdAt.
+      const ancienne = new Dexie(nom)
+      ancienne.version(1).stores({ matches: 'id, updatedAt', players: 'id, name' })
+      await ancienne.open()
+      await ancienne.table('players').bulkAdd([
+        { id: 'kevin', name: 'Kevin' },
+        { id: 'julien', name: 'Julien' },
+      ])
+      ancienne.close()
+
+      const migree = createDatabase(nom)
+      const profils = await new DexiePlayerRepository(migree).listAll()
+
+      expect(profils).toHaveLength(2)
+      for (const profil of profils) {
+        expect(PLAYER_COLORS).toContain(profil.color)
+        expect(profil.createdAt).toBeGreaterThan(0)
+      }
+      // Deux joueurs, deux couleurs : personne ne se retrouve en double.
+      expect(new Set(profils.map((profil) => profil.color)).size).toBe(2)
+
+      migree.close()
     })
   })
 })
