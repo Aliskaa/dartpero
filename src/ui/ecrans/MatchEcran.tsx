@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Undo2, Zap } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { X01Config } from '@/core/domain/entities/Match'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
-import { Button } from '@/ui/composants/commun/Button'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { PaveFlechettes } from '@/ui/composants/match/PaveFlechettes'
 import { PaveRapide } from '@/ui/composants/match/PaveRapide'
@@ -12,7 +11,6 @@ import { Tableau } from '@/ui/composants/match/Tableau'
 import { usePreference, useWakeLock } from '@/ui/hooks/useAppareil'
 import { useNomsJoueurs } from '@/ui/hooks/useJoueurs'
 import { useMatch } from '@/ui/hooks/useMatch'
-import { nomJoueur } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const CLE_MODE_RAPIDE = 'saisie-rapide'
@@ -108,15 +106,16 @@ export const MatchEcran = () => {
     (stats.data?.players ?? []).map((joueur) => [joueur.playerId, joueur.average3]),
   )
 
-  // Le résumé de la volée précédente reste affiché jusqu'à la fléchette suivante.
-  const derniere =
-    match.dartsEnCours.length === 0 && match.derniereVolee
-      ? {
-          nom: nomJoueur(noms.get(match.derniereVolee.visit.playerId) ?? null),
-          outcome: match.derniereVolee.visit.outcome,
-          scored: match.derniereVolee.visit.scored,
-        }
-      : null
+  // « Annuler » et la bascule de mode vivent DANS le pavé, sur sa dernière
+  // rangée : le bas de l'écran est la seule zone qu'on atteint sans changer la
+  // prise du téléphone.
+  const actions = {
+    onAnnuler: () => void match.annuler(),
+    peutAnnuler: match.peutAnnuler,
+    rapide,
+    onRapide: () => setRapide(!rapide),
+    desactive: match.occupe,
+  }
 
   return (
     <div className="feutre-tapis flex min-h-dvh flex-col">
@@ -128,47 +127,27 @@ export const MatchEcran = () => {
           resteAffiche={match.resteAffiche}
           dartsEnCours={match.dartsEnCours}
           suggestion={match.suggestion}
-          derniere={derniere}
           noms={noms}
           moyennes={moyennes}
         />
 
         {match.erreur && <MessageErreur>{match.erreur}</MessageErreur>}
 
-        <div className="mt-auto flex flex-col gap-2.5 pt-2">
+        <div className="mt-auto pt-2">
           {rapide ? (
             <PaveRapide
               reste={joueurCourant.remaining}
               onScore={(total, dartsUsed) => void match.enregistrerScore(total, dartsUsed)}
-              desactive={match.occupe}
+              {...actions}
             />
           ) : (
             <PaveFlechettes
               multiplicateur={match.multiplicateur}
               onMultiplicateur={match.setMultiplicateur}
               onFlechette={match.ajouterFlechette}
-              desactive={match.occupe}
+              {...actions}
             />
           )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variante="secondaire"
-              disabled={!match.peutAnnuler || match.occupe}
-              onClick={() => void match.annuler()}
-            >
-              <Undo2 aria-hidden="true" className="size-4" />
-              Annuler
-            </Button>
-            <Button
-              variante={rapide ? 'primaire' : 'secondaire'}
-              aria-pressed={rapide}
-              onClick={() => setRapide(!rapide)}
-            >
-              <Zap aria-hidden="true" className="size-4" />
-              Rapide
-            </Button>
-          </div>
         </div>
       </div>
     </div>

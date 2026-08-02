@@ -5,6 +5,7 @@ import App from '@/App'
 import type { Services } from '@/composition/container'
 import { X01Config, type X01ConfigInput } from '@/core/domain/entities/Match'
 import { fakeServices } from '../fakes'
+import { flechette } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
 let services: Services
@@ -33,18 +34,43 @@ describe('Écran de match', () => {
     await partie()
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
 
-    await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
-    await utilisateur.click(screen.getByRole('button', { name: '20' }))
+    await flechette(utilisateur, '20', 'Triple')
 
     // Le tableau réagit AVANT que la volée ne soit enregistrée.
     expect(scoreDe('Kevin')).toHaveTextContent('441')
 
-    await utilisateur.click(screen.getByRole('button', { name: '20' }))
-    await utilisateur.click(screen.getByRole('button', { name: '20' }))
+    await flechette(utilisateur, '20', 'Triple')
+    await flechette(utilisateur, '20', 'Triple')
 
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('321'))
     // La main est passée : c'est Julien qui a le halo.
     await waitFor(() => expect(scoreDe('Julien').closest('[aria-current]')).not.toBeNull())
+  })
+
+  it('repasse en simple après chaque fléchette, sans laisser le triple armé', async () => {
+    const utilisateur = userEvent.setup()
+    await partie()
+    await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
+
+    await flechette(utilisateur, '20', 'Triple') // T20 → 441
+    await flechette(utilisateur, '20') // le triple est retombé : S20 → 421
+
+    expect(scoreDe('Kevin')).toHaveTextContent('421')
+    expect(screen.getByRole('button', { name: 'Simple' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('compte le bullseye comme un double 25, et interdit le triple bull', async () => {
+    const utilisateur = userEvent.setup()
+    await partie()
+    await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
+
+    await flechette(utilisateur, '25', 'Double') // bullseye → 451
+    expect(scoreDe('Kevin')).toHaveTextContent('451')
+
+    // Il n'existe pas de triple bull : la touche se grise plutôt que de refuser
+    // le coup une fois qu'il a été porté.
+    await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
+    expect(screen.getByRole('button', { name: '25' })).toBeDisabled()
   })
 
   it('annule la volée entière sur un bust et rend la main', async () => {
@@ -52,8 +78,7 @@ describe('Écran de match', () => {
     await partie({ startingScore: 40 })
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('40'))
 
-    await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
-    await utilisateur.click(screen.getByRole('button', { name: '20' })) // 40 - 60 < 0
+    await flechette(utilisateur, '20', 'Triple') // 40 - 60 < 0
 
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('40'))
     expect(await screen.findByText(/bust/i)).toBeInTheDocument()
@@ -64,7 +89,7 @@ describe('Écran de match', () => {
     await partie()
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
 
-    await utilisateur.click(screen.getByRole('button', { name: '20' }))
+    await flechette(utilisateur, '20')
     expect(scoreDe('Kevin')).toHaveTextContent('481')
 
     await utilisateur.click(screen.getByRole('button', { name: /annuler/i }))

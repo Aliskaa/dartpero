@@ -44,9 +44,10 @@ secondes, portant leurs stats **sur cet appareil**. Filet de sécurité obligato
 - **Le match est une liste d'événements** (`MatchEvent[]`), l'état affiché est une
 **projection** rejouée depuis ces événements. C'est le choix qui rend l'**annulation**
 triviale et fiable (on se trompe de saisie très souvent en pleine partie).
-- **Saisie hybride** : fléchette par fléchette par défaut (grille 1-20 + bull, bascule S/D/T
-persistante) — c'est la **condition technique** des stats de doubles et de l'entraînement —
-**plus** un mode « rapide » (score de volée 0-180) basculable.
+- **Saisie hybride** : fléchette par fléchette par défaut (grille 1-20 + 25, bascule S/D/T
+**momentanée** — elle retombe sur Simple après chaque fléchette) — c'est la **condition
+technique** des stats de doubles et de l'entraînement — **plus** un mode « rapide » (score de
+volée 0-180) basculable.
 - **Modes v1 : X01 uniquement**, puis **entraînement solo** (lot 5). Cricket et jeux fun
 (Around the Clock, Killer, Shanghai) sont **hors périmètre v1** — mais la couture
 `GameMode` existe pour les accueillir sans refonte.
@@ -219,24 +220,24 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 ┌──────────────────────────────────┐
 │ ←  LEG 2 | 501 · BO3       [DO]  │  bandeau de chêne veiné
 ├──────────────────────────────────┤
-│ ╔═══════════╗  ╔═══════════╗     │  ZONE LECTURE
-│ ║(K) KEVIN ♛║  ║(J) JULIEN ║     │  cadre bois + liseré couleur du profil
-│ ║    141    ║  ║    286    ║     │  chiffres énormes (font-score) + pop
-│ ║ ◆◇ | moy  ║  ║ ◇◇ | moy  ║     │  joueur actif = halo laiton qui respire
-│ ║ T20 20  · ║  ╚═══════════╝     │  volée en cours dans ses encoches
-│ ╚═══════════╝                    │
+│ ▌ 141  │T20│ 20│ · │ ◆◇  ➤ 6     │  ZONE LECTURE — une ligne par joueur
+│   KEVIN│      80     │ moy 58,4  │  score géant + volée en cours + total
+│ ▌ 286  │D25│ 19│ 18│ ◇◇  ➤ 6     │  liseré = couleur du profil
+│   JULIEN│     87     │ moy 94,5  │  actif = halo laiton qui respire
 │  ⌖ SORTIE  T20 · T11 · D24       │  ruban vert dès reste ≤ 170
-│  Kevin · Bust — volée annulée    │  bandeau d'issue (rouge + secousse)
 ├──────────────────────────────────┤
-│  [SIMPLE][DOUBLE][TRIPLE]        │  ZONE SAISIE — curseur laiton glissant
-│   1⁶⁰ 2  3  4  5                 │  compacte, atteignable au pouce
+│   1⁶⁰ 2  3  4  5                 │  ZONE SAISIE
 │   6  7  8  9 10                  │  cibles ≥ 48 px, touches en relief
 │  11 12 13 14 15                  │  valeur réelle en exposant hors simple
 │  16 17 18 19 20                  │
-│      [25]  [BULL]  [0]           │  couleurs du plateau : 25 vert, bull rouge
-│  ↶ Annuler          ⚡ Rapide     │
-└──────────────────────────────────┘
+│  [25] [0] [   ↶ Annuler   ]      │  pas de touche BULL : c'est DOUBLE + 25
+│  [SIMPLE][DOUBLE][TRIPLE] [⚡]    │  rangée du pouce ; retombe sur SIMPLE
+└──────────────────────────────────┘             après chaque fléchette
 ```
+
+**Une ligne par joueur, toujours** — la disposition ne change pas avec le nombre de joueurs,
+seule l'**échelle** du score suit (2 joueurs → `4rem`, 3 → `3rem`, 4 → `2.5rem`). Les colonnes
+sont à largeur fixe : c'est en alignant les scores d'une ligne à l'autre qu'on les compare.
 
 **Portrait** par défaut (téléphone posé contre un mur). Un mode paysage « tableau » reste une
 décision ouverte.
@@ -473,6 +474,54 @@ résumé, la carte de stats d'un joueur utilise `Panneau enTete=` (contenu libre
 - **Décision ouverte n° 1 tranchée** : **Alfa Slab One est conservée**, mais cantonnée à
 l'enseigne (« Dartpéro », nom du vainqueur). Tout le reste — titres de panneaux, libellés,
 chiffres — est en Oswald. Vue sur pièce, la Alfa Slab ne tient que sur 2 ou 3 mots.
+
+### Écran de match, seconde passe — d'après une app de référence
+
+Quatre idées reprises à une app Android de comptage (captures fournies par l'utilisateur),
+retenues pour leur ergonomie, **pas** pour leur esthétique (Material vert sur blanc, franglais :
+écartés). Décisions tranchées par l'utilisateur.
+
+- **Une ligne par joueur, dans tous les cas** — pas de grille, pas de disposition alternative
+au-delà de 2 joueurs. Une grille 2 colonnes s'étrangle à 4 joueurs ; la ligne encaisse. Le
+coût assumé est un score plus petit à 2 joueurs, compensé par l'**échelle** qui respire selon
+le nombre de joueurs — une seule règle de layout, pas deux composants.
+- **Chaque joueur affiche en permanence sa dernière volée détaillée et son total** (`T20 20 ·`
+puis `80`). C'est la question qui revient le plus autour d'une cible — « t'as mis quoi, là ? ».
+La volée montrée est celle **en cours** dès la première fléchette plantée, la **dernière
+enregistrée** sinon : sans cette bascule, un bust en solo ne serait jamais annoncé, la main ne
+passant à personne.
+- **Le bandeau « ce qui vient de se passer » a disparu** : chaque ligne porte déjà l'info.
+Seul le **bust** garde un signal fort — la ligne passe au rouge, ses fléchettes sont barrées,
+elle encaisse la secousse. C'est le seul cas où l'app doit annoncer que des points ont été
+retirés.
+- **Il n'y a plus de touche « Bull » : le bullseye, c'est `DOUBLE` + `25`** — ce que dit la
+règle. Ça supprime une exception du pavé. En `TRIPLE` la touche 25 se **grise** plutôt que de
+refuser le coup après l'avoir accepté : il n'existe pas de triple bull.
+⚠️ Cette touche vise le segment `BULL`, pas le nombre 25 (`Dart.of('BULL', multiplicateur)`).
+Le badge affiche toujours `BULL`, pas `D25` : `Dart.label` vit dans le domaine et un test le
+couvre — on ne modifie pas le cœur pour une préférence d'affichage.
+- **Les modificateurs et « Annuler » sont passés EN BAS**, dans le pavé lui-même. Le haut de
+l'écran est la zone la plus difficile à atteindre au pouce ; y placer la bascule S/D/T, qu'on
+actionne des dizaines de fois par partie, était une erreur. La rangée du pouce est **identique
+dans les deux modes de saisie**.
+- ⚠️ **La bascule S/D/T n'est plus persistante : elle retombe sur Simple après chaque
+fléchette.** Décision de l'utilisateur, qui **renverse** celle du cadrage initial. Un
+multiplicateur qui reste armé sans qu'on le voie est la faute n° 1 — trois T20 comptés là où
+il y avait trois simples, et il faut ensuite retrouver *où* le score a dérapé. Un clic de plus
+par triple coûte moins cher qu'un score faux. La remise à zéro vit dans **`useMatch`**, pas
+dans le pavé, pour tenir quelle que soit la façon de saisir ; le curseur de laiton qui revient
+tout seul rend la chose visible plutôt que silencieuse.
+- Côté tests, `tests/ui/gestes.ts` expose `flechette(utilisateur, cible, multiplicateur?)` :
+les tests re-sélectionnent le triple à chaque fléchette, comme un vrai joueur.
+- **La touche `0` ignore le multiplicateur** : une fléchette manquée n'a ni double ni triple
+(`Dart.of('MISS', 'DOUBLE')` lève une `DomainError`).
+- **Le total de la volée en cours se déduit de `remaining - resteAffiche`**, jamais d'une somme
+recalculée dans l'UI : le reste projeté vient déjà du port `PreviewVisit`, donc aucune règle
+n'est réimplémentée côté écran.
+- **Retenu pour le lot 4** : barre de navigation basse (Début / Joueurs / Statistiques /
+Historique / Réglages), historique avec statut *en cours* / *terminée*, et surtout des stats
+en **tableau comparatif classé** plutôt qu'en cartes empilées — vaut aussi pour l'écran de
+résumé, où comparer quatre panneaux superposés est pénible.
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode

@@ -1,9 +1,10 @@
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { couleurJoueur, initiales } from '@/ui/couleurs'
 
-type Taille = 'sm' | 'md' | 'lg' | 'xl'
+type Taille = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
 const TAILLES: Record<Taille, string> = {
+  xs: 'size-5 border text-[0.5rem]',
   sm: 'size-7 text-[0.65rem]',
   md: 'size-10 text-sm',
   lg: 'size-14 text-lg',

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import App from '@/App'
 import { X01Config } from '@/core/domain/entities/Match'
 import { fakeServices } from '../fakes'
+import { flechette } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
 describe('Parcours complet', () => {
@@ -27,20 +28,20 @@ describe('Parcours complet', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 
     // --- Match : 180, 180, puis sortie sur 141 ---
+    // Le multiplicateur retombe sur Simple après chaque fléchette : chaque
+    // triple se re-sélectionne, c'est ce que fait le helper `flechette`.
     const score = () => screen.getByLabelText('Score restant de Kevin')
     await waitFor(() => expect(score()).toHaveTextContent('501'))
 
-    await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
-    for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: '20' }))
+    for (const _ of [0, 1, 2]) await flechette(utilisateur, '20', 'Triple')
     await waitFor(() => expect(score()).toHaveTextContent('321'))
 
-    for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: '20' }))
+    for (const _ of [0, 1, 2]) await flechette(utilisateur, '20', 'Triple')
     await waitFor(() => expect(score()).toHaveTextContent('141'))
 
-    await utilisateur.click(screen.getByRole('button', { name: '20' })) // T20 → 81
-    await utilisateur.click(screen.getByRole('button', { name: '19' })) // T19 → 24
-    await utilisateur.click(screen.getByRole('button', { name: 'Double' }))
-    await utilisateur.click(screen.getByRole('button', { name: '12' })) // D12 → sortie
+    await flechette(utilisateur, '20', 'Triple') // T20 → 81
+    await flechette(utilisateur, '19', 'Triple') // T19 → 24
+    await flechette(utilisateur, '12', 'Double') // D12 → sortie
 
     // --- Résumé : l'écran de fin arrive tout seul ---
     expect(await screen.findByText('Vainqueur')).toBeInTheDocument()

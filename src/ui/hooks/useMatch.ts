@@ -93,6 +93,11 @@ export const useMatch = (matchId: MatchId) => {
       services.devices.haptics.tap()
       setDartsEnCours(suite)
 
+      // Le multiplicateur retombe sur SIMPLE après chaque fléchette : il ne
+      // reste jamais armé à l'insu du joueur. C'est ici et pas dans le pavé,
+      // pour que la règle tienne quelle que soit la façon de saisir.
+      setMultiplicateur('SIMPLE')
+
       const evaluation = services.previewVisit.execute({
         config: state.config,
         remaining: joueurCourant.remaining,

@@ -1,4 +1,4 @@
-import { Check, Delete, Eraser } from 'lucide-react'
+import { Check, Delete, Eraser, Undo2, Zap } from 'lucide-react'
 import { useState } from 'react'
 
 const RACCOURCIS = [26, 41, 45, 60, 85, 100, 140, 180] as const
@@ -7,6 +7,10 @@ const TOUCHES = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
 type Props = {
   readonly reste: number
   readonly onScore: (total: number, dartsUsed: number) => void
+  readonly onAnnuler: () => void
+  readonly peutAnnuler: boolean
+  readonly rapide: boolean
+  readonly onRapide: () => void
   readonly desactive: boolean
 }
 
@@ -20,8 +24,19 @@ type Props = {
  * Quand le score annoncé clôt le leg, on demande **combien de fléchettes** ont
  * servi : c'est la seule information que le total ne porte pas, et elle change
  * la moyenne comme le « meilleur leg ».
+ *
+ * Comme dans le pavé fléchette par fléchette, « Annuler » et la bascule de mode
+ * occupent la dernière rangée — toujours au même endroit, sous le pouce.
  */
-export const PaveRapide = ({ reste, onScore, desactive }: Props) => {
+export const PaveRapide = ({
+  reste,
+  onScore,
+  onAnnuler,
+  peutAnnuler,
+  rapide,
+  onRapide,
+  desactive,
+}: Props) => {
   const [saisie, setSaisie] = useState('')
 
   const total = saisie === '' ? null : Number(saisie)
@@ -43,7 +58,7 @@ export const PaveRapide = ({ reste, onScore, desactive }: Props) => {
   }
 
   return (
-    <section aria-label="Saisie rapide" className="flex flex-col gap-2">
+    <section aria-label="Saisie rapide" className="flex flex-col gap-1.5">
       <div
         className={[
           'flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4',
@@ -130,11 +145,11 @@ export const PaveRapide = ({ reste, onScore, desactive }: Props) => {
       </div>
 
       {sortie ? (
-        <div className="flex animate-monter flex-col gap-2">
+        <div className="flex animate-monter flex-col gap-1.5">
           <p className="text-center font-score text-sm uppercase tracking-widest text-vert-cible">
             Sortie ! Combien de fléchettes ?
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
             {[1, 2, 3].map((nombre) => (
               <button
                 key={nombre}
@@ -163,6 +178,35 @@ export const PaveRapide = ({ reste, onScore, desactive }: Props) => {
           Valider
         </button>
       )}
+
+      {/* La rangée du pouce, identique à celle du pavé fléchette par fléchette. */}
+      <div className="grid grid-cols-[1fr_3.5rem] gap-1.5">
+        <button
+          type="button"
+          disabled={desactive || !peutAnnuler}
+          onClick={onAnnuler}
+          className={[
+            'touche flex min-h-14 items-center justify-center gap-2 rounded-xl',
+            'border-chene font-score text-sm font-bold uppercase tracking-widest text-craie',
+          ].join(' ')}
+        >
+          <Undo2 aria-hidden="true" className="size-4" />
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          aria-label="Saisie rapide"
+          aria-pressed={rapide}
+          onClick={onRapide}
+          className={[
+            'flex min-h-14 items-center justify-center rounded-xl',
+            rapide ? 'laiton-poli' : 'touche text-craie/75',
+          ].join(' ')}
+        >
+          <Zap aria-hidden="true" className="size-5" />
+        </button>
+      </div>
     </section>
   )
 }

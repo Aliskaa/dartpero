@@ -1,38 +1,37 @@
 import { CircleOff, Target } from 'lucide-react'
-import type { VisitOutcome } from '@/core/domain/entities/Visit'
+import type { Visit } from '@/core/domain/entities/Visit'
 import type { MatchState } from '@/core/domain/services/x01Rules'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { nomJoueur } from '@/ui/labels'
-import { CarteJoueur } from './CarteJoueur'
-
-export type DerniereVolee = {
-  readonly nom: string
-  readonly outcome: VisitOutcome
-  readonly scored: number
-}
+import { type Echelle, LigneJoueur, type VoleeAffichee } from './LigneJoueur'
 
 type Props = {
   readonly state: MatchState
   readonly resteAffiche: number
   readonly dartsEnCours: readonly Dart[]
   readonly suggestion: readonly Dart[] | null
-  readonly derniere: DerniereVolee | null
   readonly noms: ReadonlyMap<PlayerId, string>
   readonly moyennes: ReadonlyMap<PlayerId, number>
 }
 
-const RESUME_ISSUE: Record<VisitOutcome, (scored: number) => string> = {
-  SCORED: (scored) => `${scored} point${scored > 1 ? 's' : ''}`,
-  BUSTED: () => 'Bust — volée annulée',
-  CHECKOUT: () => 'Sortie !',
-}
+const ECHELLES: readonly Echelle[] = ['large', 'large', 'moyen', 'compact']
 
-const TON_ISSUE: Record<VisitOutcome, string> = {
-  SCORED: 'border-chene/60 bg-ardoise/70 text-craie/80',
-  BUSTED: 'animate-secousse border-rouge-cible/70 bg-rouge-cible/20 text-craie-vive',
-  CHECKOUT: 'border-vert-cible/70 bg-vert-cible/20 text-craie-vive',
-}
+/**
+ * La dernière volée de chaque joueur **dans le leg en cours**, avec le rang de
+ * cette volée dans l'historique.
+ *
+ * Le rang sert de clé de rendu : il ne change que lorsque ce joueur-là rejoue,
+ * ce qui rejoue les animations (le « pop » du score, la secousse d'un bust) au
+ * bon moment — et seulement pour lui, pas à chaque volée des adversaires.
+ */
+const dernieresVolees = (
+  state: MatchState,
+): ReadonlyMap<PlayerId, { visit: Visit; rang: number }> =>
+  state.history.reduce((acc, visit, rang) => {
+    if (visit.legNumber === state.legNumber) acc.set(visit.playerId, { visit, rang })
+    return acc
+  }, new Map<PlayerId, { visit: Visit; rang: number }>())
 
 /** La sortie conseillée, en ruban : trois cibles qu'on lit de loin. */
 const RubanSortie = ({
@@ -96,42 +95,66 @@ const RubanSortie = ({
 /**
  * ZONE LECTURE — elle se lit depuis la ligne de lancer, à 2-3 mètres.
  *
- * Trois étages, du plus important au plus accessoire : les scores, la sortie
- * conseillée, puis ce qui vient de se passer.
+ * Une ligne par joueur, toujours : la disposition ne change pas avec le nombre
+ * de joueurs, seule l'échelle du score suit.
+ *
+ * Il n'y a **pas** de bandeau « ce qui vient de se passer » : chaque ligne porte
+ * déjà sa dernière volée et son total. Seul le bust garde un signal fort — sa
+ * ligne passe au rouge, ses fléchettes sont barrées et elle encaisse la
+ * secousse — parce que c'est le seul cas où l'app doit annoncer que des points
+ * viennent d'être retirés.
  */
 export const Tableau = ({
   state,
   resteAffiche,
   dartsEnCours,
   suggestion,
-  derniere,
   noms,
   moyennes,
 }: Props) => {
-  const compact = state.players.length > 2
+  const echelle = ECHELLES[Math.min(state.players.length, ECHELLES.length) - 1] ?? 'compact'
+  const volees = dernieresVolees(state)
 
   return (
-    <section aria-label="Tableau des scores" className="flex flex-col gap-2.5">
-      <div className="grid grid-cols-2 gap-2.5">
+    <section aria-label="Tableau des scores" className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2">
         {state.players.map((joueur, index) => {
           const actif = index === state.currentPlayerIndex && state.winnerId === null
           const nom = nomJoueur(noms.get(joueur.playerId) ?? null)
+          const derniere = volees.get(joueur.playerId)
+
+          // Tant que le joueur actif n'a pas planté sa première fléchette, sa
+          // ligne continue d'afficher sa volée précédente — sans quoi un bust
+          // en solo ne serait jamais annoncé, la main ne passant à personne.
+          // Le total de la volée en cours se déduit du reste projeté : aucune
+          // règle de calcul n'est réimplémentée ici.
+          const volee: VoleeAffichee | null =
+            actif && dartsEnCours.length > 0
+              ? { darts: dartsEnCours, total: joueur.remaining - resteAffiche, outcome: null }
+              : derniere
+                ? {
+                    darts: derniere.visit.darts,
+                    total: derniere.visit.scored,
+                    outcome: derniere.visit.outcome,
+                  }
+                : null
 
           return (
-            <CarteJoueur
-              key={joueur.playerId}
+            <LigneJoueur
+              key={`${joueur.playerId}-${derniere?.rang ?? 'debut'}`}
               id={joueur.playerId}
               nom={nom}
               reste={actif ? resteAffiche : joueur.remaining}
               actif={actif}
               vainqueur={state.winnerId === joueur.playerId}
+              volee={volee}
               legsGagnes={joueur.legsWonInSet}
               legsRequis={state.config.legsToWin}
               setsGagnes={joueur.setsWon}
               setsRequis={state.config.setsToWin}
               moyenne={moyennes.get(joueur.playerId) ?? 0}
-              dartsEnCours={dartsEnCours}
-              compact={compact}
+              flechettes={joueur.dartsThrownInLeg}
+              echelle={echelle}
             />
           )
         })}
@@ -142,27 +165,6 @@ export const Tableau = ({
           suggestion={suggestion}
           aucunFinish={state.winnerId === null && resteAffiche > 1 && resteAffiche <= 170}
         />
-      </div>
-
-      {/* Ce qui vient de se passer — lisible par tout le monde, pas seulement
-          par celui qui tape. La `key` rejoue l'animation à chaque volée. */}
-      <div className="min-h-9">
-        {derniere && (
-          <p
-            key={state.history.length}
-            className={[
-              'flex items-center justify-center gap-2 rounded-xl border px-3 py-1.5',
-              'font-score text-sm uppercase tracking-widest',
-              TON_ISSUE[derniere.outcome],
-            ].join(' ')}
-          >
-            <span className="truncate text-craie/70">{derniere.nom}</span>
-            <span aria-hidden="true" className="text-craie/30">
-              ·
-            </span>
-            <span className="font-bold">{RESUME_ISSUE[derniere.outcome](derniere.scored)}</span>
-          </p>
-        )}
       </div>
     </section>
   )
