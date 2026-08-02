@@ -1,32 +1,51 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-type Variante = 'primaire' | 'secondaire' | 'discret'
+type Variante = 'primaire' | 'secondaire' | 'discret' | 'danger'
+type Taille = 'md' | 'lg'
 
 /**
  * Cibles ≥ 48 px : on tape debout, une fléchette dans l'autre main.
  * `min-h-12` = 48 px, jamais descendre en dessous.
  */
 const VARIANTES: Record<Variante, string> = {
-  primaire: 'laiton-poli shadow-[0_2px_0_rgba(0,0,0,0.45)] active:translate-y-px',
-  secondaire: 'border-2 border-chene bg-ardoise text-craie active:bg-chene/30',
+  // Le laiton porte son relief dans `.laiton-poli` (biseau, reflet, enfoncement).
+  primaire: 'laiton-poli',
+  secondaire:
+    'cadre-bois text-craie shadow-[0_3px_0_rgba(0,0,0,0.45)] active:translate-y-[3px] active:shadow-none',
   discret: 'text-craie/70 active:text-craie',
+  danger:
+    'border-2 border-rouge-cible/70 bg-rouge-cible/15 text-craie active:bg-rouge-cible/30 active:translate-y-px',
 }
 
-export const classesBouton = (variante: Variante = 'primaire'): string =>
+const TAILLES: Record<Taille, string> = {
+  md: 'min-h-12 px-5 text-base',
+  lg: 'min-h-14 px-7 text-lg',
+}
+
+export const classesBouton = (variante: Variante = 'primaire', taille: Taille = 'md'): string =>
   [
-    'inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5',
-    'font-score text-base font-bold uppercase tracking-widest',
-    'transition-colors disabled:opacity-40',
+    'inline-flex items-center justify-center gap-2 rounded-xl',
+    'font-score font-bold uppercase tracking-widest',
+    'transition-[transform,box-shadow,background-color] duration-100',
+    'disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
+    TAILLES[taille],
     VARIANTES[variante],
   ].join(' ')
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   readonly variante?: Variante
+  readonly taille?: Taille
   readonly children: ReactNode
 }
 
-export const Button = ({ variante = 'primaire', className = '', children, ...reste }: Props) => (
-  <button type="button" className={`${classesBouton(variante)} ${className}`} {...reste}>
+export const Button = ({
+  variante = 'primaire',
+  taille = 'md',
+  className = '',
+  children,
+  ...reste
+}: Props) => (
+  <button type="button" className={`${classesBouton(variante, taille)} ${className}`} {...reste}>
     {children}
   </button>
 )

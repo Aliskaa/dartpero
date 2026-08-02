@@ -1,7 +1,8 @@
+import { Check, Delete, Eraser } from 'lucide-react'
 import { useState } from 'react'
 
 const RACCOURCIS = [26, 41, 45, 60, 85, 100, 140, 180] as const
-const TOUCHES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'] as const
+const TOUCHES = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
 
 type Props = {
   readonly reste: number
@@ -11,6 +12,10 @@ type Props = {
 
 /**
  * ZONE SAISIE — mode rapide : un score de volée plutôt que trois fléchettes.
+ *
+ * L'écran annonce en direct le reste qui en découlerait, et signale un bust
+ * avant qu'on valide : en mode rapide on tape un total de tête, une erreur de
+ * dizaine est vite arrivée.
  *
  * Quand le score annoncé clôt le leg, on demande **combien de fléchettes** ont
  * servi : c'est la seule information que le total ne porte pas, et elle change
@@ -22,6 +27,8 @@ export const PaveRapide = ({ reste, onScore, desactive }: Props) => {
   const total = saisie === '' ? null : Number(saisie)
   const valide = total !== null && total >= 0 && total <= 180
   const sortie = valide && total === reste
+  const resteApres = total === null ? reste : reste - total
+  const bust = valide && (resteApres < 0 || resteApres === 1)
 
   const taper = (touche: string) => {
     const suite = (saisie + touche).replace(/^0+(?=\d)/, '')
@@ -37,59 +44,93 @@ export const PaveRapide = ({ reste, onScore, desactive }: Props) => {
 
   return (
     <section aria-label="Saisie rapide" className="flex flex-col gap-2">
-      <output
-        aria-label="Score de la volée"
-        className="ardoise-craie chiffres flex min-h-14 items-center justify-center rounded-xl text-4xl font-bold text-craie-vive"
+      <div
+        className={[
+          'flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4',
+          'transition-colors duration-150',
+          bust
+            ? 'border-rouge-cible/70 bg-rouge-cible/15'
+            : sortie
+              ? 'border-vert-cible/70 bg-vert-cible/15'
+              : 'border-chene/60 bg-feutre/70',
+        ].join(' ')}
       >
-        {saisie === '' ? <span className="text-craie/30">—</span> : saisie}
-      </output>
+        <output
+          aria-label="Score de la volée"
+          className="chiffres text-4xl font-bold leading-none text-craie-vive"
+        >
+          {saisie === '' ? <span className="text-craie/25">—</span> : saisie}
+        </output>
 
-      <div className="grid grid-cols-4 gap-2">
+        <span className="font-score text-xs uppercase tracking-widest">
+          {bust ? (
+            <span className="font-bold text-rouge-cible">Bust</span>
+          ) : sortie ? (
+            <span className="font-bold text-vert-cible">Sortie</span>
+          ) : (
+            <span className="text-craie/60">
+              reste <span className="chiffres text-base font-bold text-craie">{resteApres}</span>
+            </span>
+          )}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-4 gap-1.5">
         {RACCOURCIS.map((score) => (
           <button
             key={score}
             type="button"
             disabled={desactive}
             onClick={() => setSaisie(String(score))}
-            className="chiffres ardoise-craie min-h-12 rounded-xl text-base font-bold text-craie disabled:opacity-40 active:bg-laiton/25"
+            className="touche chiffres min-h-12 rounded-xl text-base font-bold text-craie"
           >
             {score}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1.5">
         {TOUCHES.map((touche) => (
           <button
             key={touche}
             type="button"
             disabled={desactive}
             onClick={() => taper(touche)}
-            className="chiffres ardoise-craie min-h-12 rounded-xl text-xl font-bold text-craie-vive disabled:opacity-40 active:bg-laiton/25"
+            className="touche chiffres min-h-12 rounded-xl text-xl font-bold text-craie-vive"
           >
             {touche}
           </button>
         ))}
         <button
           type="button"
+          aria-label="Effacer le dernier chiffre"
           disabled={desactive || saisie === ''}
           onClick={() => setSaisie(saisie.slice(0, -1))}
-          className="ardoise-craie min-h-12 rounded-xl font-score text-sm uppercase tracking-widest text-craie/80 disabled:opacity-40"
+          className="touche flex min-h-12 items-center justify-center rounded-xl text-craie/80"
         >
-          Effacer
+          <Delete aria-hidden="true" className="size-5" />
         </button>
         <button
           type="button"
+          disabled={desactive}
+          onClick={() => taper('0')}
+          className="touche chiffres min-h-12 rounded-xl text-xl font-bold text-craie-vive"
+        >
+          0
+        </button>
+        <button
+          type="button"
+          aria-label="Vider la saisie"
           disabled={desactive || saisie === ''}
           onClick={() => setSaisie('')}
-          className="ardoise-craie min-h-12 rounded-xl font-score text-sm uppercase tracking-widest text-craie/80 disabled:opacity-40"
+          className="touche flex min-h-12 items-center justify-center rounded-xl text-craie/80"
         >
-          Vider
+          <Eraser aria-hidden="true" className="size-5" />
         </button>
       </div>
 
       {sortie ? (
-        <div className="flex flex-col gap-2">
+        <div className="flex animate-monter flex-col gap-2">
           <p className="text-center font-score text-sm uppercase tracking-widest text-vert-cible">
             Sortie ! Combien de fléchettes ?
           </p>
@@ -112,8 +153,13 @@ export const PaveRapide = ({ reste, onScore, desactive }: Props) => {
           type="button"
           disabled={desactive || !valide}
           onClick={() => valider(3)}
-          className="laiton-poli min-h-12 rounded-xl font-score text-base font-bold uppercase tracking-widest disabled:opacity-40"
+          className={[
+            'laiton-poli flex min-h-14 items-center justify-center gap-2 rounded-xl',
+            'font-score text-base font-bold uppercase tracking-widest',
+            'disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
+          ].join(' ')}
         >
+          <Check aria-hidden="true" className="size-5" />
           Valider
         </button>
       )}

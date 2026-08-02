@@ -180,18 +180,32 @@ en luminosité basse.
 | `font-sans`    | **Barlow** (400/600)    | Corps, boutons, listes, stats.                                                                                   |
 
 
-**Matières** (classes utilitaires dans `src/index.css`)
-`.feutre-tapis` (texture feutre, bruit SVG inline — 0 image à charger) ·
-`.cadre-bois` (`border-image` 9-slice) · `.laiton-poli` (dégradé métallique des boutons
-primaires) · `.ardoise-craie` (fond tableau noir pour les stats secondaires).
+**Matières** (classes de `@layer components` dans `src/index.css`) — aucune image, tout est
+CSS ou SVG inline :
+`.feutre-tapis` (dégradé + vignette + grain) · `.cadre-bois` (encadrement de chêne, technique
+double-`background` peinte dans la bordure) · `.bois-veine` (bandeau d'en-tête veiné) ·
+`.laiton-poli` (métal biseauté, reflet spéculaire, s'enfonce à l'appui) · `.ardoise-craie`
+(panneau) · `.touche` (touche de pavé avec épaisseur et enfoncement) · `.chiffres`
+(tabular-nums) · `.trace-craie` (halo de poudre sous les grands chiffres) · `.grave` (texte
+gravé dans le bois) · `.filet-laiton` · `.chargement-balai`.
 
 **Composants réutilisables** dans `src/ui/composants/commun/` — toujours réutiliser, ne jamais
-dupliquer de variante ad hoc : `Button` (primaire laiton / secondaire contour bois),
-`ScoreTile` (chiffre géant), `SegmentGrid` (pavé S/D/T), `PlayerCard`, `Avatar` (pastille
-couleur + initiales), `StatTile`, `EmptyState`, `Skeleton`, `Spinner`.
+dupliquer de variante ad hoc : `Button` (primaire laiton / secondaire cadre bois / discret /
+danger, tailles `md` et `lg`), `Avatar` (pastille couleur + initiales), `Cible` (plateau de
+fléchettes en SVG génératif), `Enseigne` + `LogoHero`, `Panneau` (ardoise dans un cadre bois,
+bandeau `titre` en `<h2>` **ou** `enTete` libre), `StatTile`, `EmptyState`, `Skeleton`,
+`Spinner` / `SpinnerLigne`, `MessageErreur`, `EcranErreur`.
+Côté match : `CarteJoueur` (dans `composants/match/`) porte le score géant, les jetons de legs
+et la volée en cours.
 
-Icônes : **lucide-react**. Icône PWA générée par `npm run icons` depuis `scripts/icon.svg`
-(cible stylisée, triple 20 en laiton, une fléchette plantée).
+Icônes : **lucide-react**, toujours en `aria-hidden` — elles ne doivent jamais entrer dans le
+nom accessible d'un bouton. ⚠️ En v1 `Home` s'appelle **`House`**.
+Icône PWA générée par `npm run icons` depuis `scripts/icon.svg` (cible stylisée, triple 20 en
+laiton, une fléchette plantée).
+
+**Mouvement** (tokens `--animate-*` du `@theme`, keyframes au niveau racine) : `pop-score`
+(le score qui change), `secousse` (bust), `halo` (le joueur actif respire), `monter`, `craie`,
+`eclat`, `tourner-lent` (la cible de l'accueil), `respirer`, `defiler`.
 
 ---
 
@@ -203,17 +217,23 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 
 ```
 ┌──────────────────────────────────┐
-│  KEVIN  ●            JULIEN      │  ZONE LECTURE
-│    141                 286       │  chiffres énormes (font-score),
-│  ● ● ○   T20 20 —      moy 58.4  │  joueur actif = halo laiton
-│  → T20 · T11 · D24               │  checkout dès reste ≤ 170
+│ ←  LEG 2 | 501 · BO3       [DO]  │  bandeau de chêne veiné
 ├──────────────────────────────────┤
-│  [SIMPLE] [DOUBLE] [TRIPLE]      │  ZONE SAISIE
-│   1  2  3  4  5                  │  compacte, atteignable au pouce
-│   6  7  8  9 10                  │  cibles ≥ 48 px
-│  11 12 13 14 15                  │
+│ ╔═══════════╗  ╔═══════════╗     │  ZONE LECTURE
+│ ║(K) KEVIN ♛║  ║(J) JULIEN ║     │  cadre bois + liseré couleur du profil
+│ ║    141    ║  ║    286    ║     │  chiffres énormes (font-score) + pop
+│ ║ ◆◇ | moy  ║  ║ ◇◇ | moy  ║     │  joueur actif = halo laiton qui respire
+│ ║ T20 20  · ║  ╚═══════════╝     │  volée en cours dans ses encoches
+│ ╚═══════════╝                    │
+│  ⌖ SORTIE  T20 · T11 · D24       │  ruban vert dès reste ≤ 170
+│  Kevin · Bust — volée annulée    │  bandeau d'issue (rouge + secousse)
+├──────────────────────────────────┤
+│  [SIMPLE][DOUBLE][TRIPLE]        │  ZONE SAISIE — curseur laiton glissant
+│   1⁶⁰ 2  3  4  5                 │  compacte, atteignable au pouce
+│   6  7  8  9 10                  │  cibles ≥ 48 px, touches en relief
+│  11 12 13 14 15                  │  valeur réelle en exposant hors simple
 │  16 17 18 19 20                  │
-│      [25]  [BULL]  [0]           │
+│      [25]  [BULL]  [0]           │  couleurs du plateau : 25 vert, bull rouge
 │  ↶ Annuler          ⚡ Rapide     │
 └──────────────────────────────────┘
 ```
@@ -294,6 +314,10 @@ par le composition root.
   (fléchette par fléchette **et** mode rapide), annulation, suggestion de checkout, wake lock,
   haptique, écran de résumé. Routage React Router, `QueryClient` + `ServicesProvider` câblés.
   **100 tests verts**, dont un parcours complet accueil → partie → résumé.
+- [x] **Lot 3 bis** — Refonte visuelle : la charte « pub anglais » réellement exécutée
+  (matières, relief, cible SVG, avatars, animations ciblées + `prefers-reduced-motion`),
+  socle de composants communs, en-tête de match avec bouton retour, valeur réelle des touches
+  hors simple, mode rapide qui projette le reste. **100 tests toujours verts, aucun modifié.**
 - [ ] **Lot 4** — Profils joueurs, historique, stats, export/import JSON, charte graphique
 - [ ] **Lot 5** — Entraînement solo + annonce vocale
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
@@ -413,6 +437,43 @@ que l'onglet passe en arrière-plan. Sans cette reprise, l'écran se rendort dè
 - **Accessibilité** : les scores et la volée en cours sont des `<output>`, pas des `<p>` —
 `aria-label` n'est pas supporté sur un paragraphe (Biome le refuse, à juste titre).
 
+### Décisions de la refonte visuelle (lot 3 bis)
+
+La charte était écrite mais quasiment pas exécutée (`.cadre-bois` n'existait pas, aucun des
+composants annoncés non plus, zéro animation, zéro icône). Refonte de `src/index.css` et de
+tout `src/ui/` — **aucun test modifié, les 100 tests restent verts**, ce qui valide au passage
+que la refonte n'a touché à aucun comportement.
+
+- **On pousse la charte « pub anglais », on ne la remplace pas.** Décision de l'utilisateur :
+le problème n'était pas la direction mais son absence d'exécution. Matière, relief, biseaux
+et mouvement partout sur le chrome ; les chiffres du tableau restent en craie sur feutre.
+- **Le mouvement est généreux mais ciblé**, et `prefers-reduced-motion` coupe tout. ⚠️ Le bloc
+`@media (prefers-reduced-motion)` est **volontairement hors de toute `@layer`** : le CSS sans
+couche l'emporte sur n'importe quelle couche, donc il neutralise les `animate-*` de Tailwind
+(couche `utilities`) **sans un seul `!important`** — que Biome refuse par ailleurs.
+- **La cible est dessinée en SVG génératif** (`Cible`), à partir de l'ordre officiel des 20
+secteurs et des rayons d'un plateau réel. Zéro image, donc zéro octet de plus au précache, et
+net à toutes les tailles. Toujours `aria-hidden` : elle est décorative.
+- **La couleur de joueur est dérivée de son `PlayerId`** (`src/ui/couleurs.ts`, hash + palette
+de 8 teintes). C'est **provisoire et purement UI** : le jour où `Player` porte une couleur
+choisie (lot 4), il n'y a qu'à la préférer à cet endroit. Le domaine n'a pas bougé.
+- **Le pavé affiche la valeur réelle de la touche dès qu'on quitte le simple** (le « 20 »
+porte un « 60 » en exposant en mode triple). C'est la faute de saisie n° 1, et le badge est
+`aria-hidden` — le nom accessible du bouton reste « 20 », donc les tests aussi.
+- **L'écran de match a enfin un en-tête** : leg/set en cours, score de départ, best-of,
+badges DI/DO, et surtout un **bouton retour** — il n'existait aucun moyen de quitter une
+partie en cours.
+- **Le mode rapide projette le reste avant validation** et annonce « Bust » ou « Sortie » : on
+tape un total de tête, une erreur de dizaine est vite arrivée.
+- **Les icônes sont toujours `aria-hidden`.** Sans ça elles entreraient dans le nom accessible
+des boutons (« ⚡ Rapide » au lieu de « Rapide ») et casseraient les requêtes par rôle.
+- **Un `<h2>` de panneau ne doit jamais reprendre un nom déjà porté par un `<h1>`** : dans le
+résumé, la carte de stats d'un joueur utilise `Panneau enTete=` (contenu libre) et non
+`titre=`, sinon `getByRole('heading', { name: 'Kevin' })` trouve deux éléments.
+- **Décision ouverte n° 1 tranchée** : **Alfa Slab One est conservée**, mais cantonnée à
+l'enseigne (« Dartpéro », nom du vainqueur). Tout le reste — titres de panneaux, libellés,
+chiffres — est en Oswald. Vue sur pièce, la Alfa Slab ne tient que sur 2 ou 3 mots.
+
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode
 **RSC** (React Server Components) et l'exécution d'actions serveur — Dartpéro est une SPA
@@ -423,8 +484,8 @@ Décision : **on reste en 7.18**, à réévaluer si un correctif sort dans la br
 
 ## Décisions ouvertes
 
-1. **Alfa Slab One** conservée ou remplacée par Oswald 700 pour l'enseigne — à trancher **sur
-   pièce** au lot 3, une fois l'écran de match à l'écran.
+1. ~~**Alfa Slab One** conservée ou remplacée par Oswald 700 pour l'enseigne.~~ **Tranchée au
+   lot 3 bis** : conservée, mais réservée à l'enseigne et au nom du vainqueur.
 2. **Mode paysage « tableau »** (téléphone à plat sur une table) — après le lot 3 si le besoin
    se confirme.
 3. **Cricket / jeux fun** (Around the Clock, Killer, Shanghai) — hors v1, la couture

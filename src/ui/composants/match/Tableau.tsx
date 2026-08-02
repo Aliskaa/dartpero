@@ -1,8 +1,10 @@
+import { CircleOff, Target } from 'lucide-react'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import type { MatchState } from '@/core/domain/services/x01Rules'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
-import { moyenne, nomJoueur } from '@/ui/labels'
+import { nomJoueur } from '@/ui/labels'
+import { CarteJoueur } from './CarteJoueur'
 
 export type DerniereVolee = {
   readonly nom: string
@@ -26,12 +28,76 @@ const RESUME_ISSUE: Record<VisitOutcome, (scored: number) => string> = {
   CHECKOUT: () => 'Sortie !',
 }
 
+const TON_ISSUE: Record<VisitOutcome, string> = {
+  SCORED: 'border-chene/60 bg-ardoise/70 text-craie/80',
+  BUSTED: 'animate-secousse border-rouge-cible/70 bg-rouge-cible/20 text-craie-vive',
+  CHECKOUT: 'border-vert-cible/70 bg-vert-cible/20 text-craie-vive',
+}
+
+/** La sortie conseillée, en ruban : trois cibles qu'on lit de loin. */
+const RubanSortie = ({
+  suggestion,
+  aucunFinish,
+}: {
+  readonly suggestion: readonly Dart[] | null
+  readonly aucunFinish: boolean
+}) => {
+  // Une route peut répéter la même cible (T20 · T20 · D20) : la clé porte donc
+  // aussi le rang, mais elle est calculée ici pour rester une donnée stable.
+  const cibles = suggestion?.map((dart, rang) => ({
+    cle: `${rang}-${DartVO.label(dart)}`,
+    libelle: DartVO.label(dart),
+  }))
+
+  if (cibles) {
+    return (
+      <div
+        className={[
+          'flex animate-monter items-center justify-center gap-2.5 rounded-xl px-3 py-2',
+          'border border-vert-cible/60 bg-vert-cible/12',
+          'shadow-[0_0_24px_-10px_var(--color-vert-cible)]',
+        ].join(' ')}
+      >
+        <Target aria-hidden="true" className="size-4 shrink-0 text-vert-cible" />
+        <span className="font-score text-[0.6rem] uppercase tracking-[0.28em] text-vert-cible">
+          Sortie
+        </span>
+        <span className="flex items-center gap-1.5">
+          {cibles.map((cible) => (
+            <span
+              key={cible.cle}
+              className={[
+                'chiffres rounded-md border border-vert-cible/45 bg-feutre/70 px-2 py-0.5',
+                'text-base font-bold text-craie-vive',
+              ].join(' ')}
+            >
+              {cible.libelle}
+            </span>
+          ))}
+        </span>
+      </div>
+    )
+  }
+
+  if (aucunFinish) {
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-chene/50 bg-ardoise/60 px-3 py-2">
+        <CircleOff aria-hidden="true" className="size-4 shrink-0 text-craie/60" />
+        <span className="font-score text-sm uppercase tracking-widest text-craie/65">
+          Pas de finish
+        </span>
+      </div>
+    )
+  }
+
+  return null
+}
+
 /**
  * ZONE LECTURE — elle se lit depuis la ligne de lancer, à 2-3 mètres.
  *
- * Règle de la charte : les chiffres du tableau sont en craie quasi-blanche sur
- * feutre sombre. Le bois et le laiton restent sur le cadre, jamais derrière un
- * score.
+ * Trois étages, du plus important au plus accessoire : les scores, la sortie
+ * conseillée, puis ce qui vient de se passer.
  */
 export const Tableau = ({
   state,
@@ -41,94 +107,63 @@ export const Tableau = ({
   derniere,
   noms,
   moyennes,
-}: Props) => (
-  <section aria-label="Tableau des scores" className="flex flex-col gap-3">
-    <div className="grid grid-cols-2 gap-3">
-      {state.players.map((joueur, index) => {
-        const actif = index === state.currentPlayerIndex && state.winnerId === null
-        const nom = nomJoueur(noms.get(joueur.playerId) ?? null)
+}: Props) => {
+  const compact = state.players.length > 2
 
-        return (
-          <div
-            key={joueur.playerId}
-            aria-current={actif ? 'true' : undefined}
+  return (
+    <section aria-label="Tableau des scores" className="flex flex-col gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5">
+        {state.players.map((joueur, index) => {
+          const actif = index === state.currentPlayerIndex && state.winnerId === null
+          const nom = nomJoueur(noms.get(joueur.playerId) ?? null)
+
+          return (
+            <CarteJoueur
+              key={joueur.playerId}
+              id={joueur.playerId}
+              nom={nom}
+              reste={actif ? resteAffiche : joueur.remaining}
+              actif={actif}
+              vainqueur={state.winnerId === joueur.playerId}
+              legsGagnes={joueur.legsWonInSet}
+              legsRequis={state.config.legsToWin}
+              setsGagnes={joueur.setsWon}
+              setsRequis={state.config.setsToWin}
+              moyenne={moyennes.get(joueur.playerId) ?? 0}
+              dartsEnCours={dartsEnCours}
+              compact={compact}
+            />
+          )
+        })}
+      </div>
+
+      <div className="min-h-11">
+        <RubanSortie
+          suggestion={suggestion}
+          aucunFinish={state.winnerId === null && resteAffiche > 1 && resteAffiche <= 170}
+        />
+      </div>
+
+      {/* Ce qui vient de se passer — lisible par tout le monde, pas seulement
+          par celui qui tape. La `key` rejoue l'animation à chaque volée. */}
+      <div className="min-h-9">
+        {derniere && (
+          <p
+            key={state.history.length}
             className={[
-              'ardoise-craie rounded-2xl px-3 py-4 text-center transition',
-              actif
-                ? 'ring-2 ring-laiton shadow-[0_0_24px_-6px_var(--color-laiton)]'
-                : 'opacity-80',
+              'flex items-center justify-center gap-2 rounded-xl border px-3 py-1.5',
+              'font-score text-sm uppercase tracking-widest',
+              TON_ISSUE[derniere.outcome],
             ].join(' ')}
           >
-            <p
-              className={`truncate font-score text-sm uppercase tracking-widest ${
-                actif ? 'text-laiton' : 'text-craie/70'
-              }`}
-            >
-              {nom}
-            </p>
-
-            <output
-              aria-label={`Score restant de ${nom}`}
-              className="chiffres mt-1 block text-6xl font-bold leading-none text-craie-vive"
-            >
-              {actif ? resteAffiche : joueur.remaining}
-            </output>
-
-            <p className="mt-2 font-score text-xs uppercase tracking-widest text-craie/70">
-              {joueur.legsWonInSet} leg{joueur.legsWonInSet > 1 ? 's' : ''}
-              {state.config.setsToWin > 1 ? ` · ${joueur.setsWon} set` : ''}
-              {` · moy ${moyenne(moyennes.get(joueur.playerId) ?? 0)}`}
-            </p>
-
-            {actif && (
-              <output
-                className="mt-2 flex items-center justify-center gap-1.5"
-                aria-label="Volée en cours"
-              >
-                {[0, 1, 2].map((rang) => {
-                  const dart = dartsEnCours[rang]
-                  return (
-                    <span
-                      key={rang}
-                      className={`chiffres min-w-10 rounded-md px-1 py-0.5 text-xs ${
-                        dart
-                          ? 'bg-laiton/25 text-craie-vive'
-                          : 'border border-craie/25 text-craie/25'
-                      }`}
-                    >
-                      {dart ? DartVO.label(dart) : '·'}
-                    </span>
-                  )
-                })}
-              </output>
-            )}
-          </div>
-        )
-      })}
-    </div>
-
-    {/* Sortie conseillée du joueur en cours. */}
-    <div className="min-h-8 text-center">
-      {suggestion ? (
-        <p className="font-score text-lg tracking-wide text-vert-cible">
-          → {suggestion.map(DartVO.label).join(' · ')}
-        </p>
-      ) : state.winnerId === null && resteAffiche > 1 && resteAffiche <= 170 ? (
-        <p className="font-score text-sm uppercase tracking-widest text-craie/60">Pas de finish</p>
-      ) : null}
-    </div>
-
-    {/* Ce qui vient de se passer — lisible par tout le monde, pas seulement par celui qui tape. */}
-    <div className="min-h-6 text-center">
-      {derniere && (
-        <p
-          className={`font-score text-sm uppercase tracking-widest ${
-            derniere.outcome === 'BUSTED' ? 'text-rouge-cible' : 'text-craie/70'
-          }`}
-        >
-          {derniere.nom} · {RESUME_ISSUE[derniere.outcome](derniere.scored)}
-        </p>
-      )}
-    </div>
-  </section>
-)
+            <span className="truncate text-craie/70">{derniere.nom}</span>
+            <span aria-hidden="true" className="text-craie/30">
+              ·
+            </span>
+            <span className="font-bold">{RESUME_ISSUE[derniere.outcome](derniere.scored)}</span>
+          </p>
+        )}
+      </div>
+    </section>
+  )
+}

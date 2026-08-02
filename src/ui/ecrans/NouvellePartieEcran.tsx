@@ -1,10 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft, Check, Play, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { X01Config } from '@/core/domain/entities/Match'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
+import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
-import { MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
+import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
+import { Enseigne } from '@/ui/composants/commun/Logo'
+import { Panneau } from '@/ui/composants/commun/Panneau'
 import { CLE_JOUEURS, useJoueurs } from '@/ui/hooks/useJoueurs'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
@@ -12,6 +16,11 @@ const SCORES = [301, 501, 701] as const
 const BEST_OF = [1, 3, 5, 7] as const
 const MAX_JOUEURS = 4
 
+/**
+ * Sélecteur segmenté : un rail d'ardoise, un curseur de laiton qui glisse
+ * jusqu'à l'option retenue. Le mouvement dit le changement mieux qu'un
+ * changement de couleur seul.
+ */
 const Choix = <T extends string | number>({
   legende,
   valeurs,
@@ -22,36 +31,53 @@ const Choix = <T extends string | number>({
   readonly valeurs: readonly T[]
   readonly valeur: T
   readonly onChange: (valeur: T) => void
-}) => (
-  <fieldset className="flex flex-col gap-2">
-    <legend className="font-score text-xs uppercase tracking-widest text-craie/70">
-      {legende}
-    </legend>
-    <div className="flex gap-2">
-      {valeurs.map((option) => (
-        <button
-          key={option}
-          type="button"
-          aria-pressed={option === valeur}
-          onClick={() => onChange(option)}
-          className={[
-            'chiffres min-h-12 flex-1 rounded-xl text-lg font-bold',
-            option === valeur ? 'laiton-poli' : 'ardoise-craie text-craie',
-          ].join(' ')}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-  </fieldset>
-)
+}) => {
+  const rang = Math.max(valeurs.indexOf(valeur), 0)
 
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65">
+        {legende}
+      </legend>
+      <div
+        className="relative grid rounded-xl border border-chene/60 bg-feutre/70 p-1"
+        style={{ gridTemplateColumns: `repeat(${valeurs.length}, minmax(0, 1fr))` }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            width: `calc((100% - 0.5rem) / ${valeurs.length})`,
+            transform: `translateX(${rang * 100}%)`,
+          }}
+          className="laiton-poli absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
+        />
+        {valeurs.map((option) => (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={option === valeur}
+            onClick={() => onChange(option)}
+            className={`chiffres relative z-10 min-h-12 rounded-lg text-lg font-bold transition-colors duration-150 ${
+              option === valeur ? 'text-[#1a1206]' : 'text-craie/75'
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
+/** Interrupteur de comptoir : la pastille de laiton glisse dans son rail. */
 const Bascule = ({
   libelle,
+  aide,
   actif,
   onChange,
 }: {
   readonly libelle: string
+  readonly aide: string
   readonly actif: boolean
   readonly onChange: (actif: boolean) => void
 }) => (
@@ -59,13 +85,34 @@ const Bascule = ({
     type="button"
     aria-pressed={actif}
     onClick={() => onChange(!actif)}
-    className="ardoise-craie flex min-h-12 items-center justify-between rounded-xl px-4"
+    className={[
+      'flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4 text-left',
+      'transition-colors duration-150',
+      actif ? 'border-laiton/50 bg-laiton/10' : 'border-chene/55 bg-feutre/60',
+    ].join(' ')}
   >
-    <span className="font-score text-sm uppercase tracking-widest text-craie">{libelle}</span>
+    <span className="min-w-0">
+      <span
+        className={`block font-score text-sm font-bold uppercase tracking-widest ${
+          actif ? 'text-laiton-clair' : 'text-craie/75'
+        }`}
+      >
+        {libelle}
+      </span>
+      <span className="block truncate text-xs text-craie/60">{aide}</span>
+    </span>
+
     <span
-      className={`font-score text-sm font-bold uppercase ${actif ? 'text-vert-cible' : 'text-craie/50'}`}
+      aria-hidden="true"
+      className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-200 ${
+        actif ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-black/40'
+      }`}
     >
-      {actif ? 'Activé' : 'Désactivé'}
+      <span
+        className={`absolute top-0.5 size-5 rounded-full transition-all duration-200 ${
+          actif ? 'laiton-poli left-[1.6rem]' : 'left-0.5 bg-craie/45'
+        }`}
+      />
     </span>
   </button>
 )
@@ -130,25 +177,40 @@ export const NouvellePartieEcran = () => {
   }
 
   return (
-    <main className="feutre-tapis flex min-h-dvh flex-col gap-6 px-5 py-8">
+    <main className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
       <header className="flex items-center gap-3">
-        <Link to="/" className="font-score text-sm uppercase tracking-widest text-craie/70">
-          ← Accueil
+        <Link
+          to="/"
+          aria-label="Retour à l’accueil"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-chene/60 bg-ardoise text-craie/80 active:bg-chene/30"
+        >
+          <ArrowLeft aria-hidden="true" className="size-5" />
         </Link>
-        <h1 className="font-display text-2xl text-laiton">Nouvelle partie</h1>
+        <div className="min-w-0">
+          <p className="font-score text-[0.6rem] uppercase tracking-[0.3em] text-craie/60">
+            Nouvelle partie
+          </p>
+          <Enseigne className="text-2xl" />
+        </div>
       </header>
 
-      <section aria-label="Joueurs" className="flex flex-col gap-3">
-        <p className="font-score text-xs uppercase tracking-widest text-craie/70">
-          Joueurs ({selection.length}/{MAX_JOUEURS})
-        </p>
-
+      <Panneau
+        aria-label="Joueurs"
+        titre="Joueurs"
+        action={
+          <span className="chiffres text-xs text-craie/60">
+            {selection.length}/{MAX_JOUEURS}
+          </span>
+        }
+        contenuClassName="flex flex-col gap-3 p-3"
+      >
         {joueurs.isPending ? (
-          <Spinner label="Chargement des profils…" />
+          <SpinnerLigne label="Chargement des profils…" />
         ) : (
           <ul className="flex flex-col gap-2">
             {(joueurs.data ?? []).map((joueur) => {
-              const choisi = selection.includes(joueur.id)
+              const rang = selection.indexOf(joueur.id)
+              const choisi = rang >= 0
               return (
                 <li key={joueur.id}>
                   <button
@@ -156,14 +218,33 @@ export const NouvellePartieEcran = () => {
                     aria-pressed={choisi}
                     onClick={() => basculer(joueur.id)}
                     className={[
-                      'flex min-h-12 w-full items-center justify-between rounded-xl px-4',
-                      choisi ? 'ardoise-craie ring-2 ring-laiton' : 'ardoise-craie',
+                      'flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 text-left',
+                      'transition-colors duration-150',
+                      choisi
+                        ? 'border-laiton/60 bg-laiton/10 shadow-[0_0_20px_-10px_var(--color-laiton)]'
+                        : 'border-chene/55 bg-feutre/60',
                     ].join(' ')}
                   >
-                    <span className="text-craie">{joueur.name}</span>
-                    <span className="font-score text-sm text-laiton">
-                      {choisi ? `n°${selection.indexOf(joueur.id) + 1}` : '+'}
+                    <Avatar id={joueur.id} nom={joueur.name} />
+                    <span
+                      className={`min-w-0 flex-1 truncate font-score text-base uppercase tracking-wide ${
+                        choisi ? 'text-craie-vive' : 'text-craie/75'
+                      }`}
+                    >
+                      {joueur.name}
                     </span>
+                    {choisi ? (
+                      <span className="chiffres flex size-7 shrink-0 items-center justify-center rounded-full border border-laiton/60 bg-laiton/20 text-xs font-bold text-laiton-clair">
+                        n°{rang + 1}
+                      </span>
+                    ) : (
+                      <span
+                        aria-hidden="true"
+                        className="flex size-7 shrink-0 items-center justify-center rounded-full border border-craie/20 text-craie/40"
+                      >
+                        +
+                      </span>
+                    )}
                   </button>
                 </li>
               )
@@ -171,41 +252,69 @@ export const NouvellePartieEcran = () => {
           </ul>
         )}
 
-        <div className="flex gap-2">
+        <form
+          className="flex gap-2"
+          onSubmit={(evenement) => {
+            evenement.preventDefault()
+            void ajouterJoueur()
+          }}
+        >
           <input
             aria-label="Nouveau joueur"
             placeholder="Ajouter un joueur"
             value={nouveauNom}
             onChange={(evenement) => setNouveauNom(evenement.target.value)}
-            className="ardoise-craie min-h-12 flex-1 rounded-xl px-4 text-craie placeholder:text-craie/40"
+            className={[
+              'min-h-12 flex-1 rounded-xl border border-chene/60 bg-feutre/70 px-4',
+              'text-craie placeholder:text-craie/40',
+            ].join(' ')}
           />
-          <Button
-            variante="secondaire"
-            disabled={nouveauNom.trim() === ''}
-            onClick={() => void ajouterJoueur()}
-          >
+          <Button variante="secondaire" type="submit" disabled={nouveauNom.trim() === ''}>
+            <UserPlus aria-hidden="true" className="size-4" />
             Ajouter
           </Button>
+        </form>
+      </Panneau>
+
+      <Panneau aria-label="Règles" titre="Règles" contenuClassName="flex flex-col gap-4 p-3">
+        <Choix legende="Score de départ" valeurs={SCORES} valeur={score} onChange={setScore} />
+        <Choix legende="Best of (legs)" valeurs={BEST_OF} valeur={bestOf} onChange={setBestOf} />
+
+        <div className="flex flex-col gap-2">
+          <Bascule
+            libelle="Double out"
+            aide="Finir obligatoirement sur un double"
+            actif={doubleOut}
+            onChange={setDoubleOut}
+          />
+          <Bascule
+            libelle="Double in"
+            aide="Ne décompter qu’après un premier double"
+            actif={doubleIn}
+            onChange={setDoubleIn}
+          />
         </div>
-      </section>
-
-      <Choix legende="Score de départ" valeurs={SCORES} valeur={score} onChange={setScore} />
-      <Choix legende="Best of (legs)" valeurs={BEST_OF} valeur={bestOf} onChange={setBestOf} />
-
-      <div className="flex flex-col gap-2">
-        <Bascule libelle="Double out" actif={doubleOut} onChange={setDoubleOut} />
-        <Bascule libelle="Double in" actif={doubleIn} onChange={setDoubleIn} />
-      </div>
+      </Panneau>
 
       {erreur && <MessageErreur>{erreur}</MessageErreur>}
 
-      <Button
-        className="mt-auto w-full"
-        disabled={selection.length === 0 || occupe}
-        onClick={() => void commencer()}
-      >
-        Commencer
-      </Button>
+      <div className="mt-auto flex flex-col gap-2 pt-1">
+        <p className="flex items-center justify-center gap-2 text-center font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
+          <Check aria-hidden="true" className="size-3.5" />
+          {score} · BO{bestOf} · {doubleOut ? 'double out' : 'sortie libre'}
+          {doubleIn && ' · double in'}
+        </p>
+
+        <Button
+          taille="lg"
+          className="w-full"
+          disabled={selection.length === 0 || occupe}
+          onClick={() => void commencer()}
+        >
+          <Play aria-hidden="true" className="size-5 fill-current" />
+          Commencer
+        </Button>
+      </div>
     </main>
   )
 }
