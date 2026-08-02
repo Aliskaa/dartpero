@@ -92,16 +92,19 @@ fléchettes **sont comptées**.
 
 ### Driven (ce dont le cœur a besoin)
 
-| Port | Adapter v1 | Null-object ? |
-| --- | --- | --- |
-| `MatchRepository` | Dexie | in-memory (tests) |
-| `PlayerRepository` | Dexie | in-memory (tests) |
-| `Preferences` | localStorage | in-memory |
-| `Clock` | horloge système | fixe (tests) |
-| `IdGenerator` | `crypto.randomUUID` | séquentiel (tests) |
-| `ScreenLock` | Wake Lock API | ✅ **oui** — indisponible sur certains navigateurs |
-| `Haptics` | Vibration API | ✅ oui |
-| `Announcer` | Web Speech API (lot 5) | ✅ oui |
+Un port n'est créé **qu'avec son premier consommateur** — pas avant. Écrire un port sans
+use case ni écran qui l'appelle, c'est du code non testé qui vieillit en attendant.
+
+| Port | Adapter | Doublure de test | Créé au |
+| --- | --- | --- | --- |
+| `MatchRepository` | Dexie | in-memory | **lot 2** ✅ |
+| `PlayerRepository` | Dexie | in-memory | **lot 2** ✅ |
+| `Clock` | horloge système | horloge qui avance d'un pas | **lot 2** ✅ |
+| `IdGenerator` | `crypto.randomUUID` | séquentiel (`id-1`, `id-2`…) | **lot 2** ✅ |
+| `ScreenLock` | Wake Lock API | null-object (API absente ailleurs) | lot 3 |
+| `Haptics` | Vibration API | null-object | lot 3 |
+| `Preferences` | localStorage | in-memory | lot 3 |
+| `Announcer` | Web Speech API | null-object | lot 5 |
 
 ---
 
@@ -177,6 +180,12 @@ React (injectable, pour les tests UI).
 
 **Fini quand** : un test d'intégration joue **une partie complète de 501 en BO3** de bout en
 bout via les use cases, avec le repository Dexie fake — sans une ligne d'UI.
+
+✅ **Fait — 86 tests verts.** La partie complète est jouée à travers le vrai composition root,
+seuls les adapters changent. S'y ajoutent : un test d'architecture qui lit les imports réels
+de `src/` (le cœur ne peut rien importer d'autre que lui-même, l'UI ne touche pas un adapter,
+un adapter ne remonte pas vers l'UI), et un test des adapters Dexie sur une vraie IndexedDB
+via `fake-indexeddb`.
 
 ---
 

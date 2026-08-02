@@ -286,7 +286,10 @@ par le composition root.
   journal d'événements, `x01Rules` (bust, double in/out, legs/sets, annulation), `checkout`
   (suggestion + bogey numbers), `matchStats`. **60 tests verts**, `src/core/` sans le moindre
   import externe. Aucune UI, aucune persistance.
-- [ ] **Lot 2** — Ports + use cases + adapters (Dexie, in-memory) + composition root
+- [x] **Lot 2** — Ports driving/driven, 9 use cases, adapters **Dexie** + **in-memory**,
+  composition root (`src/composition/container.ts`) et `ServicesProvider` injectable.
+  **86 tests verts**, dont une partie de 501 en BO3 jouée de bout en bout via les use cases,
+  un test des adapters Dexie sur `fake-indexeddb`, et un **test d'architecture**.
 - [ ] **Lot 3** — Écran match : saisie hybride, undo, checkout, wake lock, haptique
 - [ ] **Lot 4** — Profils joueurs, historique, stats, export/import JSON, charte graphique
 - [ ] **Lot 5** — Entraînement solo + annonce vocale
@@ -354,6 +357,31 @@ les 7 bogey numbers sont exactement les bons.
 (un 180 compte aussi en 140+/100+/60+) ; la moyenne *first 9* porte sur les **3 premières
 volées** de chaque leg ; une **tentative de double** = toute fléchette lancée depuis un reste
 qu'une seule fléchette peut clore (pair ≤ 40, ou 50).
+
+### Décisions de la couche application (lot 2)
+
+- **`MatchRecord` ne persiste que le journal** (`id`, `createdAt`, `updatedAt`, `events`).
+Le vainqueur, les scores, les legs gagnés ne sont **jamais** stockés : ils se rejouent. Seules
+les dates échappent au journal, elles viennent du port `Clock`.
+- **Les règles sont appliquées AVANT d'écrire.** `RecordVisitUseCase` projette, applique
+`X01Rules.applyVisit`, et n'ajoute l'événement que si ça passe : une volée illégale ne laisse
+aucune trace. Testé explicitement.
+- **`MatchSummaryPlayer.name` vaut `null`** quand le profil local a été supprimé. Le cœur ne
+fabrique pas de libellé français ; c'est l'UI qui décide d'afficher « Joueur supprimé ».
+- **Un port n'est créé qu'avec son premier consommateur.** Lot 2 = `MatchRepository`,
+`PlayerRepository`, `Clock`, `IdGenerator`. `ScreenLock` / `Haptics` / `Preferences` arrivent
+au **lot 3**, `Announcer` au **lot 5** — écrire un port sans appelant, c'est du code non testé
+qui vieillit.
+- **Test d'architecture** (`tests/architecture/hexagonalBoundary.test.ts`) : il lit les imports
+réels de `src/` et vérifie que le cœur n'importe que lui-même (en relatif), que `src/ui` ne
+touche aucun adapter, et qu'aucun adapter ne remonte vers l'UI. Plus robuste que la liste de
+paquets bannis de Biome, qui ne peut interdire que ce qu'on a pensé à y mettre. Les deux
+cohabitent : Biome donne l'erreur dans l'éditeur, le test attrape le reste. **Un garde-fou
+interne vérifie que le test n'est pas vert à vide** (nombre de fichiers et d'imports analysés).
+- **`fake-indexeddb`** (devDep) est chargé dans `tests/setup.ts` : jsdom n'a pas d'IndexedDB,
+sans quoi les adapters Dexie seraient les seuls du projet à n'être jamais exécutés en test.
+- **`createDatabase()` est une fonction, pas une sous-classe de Dexie** : avec
+`useDefineForClassFields`, des champs de classe écraseraient les tables installées par Dexie.
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode
