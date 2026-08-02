@@ -1,25 +1,35 @@
 import type { Clock } from '@/core/application/ports/driven/Clock'
+import type { Haptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
 import type { MatchRepository } from '@/core/application/ports/driven/MatchRepository'
 import type { PlayerRepository } from '@/core/application/ports/driven/PlayerRepository'
+import type { Preferences } from '@/core/application/ports/driven/Preferences'
+import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
+import type { BuildVisitFromScore } from '@/core/application/ports/driving/BuildVisitFromScore'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
 import type { GetMatchHistory } from '@/core/application/ports/driving/GetMatchHistory'
 import type { GetMatchState } from '@/core/application/ports/driving/GetMatchState'
 import type { GetMatchStats } from '@/core/application/ports/driving/GetMatchStats'
 import type { GetOngoingMatch } from '@/core/application/ports/driving/GetOngoingMatch'
 import type { ManagePlayers } from '@/core/application/ports/driving/ManagePlayers'
+import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
 import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVisit'
+import { BuildVisitFromScoreUseCase } from '@/core/application/use-cases/BuildVisitFromScoreUseCase'
 import { GetCheckoutSuggestionUseCase } from '@/core/application/use-cases/GetCheckoutSuggestionUseCase'
 import { GetMatchHistoryUseCase } from '@/core/application/use-cases/GetMatchHistoryUseCase'
 import { GetMatchStateUseCase } from '@/core/application/use-cases/GetMatchStateUseCase'
 import { GetMatchStatsUseCase } from '@/core/application/use-cases/GetMatchStatsUseCase'
 import { GetOngoingMatchUseCase } from '@/core/application/use-cases/GetOngoingMatchUseCase'
 import { ManagePlayersUseCase } from '@/core/application/use-cases/ManagePlayersUseCase'
+import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
 import { UndoLastVisitUseCase } from '@/core/application/use-cases/UndoLastVisitUseCase'
+import { createLocalStoragePreferences } from '@/infrastructure/device/LocalStoragePreferences'
+import { VibrationHaptics } from '@/infrastructure/device/VibrationHaptics'
+import { WakeLockScreenLock } from '@/infrastructure/device/WakeLockScreenLock'
 import { DexieMatchRepository } from '@/infrastructure/dexie/DexieMatchRepository'
 import { DexiePlayerRepository } from '@/infrastructure/dexie/DexiePlayerRepository'
 import { createDatabase } from '@/infrastructure/dexie/database'
@@ -33,14 +43,30 @@ import { SystemClock } from '@/infrastructure/system/SystemClock'
  * permet de rejouer toute l'application en mémoire dans les tests, et d'ajouter
  * un jour une synchro distante en changeant une seule ligne ici.
  */
+/** Les capacités de l'appareil, derrière des ports. Muettes si le matériel manque. */
+export type Devices = {
+  readonly screenLock: ScreenLock
+  readonly haptics: Haptics
+  readonly preferences: Preferences
+}
+
 export type Dependencies = {
   readonly matches: MatchRepository
   readonly players: PlayerRepository
   readonly clock: Clock
   readonly ids: IdGenerator
+  readonly devices: Devices
 }
 
-/** Tout ce que l'UI a le droit d'appeler. Rien d'autre ne lui est exposé. */
+/**
+ * Tout ce que l'UI a le droit d'appeler. Rien d'autre ne lui est exposé.
+ *
+ * `devices` est une exception assumée à la règle « UI → use cases uniquement » :
+ * ce sont des ports **driven** (écran, vibreur, préférences locales) consommés
+ * directement par la coquille UI. Ils ne portent aucune règle métier, donc les
+ * emballer dans des use cases serait de la cérémonie pure. Ils restent des
+ * ports : injectables, remplaçables, muets quand le matériel ne suit pas.
+ */
 export type Services = {
   readonly startMatch: StartMatch
   readonly recordVisit: RecordVisit
@@ -51,9 +77,18 @@ export type Services = {
   readonly getMatchHistory: GetMatchHistory
   readonly getOngoingMatch: GetOngoingMatch
   readonly managePlayers: ManagePlayers
+  readonly previewVisit: PreviewVisit
+  readonly buildVisitFromScore: BuildVisitFromScore
+  readonly devices: Devices
 }
 
-export const createServices = ({ matches, players, clock, ids }: Dependencies): Services => ({
+export const createServices = ({
+  matches,
+  players,
+  clock,
+  ids,
+  devices,
+}: Dependencies): Services => ({
   startMatch: new StartMatchUseCase(matches, players, clock, ids),
   recordVisit: new RecordVisitUseCase(matches, clock),
   undoLastVisit: new UndoLastVisitUseCase(matches, clock),
@@ -63,6 +98,9 @@ export const createServices = ({ matches, players, clock, ids }: Dependencies): 
   getMatchHistory: new GetMatchHistoryUseCase(matches, players),
   getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
   managePlayers: new ManagePlayersUseCase(players, ids),
+  previewVisit: new PreviewVisitUseCase(),
+  buildVisitFromScore: new BuildVisitFromScoreUseCase(),
+  devices,
 })
 
 /** Câblage réel : IndexedDB, horloge système, identifiants cryptographiques. */
@@ -73,6 +111,11 @@ export const createBrowserDependencies = (): Dependencies => {
     players: new DexiePlayerRepository(db),
     clock: new SystemClock(),
     ids: new CryptoIdGenerator(),
+    devices: {
+      screenLock: new WakeLockScreenLock(),
+      haptics: new VibrationHaptics(),
+      preferences: createLocalStoragePreferences(),
+    },
   }
 }
 

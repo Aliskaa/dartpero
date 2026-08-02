@@ -1,6 +1,9 @@
 import { createServices, type Dependencies, type Services } from '@/composition/container'
 import type { Clock } from '@/core/application/ports/driven/Clock'
+import { NullHaptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
+import { createMemoryPreferences } from '@/core/application/ports/driven/Preferences'
+import { NullScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import { InMemoryMatchRepository } from '@/infrastructure/memory/InMemoryMatchRepository'
 import { InMemoryPlayerRepository } from '@/infrastructure/memory/InMemoryPlayerRepository'
 
@@ -37,6 +40,11 @@ export const fakeDependencies = (): Dependencies => ({
   players: new InMemoryPlayerRepository(),
   clock: new TickingClock(),
   ids: new SequentialIdGenerator(),
+  devices: {
+    screenLock: NullScreenLock,
+    haptics: NullHaptics,
+    preferences: createMemoryPreferences(),
+  },
 })
 
 /** Le vrai composition root, câblé sur des adapters en mémoire. */

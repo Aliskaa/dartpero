@@ -1,6 +1,7 @@
 import { DomainError } from '../DomainError'
 import type { X01Config } from '../entities/Match'
-import { ALL_SCORING_DARTS, Dart, type SegmentNumber } from '../value-objects/Dart'
+import { Dart, type SegmentNumber } from '../value-objects/Dart'
+import { SETUP_DARTS } from './dartSearch'
 
 /** Checkout maximal en 3 fléchettes : T20 · T20 · Bull. */
 export const MAX_CHECKOUT = 170
@@ -27,16 +28,6 @@ const FINISHING_DOUBLES: readonly Dart[] = [
   ...DOUBLE_PREFERENCE.map((segment) => Dart.double(segment)),
   Dart.bullseye(),
 ]
-
-/** À points égaux, un simple est plus facile à viser qu'un triple, et qu'un double. */
-const COUT_MULTIPLICATEUR = { SIMPLE: 0, TRIPLE: 1, DOUBLE: 2 } as const
-
-/** Toutes les fléchettes, des plus grosses aux plus petites. */
-const SETUP_DARTS: readonly Dart[] = [...ALL_SCORING_DARTS].sort((a, b) => {
-  const ecart = Dart.points(b) - Dart.points(a)
-  if (ecart !== 0) return ecart
-  return COUT_MULTIPLICATEUR[a.multiplier] - COUT_MULTIPLICATEUR[b.multiplier]
-})
 
 const ORDERED_FINISHERS = (config: X01Config): readonly Dart[] =>
   config.doubleOut ? FINISHING_DOUBLES : SETUP_DARTS

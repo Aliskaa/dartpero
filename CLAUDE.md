@@ -290,7 +290,10 @@ par le composition root.
   composition root (`src/composition/container.ts`) et `ServicesProvider` injectable.
   **86 tests verts**, dont une partie de 501 en BO3 jouée de bout en bout via les use cases,
   un test des adapters Dexie sur `fake-indexeddb`, et un **test d'architecture**.
-- [ ] **Lot 3** — Écran match : saisie hybride, undo, checkout, wake lock, haptique
+- [x] **Lot 3** — Écran match : accueil, configuration de partie, tableau + saisie hybride
+  (fléchette par fléchette **et** mode rapide), annulation, suggestion de checkout, wake lock,
+  haptique, écran de résumé. Routage React Router, `QueryClient` + `ServicesProvider` câblés.
+  **100 tests verts**, dont un parcours complet accueil → partie → résumé.
 - [ ] **Lot 4** — Profils joueurs, historique, stats, export/import JSON, charte graphique
 - [ ] **Lot 5** — Entraînement solo + annonce vocale
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
@@ -382,6 +385,33 @@ interne vérifie que le test n'est pas vert à vide** (nombre de fichiers et d'i
 sans quoi les adapters Dexie seraient les seuls du projet à n'être jamais exécutés en test.
 - **`createDatabase()` est une fonction, pas une sous-classe de Dexie** : avec
 `useDefineForClassFields`, des champs de classe écraseraient les tables installées par Dexie.
+
+### Décisions de l'écran de match (lot 3)
+
+- **La volée en cours n'est PAS persistée.** Elle vit en état local ; le port driving
+`PreviewVisit` (synchrone, pur) l'évalue à chaque fléchette pour faire suivre le score affiché
+et détecter qu'elle est close (3 fléchettes, bust ou sortie). Elle n'est envoyée à
+`RecordVisit` qu'à ce moment-là. Sans ce port, l'UI devrait réimplémenter les règles.
+- **TanStack Query sert de cache, pas d'orchestrateur.** `RecordVisit` renvoie déjà le nouvel
+état, injecté via `setQueryData` : aucun rechargement entre le tap et le score affiché.
+- **Un seul bouton « Annuler »**, qui fait ce qu'on attend : il retire la fléchette qu'on vient
+de taper si la volée est en cours, sinon il annule la dernière volée **enregistrée** (même si
+elle avait gagné un leg).
+- **Le mode rapide fabrique des fléchettes synthétiques** (`composeVisit`) : le total et le
+nombre de fléchettes sont exacts — donc scores, legs et moyennes aussi — mais le détail
+« quelle fléchette a touché quoi » est inventé. C'est le marché assumé du mode rapide. Il
+rejette les 9 totaux impossibles en 3 fléchettes (179, 178, 176, 175, 173, 172, 169, 166, 163),
+découverts par la même recherche que les checkouts, sans liste codée en dur.
+- **Sur une sortie en mode rapide, l'app demande le nombre de fléchettes utilisées** : c'est la
+seule information que le total ne porte pas, et elle change la moyenne comme le « meilleur leg ».
+- **`Services.devices`** (`screenLock`, `haptics`, `preferences`) est une **exception assumée**
+à la règle « UI → use cases uniquement » : ce sont des ports *driven* consommés par la coquille
+UI. Ils ne portent aucune règle métier, les emballer dans des use cases serait de la cérémonie.
+- **Le Wake Lock se ré-acquiert sur `visibilitychange`** : le navigateur relâche le verrou dès
+que l'onglet passe en arrière-plan. Sans cette reprise, l'écran se rendort dès qu'on a répondu
+à un message pendant la partie.
+- **Accessibilité** : les scores et la volée en cours sont des `<output>`, pas des `<p>` —
+`aria-label` n'est pas supporté sur un paragraphe (Biome le refuse, à juste titre).
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode

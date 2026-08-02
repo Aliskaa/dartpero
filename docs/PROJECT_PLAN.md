@@ -206,6 +206,14 @@ Le lot qui rend l'app réellement utilisable.
 **Fini quand** : une vraie partie à 2 joueurs se joue du début à la fin sur un téléphone
 Android, écran allumé, hors ligne. **C'est le jalon « utilisable ».**
 
+✅ **Construit — 100 tests verts**, dont un parcours de bout en bout dans l'UI : création d'un
+joueur, configuration, leg de 501 gagné en 9 fléchettes, arrivée automatique sur le résumé.
+Deux ports driving ont été ajoutés pour que l'UI ne réimplémente jamais les règles :
+`PreviewVisit` (évalue la volée en cours de saisie) et `BuildVisitFromScore` (traduit un score
+de volée en fléchettes pour le mode rapide).
+⚠️ **Reste à valider sur un vrai téléphone** — c'est le seul critère que les tests ne couvrent
+pas : lisibilité à 3 m, confort des cibles au pouce, tenue du wake lock en conditions réelles.
+
 ---
 
 ### Lot 4 — Profils, historique, stats
