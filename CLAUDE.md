@@ -33,11 +33,14 @@ Nom affiché : **Dartpéro** (fléchettes + apéro). Slug technique : `dartpero`
 d'accueil ». Pas de passage par les stores.
 - **Backend = architecture hexagonale (Ports & Adapters) + SOLID.** Exigence forte de
 l'utilisateur, à respecter strictement.
-- **PAS de Firebase, PAS d'authentification, PAS de réseau.** Décidé. Une partie se joue hors
-ligne, autour d'un seul téléphone : un écran de login serait rédhibitoire. Toute la
+- **PAS de Firebase DANS L'APP, PAS d'authentification, PAS de réseau.** Décidé. Une partie se
+joue hors ligne, autour d'un seul téléphone : un écran de login serait rédhibitoire. Toute la
 persistance passe par **Dexie (IndexedDB)** derrière les ports `MatchRepository` /
 `PlayerRepository`. Une éventuelle sync cloud serait **un adapter de plus**, jamais une
 dépendance du cœur.
+⚠️ **Firebase *Hosting* est une exception qui n'en est pas une** (voir § Déploiement) : c'est
+un serveur de fichiers statiques, il ne met pas un octet de SDK dans le bundle. Aucun
+`import` de `firebase` dans `src/`, jamais — ni Auth, ni Firestore, ni Functions.
 - **Les joueurs sont des profils LOCAUX**, pas des comptes : pseudo + couleur, créés en 2
 secondes, portant leurs stats **sur cet appareil**. Filet de sécurité obligatoire :
 **export / import JSON** de toute la base (lot 4).
@@ -751,11 +754,47 @@ Décision : **on reste en 7.18**, à réévaluer si un correctif sort dans la br
 
 ---
 
+## Déploiement — Firebase Hosting
+
+L'app est en ligne sur **https://dartpero.web.app** (projet Firebase `dartpero`, même compte
+que Pokegypte). Une seule commande : `npm run firebase:deploy` (= `build` + `firebase deploy
+--only hosting`).
+
+- **Hosting et rien d'autre.** `firebase.json` ne déclare **que** le bloc `hosting` : ni
+  Firestore, ni Storage, ni Functions, ni règles de sécurité — il n'y a pas de données côté
+  serveur, elles vivent dans l'IndexedDB du téléphone. La CLI (`firebase-tools`) est
+  **globale**, volontairement absente du `package.json` : c'est un outil de poste de travail,
+  pas une dépendance du projet.
+- **Le `rewrite ** → /index.html` est obligatoire** : sans lui, ouvrir directement
+  `/historique` ou `/partie/<id>` renverrait un 404 Firebase au lieu de laisser React Router
+  faire son travail. Les vrais fichiers gagnent toujours sur la réécriture, donc `sw.js` reste
+  bien servi comme du JavaScript.
+- ⚠️ **Les en-têtes de cache ne sont PAS un détail.** Firebase pose `max-age=3600` sur *tout*
+  par défaut, `index.html` et `sw.js` compris — donc une PWA en `registerType: 'autoUpdate'`
+  peut servir l'ancienne version **pendant une heure** après un déploiement, y compris à
+  quelqu'un qui recharge en boucle. Le bloc `headers` corrige ça :
+  - `/assets/**` et `/workbox-*.js` → `max-age=31536000, immutable` (noms hachés par Vite,
+    ils ne changent jamais de contenu) ;
+  - `/icons/**` → 7 jours (noms **non** hachés, une semaine est le compromis) ;
+  - tout le reste → `no-cache`, c'est-à-dire « revalide avant de servir » : `index.html`,
+    `sw.js`, `registerSW.js`, `manifest.webmanifest` et les routes SPA. La mise à jour est
+    donc vue au premier rechargement.
+- **La dernière règle `headers` qui matche l'emporte** (vérifié en vrai avec `curl -I` après
+  déploiement, pas déduit de la doc) : c'est pourquoi le fourre-tout `**` est écrit **en
+  premier** et les règles précises après. Inverser l'ordre casserait le cache long des assets.
+- **Les en-têtes s'appliquent au chemin DEMANDÉ, pas à la cible de la réécriture** : `/partie/x`
+  ne matche pas `/index.html`. C'est la deuxième raison d'avoir un `**` fourre-tout.
+- **iOS** : l'installation passe toujours par Safari → « Ajouter à l'écran d'accueil ». Le HTTPS
+  de Firebase règle en revanche la question du contexte sécurisé — Wake Lock, vibration et
+  service worker fonctionnent sur le domaine, sans le certificat auto-signé de `dev:mobile`.
+
+---
+
 ## Environnement
 
 - OS : Windows 11. Shell par défaut PowerShell (outil Bash dispo aussi).
 - Dossier : `c:\Users\kevin\Documents\Flechettes`. Repo **git initialisé** (branche `main`,
-  pas encore de commit, pas de remote).
+  historique par lots, pas de remote — le déploiement passe par la CLI Firebase, pas par CI).
 - Échelle : usage perso + potes. Parc **mixte iPhone + Android**.
 - Dév & test principal sur un **appareil Android** (Chrome → DevTools / remote debug faciles).
   Tester sur un vrai iPhone avant de considérer le projet fini.

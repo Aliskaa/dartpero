@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "firebase:deploy": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "@fontsource/alfa-slab-one": "^5.3.0",
