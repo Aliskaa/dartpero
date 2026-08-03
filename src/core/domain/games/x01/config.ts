@@ -1,5 +1,5 @@
-import { DomainError } from '../DomainError'
-import { Score } from '../value-objects/Score'
+import { DomainError } from '../../DomainError'
+import { Score } from '../../value-objects/Score'
 
 /**
  * Configuration d'un match X01.

@@ -1,5 +1,5 @@
-import type { PlayerId } from '../value-objects/ids'
-import type { MatchStats, PlayerStats } from './matchStats'
+import type { PlayerId } from '../../value-objects/ids'
+import type { X01PlayerStats, X01Stats } from './stats'
 
 /**
  * Ce qu'un joueur a accompli sur **toutes** ses parties.
@@ -78,7 +78,7 @@ const plusCourt = (actuel: number | null, candidat: number | null): number | nul
   return Math.min(actuel, candidat)
 }
 
-const cumuler = (acc: Accumulator, joueur: PlayerStats, gagnant: boolean): void => {
+const cumuler = (acc: Accumulator, joueur: X01PlayerStats, gagnant: boolean): void => {
   acc.matchesPlayed += 1
   if (gagnant) acc.matchesWon += 1
   acc.legsWon += joueur.legsWon
@@ -106,7 +106,7 @@ const cumuler = (acc: Accumulator, joueur: PlayerStats, gagnant: boolean): void 
  * frustrant. Seul `matchesWon` distingue les parties terminées, puisqu'un match
  * sans vainqueur n'en a tout simplement pas.
  */
-export const computeCareerStats = (matches: readonly MatchStats[]): readonly CareerStats[] => {
+export const computeCareerStats = (matches: readonly X01Stats[]): readonly CareerStats[] => {
   const accumulateurs = new Map<PlayerId, Accumulator>()
 
   for (const match of matches) {

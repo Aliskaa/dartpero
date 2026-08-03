@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Crown, House, RotateCcw } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
-import type { PlayerStats } from '@/core/domain/services/matchStats'
+import type { X01PlayerStats } from '@/core/domain/games/x01/stats'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
@@ -14,7 +14,7 @@ import { moyenne, nomJoueur } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /** Les huit chiffres qui se commentent au comptoir, dans cet ordre. */
-const tuiles = (joueur: PlayerStats) => [
+const tuiles = (joueur: X01PlayerStats) => [
   { libelle: 'Moyenne', valeur: moyenne(joueur.average3), accent: true },
   { libelle: 'First 9', valeur: moyenne(joueur.first9Average), accent: true },
   { libelle: '180', valeur: joueur.count180 },
@@ -25,7 +25,7 @@ const tuiles = (joueur: PlayerStats) => [
   { libelle: 'Plus haut checkout', valeur: joueur.highestCheckout || '—' },
 ]
 
-export const ResumeEcran = () => {
+export const ResumeX01Ecran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
   const services = useServices()

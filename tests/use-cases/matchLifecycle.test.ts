@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Dependencies, Services } from '@/composition/container'
 import { DomainError } from '@/core/domain/DomainError'
-import { X01Config } from '@/core/domain/entities/Match'
+import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { type MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 import { fakeServices } from '../fakes'

@@ -1,4 +1,4 @@
-import { composeVisit } from '../../domain/services/scoring'
+import { composeVisit } from '../../domain/games/x01/scoring'
 import type { Dart } from '../../domain/value-objects/Dart'
 import type {
   BuildVisitFromScore,

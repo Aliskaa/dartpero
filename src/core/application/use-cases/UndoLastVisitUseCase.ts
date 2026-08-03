@@ -1,5 +1,5 @@
 import { DomainError } from '../../domain/DomainError'
-import { type MatchState, X01Rules } from '../../domain/services/x01Rules'
+import { X01Rules, type X01State } from '../../domain/games/x01/rules'
 import type { MatchId } from '../../domain/value-objects/ids'
 import type { Clock } from '../ports/driven/Clock'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
@@ -12,10 +12,10 @@ export class UndoLastVisitUseCase implements UndoLastVisit {
     private readonly clock: Clock,
   ) {}
 
-  async execute(matchId: MatchId): Promise<MatchState> {
+  async execute(matchId: MatchId): Promise<X01State> {
     const record = await loadMatch(this.matches, matchId)
 
-    // Le premier événement est toujours MatchStarted : on n'y touche pas.
+    // Le premier événement est toujours X01Started : on n'y touche pas.
     if (record.events.length <= 1) throw new DomainError('No visit to undo')
 
     const events = record.events.slice(0, -1)

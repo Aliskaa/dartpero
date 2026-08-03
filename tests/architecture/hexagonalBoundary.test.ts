@@ -84,4 +84,48 @@ describe('Frontière hexagonale', () => {
 
     expect(fautes).toEqual([])
   })
+
+  /**
+   * La couture `GameMode` ne tient que si les modes s'ignorent : c'est ce qui
+   * permet d'en ajouter un sans relire les autres. Seul `games/index.ts` les
+   * connaît tous — c'est précisément son rôle d'aiguilleur.
+   */
+  it('un mode de jeu n’importe jamais un autre mode', () => {
+    const MODES = ['x01', 'tour-du-monde']
+    const fautes: string[] = []
+
+    for (const mode of MODES) {
+      const autres = MODES.filter((autre) => autre !== mode)
+
+      for (const fichier of fichiers(resolve(SRC, 'core/domain/games', mode))) {
+        for (const specifier of importsDe(fichier)) {
+          if (autres.some((autre) => specifier.includes(`games/${autre}`))) {
+            fautes.push(`${enSrc(fichier)} → ${specifier}`)
+          }
+        }
+      }
+    }
+
+    expect(fautes).toEqual([])
+  })
+
+  it('les écrans d’un mode n’empruntent pas les composants d’un autre', () => {
+    const MODES = ['x01', 'tour-du-monde']
+    const fautes: string[] = []
+
+    for (const mode of MODES) {
+      const autres = MODES.filter((autre) => autre !== mode)
+
+      for (const fichier of fichiers(resolve(SRC, 'ui/composants', mode))) {
+        for (const specifier of importsDe(fichier)) {
+          if (autres.some((autre) => specifier.includes(`composants/${autre}`))) {
+            fautes.push(`${enSrc(fichier)} → ${specifier}`)
+          }
+        }
+      }
+    }
+
+    // Ce qui est vraiment partagé vit dans `composants/commun/`.
+    expect(fautes).toEqual([])
+  })
 })

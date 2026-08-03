@@ -19,7 +19,7 @@ const message = (erreur: unknown): string =>
  * et n'est envoyée au use case qu'une fois complète (3 fléchettes, bust ou
  * sortie) — c'est le port `PreviewVisit` qui le détermine.
  */
-export const useMatch = (matchId: MatchId) => {
+export const useX01 = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
 
@@ -182,4 +182,4 @@ export const useMatch = (matchId: MatchId) => {
   }
 }
 
-export type SaisieMatch = ReturnType<typeof useMatch>
+export type SaisieX01 = ReturnType<typeof useX01>

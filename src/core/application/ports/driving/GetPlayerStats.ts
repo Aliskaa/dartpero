@@ -1,4 +1,4 @@
-import type { CareerStats } from '../../../domain/services/careerStats'
+import type { CareerStats } from '../../../domain/games/x01/career'
 import type { PlayerColor } from '../../../domain/value-objects/PlayerColor'
 
 /**

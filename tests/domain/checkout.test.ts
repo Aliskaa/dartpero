@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { DomainError } from '@/core/domain/DomainError'
-import { X01Config } from '@/core/domain/entities/Match'
 import {
   BOGEY_NUMBERS,
   isOnACheckoutDouble,
   MAX_CHECKOUT,
   suggestCheckout,
-} from '@/core/domain/services/checkout'
+} from '@/core/domain/games/x01/checkout'
+import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 
 const config = X01Config.create()

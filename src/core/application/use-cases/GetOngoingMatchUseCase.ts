@@ -1,4 +1,4 @@
-import { X01Rules } from '../../domain/services/x01Rules'
+import { X01Rules } from '../../domain/games/x01/rules'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
 import type { GetOngoingMatch } from '../ports/driving/GetOngoingMatch'

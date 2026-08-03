@@ -1,6 +1,6 @@
 import { DomainError } from '../../domain/DomainError'
 import type { TourDuMondeStarted } from '../../domain/events/MatchEvent'
-import { TourDuMondeRules, type TourDuMondeState } from '../../domain/services/tourDuMondeRules'
+import { TourDuMondeRules, type TourDuMondeState } from '../../domain/games/tour-du-monde/rules'
 import type { Dart } from '../../domain/value-objects/Dart'
 import { MatchId } from '../../domain/value-objects/ids'
 import type { Clock } from '../ports/driven/Clock'

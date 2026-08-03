@@ -1,9 +1,9 @@
-import { Dart } from '../value-objects/Dart'
-import type { PlayerId } from '../value-objects/ids'
+import { Dart } from '../../value-objects/Dart'
+import type { PlayerId } from '../../value-objects/ids'
 import { isOnACheckoutDouble } from './checkout'
-import type { MatchState } from './x01Rules'
+import type { X01State } from './rules'
 
-export type PlayerStats = {
+export type X01PlayerStats = {
   readonly playerId: PlayerId
   readonly visits: number
   readonly dartsThrown: number
@@ -39,8 +39,8 @@ export type PlayerStats = {
   readonly setsWon: number
 }
 
-export type MatchStats = {
-  readonly players: readonly PlayerStats[]
+export type X01Stats = {
+  readonly players: readonly X01PlayerStats[]
   readonly winnerId: PlayerId | null
 }
 
@@ -87,7 +87,7 @@ const moyenne = (points: number, darts: number): number => (darts === 0 ? 0 : (p
  * ⚠️ Une volée *busted* marque 0 point mais ses fléchettes sont comptées :
  * c'est la définition standard de la moyenne 3 fléchettes.
  */
-export const computeMatchStats = (state: MatchState): MatchStats => {
+export const computeX01Stats = (state: X01State): X01Stats => {
   const accumulateurs = new Map<PlayerId, Accumulator>(
     state.players.map((player) => [player.playerId, nouvelAccumulateur()]),
   )

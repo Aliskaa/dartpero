@@ -1,12 +1,12 @@
-import { DomainError } from '../DomainError'
-import type { X01Config } from '../entities/Match'
-import type { Visit, VisitOutcome } from '../entities/Visit'
-import type { MatchEvent, MatchMilestone, MatchStarted } from '../events/MatchEvent'
-import { Dart } from '../value-objects/Dart'
-import type { PlayerId } from '../value-objects/ids'
-import { Score } from '../value-objects/Score'
+import { DomainError } from '../../DomainError'
+import type { Visit, VisitOutcome } from '../../entities/Visit'
+import type { MatchEvent, X01Milestone, X01Started } from '../../events/MatchEvent'
+import { Dart } from '../../value-objects/Dart'
+import type { PlayerId } from '../../value-objects/ids'
+import { Score } from '../../value-objects/Score'
+import type { X01Config } from './config'
 
-export type PlayerMatchState = {
+export type X01PlayerState = {
   readonly playerId: PlayerId
   readonly remaining: Score
   /** `double in` : le joueur a-t-il déjà touché un double ? Toujours vrai sinon. */
@@ -16,11 +16,11 @@ export type PlayerMatchState = {
   readonly setsWon: number
 }
 
-export type MatchState = {
+export type X01State = {
   /** Le discriminant de la couture `GameMode` : il rend l'union d'états sûre. */
   readonly mode: 'X01'
   readonly config: X01Config
-  readonly players: readonly PlayerMatchState[]
+  readonly players: readonly X01PlayerState[]
   readonly currentPlayerIndex: number
   readonly startingPlayerIndex: number
   /** Numéro de leg global (0-based), tous sets confondus. */
@@ -28,7 +28,7 @@ export type MatchState = {
   readonly setNumber: number
   readonly winnerId: PlayerId | null
   readonly history: readonly Visit[]
-  readonly milestones: readonly MatchMilestone[]
+  readonly milestones: readonly X01Milestone[]
 }
 
 const at = <T>(items: readonly T[], index: number, label: string): T => {
@@ -114,7 +114,7 @@ const resolveVisit = (
   }
 }
 
-const start = (event: MatchStarted): MatchState => {
+const start = (event: X01Started): X01State => {
   const { config, playerIds, startingPlayerIndex } = event
 
   if (playerIds.length < 1) throw new DomainError('A match needs at least one player')
@@ -150,7 +150,7 @@ const start = (event: MatchStarted): MatchState => {
   }
 }
 
-const applyVisit = (state: MatchState, darts: readonly Dart[]): MatchState => {
+const applyVisit = (state: X01State, darts: readonly Dart[]): X01State => {
   if (state.winnerId !== null) throw new DomainError('Match is already finished')
   if (darts.length < 1 || darts.length > 3) {
     throw new DomainError(`A visit holds 1 to 3 darts, got ${darts.length}`)
@@ -170,7 +170,7 @@ const applyVisit = (state: MatchState, darts: readonly Dart[]): MatchState => {
     legNumber: state.legNumber,
   }
 
-  const afterVisit: PlayerMatchState = {
+  const afterVisit: X01PlayerState = {
     ...player,
     remaining: Score.of(resolution.remainingAfter),
     hasOpened: resolution.hasOpenedAfter,
@@ -190,7 +190,7 @@ const applyVisit = (state: MatchState, darts: readonly Dart[]): MatchState => {
   }
 
   // ---- Le leg est gagné ----
-  const milestones: MatchMilestone[] = [
+  const milestones: X01Milestone[] = [
     {
       type: 'LegWon',
       playerId: player.playerId,
@@ -257,7 +257,7 @@ const applyVisit = (state: MatchState, darts: readonly Dart[]): MatchState => {
  *
  * C'est aussi l'implémentation de l'annulation : `project(events.slice(0, -1))`.
  */
-const project = (events: readonly MatchEvent[]): MatchState => {
+const project = (events: readonly MatchEvent[]): X01State => {
   const [first, ...rest] = events
   if (first === undefined || first.type !== 'MatchStarted') {
     throw new DomainError('A match log must start with MatchStarted')
@@ -280,7 +280,7 @@ export const X01Rules = {
   applyVisit,
   project,
   resolveVisit,
-  currentPlayer: (state: MatchState): PlayerMatchState =>
+  currentPlayer: (state: X01State): X01PlayerState =>
     at(state.players, state.currentPlayerIndex, 'players'),
-  isFinished: (state: MatchState): boolean => state.winnerId !== null,
+  isFinished: (state: X01State): boolean => state.winnerId !== null,
 }

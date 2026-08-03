@@ -3,10 +3,10 @@ import { Link, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { useServices } from '@/ui/providers/ServicesProvider'
-import { MatchEcran } from './MatchEcran'
-import { ResumeEcran } from './ResumeEcran'
 import { ResumeTourDuMondeEcran } from './ResumeTourDuMondeEcran'
+import { ResumeX01Ecran } from './ResumeX01Ecran'
 import { TourDuMondeEcran } from './TourDuMondeEcran'
+import { X01Ecran } from './X01Ecran'
 
 /**
  * L'aiguillage de la couture `GameMode`, côté écran.
@@ -64,7 +64,7 @@ export const PartieEcran = () => {
   return (
     <Aiguillage
       matchId={(matchId ?? '') as MatchId}
-      x01={<MatchEcran />}
+      x01={<X01Ecran />}
       tourDuMonde={<TourDuMondeEcran />}
     />
   )
@@ -75,7 +75,7 @@ export const ResumePartieEcran = () => {
   return (
     <Aiguillage
       matchId={(matchId ?? '') as MatchId}
-      x01={<ResumeEcran />}
+      x01={<ResumeX01Ecran />}
       tourDuMonde={<ResumeTourDuMondeEcran />}
     />
   )

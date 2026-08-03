@@ -1,4 +1,4 @@
-import { suggestCheckout } from '../../domain/services/checkout'
+import { suggestCheckout } from '../../domain/games/x01/checkout'
 import type { Dart } from '../../domain/value-objects/Dart'
 import type {
   CheckoutSuggestionQuery,

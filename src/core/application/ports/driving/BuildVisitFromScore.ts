@@ -1,4 +1,4 @@
-import type { X01Config } from '../../../domain/entities/Match'
+import type { X01Config } from '../../../domain/games/x01/config'
 import type { Dart } from '../../../domain/value-objects/Dart'
 
 export type BuildVisitFromScoreQuery = {

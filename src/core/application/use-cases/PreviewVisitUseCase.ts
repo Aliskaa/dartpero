@@ -1,4 +1,4 @@
-import { X01Rules } from '../../domain/services/x01Rules'
+import { X01Rules } from '../../domain/games/x01/rules'
 import type { PreviewVisit, PreviewVisitQuery, VisitPreview } from '../ports/driving/PreviewVisit'
 
 export class PreviewVisitUseCase implements PreviewVisit {

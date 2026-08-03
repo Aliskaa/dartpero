@@ -2,8 +2,8 @@ import { DomainError } from '../DomainError'
 import type { MatchEvent } from '../events/MatchEvent'
 import type { Dart } from '../value-objects/Dart'
 import type { PlayerId } from '../value-objects/ids'
-import { TourDuMondeRules, type TourDuMondeState } from './tourDuMondeRules'
-import { type MatchState, X01Rules } from './x01Rules'
+import { TourDuMondeRules, type TourDuMondeState } from './tour-du-monde/rules'
+import { X01Rules, type X01State } from './x01/rules'
 
 /**
  * LA COUTURE `GameMode` — annoncée dès le lot 1, écrite au lot 5 seulement,
@@ -23,11 +23,11 @@ export const GAME_MODE_IDS = ['X01', 'TOUR_DU_MONDE'] as const
 export type GameModeId = (typeof GAME_MODE_IDS)[number]
 
 /** L'état d'une partie, quel que soit son mode. */
-export type AnyMatchState = MatchState | TourDuMondeState
+export type AnyMatchState = X01State | TourDuMondeState
 
 /**
  * Le mode se lit sur le **premier événement du journal**, jamais sur un champ
- * ajouté après coup : les parties d'avant le lot 5 disent `MatchStarted` et se
+ * ajouté après coup : les parties d'avant le lot 5 disent `X01Started` et se
  * rejouent en X01 pour toujours, sans migration.
  */
 export const modeOf = (events: readonly MatchEvent[]): GameModeId => {

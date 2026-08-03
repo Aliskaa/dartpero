@@ -1,7 +1,7 @@
 import Dexie from 'dexie'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { MatchRecord } from '@/core/application/ports/driven/MatchRepository'
-import { X01Config } from '@/core/domain/entities/Match'
+import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 import { PLAYER_COLORS } from '@/core/domain/value-objects/PlayerColor'

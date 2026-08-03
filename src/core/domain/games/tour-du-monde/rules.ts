@@ -1,8 +1,8 @@
-import { DomainError } from '../DomainError'
-import type { TourDuMondeConfig } from '../entities/TourDuMonde'
-import type { MatchEvent, TourDuMondeStarted } from '../events/MatchEvent'
-import type { Dart, Segment } from '../value-objects/Dart'
-import type { PlayerId } from '../value-objects/ids'
+import { DomainError } from '../../DomainError'
+import type { MatchEvent, TourDuMondeStarted } from '../../events/MatchEvent'
+import type { Dart, Segment } from '../../value-objects/Dart'
+import type { PlayerId } from '../../value-objects/ids'
+import type { TourDuMondeConfig } from './config'
 
 export type TourDuMondePlayerState = {
   readonly playerId: PlayerId

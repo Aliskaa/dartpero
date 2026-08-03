@@ -1,6 +1,6 @@
-import type { X01Config } from '@/core/domain/entities/Match'
 import type { MatchEvent } from '@/core/domain/events/MatchEvent'
-import { type MatchState, X01Rules } from '@/core/domain/services/x01Rules'
+import type { X01Config } from '@/core/domain/games/x01/config'
+import { X01Rules, type X01State } from '@/core/domain/games/x01/rules'
 import type { Dart } from '@/core/domain/value-objects/Dart'
 import { PlayerId } from '@/core/domain/value-objects/ids'
 
@@ -23,19 +23,19 @@ export const jouer = (
   playerIds: readonly PlayerId[],
   volees: readonly (readonly Dart[])[],
   startingPlayerIndex = 0,
-): MatchState => X01Rules.project(journal(config, playerIds, volees, startingPlayerIndex))
+): X01State => X01Rules.project(journal(config, playerIds, volees, startingPlayerIndex))
 
 /** Le joueur dont c'est le tour. */
-export const courant = (state: MatchState) => X01Rules.currentPlayer(state)
+export const courant = (state: X01State) => X01Rules.currentPlayer(state)
 
 /** L'état d'un joueur, par identifiant. */
-export const joueur = (state: MatchState, playerId: PlayerId) => {
+export const joueur = (state: X01State, playerId: PlayerId) => {
   const found = state.players.find((p) => p.playerId === playerId)
   if (!found) throw new Error(`Joueur introuvable : ${playerId}`)
   return found
 }
 
-export const derniereVolee = (state: MatchState) => {
+export const derniereVolee = (state: X01State) => {
   const visit = state.history.at(-1)
   if (!visit) throw new Error('Aucune volée dans l’historique')
   return visit

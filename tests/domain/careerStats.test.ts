@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { X01Config } from '@/core/domain/entities/Match'
-import { computeCareerStats } from '@/core/domain/services/careerStats'
-import { computeMatchStats } from '@/core/domain/services/matchStats'
+import { computeCareerStats } from '@/core/domain/games/x01/career'
+import { X01Config } from '@/core/domain/games/x01/config'
+import { computeX01Stats } from '@/core/domain/games/x01/stats'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { JULIEN, jouer, KEVIN } from './helpers'
 
@@ -10,7 +10,7 @@ const RIEN = [Dart.miss(), Dart.miss(), Dart.miss()]
 
 /** Une partie de 501 gagnée par Kevin en 9 fléchettes, Julien n'ayant rien marqué. */
 const legParfait = () =>
-  computeMatchStats(
+  computeX01Stats(
     jouer(
       X01Config.create({ startingScore: 501, legsToWin: 1 }),
       [KEVIN, JULIEN],
@@ -20,7 +20,7 @@ const legParfait = () =>
 
 /** Une partie où Kevin ne fait que des simples 20 — et ne gagne pas. */
 const legMediocre = () =>
-  computeMatchStats(
+  computeX01Stats(
     jouer(
       X01Config.create({ startingScore: 501, legsToWin: 1 }),
       [KEVIN, JULIEN],
@@ -28,7 +28,7 @@ const legMediocre = () =>
     ),
   )
 
-const carriereDe = (...matchs: ReturnType<typeof computeMatchStats>[]) => {
+const carriereDe = (...matchs: ReturnType<typeof computeX01Stats>[]) => {
   const carriere = computeCareerStats(matchs).find((joueur) => joueur.playerId === KEVIN)
   if (!carriere) throw new Error('Carrière de Kevin introuvable')
   return carriere

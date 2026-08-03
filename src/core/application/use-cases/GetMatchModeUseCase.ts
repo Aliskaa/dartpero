@@ -1,4 +1,4 @@
-import { type GameModeId, modeOf } from '../../domain/services/gameModes'
+import { type GameModeId, modeOf } from '../../domain/games'
 import type { MatchId } from '../../domain/value-objects/ids'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { GetMatchMode } from '../ports/driving/GetMatchMode'

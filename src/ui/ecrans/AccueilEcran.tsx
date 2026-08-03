@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { Play, WifiOff } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
+import { ApercuPartie, libelleRegles } from '@/ui/composants/commun/ApercuPartie'
 import { Button } from '@/ui/composants/commun/Button'
 import { Skeleton } from '@/ui/composants/commun/Etats'
 import { LogoHero } from '@/ui/composants/commun/Logo'
 import { Panneau } from '@/ui/composants/commun/Panneau'
-import { ApercuPartie, libelleRegles } from '@/ui/composants/match/ApercuPartie'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useServices } from '@/ui/providers/ServicesProvider'
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DomainError } from '@/core/domain/DomainError'
-import { X01Config } from '@/core/domain/entities/Match'
-import { X01Rules } from '@/core/domain/services/x01Rules'
+import { X01Config } from '@/core/domain/games/x01/config'
+import { X01Rules } from '@/core/domain/games/x01/rules'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { courant, derniereVolee, JULIEN, jouer, joueur, journal, KEVIN } from './helpers'
 
@@ -265,7 +265,7 @@ describe('X01Rules — garde-fous', () => {
     expect(() => X01Rules.project([])).toThrow(DomainError)
   })
 
-  it('refuse deux MatchStarted dans le même journal', () => {
+  it('refuse deux X01Started dans le même journal', () => {
     const debut = journal(config, DEUX_JOUEURS, [])
     expect(() => X01Rules.project([...debut, ...debut])).toThrow(DomainError)
   })

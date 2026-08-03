@@ -24,7 +24,7 @@ type Props = {
  * ZONE SAISIE — compacte, atteignable au pouce, cibles ≥ 48 px.
  *
  * Le multiplicateur est **momentané** : il retombe sur Simple dès qu'une
- * fléchette est saisie (la remise à zéro vit dans `useMatch`, pas ici). Un
+ * fléchette est saisie (la remise à zéro vit dans `useX01`, pas ici). Un
  * multiplicateur qui reste armé sans qu'on le voie est la source d'erreur n° 1
  * — trois T20 comptés là où il y avait trois simples. On préfère un clic de
  * plus par triple à un score faux qu'il faut retrouver.

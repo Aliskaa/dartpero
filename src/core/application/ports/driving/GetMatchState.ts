@@ -1,6 +1,6 @@
-import type { MatchState } from '../../../domain/services/x01Rules'
+import type { X01State } from '../../../domain/games/x01/rules'
 import type { MatchId } from '../../../domain/value-objects/ids'
 
 export interface GetMatchState {
-  execute(matchId: MatchId): Promise<MatchState>
+  execute(matchId: MatchId): Promise<X01State>
 }

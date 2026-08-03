@@ -1,9 +1,9 @@
-import type { TourDuMondeConfig } from '../../../domain/entities/TourDuMonde'
+import type { TourDuMondeConfig } from '../../../domain/games/tour-du-monde/config'
 import type {
   TourDuMondeMilestone,
   TourDuMondeState,
   TourDuMondeVisit,
-} from '../../../domain/services/tourDuMondeRules'
+} from '../../../domain/games/tour-du-monde/rules'
 import type { Dart } from '../../../domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
 

@@ -1,7 +1,7 @@
-import { computeCareerStats } from '../../domain/services/careerStats'
-import { modeOf } from '../../domain/services/gameModes'
-import { computeMatchStats } from '../../domain/services/matchStats'
-import { X01Rules } from '../../domain/services/x01Rules'
+import { modeOf } from '../../domain/games'
+import { computeCareerStats } from '../../domain/games/x01/career'
+import { X01Rules } from '../../domain/games/x01/rules'
+import { computeX01Stats } from '../../domain/games/x01/stats'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
 import type { GetPlayerStats, PlayerCareer } from '../ports/driving/GetPlayerStats'
@@ -29,7 +29,7 @@ export class GetPlayerStatsUseCase implements GetPlayerStats {
     // n'y répondrait simplement pas — on l'écarte donc du cumul.
     const stats = records
       .filter((record) => modeOf(record.events) === 'X01')
-      .map((record) => computeMatchStats(X01Rules.project(record.events)))
+      .map((record) => computeX01Stats(X01Rules.project(record.events)))
     const carrieres = computeCareerStats(stats)
     const parId = new Map(profils.map((profil) => [profil.id, profil]))
 

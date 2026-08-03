@@ -1,7 +1,7 @@
-import { DomainError } from '../DomainError'
-import type { X01Config } from '../entities/Match'
-import { Dart, type SegmentNumber } from '../value-objects/Dart'
-import { SETUP_DARTS } from './dartSearch'
+import { DomainError } from '../../DomainError'
+import { SETUP_DARTS } from '../../services/dartSearch'
+import { Dart, type SegmentNumber } from '../../value-objects/Dart'
+import type { X01Config } from './config'
 
 /** Checkout maximal en 3 fléchettes : T20 · T20 · Bull. */
 export const MAX_CHECKOUT = 170

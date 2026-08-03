@@ -1,4 +1,4 @@
-import { GameModes } from '../../domain/services/gameModes'
+import { GameModes } from '../../domain/games'
 import type { PlayerId } from '../../domain/value-objects/ids'
 import type { MatchRecord } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'

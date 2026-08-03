@@ -1,6 +1,6 @@
 import { DomainError } from '../../domain/DomainError'
-import type { MatchStarted } from '../../domain/events/MatchEvent'
-import { X01Rules } from '../../domain/services/x01Rules'
+import type { X01Started } from '../../domain/events/MatchEvent'
+import { X01Rules } from '../../domain/games/x01/rules'
 import { MatchId } from '../../domain/value-objects/ids'
 import type { Clock } from '../ports/driven/Clock'
 import type { IdGenerator } from '../ports/driven/IdGenerator'
@@ -25,7 +25,7 @@ export class StartMatchUseCase implements StartMatch {
       throw new DomainError(`Unknown player(s): ${inconnus.join(', ')}`)
     }
 
-    const started: MatchStarted = {
+    const started: X01Started = {
       type: 'MatchStarted',
       config,
       playerIds,

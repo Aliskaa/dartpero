@@ -1,6 +1,6 @@
 import { DomainError } from '../../domain/DomainError'
 import type { MatchEvent } from '../../domain/events/MatchEvent'
-import { X01Rules } from '../../domain/services/x01Rules'
+import { X01Rules } from '../../domain/games/x01/rules'
 import type { Clock } from '../ports/driven/Clock'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type {

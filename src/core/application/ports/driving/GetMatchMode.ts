@@ -1,4 +1,4 @@
-import type { GameModeId } from '../../../domain/services/gameModes'
+import type { GameModeId } from '../../../domain/games'
 import type { MatchId } from '../../../domain/value-objects/ids'
 
 /**

@@ -1,5 +1,5 @@
-import type { X01Config } from '../entities/Match'
-import type { TourDuMondeConfig } from '../entities/TourDuMonde'
+import type { TourDuMondeConfig } from '../games/tour-du-monde/config'
+import type { X01Config } from '../games/x01/config'
 import type { Dart } from '../value-objects/Dart'
 import type { PlayerId } from '../value-objects/ids'
 
@@ -8,7 +8,7 @@ import type { PlayerId } from '../value-objects/ids'
  *
  * ⚠️ Décision d'architecture : le journal ne contient QUE des faits bruts —
  * le match a démarré, telles fléchettes ont été lancées. Les legs gagnés, les
- * sets et la fin du match sont **déduits** par les règles (voir `MatchMilestone`),
+ * sets et la fin du match sont **déduits** par les règles (voir `X01Milestone`),
  * jamais stockés.
  *
  * Pourquoi : c'est ce qui rend l'annulation exacte et sans piège. Annuler,
@@ -20,7 +20,18 @@ import type { PlayerId } from '../value-objects/ids'
  * déduit de la projection, donc le journal ne peut pas être en désaccord avec
  * les règles.
  */
-export type MatchStarted = {
+/**
+ * L'ouverture d'une partie de X01.
+ *
+ * ⚠️ Le type s'appelle `X01Started`, mais son discriminant vaut toujours
+ * **`'MatchStarted'`** — et c'est volontaire. Cette chaîne est une **donnée
+ * persistée** : elle est écrite dans IndexedDB et dans les sauvegardes JSON
+ * déjà exportées par les utilisateurs. La renommer invaliderait toutes les
+ * parties enregistrées avant le lot 5a. On corrige donc le nom du **type**, qui
+ * mentait (X01 était le seul mode et s'appelait « Match »), sans toucher à un
+ * seul octet sur le disque.
+ */
+export type X01Started = {
   readonly type: 'MatchStarted'
   readonly config: X01Config
   readonly playerIds: readonly PlayerId[]
@@ -31,10 +42,10 @@ export type MatchStarted = {
 /**
  * L'ouverture d'une partie de Tour du monde.
  *
- * ⚠️ C'est un **événement distinct**, pas un champ `mode` ajouté à
- * `MatchStarted` : les journaux déjà en base disent `MatchStarted` et doivent
- * continuer à se rejouer en X01 pour toujours, sans migration ni valeur par
- * défaut à deviner. Le mode se lit donc sur le premier événement du journal.
+ * ⚠️ C'est un **événement distinct**, pas un champ `mode` ajouté à l'ouverture
+ * X01 : les journaux déjà en base portent `'MatchStarted'` et doivent continuer
+ * à se rejouer en X01 pour toujours, sans migration ni valeur par défaut à
+ * deviner. Le mode se lit donc sur le premier événement du journal.
  */
 export type TourDuMondeStarted = {
   readonly type: 'TourDuMondeStarted'
@@ -55,14 +66,14 @@ export type VisitRecorded = {
  * trois fléchettes, que l'on décompte un 501 ou que l'on remonte le plateau.
  * Seule l'interprétation change, et elle appartient aux règles du mode.
  */
-export type MatchEvent = MatchStarted | TourDuMondeStarted | VisitRecorded
+export type MatchEvent = X01Started | TourDuMondeStarted | VisitRecorded
 
 /**
  * Les conséquences déduites d'une volée. Elles ne sont pas persistées : l'UI
  * s'en sert pour les moments de récompense (leg gagné, match fini) et le lot 5
  * pour l'annonce vocale.
  */
-export type MatchMilestone =
+export type X01Milestone =
   | {
       readonly type: 'LegWon'
       readonly playerId: PlayerId

@@ -1,7 +1,7 @@
 import { DomainError } from '../../domain/DomainError'
-import { X01Config } from '../../domain/entities/Match'
 import { Player } from '../../domain/entities/Player'
 import type { MatchEvent } from '../../domain/events/MatchEvent'
+import { X01Config } from '../../domain/games/x01/config'
 import { Dart, type Multiplier, type Segment } from '../../domain/value-objects/Dart'
 import { MatchId, PlayerId } from '../../domain/value-objects/ids'
 import { PlayerColor } from '../../domain/value-objects/PlayerColor'

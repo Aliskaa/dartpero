@@ -2,15 +2,15 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import type { X01Config } from '@/core/domain/entities/Match'
+import type { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
-import { PaveFlechettes } from '@/ui/composants/match/PaveFlechettes'
-import { PaveRapide } from '@/ui/composants/match/PaveRapide'
-import { Tableau } from '@/ui/composants/match/Tableau'
+import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
+import { PaveRapide } from '@/ui/composants/x01/PaveRapide'
+import { Tableau } from '@/ui/composants/x01/Tableau'
 import { usePreference, useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
-import { useMatch } from '@/ui/hooks/useMatch'
+import { useX01 } from '@/ui/hooks/useX01'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const CLE_MODE_RAPIDE = 'saisie-rapide'
@@ -59,7 +59,7 @@ const EnTeteManche = ({
   </header>
 )
 
-export const MatchEcran = () => {
+export const X01Ecran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
   const services = useServices()
@@ -67,7 +67,7 @@ export const MatchEcran = () => {
   const profils = useProfils()
   const [rapide, setRapide] = usePreference(CLE_MODE_RAPIDE, false)
 
-  const match = useMatch(identifiant)
+  const match = useX01(identifiant)
   const { state, joueurCourant, termine } = match
 
   // L'écran ne doit pas s'éteindre tant que la partie n'est pas finie.

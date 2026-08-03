@@ -1,14 +1,14 @@
 import { CircleOff, Target } from 'lucide-react'
 import type { Player } from '@/core/domain/entities/Player'
 import type { Visit } from '@/core/domain/entities/Visit'
-import type { MatchState } from '@/core/domain/services/x01Rules'
+import type { X01State } from '@/core/domain/games/x01/rules'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { nomJoueur } from '@/ui/labels'
 import { type Echelle, LigneJoueur, type VoleeAffichee } from './LigneJoueur'
 
 type Props = {
-  readonly state: MatchState
+  readonly state: X01State
   readonly resteAffiche: number
   readonly dartsEnCours: readonly Dart[]
   readonly suggestion: readonly Dart[] | null
@@ -26,9 +26,7 @@ const ECHELLES: readonly Echelle[] = ['large', 'large', 'moyen', 'compact']
  * ce qui rejoue les animations (le « pop » du score, la secousse d'un bust) au
  * bon moment — et seulement pour lui, pas à chaque volée des adversaires.
  */
-const dernieresVolees = (
-  state: MatchState,
-): ReadonlyMap<PlayerId, { visit: Visit; rang: number }> =>
+const dernieresVolees = (state: X01State): ReadonlyMap<PlayerId, { visit: Visit; rang: number }> =>
   state.history.reduce((acc, visit, rang) => {
     if (visit.legNumber === state.legNumber) acc.set(visit.playerId, { visit, rang })
     return acc

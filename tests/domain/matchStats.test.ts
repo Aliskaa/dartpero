@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { X01Config } from '@/core/domain/entities/Match'
-import { computeMatchStats, type PlayerStats } from '@/core/domain/services/matchStats'
-import type { MatchState } from '@/core/domain/services/x01Rules'
+import { X01Config } from '@/core/domain/games/x01/config'
+import type { X01State } from '@/core/domain/games/x01/rules'
+import { computeX01Stats, type X01PlayerStats } from '@/core/domain/games/x01/stats'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { JULIEN, jouer, KEVIN } from './helpers'
@@ -13,14 +13,14 @@ const S1 = Dart.single(1)
 const D20 = Dart.double(20)
 const D12 = Dart.double(12)
 
-const stats = (state: MatchState, playerId: PlayerId): PlayerStats => {
-  const found = computeMatchStats(state).players.find((p) => p.playerId === playerId)
+const stats = (state: X01State, playerId: PlayerId): X01PlayerStats => {
+  const found = computeX01Stats(state).players.find((p) => p.playerId === playerId)
   if (!found) throw new Error(`Stats introuvables pour ${playerId}`)
   return found
 }
 
 /** Un leg de 501 gagné par Kevin en 9 fléchettes (180, 180, 141). */
-const legParfait = (): MatchState =>
+const legParfait = (): X01State =>
   jouer(
     X01Config.create({ legsToWin: 3 }),
     [KEVIN, JULIEN],
@@ -138,6 +138,6 @@ describe('computeMatchStats', () => {
       [[D20]],
     )
 
-    expect(computeMatchStats(state).winnerId).toBe(KEVIN)
+    expect(computeX01Stats(state).winnerId).toBe(KEVIN)
   })
 })

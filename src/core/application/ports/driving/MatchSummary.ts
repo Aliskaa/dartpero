@@ -1,5 +1,5 @@
-import type { X01Config } from '../../../domain/entities/Match'
-import type { TourDuMondeConfig } from '../../../domain/entities/TourDuMonde'
+import type { TourDuMondeConfig } from '../../../domain/games/tour-du-monde/config'
+import type { X01Config } from '../../../domain/games/x01/config'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
 
 type SummaryPlayer = {

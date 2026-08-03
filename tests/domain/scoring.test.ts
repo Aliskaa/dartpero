@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DomainError } from '@/core/domain/DomainError'
-import { X01Config } from '@/core/domain/entities/Match'
-import { composeVisit } from '@/core/domain/services/scoring'
+import { X01Config } from '@/core/domain/games/x01/config'
+import { composeVisit } from '@/core/domain/games/x01/scoring'
 import { Dart } from '@/core/domain/value-objects/Dart'
 
 const config = X01Config.create()

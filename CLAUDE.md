@@ -276,24 +276,32 @@ décision ouverte.
 src/
 ├─ core/
 │  ├─ domain/
-│  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, PlayerColor, MatchId, PlayerId
-│  │  ├─ entities/        Visit, Match (X01Config), Player
-│  │  ├─ events/          MatchEvent (MatchStarted, VisitRecorded) · MatchMilestone
-│  │  └─ services/        x01Rules, checkout, dartSearch, scoring,
-│  │                      matchStats (une partie), careerStats (toutes)
+│  │  ├─ games/           ← UN DOSSIER PAR MODE DE JEU
+│  │  │  ├─ index.ts      la couture : GameModeId, AnyMatchState, GameModes
+│  │  │  ├─ x01/          config · rules · checkout · scoring · stats · career
+│  │  │  └─ tour-du-monde/ config · rules
+│  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, PlayerColor, ids
+│  │  ├─ entities/        Visit, Player          (transverses aux modes)
+│  │  ├─ events/          MatchEvent : X01Started | TourDuMondeStarted | VisitRecorded
+│  │  └─ services/        dartSearch             (utilitaire transverse)
 │  └─ application/
 │     ├─ ports/driving/   StartMatch, RecordVisit, UndoLastVisit, PreviewVisit,
 │     │                   BuildVisitFromScore, GetMatchState, GetCheckoutSuggestion,
-│     │                   GetMatchStats, GetMatchHistory, GetOngoingMatch,
-│     │                   GetPlayerStats, DeleteMatch, ManagePlayers, ManageBackup
+│     │                   GetMatchStats, GetMatchHistory, GetMatchMode,
+│     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
+│     │                   ManagePlayers, ManageBackup, PlayTourDuMonde
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
-│     │                   Haptics, ScreenLock, Preferences   (Announcer → lot 5)
+│     │                   Haptics, ScreenLock, Preferences   (Announcer → lot 5b)
 │     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
 ├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
-├─ ui/                    composants/ (+ commun/, match/) · ecrans/ · hooks/ ·
-│                         providers/ · couleurs.ts (teintes) · labels.ts (français)
-└─ data/                  (vide : les checkouts sont calculés, pas tabulés)
+├─ ui/
+│  ├─ composants/         commun/ (dont ApercuPartie, qui ouvre l'union des modes)
+│  │                      x01/ · tour-du-monde/   ← MÊME DÉCOUPAGE QUE LE DOMAINE
+│  ├─ ecrans/             PartieEcran (aiguillage) · X01Ecran · TourDuMondeEcran ·
+│  │                      ResumeX01Ecran · ResumeTourDuMondeEcran · …
+│  ├─ hooks/              useX01 · useTourDuMonde · useJoueurs · useAppareil
+│  └─ couleurs.ts (teintes) · labels.ts (tout le français)
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
 ```
@@ -641,9 +649,39 @@ contrôle sans effet induit en erreur. Les fléchettes enregistrées sont donc d
 doubles : ces mesures n'ont pas de sens au Tour du monde, qui est écarté du cumul plutôt que
 d'y injecter des zéros trompeurs.
 
-**Pour ajouter le Cricket un jour** : un événement d'ouverture, un module de règles avec son
-`mode` discriminant, trois lignes dans chaque aiguillage de `gameModes.ts`, un écran de jeu et
-un résumé. Rien d'autre ne bouge.
+**Pour ajouter le Cricket un jour** : un dossier `games/cricket/`, un événement d'ouverture, un
+module de règles avec son `mode` discriminant, trois lignes dans chaque aiguillage de
+`games/index.ts`, un dossier `ui/composants/cricket/`, un écran de jeu et un résumé. Rien
+d'autre ne bouge.
+
+### Nommage : un mode se nomme, toujours (réagencement post-lot 5a)
+
+Tant que X01 était le seul jeu, ses types s'appelaient `Match*` — et le Tour du monde arrivé,
+`MatchStarted` voulait en réalité dire « X01 démarré » pendant que le nouveau venu annonçait
+clairement la couleur. Le plus ancien était le plus mal nommé. Corrigé en un commit dédié,
+juste après le lot 5a.
+
+- **Ce qui a été renommé** : ce qui décrit l'**état et les règles d'un mode**.
+`MatchState` → `X01State`, `PlayerMatchState` → `X01PlayerState`, `MatchStats` → `X01Stats`,
+`PlayerStats` → `X01PlayerStats`, `MatchMilestone` → `X01Milestone`, `MatchStarted` →
+`X01Started`, `computeMatchStats` → `computeX01Stats`. Côté écrans : `MatchEcran` →
+`X01Ecran`, `ResumeEcran` → `ResumeX01Ecran`, `useMatch` → `useX01`.
+- **Ce qui NE devait PAS l'être** : `MatchId`, `MatchRecord`, `MatchRepository`,
+`MatchSummary`, `MatchEvent`. Ceux-là désignent bien **une partie, tous modes confondus**.
+Tout ce qui s'appelle `Match` n'est pas fautif — seul l'est ce qui prétend être générique en
+ne parlant que du X01.
+- ⚠️ **`X01Started.type` vaut toujours `'MatchStarted'`.** Cette chaîne est une **donnée
+persistée**, présente dans IndexedDB et dans les sauvegardes JSON déjà exportées : la
+renommer invaliderait toutes les parties antérieures. On corrige le nom du **type**, jamais
+la valeur sur le disque. Si un jour ça gêne vraiment, il faudra une migration — pas un
+rechercher-remplacer.
+- **Deux gardes ajoutées au test d'architecture** : un mode n'importe jamais un autre mode
+(ni côté domaine, ni côté composants). Seul `games/index.ts` les connaît tous, c'est son rôle.
+Ce qui est réellement partagé descend dans `commun/`.
+- **Reste à faire, si l'asymétrie regêne** : les *ports* X01 gardent des noms génériques
+(`StartMatch`, `RecordVisit`, `GetMatchState`…) face à `PlayTourDuMonde`. Leurs **types de
+retour** disent désormais `X01State`, ce qui lève l'ambiguïté à la lecture ; renommer les
+ports eux-mêmes serait le prolongement naturel mais n'était pas dans le périmètre.
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode

@@ -1,5 +1,5 @@
 import { DomainError } from '../../domain/DomainError'
-import { type MatchState, X01Rules } from '../../domain/services/x01Rules'
+import { X01Rules, type X01State } from '../../domain/games/x01/rules'
 import type { MatchId } from '../../domain/value-objects/ids'
 import type { MatchRecord, MatchRepository } from '../ports/driven/MatchRepository'
 
@@ -15,4 +15,4 @@ export const loadMatch = async (
 export const loadMatchState = async (
   matches: MatchRepository,
   matchId: MatchId,
-): Promise<MatchState> => X01Rules.project((await loadMatch(matches, matchId)).events)
+): Promise<X01State> => X01Rules.project((await loadMatch(matches, matchId)).events)

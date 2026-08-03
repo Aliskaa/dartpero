@@ -1,8 +1,8 @@
-import { DomainError } from '../DomainError'
-import type { X01Config } from '../entities/Match'
-import { Dart } from '../value-objects/Dart'
+import { DomainError } from '../../DomainError'
+import { findExactScore } from '../../services/dartSearch'
+import { Dart } from '../../value-objects/Dart'
 import { suggestCheckout } from './checkout'
-import { findExactScore } from './dartSearch'
+import type { X01Config } from './config'
 
 /**
  * Traduit un **score de volée** en fléchettes, pour le mode de saisie rapide.

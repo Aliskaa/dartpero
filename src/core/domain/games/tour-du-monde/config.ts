@@ -1,5 +1,5 @@
-import { DomainError } from '../DomainError'
-import { SEGMENT_NUMBERS, type Segment } from '../value-objects/Dart'
+import { DomainError } from '../../DomainError'
+import { SEGMENT_NUMBERS, type Segment } from '../../value-objects/Dart'
 
 /**
  * Le **Tour du monde** : on part du 20, on descend jusqu'au 1, on finit sur la

@@ -1,5 +1,5 @@
-import type { X01Config } from '../../../domain/entities/Match'
 import type { VisitOutcome } from '../../../domain/entities/Visit'
+import type { X01Config } from '../../../domain/games/x01/config'
 import type { Dart } from '../../../domain/value-objects/Dart'
 
 export type PreviewVisitQuery = {
