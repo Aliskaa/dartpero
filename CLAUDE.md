@@ -48,9 +48,10 @@ triviale et fiable (on se trompe de saisie très souvent en pleine partie).
 **momentanée** — elle retombe sur Simple après chaque fléchette) — c'est la **condition
 technique** des stats de doubles et de l'entraînement — **plus** un mode « rapide » (score de
 volée 0-180) basculable.
-- **Modes v1 : X01 uniquement**, puis **entraînement solo** (lot 5). Cricket et jeux fun
-(Around the Clock, Killer, Shanghai) sont **hors périmètre v1** — mais la couture
-`GameMode` existe pour les accueillir sans refonte.
+- **Modes de jeu : X01 et Tour du monde** (lot 5a), puis **entraînement solo** (lot 5b).
+Cricket, Killer et Shanghai restent **hors périmètre v1** — mais la couture `GameMode`
+existe désormais **pour de vrai** (`src/core/domain/services/gameModes.ts`) et les
+accueillera sans refonte.
 - **Réglages X01 par défaut** : **501**, **best-of 3 legs**, **double out** activé,
 **double in** désactivé. Tous modifiables à la création de partie.
 - **TypeScript partout.**
@@ -92,6 +93,29 @@ Si on me demande d'ajouter une capacité externe (voix, vibration, cloud, capteu
 ---
 
 
+
+## Règles du Tour du monde (référence — NE PAS improviser)
+
+Le jeu de groupe de l'utilisateur, ajouté au lot 5a. **Ce n'est pas un exercice solo** : c'est
+un mode de jeu à part entière, au même titre que X01.
+
+- **Parcours** : on part du **20**, on descend 19, 18… jusqu'au **1**, puis on finit sur la
+**bulle** — 21 cibles. La liste vit dans la config, donc dans le journal : une partie ancienne
+reste rejouable même si le parcours par défaut change un jour.
+- **Toucher, c'est atteindre le secteur.** Simple, double ou triple : aucune différence. La
+bulle est validée aussi bien par l'anneau à 25 que par le centre à 50. Une fléchette hors
+cible (`MISS`) ne vaut jamais.
+- Une volée fait **3 fléchettes**, et l'on avance à **chaque** touche : on peut donc valider
+trois cibles dans la même volée. La volée s'arrête sur la fléchette qui boucle le tour, comme
+une volée de checkout au X01.
+- ⚠️ **On finit le tour de table.** Quand un joueur boucle, la partie ne s'arrête pas : les
+autres jouent leur volée, pour que tout le monde ait eu le même nombre de fléchettes. Sans ça,
+celui qui commence part avec une longueur d'avance imméritée.
+- **Départage** : parmi ceux qui ont bouclé, celui qui y a mis le **moins de fléchettes**.
+À égalité parfaite, **match nul** — on ne départage ni au hasard ni à l'ordre de passage.
+- Il n'y a ni leg, ni set, ni bust : la partie tient en un seul parcours.
+
+---
 
 ## Règles du jeu X01 (référence — NE PAS improviser)
 
@@ -328,7 +352,10 @@ par le composition root.
   parties avec statut et suppression, statistiques de carrière en tableaux comparatifs classés,
   **export / import JSON** de toute la base, écran Réglages, barre de navigation basse.
   Migration Dexie **v1 → v2** testée. **135 tests verts.**
-- [ ] **Lot 5** — Entraînement solo + annonce vocale (port `Announcer`)
+- [x] **Lot 5a** — **Tour du monde**, deuxième mode de jeu, et la **couture `GameMode`** qui
+  l'accueille : événement d'ouverture propre au mode, états discriminés, aiguillage des
+  règles comme des écrans. **167 tests verts.**
+- [ ] **Lot 5b** — Entraînement solo (Checkout Practice) + annonce vocale (port `Announcer`)
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 ---
@@ -584,6 +611,39 @@ sinon il serait premier.
 un second agit. Pas de fenêtre modale, mais rien ne s'efface d'un doigt qui glisse. Supprimer
 un profil ne supprime pas ses parties — elles affichent « Joueur supprimé », comme décidé au
 lot 2.
+
+### La couture `GameMode` (lot 5a) — comment ajouter un mode
+
+Annoncée dès le lot 1, écrite seulement au lot 5a, quand un **deuxième mode réel** est arrivé.
+Généraliser plus tôt aurait été inventer une abstraction sans savoir ce qu'elle abstrait.
+
+**Le principe : aucun dénominateur commun artificiel.** Chaque mode garde ses règles et son
+état complets et lisibles ; `services/gameModes.ts` ne fait qu'**aiguiller** sur le
+discriminant `mode` que porte chaque état, et TypeScript garantit qu'aucun cas n'est oublié.
+
+- ⚠️ **Le mode se lit sur le PREMIER ÉVÉNEMENT du journal**, via un événement d'ouverture qui
+lui est propre (`MatchStarted` pour X01, `TourDuMondeStarted` pour le Tour du monde) — et
+**non** via un champ `mode` ajouté à `MatchStarted`. C'est ce qui rend les parties d'avant le
+lot 5a rejouables **pour toujours** en X01, sans migration ni valeur par défaut à deviner. Un
+test le vérifie explicitement.
+- **`VisitRecorded` est partagé par tous les modes** : une volée, c'est 1 à 3 fléchettes, que
+l'on décompte un 501 ou que l'on remonte le plateau. Seule l'interprétation change.
+- **`MatchSummary` est une union discriminée**, pas un type mou : un Tour du monde n'a pas de
+score restant, un X01 n'a pas de cible courante. `ApercuPartie` est le **seul** endroit de
+l'UI qui ouvre cette union, pour ne pas la disperser entre l'accueil et l'historique.
+- **Une seule URL par partie** (`/partie/:id`) : `PartieEcran` lit le mode et rend l'écran
+correspondant. Un lien d'historique reste valable quel que soit le jeu, et l'utilisateur n'a
+pas à savoir dans quel mode il reprend. Chaque mode a son **propre** écran plutôt qu'un écran
+truffé de conditions — les deux zones de saisie n'ont rien en commun.
+- **Le pavé du Tour du monde n'a pas de bascule S/D/T** : elle ne changerait rien, et un
+contrôle sans effet induit en erreur. Les fléchettes enregistrées sont donc des simples.
+- **Les statistiques de carrière restent au X01.** Moyenne 3 fléchettes, 180, pourcentage de
+doubles : ces mesures n'ont pas de sens au Tour du monde, qui est écarté du cumul plutôt que
+d'y injecter des zéros trompeurs.
+
+**Pour ajouter le Cricket un jour** : un événement d'ouverture, un module de règles avec son
+`mode` discriminant, trois lignes dans chaque aiguillage de `gameModes.ts`, un écran de jeu et
+un résumé. Rien d'autre ne bouge.
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode

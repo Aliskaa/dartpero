@@ -1,25 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, Crown, Trash2 } from 'lucide-react'
+import { ChevronRight, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { Avatar } from '@/ui/composants/commun/Avatar'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { EmptyState, MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
+import { ApercuPartie, libelleRegles } from '@/ui/composants/match/ApercuPartie'
 import { useProfils } from '@/ui/hooks/useJoueurs'
-import { dateHeure, nomJoueur, pluriel } from '@/ui/labels'
+import { dateHeure, pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const CLE_HISTORIQUE = ['historique'] as const
-
-/** Le classement d'une partie : vainqueur en tête, puis le reste dans l'ordre du tableau. */
-const classer = (partie: MatchSummary) =>
-  [...partie.players].sort((a, b) => {
-    if (a.playerId === partie.winnerId) return -1
-    if (b.playerId === partie.winnerId) return 1
-    return b.legsWonInSet - a.legsWonInSet
-  })
 
 const CartePartie = ({
   partie,
@@ -53,40 +45,10 @@ const CartePartie = ({
 
       <div className="flex flex-col gap-2 p-3">
         <p className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
-          X01 · {partie.config.startingScore} · BO{partie.config.legsToWin * 2 - 1}
-          {partie.config.doubleOut && ' · double out'}
-          {partie.config.doubleIn && ' · double in'}
+          {libelleRegles(partie)}
         </p>
 
-        <ul className="flex flex-col gap-1.5">
-          {classer(partie).map((joueur) => {
-            const nom = nomJoueur(joueur.name)
-            const gagnant = joueur.playerId === partie.winnerId
-            return (
-              <li key={joueur.playerId} className="flex items-center gap-2">
-                <Avatar
-                  nom={nom}
-                  couleur={profils.get(joueur.playerId)?.color ?? null}
-                  taille="xs"
-                />
-                <span
-                  className={`min-w-0 flex-1 truncate text-sm ${
-                    gagnant ? 'font-semibold text-craie-vive' : 'text-craie/75'
-                  }`}
-                >
-                  {nom}
-                </span>
-                {gagnant && <Crown aria-hidden="true" className="size-3.5 shrink-0 text-laiton" />}
-                <span className="chiffres text-xs text-craie/60">
-                  {pluriel(joueur.legsWonInSet, 'leg')}
-                </span>
-                <span className="chiffres w-10 text-right text-base font-bold text-craie-vive">
-                  {joueur.remaining}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
+        <ApercuPartie partie={partie} profils={profils} classe />
 
         <div className="mt-1 grid grid-cols-[1fr_auto] gap-2">
           <button

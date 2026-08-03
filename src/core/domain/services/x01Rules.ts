@@ -17,6 +17,8 @@ export type PlayerMatchState = {
 }
 
 export type MatchState = {
+  /** Le discriminant de la couture `GameMode` : il rend l'union d'états sûre. */
+  readonly mode: 'X01'
   readonly config: X01Config
   readonly players: readonly PlayerMatchState[]
   readonly currentPlayerIndex: number
@@ -128,6 +130,7 @@ const start = (event: MatchStarted): MatchState => {
   }
 
   return {
+    mode: 'X01',
     config,
     players: playerIds.map((playerId) => ({
       playerId,
@@ -262,8 +265,10 @@ const project = (events: readonly MatchEvent[]): MatchState => {
 
   let state = start(first)
   for (const event of rest) {
-    if (event.type === 'MatchStarted') {
-      throw new DomainError('MatchStarted can only appear once in a match log')
+    // Un journal n'a qu'un seul événement d'ouverture, quel que soit le mode :
+    // tout le reste est une volée.
+    if (event.type !== 'VisitRecorded') {
+      throw new DomainError(`A match log holds a single opening event, got ${event.type}`)
     }
     state = applyVisit(state, event.darts)
   }

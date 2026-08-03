@@ -1,4 +1,5 @@
 import type { X01Config } from '../entities/Match'
+import type { TourDuMondeConfig } from '../entities/TourDuMonde'
 import type { Dart } from '../value-objects/Dart'
 import type { PlayerId } from '../value-objects/ids'
 
@@ -27,13 +28,34 @@ export type MatchStarted = {
   readonly startingPlayerIndex: number
 }
 
+/**
+ * L'ouverture d'une partie de Tour du monde.
+ *
+ * ⚠️ C'est un **événement distinct**, pas un champ `mode` ajouté à
+ * `MatchStarted` : les journaux déjà en base disent `MatchStarted` et doivent
+ * continuer à se rejouer en X01 pour toujours, sans migration ni valeur par
+ * défaut à deviner. Le mode se lit donc sur le premier événement du journal.
+ */
+export type TourDuMondeStarted = {
+  readonly type: 'TourDuMondeStarted'
+  readonly config: TourDuMondeConfig
+  readonly playerIds: readonly PlayerId[]
+  /** Qui commence la partie (index dans `playerIds`). */
+  readonly startingPlayerIndex: number
+}
+
 export type VisitRecorded = {
   readonly type: 'VisitRecorded'
   /** 1 à 3 fléchettes. Une volée s'arrête plus tôt sur un checkout ou un bust. */
   readonly darts: readonly Dart[]
 }
 
-export type MatchEvent = MatchStarted | VisitRecorded
+/**
+ * `VisitRecorded` est **partagé par tous les modes** : une volée, c'est une à
+ * trois fléchettes, que l'on décompte un 501 ou que l'on remonte le plateau.
+ * Seule l'interprétation change, et elle appartient aux règles du mode.
+ */
+export type MatchEvent = MatchStarted | TourDuMondeStarted | VisitRecorded
 
 /**
  * Les conséquences déduites d'une volée. Elles ne sont pas persistées : l'UI

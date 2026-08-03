@@ -3,6 +3,8 @@ import { ArrowLeft, Check, Play, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { X01Config } from '@/core/domain/entities/Match'
+import { TourDuMondeConfig } from '@/core/domain/entities/TourDuMonde'
+import type { GameModeId } from '@/core/domain/services/gameModes'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
@@ -69,6 +71,59 @@ const Choix = <T extends string | number>({
   )
 }
 
+const MODES: readonly { readonly id: GameModeId; readonly libelle: string }[] = [
+  { id: 'X01', libelle: 'X01' },
+  { id: 'TOUR_DU_MONDE', libelle: 'Tour du monde' },
+]
+
+/**
+ * Le mode de jeu, en premier : c'est lui qui décide de tout le reste de
+ * l'écran, donc il se choisit avant.
+ */
+const ChoixMode = ({
+  valeur,
+  onChange,
+}: {
+  readonly valeur: GameModeId
+  readonly onChange: (mode: GameModeId) => void
+}) => {
+  const rang = Math.max(
+    MODES.findIndex((option) => option.id === valeur),
+    0,
+  )
+
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65">
+        Jeu
+      </legend>
+      <div className="relative grid grid-cols-2 rounded-xl border border-chene/60 bg-feutre/70 p-1">
+        <span
+          aria-hidden="true"
+          style={{
+            width: 'calc((100% - 0.5rem) / 2)',
+            transform: `translateX(${rang * 100}%)`,
+          }}
+          className="laiton-poli absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
+        />
+        {MODES.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            aria-pressed={option.id === valeur}
+            onClick={() => onChange(option.id)}
+            className={`relative z-10 min-h-12 rounded-lg font-score text-sm font-bold uppercase tracking-widest transition-colors duration-150 ${
+              option.id === valeur ? 'text-[#1a1206]' : 'text-craie/75'
+            }`}
+          >
+            {option.libelle}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
 /** Interrupteur de comptoir : la pastille de laiton glisse dans son rail. */
 const Bascule = ({
   libelle,
@@ -125,6 +180,7 @@ export const NouvellePartieEcran = () => {
 
   const [selection, setSelection] = useState<readonly PlayerId[]>([])
   const [nouveauNom, setNouveauNom] = useState('')
+  const [mode, setMode] = useState<GameModeId>('X01')
   const [score, setScore] = useState<(typeof SCORES)[number]>(501)
   const [bestOf, setBestOf] = useState<(typeof BEST_OF)[number]>(3)
   const [doubleOut, setDoubleOut] = useState(true)
@@ -159,15 +215,22 @@ export const NouvellePartieEcran = () => {
     setErreur(null)
     setOccupe(true)
     try {
-      const matchId = await services.startMatch.execute({
-        playerIds: selection,
-        config: X01Config.create({
-          startingScore: score,
-          legsToWin: X01Config.legsForBestOf(bestOf),
-          doubleOut,
-          doubleIn,
-        }),
-      })
+      const matchId =
+        mode === 'TOUR_DU_MONDE'
+          ? await services.playTourDuMonde.start({
+              playerIds: selection,
+              config: TourDuMondeConfig.create(),
+            })
+          : await services.startMatch.execute({
+              playerIds: selection,
+              config: X01Config.create({
+                startingScore: score,
+                legsToWin: X01Config.legsForBestOf(bestOf),
+                doubleOut,
+                doubleIn,
+              }),
+            })
+
       await queryClient.invalidateQueries({ queryKey: ['matchEnCours'] })
       navigate(`/partie/${matchId}`)
     } catch {
@@ -277,23 +340,42 @@ export const NouvellePartieEcran = () => {
       </Panneau>
 
       <Panneau aria-label="Règles" titre="Règles" contenuClassName="flex flex-col gap-4 p-3">
-        <Choix legende="Score de départ" valeurs={SCORES} valeur={score} onChange={setScore} />
-        <Choix legende="Best of (legs)" valeurs={BEST_OF} valeur={bestOf} onChange={setBestOf} />
+        <ChoixMode valeur={mode} onChange={setMode} />
 
-        <div className="flex flex-col gap-2">
-          <Bascule
-            libelle="Double out"
-            aide="Finir obligatoirement sur un double"
-            actif={doubleOut}
-            onChange={setDoubleOut}
-          />
-          <Bascule
-            libelle="Double in"
-            aide="Ne décompter qu’après un premier double"
-            actif={doubleIn}
-            onChange={setDoubleIn}
-          />
-        </div>
+        {/* Le Tour du monde n'a rien à régler : le parcours est le parcours. */}
+        {mode === 'TOUR_DU_MONDE' ? (
+          <p className="rounded-xl border border-chene/50 bg-feutre/60 px-4 py-3 text-sm text-craie/75">
+            On part du <strong className="text-craie">20</strong> et on descend jusqu’au 1, puis on
+            finit sur la <strong className="text-craie">bulle</strong>. Simple, double ou triple :
+            peu importe, il suffit de toucher le secteur. Quand quelqu’un boucle, le tour de table
+            se termine — c’est le nombre de fléchettes qui départage.
+          </p>
+        ) : (
+          <>
+            <Choix legende="Score de départ" valeurs={SCORES} valeur={score} onChange={setScore} />
+            <Choix
+              legende="Best of (legs)"
+              valeurs={BEST_OF}
+              valeur={bestOf}
+              onChange={setBestOf}
+            />
+
+            <div className="flex flex-col gap-2">
+              <Bascule
+                libelle="Double out"
+                aide="Finir obligatoirement sur un double"
+                actif={doubleOut}
+                onChange={setDoubleOut}
+              />
+              <Bascule
+                libelle="Double in"
+                aide="Ne décompter qu’après un premier double"
+                actif={doubleIn}
+                onChange={setDoubleIn}
+              />
+            </div>
+          </>
+        )}
       </Panneau>
 
       {erreur && <MessageErreur>{erreur}</MessageErreur>}
@@ -301,8 +383,14 @@ export const NouvellePartieEcran = () => {
       <div className="mt-auto flex flex-col gap-2 pt-1">
         <p className="flex items-center justify-center gap-2 text-center font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
           <Check aria-hidden="true" className="size-3.5" />
-          {score} · BO{bestOf} · {doubleOut ? 'double out' : 'sortie libre'}
-          {doubleIn && ' · double in'}
+          {mode === 'TOUR_DU_MONDE' ? (
+            'Tour du monde · 20 → bulle'
+          ) : (
+            <>
+              {score} · BO{bestOf} · {doubleOut ? 'double out' : 'sortie libre'}
+              {doubleIn && ' · double in'}
+            </>
+          )}
         </p>
 
         <Button

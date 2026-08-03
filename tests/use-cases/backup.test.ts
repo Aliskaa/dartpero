@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Services } from '@/composition/container'
+import type { X01Summary } from '@/core/application/ports/driving/MatchSummary'
 import { DomainError } from '@/core/domain/DomainError'
 import { X01Config } from '@/core/domain/entities/Match'
 import { Dart } from '@/core/domain/value-objects/Dart'
@@ -64,8 +65,12 @@ describe('Sauvegarde JSON', () => {
     // Les scores se rejouent depuis le journal restauré, pas depuis un cache.
     const historique = await neuf.getMatchHistory.execute()
     expect(historique).toHaveLength(1)
-    expect(historique[0]?.players[0]?.name).toBe('Kevin')
-    expect(historique[0]?.players[0]?.remaining).toBe(321)
+
+    const partie = historique[0]
+    expect(partie?.mode).toBe('X01')
+    const x01 = partie as X01Summary
+    expect(x01.players[0]?.name).toBe('Kevin')
+    expect(x01.players[0]?.remaining).toBe(321)
   })
 
   it('fusionne sans jamais effacer ce qui était déjà là', async () => {

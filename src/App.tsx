@@ -3,10 +3,9 @@ import { LayoutPrincipal } from '@/ui/composants/commun/LayoutPrincipal'
 import { AccueilEcran } from '@/ui/ecrans/AccueilEcran'
 import { HistoriqueEcran } from '@/ui/ecrans/HistoriqueEcran'
 import { JoueursEcran } from '@/ui/ecrans/JoueursEcran'
-import { MatchEcran } from '@/ui/ecrans/MatchEcran'
 import { NouvellePartieEcran } from '@/ui/ecrans/NouvellePartieEcran'
+import { PartieEcran, ResumePartieEcran } from '@/ui/ecrans/PartieEcran'
 import { ReglagesEcran } from '@/ui/ecrans/ReglagesEcran'
-import { ResumeEcran } from '@/ui/ecrans/ResumeEcran'
 import { StatistiquesEcran } from '@/ui/ecrans/StatistiquesEcran'
 
 /**
@@ -30,8 +29,9 @@ export default function App() {
       </Route>
 
       <Route path="/nouvelle-partie" element={<NouvellePartieEcran />} />
-      <Route path="/partie/:matchId" element={<MatchEcran />} />
-      <Route path="/partie/:matchId/resume" element={<ResumeEcran />} />
+      {/* Une seule URL par partie : c'est son mode qui décide de l'écran. */}
+      <Route path="/partie/:matchId" element={<PartieEcran />} />
+      <Route path="/partie/:matchId/resume" element={<ResumePartieEcran />} />
     </Routes>
   )
 }

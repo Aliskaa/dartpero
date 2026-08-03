@@ -1,4 +1,5 @@
 import { computeCareerStats } from '../../domain/services/careerStats'
+import { modeOf } from '../../domain/services/gameModes'
 import { computeMatchStats } from '../../domain/services/matchStats'
 import { X01Rules } from '../../domain/services/x01Rules'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
@@ -23,7 +24,12 @@ export class GetPlayerStatsUseCase implements GetPlayerStats {
   async execute(): Promise<readonly PlayerCareer[]> {
     const [records, profils] = await Promise.all([this.matches.listAll(), this.players.listAll()])
 
-    const stats = records.map((record) => computeMatchStats(X01Rules.project(record.events)))
+    // Moyenne 3 fléchettes, 180, pourcentage de doubles : ces mesures n'ont de
+    // sens qu'au X01. Une partie de Tour du monde ne les fausserait pas, elle
+    // n'y répondrait simplement pas — on l'écarte donc du cumul.
+    const stats = records
+      .filter((record) => modeOf(record.events) === 'X01')
+      .map((record) => computeMatchStats(X01Rules.project(record.events)))
     const carrieres = computeCareerStats(stats)
     const parId = new Map(profils.map((profil) => [profil.id, profil]))
 

@@ -9,12 +9,14 @@ import type { BuildVisitFromScore } from '@/core/application/ports/driving/Build
 import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
 import type { GetMatchHistory } from '@/core/application/ports/driving/GetMatchHistory'
+import type { GetMatchMode } from '@/core/application/ports/driving/GetMatchMode'
 import type { GetMatchState } from '@/core/application/ports/driving/GetMatchState'
 import type { GetMatchStats } from '@/core/application/ports/driving/GetMatchStats'
 import type { GetOngoingMatch } from '@/core/application/ports/driving/GetOngoingMatch'
 import type { GetPlayerStats } from '@/core/application/ports/driving/GetPlayerStats'
 import type { ManageBackup } from '@/core/application/ports/driving/ManageBackup'
 import type { ManagePlayers } from '@/core/application/ports/driving/ManagePlayers'
+import type { PlayTourDuMonde } from '@/core/application/ports/driving/PlayTourDuMonde'
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
@@ -23,12 +25,14 @@ import { BuildVisitFromScoreUseCase } from '@/core/application/use-cases/BuildVi
 import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseCase'
 import { GetCheckoutSuggestionUseCase } from '@/core/application/use-cases/GetCheckoutSuggestionUseCase'
 import { GetMatchHistoryUseCase } from '@/core/application/use-cases/GetMatchHistoryUseCase'
+import { GetMatchModeUseCase } from '@/core/application/use-cases/GetMatchModeUseCase'
 import { GetMatchStateUseCase } from '@/core/application/use-cases/GetMatchStateUseCase'
 import { GetMatchStatsUseCase } from '@/core/application/use-cases/GetMatchStatsUseCase'
 import { GetOngoingMatchUseCase } from '@/core/application/use-cases/GetOngoingMatchUseCase'
 import { GetPlayerStatsUseCase } from '@/core/application/use-cases/GetPlayerStatsUseCase'
 import { ManageBackupUseCase } from '@/core/application/use-cases/ManageBackupUseCase'
 import { ManagePlayersUseCase } from '@/core/application/use-cases/ManagePlayersUseCase'
+import { PlayTourDuMondeUseCase } from '@/core/application/use-cases/PlayTourDuMondeUseCase'
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
@@ -81,11 +85,14 @@ export type Services = {
   readonly getCheckoutSuggestion: GetCheckoutSuggestion
   readonly getMatchStats: GetMatchStats
   readonly getMatchHistory: GetMatchHistory
+  readonly getMatchMode: GetMatchMode
   readonly getOngoingMatch: GetOngoingMatch
   readonly getPlayerStats: GetPlayerStats
   readonly deleteMatch: DeleteMatch
   readonly managePlayers: ManagePlayers
   readonly manageBackup: ManageBackup
+  /** Le second mode de jeu. Voir la couture `GameModes` côté domaine. */
+  readonly playTourDuMonde: PlayTourDuMonde
   readonly previewVisit: PreviewVisit
   readonly buildVisitFromScore: BuildVisitFromScore
   readonly devices: Devices
@@ -105,11 +112,13 @@ export const createServices = ({
   getCheckoutSuggestion: new GetCheckoutSuggestionUseCase(),
   getMatchStats: new GetMatchStatsUseCase(matches),
   getMatchHistory: new GetMatchHistoryUseCase(matches, players),
+  getMatchMode: new GetMatchModeUseCase(matches),
   getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
   getPlayerStats: new GetPlayerStatsUseCase(matches, players),
   deleteMatch: new DeleteMatchUseCase(matches),
   managePlayers: new ManagePlayersUseCase(players, ids, clock),
   manageBackup: new ManageBackupUseCase(matches, players, clock),
+  playTourDuMonde: new PlayTourDuMondeUseCase(matches, players, clock, ids),
   previewVisit: new PreviewVisitUseCase(),
   buildVisitFromScore: new BuildVisitFromScoreUseCase(),
   devices,
