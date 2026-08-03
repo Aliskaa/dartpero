@@ -63,7 +63,7 @@ export const PaveFlechettes = ({
             type="button"
             disabled={desactive}
             onClick={() => onFlechette(Dart.of(numero, multiplicateur))}
-            className="touche chiffres relative min-h-[3.25rem] rounded-xl text-xl font-bold text-craie-vive"
+            className="touche chiffres relative min-h-[3.25rem] rounded-xl text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
           >
             {/* La valeur réelle n'apparaît que si elle diffère du numéro : en
                 simple elle serait du bruit, en triple elle évite la faute. */}
@@ -86,7 +86,7 @@ export const PaveFlechettes = ({
           disabled={desactive || bullInterdit}
           onClick={() => onFlechette(Dart.of('BULL', multiplicateur))}
           title={bullInterdit ? 'Il n’existe pas de triple bull' : undefined}
-          className="touche chiffres relative min-h-[3.25rem] rounded-xl border-vert-cible/60 text-lg font-bold text-craie-vive"
+          className="touche chiffres relative min-h-[3.25rem] rounded-xl border-vert-cible/60 text-lg font-bold text-craie-vive paysage:min-h-12"
         >
           {multiplicateur === 'DOUBLE' && (
             <span
@@ -104,7 +104,7 @@ export const PaveFlechettes = ({
           disabled={desactive}
           /* Une fléchette manquée n'a ni double ni triple : elle ignore la bascule. */
           onClick={() => onFlechette(Dart.miss())}
-          className="touche chiffres min-h-[3.25rem] rounded-xl text-lg font-bold text-craie/60"
+          className="touche chiffres min-h-[3.25rem] rounded-xl text-lg font-bold text-craie/60 paysage:min-h-12"
         >
           0
         </button>
@@ -116,6 +116,7 @@ export const PaveFlechettes = ({
           className={[
             'touche col-span-2 flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl',
             'border-chene font-score text-sm font-bold uppercase tracking-widest text-craie',
+            'paysage:min-h-12',
           ].join(' ')}
         >
           <Undo2 aria-hidden="true" className="size-4" />

@@ -1,6 +1,9 @@
 import { DomainError } from '../../domain/DomainError'
 import { Player } from '../../domain/entities/Player'
 import type { MatchEvent } from '../../domain/events/MatchEvent'
+import { CheckoutPracticeConfig } from '../../domain/games/checkout-practice/config'
+import { CricketConfig, type CricketVariant } from '../../domain/games/cricket/config'
+import { TourDuMondeConfig } from '../../domain/games/tour-du-monde/config'
 import { X01Config } from '../../domain/games/x01/config'
 import { Dart, type Multiplier, type Segment } from '../../domain/value-objects/Dart'
 import { MatchId, PlayerId } from '../../domain/value-objects/ids'
@@ -57,25 +60,53 @@ const versDart = (valeur: unknown): Dart => {
   return Dart.of(segment as Segment, multiplier as Multiplier)
 }
 
+const versSegment = (valeur: unknown): Segment => {
+  if (valeur === 'BULL' || valeur === 'MISS') return valeur
+  if (typeof valeur === 'number' && Number.isInteger(valeur) && valeur >= 1 && valeur <= 20) {
+    return valeur as Segment
+  }
+  throw new DomainError(`invalid segment: ${String(valeur)}`)
+}
+
+/** La partie commune à toutes les ouvertures : qui joue, et qui commence. */
+const versOuverture = (
+  valeur: Record<string, unknown>,
+  type: string,
+): { playerIds: readonly PlayerId[]; startingPlayerIndex: number } => {
+  const playerIds = liste(valeur.playerIds, 'playerIds').map((id) =>
+    PlayerId.of(texte(id, 'playerId')),
+  )
+  if (playerIds.length === 0) throw new DomainError(`${type} needs at least one player`)
+
+  const index = valeur.startingPlayerIndex
+  if (!Number.isInteger(index) || (index as number) < 0 || (index as number) >= playerIds.length) {
+    throw new DomainError(`invalid startingPlayerIndex: ${String(index)}`)
+  }
+
+  return { playerIds, startingPlayerIndex: index as number }
+}
+
+/**
+ * Les événements qui ouvrent une partie, un par mode.
+ *
+ * ⚠️ Un mode absent d'ici est un mode **impossible à réimporter** : sa
+ * sauvegarde partirait bien du téléphone mais serait refusée au retour, et le
+ * joueur perdrait ses parties en changeant d'appareil. Ajouter un mode, c'est
+ * donc aussi ajouter sa ligne ici.
+ */
+const OUVERTURES = [
+  'MatchStarted',
+  'TourDuMondeStarted',
+  'CricketStarted',
+  'CheckoutPracticeStarted',
+]
+
 const versEvenement = (valeur: unknown): MatchEvent => {
   if (!estObjet(valeur)) throw new DomainError('event must be an object')
 
+  const config = estObjet(valeur.config) ? valeur.config : {}
+
   if (valeur.type === 'MatchStarted') {
-    const config = estObjet(valeur.config) ? valeur.config : {}
-    const playerIds = liste(valeur.playerIds, 'playerIds').map((id) =>
-      PlayerId.of(texte(id, 'playerId')),
-    )
-    if (playerIds.length === 0) throw new DomainError('MatchStarted needs at least one player')
-
-    const index = valeur.startingPlayerIndex
-    if (
-      !Number.isInteger(index) ||
-      (index as number) < 0 ||
-      (index as number) >= playerIds.length
-    ) {
-      throw new DomainError(`invalid startingPlayerIndex: ${String(index)}`)
-    }
-
     return {
       type: 'MatchStarted',
       // `X01Config.create` valide le score de départ, les legs et les sets.
@@ -86,9 +117,50 @@ const versEvenement = (valeur: unknown): MatchEvent => {
         doubleIn: config.doubleIn as boolean | undefined,
         doubleOut: config.doubleOut as boolean | undefined,
       }),
-      playerIds,
-      startingPlayerIndex: index as number,
+      ...versOuverture(valeur, 'MatchStarted'),
     }
+  }
+
+  if (valeur.type === 'TourDuMondeStarted') {
+    return {
+      type: 'TourDuMondeStarted',
+      config: TourDuMondeConfig.create({
+        targets: liste(config.targets, 'config.targets').map(versSegment),
+      }),
+      ...versOuverture(valeur, 'TourDuMondeStarted'),
+    }
+  }
+
+  if (valeur.type === 'CricketStarted') {
+    return {
+      type: 'CricketStarted',
+      // `CricketConfig.create` refuse une cible en double et une variante inconnue.
+      config: CricketConfig.create({
+        targets: liste(config.targets, 'config.targets').map(versSegment),
+        variant: config.variant as CricketVariant | undefined,
+      }),
+      ...versOuverture(valeur, 'CricketStarted'),
+    }
+  }
+
+  if (valeur.type === 'CheckoutPracticeStarted') {
+    return {
+      type: 'CheckoutPracticeStarted',
+      config: CheckoutPracticeConfig.create({
+        rounds: config.rounds as number | undefined,
+        minTarget: config.minTarget as number | undefined,
+        maxTarget: config.maxTarget as number | undefined,
+      }),
+      ...versOuverture(valeur, 'CheckoutPracticeStarted'),
+    }
+  }
+
+  if (valeur.type === 'RoundStarted') {
+    const target = valeur.target
+    if (!Number.isInteger(target) || (target as number) < 2) {
+      throw new DomainError(`invalid round target: ${String(target)}`)
+    }
+    return { type: 'RoundStarted', target: target as number }
   }
 
   if (valeur.type === 'VisitRecorded') {
@@ -117,8 +189,9 @@ export const versMatchRecord = (valeur: unknown): MatchRecord => {
   if (!estObjet(valeur)) throw new DomainError('match must be an object')
 
   const events = liste(valeur.events, 'match.events').map(versEvenement)
-  if (events[0]?.type !== 'MatchStarted') {
-    throw new DomainError('a match journal must open with MatchStarted')
+  const ouverture = events[0]?.type
+  if (ouverture === undefined || !OUVERTURES.includes(ouverture)) {
+    throw new DomainError(`a match journal must open with one of: ${OUVERTURES.join(', ')}`)
   }
 
   return {

@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
 import { PaveRapide } from '@/ui/composants/x01/PaveRapide'
@@ -25,7 +26,7 @@ const EnTeteManche = ({
   readonly legNumber: number
   readonly setNumber: number
 }) => (
-  <header className="bois-veine flex items-center gap-3 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+  <>
     <Link
       to="/"
       aria-label="Retour à l’accueil"
@@ -56,7 +57,7 @@ const EnTeteManche = ({
         </span>
       )}
     </span>
-  </header>
+  </>
 )
 
 export const X01Ecran = () => {
@@ -118,38 +119,41 @@ export const X01Ecran = () => {
   }
 
   return (
-    <div className="feutre-tapis flex min-h-dvh flex-col">
-      <EnTeteManche config={state.config} legNumber={state.legNumber} setNumber={state.setNumber} />
-
-      <div className="flex flex-1 flex-col gap-3 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <Tableau
-          state={state}
-          resteAffiche={match.resteAffiche}
-          dartsEnCours={match.dartsEnCours}
-          suggestion={match.suggestion}
-          profils={profils}
-          moyennes={moyennes}
+    <DispositionPartie
+      enTete={
+        <EnTeteManche
+          config={state.config}
+          legNumber={state.legNumber}
+          setNumber={state.setNumber}
         />
+      }
+      saisie={
+        rapide ? (
+          <PaveRapide
+            reste={joueurCourant.remaining}
+            onScore={(total, dartsUsed) => void match.enregistrerScore(total, dartsUsed)}
+            {...actions}
+          />
+        ) : (
+          <PaveFlechettes
+            multiplicateur={match.multiplicateur}
+            onMultiplicateur={match.setMultiplicateur}
+            onFlechette={match.ajouterFlechette}
+            {...actions}
+          />
+        )
+      }
+    >
+      <Tableau
+        state={state}
+        resteAffiche={match.resteAffiche}
+        dartsEnCours={match.dartsEnCours}
+        suggestion={match.suggestion}
+        profils={profils}
+        moyennes={moyennes}
+      />
 
-        {match.erreur && <MessageErreur>{match.erreur}</MessageErreur>}
-
-        <div className="mt-auto pt-2">
-          {rapide ? (
-            <PaveRapide
-              reste={joueurCourant.remaining}
-              onScore={(total, dartsUsed) => void match.enregistrerScore(total, dartsUsed)}
-              {...actions}
-            />
-          ) : (
-            <PaveFlechettes
-              multiplicateur={match.multiplicateur}
-              onMultiplicateur={match.setMultiplicateur}
-              onFlechette={match.ajouterFlechette}
-              {...actions}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+      {match.erreur && <MessageErreur>{match.erreur}</MessageErreur>}
+    </DispositionPartie>
   )
 }

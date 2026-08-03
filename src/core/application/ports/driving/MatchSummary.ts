@@ -1,4 +1,5 @@
 import type { CheckoutPracticeConfig } from '../../../domain/games/checkout-practice/config'
+import type { CricketConfig } from '../../../domain/games/cricket/config'
 import type { TourDuMondeConfig } from '../../../domain/games/tour-du-monde/config'
 import type { X01Config } from '../../../domain/games/x01/config'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
@@ -19,6 +20,13 @@ export type TourDuMondeSummaryPlayer = SummaryPlayer & {
   /** Cibles validées, sur `targetsTotal`. */
   readonly targetIndex: number
   readonly finishedInDarts: number | null
+}
+
+export type CricketSummaryPlayer = SummaryPlayer & {
+  /** Cibles fermées, sur `targetsTotal`. Le détail marque par marque n'a pas sa
+   * place dans un aperçu : ce qu'on veut savoir, c'est qui est près de finir. */
+  readonly closedTargets: number
+  readonly score: number
 }
 
 type BaseSummary = {
@@ -44,6 +52,13 @@ export type TourDuMondeSummary = BaseSummary & {
   readonly players: readonly TourDuMondeSummaryPlayer[]
 }
 
+export type CricketSummary = BaseSummary & {
+  readonly mode: 'CRICKET'
+  readonly config: CricketConfig
+  readonly targetsTotal: number
+  readonly players: readonly CricketSummaryPlayer[]
+}
+
 /**
  * Un exercice solo : pas d'adversaire, donc pas de vainqueur — `winnerId` y
  * vaut toujours `null`. Ce qui compte, c'est le taux de réussite.
@@ -66,4 +81,8 @@ export type CheckoutPracticeSummary = BaseSummary & {
  * champs seraient vides selon le mode, chacun porte exactement ce qu'il a — et
  * TypeScript force l'UI à traiter les deux cas.
  */
-export type MatchSummary = X01Summary | TourDuMondeSummary | CheckoutPracticeSummary
+export type MatchSummary =
+  | X01Summary
+  | TourDuMondeSummary
+  | CricketSummary
+  | CheckoutPracticeSummary

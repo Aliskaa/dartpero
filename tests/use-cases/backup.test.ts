@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Services } from '@/composition/container'
 import type { X01Summary } from '@/core/application/ports/driving/MatchSummary'
 import { DomainError } from '@/core/domain/DomainError'
+import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
+import { CricketConfig } from '@/core/domain/games/cricket/config'
+import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { fakeServices } from '../fakes'
@@ -71,6 +74,51 @@ describe('Sauvegarde JSON', () => {
     const x01 = partie as X01Summary
     expect(x01.players[0]?.name).toBe('Kevin')
     expect(x01.players[0]?.remaining).toBe(321)
+  })
+
+  /**
+   * ⚠️ Le piège : la sauvegarde emporte **toutes** les parties, mais seul le
+   * X01 savait revenir. Une partie d'un autre mode repartait bien du téléphone
+   * et était refusée au retour — on ne s'en apercevait qu'en changeant
+   * d'appareil, c'est-à-dire au pire moment.
+   */
+  it('restaure aussi les parties qui ne sont pas du X01', async () => {
+    const kevin = await services.managePlayers.create('Kevin')
+    const julien = await services.managePlayers.create('Julien')
+
+    const cricket = await services.playCricket.start({
+      playerIds: [kevin.id, julien.id],
+      config: CricketConfig.create({ variant: 'CUT_THROAT' }),
+    })
+    await services.playCricket.recordVisit(cricket, [Dart.triple(20), Dart.triple(20)])
+
+    const tour = await services.playTourDuMonde.start({
+      playerIds: [kevin.id, julien.id],
+      config: TourDuMondeConfig.create(),
+    })
+    await services.playTourDuMonde.recordVisit(tour, [Dart.single(20)])
+
+    const entrainement = await services.playCheckoutPractice.start({
+      playerId: kevin.id,
+      config: CheckoutPracticeConfig.create({ rounds: 2 }),
+    })
+    await services.playCheckoutPractice.recordVisit(entrainement, [Dart.miss()])
+
+    const neuf = fakeServices().services
+    const rapport = await neuf.manageBackup.importFrom(
+      JSON.parse(JSON.stringify(await services.manageBackup.exportAll())),
+    )
+
+    expect(rapport.matchesImported).toBe(3)
+    expect(rapport.matchesSkipped).toBe(0)
+
+    const modes = (await neuf.getMatchHistory.execute()).map((partie) => partie.mode).sort()
+    expect(modes).toEqual(['CHECKOUT_PRACTICE', 'CRICKET', 'TOUR_DU_MONDE'])
+
+    // La variante, elle aussi, doit survivre au voyage : elle décide du vainqueur.
+    const restaure = await neuf.playCricket.getState(cricket)
+    expect(restaure.config.variant).toBe('CUT_THROAT')
+    expect(restaure.players[1]?.score).toBe(60)
   })
 
   it('fusionne sans jamais effacer ce qui était déjà là', async () => {

@@ -28,7 +28,7 @@ export const PaveCibles = ({ onFlechette, onAnnuler, peutAnnuler, desactive }: P
           type="button"
           disabled={desactive}
           onClick={() => onFlechette(Dart.single(numero))}
-          className="touche chiffres min-h-[3.25rem] rounded-xl text-xl font-bold text-craie-vive"
+          className="touche chiffres min-h-[3.25rem] rounded-xl text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
         >
           {numero}
         </button>
@@ -43,6 +43,7 @@ export const PaveCibles = ({ onFlechette, onAnnuler, peutAnnuler, desactive }: P
         className={[
           'touche col-span-2 min-h-[3.25rem] rounded-xl border-rouge-cible/70 bg-rouge-cible/25',
           'font-score text-base font-bold uppercase tracking-widest text-craie-vive',
+          'paysage:min-h-12',
         ].join(' ')}
       >
         Bulle
@@ -52,7 +53,7 @@ export const PaveCibles = ({ onFlechette, onAnnuler, peutAnnuler, desactive }: P
         type="button"
         disabled={desactive}
         onClick={() => onFlechette(Dart.miss())}
-        className="touche chiffres min-h-[3.25rem] rounded-xl text-lg font-bold text-craie/60"
+        className="touche chiffres min-h-[3.25rem] rounded-xl text-lg font-bold text-craie/60 paysage:min-h-12"
       >
         0
       </button>
@@ -62,7 +63,7 @@ export const PaveCibles = ({ onFlechette, onAnnuler, peutAnnuler, desactive }: P
         disabled={desactive || !peutAnnuler}
         onClick={onAnnuler}
         aria-label="Annuler"
-        className="touche flex min-h-[3.25rem] items-center justify-center rounded-xl border-chene text-craie"
+        className="touche flex min-h-[3.25rem] items-center justify-center rounded-xl border-chene text-craie paysage:min-h-12"
       >
         <Undo2 aria-hidden="true" className="size-5" />
       </button>

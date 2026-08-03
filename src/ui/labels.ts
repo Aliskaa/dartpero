@@ -31,6 +31,38 @@ export const annonceTour = (nom: string): string => `À toi, ${nom}`
 
 export const annonceCible = (libelle: string): string => `Cible : ${libelle}`
 
+/**
+ * Ce que la voix dit d'une volée de Cricket — court, comme au X01.
+ *
+ * On annonce en priorité les points, parce que c'est ce qui change le
+ * classement ; à défaut, la fermeture, qui est l'autre chose qu'on attend. Une
+ * volée blanche ne dit rien : la voix n'est pas là pour commenter les ratés.
+ * En cut-throat on précise « pour les autres », sinon le joueur croit avoir
+ * marqué alors qu'il vient d'offrir des points.
+ */
+export const annonceCricket = ({
+  points,
+  fermees,
+  gagnee,
+  cutThroat,
+}: {
+  readonly points: number
+  readonly fermees: number
+  readonly gagnee: boolean
+  readonly cutThroat: boolean
+}): string | null => {
+  if (gagnee) return 'Partie gagnée !'
+  if (points > 0) return cutThroat ? `${points} pour les autres` : String(points)
+  if (fermees > 0) return fermees > 1 ? `${fermees} cibles fermées` : 'Cible fermée'
+  return null
+}
+
+/** Le nom de la variante, à l'écran. Le domaine ne connaît que `CUT_THROAT`. */
+export const LIBELLE_VARIANTE_CRICKET: Record<'STANDARD' | 'CUT_THROAT', string> = {
+  STANDARD: 'Standard',
+  CUT_THROAT: 'Cut-throat',
+}
+
 export const JOUEUR_SUPPRIME = 'Joueur supprimé'
 
 export const nomJoueur = (nom: string | null): string => nom ?? JOUEUR_SUPPRIME

@@ -1,4 +1,5 @@
 import { GameModes } from '../../domain/games'
+import { MARKS_TO_CLOSE } from '../../domain/games/cricket/config'
 import type { PlayerId } from '../../domain/value-objects/ids'
 import type { MatchRecord } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
@@ -43,6 +44,21 @@ export const summarize = (
       roundsWon: state.roundsWon,
       roundsPlayed: state.roundsPlayed,
       successPercent: state.successPercent,
+    }
+  }
+
+  if (state.mode === 'CRICKET') {
+    return {
+      ...commun,
+      mode: 'CRICKET',
+      config: state.config,
+      targetsTotal: state.config.targets.length,
+      players: state.players.map((player) => ({
+        playerId: player.playerId,
+        name: names.get(player.playerId) ?? null,
+        closedTargets: player.marks.filter((marks) => marks >= MARKS_TO_CLOSE).length,
+        score: player.score,
+      })),
     }
   }
 

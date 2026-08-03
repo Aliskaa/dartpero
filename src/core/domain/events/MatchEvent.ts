@@ -1,4 +1,5 @@
 import type { CheckoutPracticeConfig } from '../games/checkout-practice/config'
+import type { CricketConfig } from '../games/cricket/config'
 import type { TourDuMondeConfig } from '../games/tour-du-monde/config'
 import type { X01Config } from '../games/x01/config'
 import type { Dart } from '../value-objects/Dart'
@@ -56,6 +57,17 @@ export type TourDuMondeStarted = {
   readonly startingPlayerIndex: number
 }
 
+/** L'ouverture d'une partie de Cricket. La variante (standard ou cut-throat)
+ * voyage dans la configuration : elle décide du vainqueur, elle appartient donc
+ * au journal et non à un réglage d'affichage. */
+export type CricketStarted = {
+  readonly type: 'CricketStarted'
+  readonly config: CricketConfig
+  readonly playerIds: readonly PlayerId[]
+  /** Qui commence la partie (index dans `playerIds`). */
+  readonly startingPlayerIndex: number
+}
+
 /** L'ouverture d'une session d'entraînement au checkout (solo). */
 export type CheckoutPracticeStarted = {
   readonly type: 'CheckoutPracticeStarted'
@@ -91,6 +103,7 @@ export type VisitRecorded = {
 export type MatchEvent =
   | X01Started
   | TourDuMondeStarted
+  | CricketStarted
   | CheckoutPracticeStarted
   | RoundStarted
   | VisitRecorded

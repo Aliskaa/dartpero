@@ -3,6 +3,11 @@ import { ArrowLeft, Check, Play, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import type { GameModeId } from '@/core/domain/games'
+import {
+  CRICKET_VARIANTS,
+  CricketConfig,
+  type CricketVariant,
+} from '@/core/domain/games/cricket/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
@@ -12,6 +17,7 @@ import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { Enseigne } from '@/ui/composants/commun/Logo'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { CLE_JOUEURS, useJoueurs } from '@/ui/hooks/useJoueurs'
+import { LIBELLE_VARIANTE_CRICKET } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 const SCORES = [301, 501, 701] as const
@@ -28,11 +34,14 @@ const Choix = <T extends string | number>({
   valeurs,
   valeur,
   onChange,
+  libelle = (option) => String(option),
 }: {
   readonly legende: string
   readonly valeurs: readonly T[]
   readonly valeur: T
   readonly onChange: (valeur: T) => void
+  /** Par défaut la valeur elle-même : les scores et les best-of se lisent tels quels. */
+  readonly libelle?: (valeur: T) => string
 }) => {
   const rang = Math.max(valeurs.indexOf(valeur), 0)
 
@@ -63,7 +72,7 @@ const Choix = <T extends string | number>({
               option === valeur ? 'text-[#1a1206]' : 'text-craie/75'
             }`}
           >
-            {option}
+            {libelle(option)}
           </button>
         ))}
       </div>
@@ -74,6 +83,7 @@ const Choix = <T extends string | number>({
 const MODES: readonly { readonly id: GameModeId; readonly libelle: string }[] = [
   { id: 'X01', libelle: 'X01' },
   { id: 'TOUR_DU_MONDE', libelle: 'Tour du monde' },
+  { id: 'CRICKET', libelle: 'Cricket' },
 ]
 
 /**
@@ -97,11 +107,14 @@ const ChoixMode = ({
       <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65">
         Jeu
       </legend>
-      <div className="relative grid grid-cols-2 rounded-xl border border-chene/60 bg-feutre/70 p-1">
+      <div
+        className="relative grid rounded-xl border border-chene/60 bg-feutre/70 p-1"
+        style={{ gridTemplateColumns: `repeat(${MODES.length}, minmax(0, 1fr))` }}
+      >
         <span
           aria-hidden="true"
           style={{
-            width: 'calc((100% - 0.5rem) / 2)',
+            width: `calc((100% - 0.5rem) / ${MODES.length})`,
             transform: `translateX(${rang * 100}%)`,
           }}
           className="laiton-poli absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
@@ -112,7 +125,7 @@ const ChoixMode = ({
             type="button"
             aria-pressed={option.id === valeur}
             onClick={() => onChange(option.id)}
-            className={`relative z-10 min-h-12 rounded-lg font-score text-sm font-bold uppercase tracking-widest transition-colors duration-150 ${
+            className={`relative z-10 min-h-12 rounded-lg px-1 font-score text-[0.7rem] font-bold uppercase leading-tight tracking-wide transition-colors duration-150 ${
               option.id === valeur ? 'text-[#1a1206]' : 'text-craie/75'
             }`}
           >
@@ -181,6 +194,7 @@ export const NouvellePartieEcran = () => {
   const [selection, setSelection] = useState<readonly PlayerId[]>([])
   const [nouveauNom, setNouveauNom] = useState('')
   const [mode, setMode] = useState<GameModeId>('X01')
+  const [variante, setVariante] = useState<CricketVariant>('STANDARD')
   const [score, setScore] = useState<(typeof SCORES)[number]>(501)
   const [bestOf, setBestOf] = useState<(typeof BEST_OF)[number]>(3)
   const [doubleOut, setDoubleOut] = useState(true)
@@ -211,26 +225,37 @@ export const NouvellePartieEcran = () => {
     }
   }
 
+  /** Un mode, un use case : l'aiguillage de la couture `GameMode`, côté départ. */
+  const demarrer = () => {
+    switch (mode) {
+      case 'TOUR_DU_MONDE':
+        return services.playTourDuMonde.start({
+          playerIds: selection,
+          config: TourDuMondeConfig.create(),
+        })
+      case 'CRICKET':
+        return services.playCricket.start({
+          playerIds: selection,
+          config: CricketConfig.create({ variant: variante }),
+        })
+      default:
+        return services.startMatch.execute({
+          playerIds: selection,
+          config: X01Config.create({
+            startingScore: score,
+            legsToWin: X01Config.legsForBestOf(bestOf),
+            doubleOut,
+            doubleIn,
+          }),
+        })
+    }
+  }
+
   const commencer = async () => {
     setErreur(null)
     setOccupe(true)
     try {
-      const matchId =
-        mode === 'TOUR_DU_MONDE'
-          ? await services.playTourDuMonde.start({
-              playerIds: selection,
-              config: TourDuMondeConfig.create(),
-            })
-          : await services.startMatch.execute({
-              playerIds: selection,
-              config: X01Config.create({
-                startingScore: score,
-                legsToWin: X01Config.legsForBestOf(bestOf),
-                doubleOut,
-                doubleIn,
-              }),
-            })
-
+      const matchId = await demarrer()
       await queryClient.invalidateQueries({ queryKey: ['matchEnCours'] })
       navigate(`/partie/${matchId}`)
     } catch {
@@ -350,6 +375,26 @@ export const NouvellePartieEcran = () => {
             peu importe, il suffit de toucher le secteur. Quand quelqu’un boucle, le tour de table
             se termine — c’est le nombre de fléchettes qui départage.
           </p>
+        ) : mode === 'CRICKET' ? (
+          <>
+            <Choix
+              legende="Comptage"
+              valeurs={CRICKET_VARIANTS}
+              valeur={variante}
+              onChange={setVariante}
+              libelle={(option) => LIBELLE_VARIANTE_CRICKET[option]}
+            />
+
+            <p className="rounded-xl border border-chene/50 bg-feutre/60 px-4 py-3 text-sm text-craie/75">
+              Sept cibles à fermer en trois touches : <strong className="text-craie">20</strong> à{' '}
+              <strong className="text-craie">15</strong> et la{' '}
+              <strong className="text-craie">bulle</strong>. Une cible fermée chez soi mais pas chez
+              les autres rapporte des points ;{' '}
+              {variante === 'CUT_THROAT'
+                ? 'en cut-throat ils sont infligés aux adversaires, et le plus PETIT score gagne.'
+                : 'gagne celui qui ferme tout sans être derrière au score.'}
+            </p>
+          </>
         ) : (
           <>
             <Choix legende="Score de départ" valeurs={SCORES} valeur={score} onChange={setScore} />
@@ -385,6 +430,8 @@ export const NouvellePartieEcran = () => {
           <Check aria-hidden="true" className="size-3.5" />
           {mode === 'TOUR_DU_MONDE' ? (
             'Tour du monde · 20 → bulle'
+          ) : mode === 'CRICKET' ? (
+            `Cricket ${LIBELLE_VARIANTE_CRICKET[variante]} · 20 → 15 · bulle`
           ) : (
             <>
               {score} · BO{bestOf} · {doubleOut ? 'double out' : 'sortie libre'}

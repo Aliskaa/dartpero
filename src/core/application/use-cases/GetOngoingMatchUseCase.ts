@@ -1,4 +1,4 @@
-import { X01Rules } from '../../domain/games/x01/rules'
+import { GameModes } from '../../domain/games'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
 import type { GetOngoingMatch } from '../ports/driving/GetOngoingMatch'
@@ -16,7 +16,11 @@ export class GetOngoingMatchUseCase implements GetOngoingMatch {
 
   async execute(): Promise<MatchSummary | null> {
     const records = await this.matches.listRecent(PROFONDEUR)
-    const encours = records.find((record) => !X01Rules.isFinished(X01Rules.project(record.events)))
+    // ⚠️ Via la couture, jamais via `X01Rules` : une partie d'un autre mode
+    // n'est pas projetable en X01, et l'accueil planterait à la reprise.
+    const encours = records.find(
+      (record) => !GameModes.isFinished(GameModes.project(record.events)),
+    )
     if (!encours) return null
 
     return summarize(encours, await nameIndex(this.players))

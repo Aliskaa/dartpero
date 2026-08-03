@@ -62,7 +62,7 @@ export const PaveRapide = ({
       <div
         className={[
           'flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4',
-          'transition-colors duration-150',
+          'transition-colors duration-150 paysage:min-h-11',
           bust
             ? 'border-rouge-cible/70 bg-rouge-cible/15'
             : sortie

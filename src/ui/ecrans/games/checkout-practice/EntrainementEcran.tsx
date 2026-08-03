@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { Cartouche } from '@/ui/composants/checkout-practice/Cartouche'
+import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
@@ -54,52 +55,51 @@ export const EntrainementEcran = () => {
       : null
 
   return (
-    <div className="feutre-tapis flex min-h-dvh flex-col">
-      <header className="bois-veine flex items-center gap-3 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <Link
-          to="/"
-          aria-label="Retour à l’accueil"
-          className="grave -ml-1 flex size-10 shrink-0 items-center justify-center rounded-lg text-craie/80 active:bg-black/25"
-        >
-          <ArrowLeft aria-hidden="true" className="size-5" />
-        </Link>
+    <DispositionPartie
+      enTete={
+        <>
+          <Link
+            to="/"
+            aria-label="Retour à l’accueil"
+            className="grave -ml-1 flex size-10 shrink-0 items-center justify-center rounded-lg text-craie/80 active:bg-black/25"
+          >
+            <ArrowLeft aria-hidden="true" className="size-5" />
+          </Link>
 
-        <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
-          <span className="font-bold text-laiton-clair">Entraînement</span>
-          <span aria-hidden="true" className="text-craie/25">
-            |
-          </span>
-          <span>Checkout</span>
-        </p>
-      </header>
-
-      <div className="flex flex-1 flex-col gap-3 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <Cartouche
-          cible={session.cible}
-          resteAffiche={session.resteAffiche}
-          suggestion={suggestion}
-          dartsEnCours={session.dartsEnCours}
-          manche={Math.min(state.roundsPlayed + 1, state.config.rounds)}
-          total={state.config.rounds}
-          reussies={state.roundsWon}
+          <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
+            <span className="font-bold text-laiton-clair">Entraînement</span>
+            <span aria-hidden="true" className="text-craie/25">
+              |
+            </span>
+            <span>Checkout</span>
+          </p>
+        </>
+      }
+      saisie={
+        /* Le même pavé qu'au X01 : on s'entraîne à sortir, donc on saisit
+           fléchette par fléchette. Pas de mode rapide, il n'aurait rien à
+           accélérer sur une manche d'une seule volée. */
+        <PaveFlechettes
+          multiplicateur={session.multiplicateur}
+          onMultiplicateur={session.setMultiplicateur}
+          onFlechette={session.ajouterFlechette}
+          onAnnuler={() => void session.annuler()}
+          peutAnnuler={session.peutAnnuler}
+          desactive={session.occupe}
         />
+      }
+    >
+      <Cartouche
+        cible={session.cible}
+        resteAffiche={session.resteAffiche}
+        suggestion={suggestion}
+        dartsEnCours={session.dartsEnCours}
+        manche={Math.min(state.roundsPlayed + 1, state.config.rounds)}
+        total={state.config.rounds}
+        reussies={state.roundsWon}
+      />
 
-        {session.erreur && <MessageErreur>{session.erreur}</MessageErreur>}
-
-        <div className="mt-auto pt-2">
-          {/* Le même pavé qu'au X01 : on s'entraîne à sortir, donc on saisit
-              fléchette par fléchette. Pas de mode rapide, il n'aurait rien à
-              accélérer sur une manche d'une seule volée. */}
-          <PaveFlechettes
-            multiplicateur={session.multiplicateur}
-            onMultiplicateur={session.setMultiplicateur}
-            onFlechette={session.ajouterFlechette}
-            onAnnuler={() => void session.annuler()}
-            peutAnnuler={session.peutAnnuler}
-            desactive={session.occupe}
-          />
-        </div>
-      </div>
-    </div>
+      {session.erreur && <MessageErreur>{session.erreur}</MessageErreur>}
+    </DispositionPartie>
   )
 }

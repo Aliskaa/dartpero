@@ -5,6 +5,8 @@ import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { useServices } from '@/ui/providers/ServicesProvider'
 import { EntrainementEcran } from './checkout-practice/EntrainementEcran'
 import { ResumeEntrainementEcran } from './checkout-practice/ResumeEntrainementEcran'
+import { CricketEcran } from './cricket/CricketEcran'
+import { ResumeCricketEcran } from './cricket/ResumeCricketEcran'
 import { ResumeTourDuMondeEcran } from './tour-du-monde/ResumeTourDuMondeEcran'
 import { TourDuMondeEcran } from './tour-du-monde/TourDuMondeEcran'
 import { ResumeX01Ecran } from './x01/ResumeX01Ecran'
@@ -34,11 +36,13 @@ const Aiguillage = ({
   matchId,
   x01,
   tourDuMonde,
+  cricket,
   entrainement,
 }: {
   readonly matchId: MatchId
   readonly x01: React.ReactNode
   readonly tourDuMonde: React.ReactNode
+  readonly cricket: React.ReactNode
   readonly entrainement: React.ReactNode
 }) => {
   const mode = useMode(matchId)
@@ -63,6 +67,8 @@ const Aiguillage = ({
   switch (mode.data) {
     case 'TOUR_DU_MONDE':
       return <>{tourDuMonde}</>
+    case 'CRICKET':
+      return <>{cricket}</>
     case 'CHECKOUT_PRACTICE':
       return <>{entrainement}</>
     default:
@@ -77,6 +83,7 @@ export const PartieEcran = () => {
       matchId={(matchId ?? '') as MatchId}
       x01={<X01Ecran />}
       tourDuMonde={<TourDuMondeEcran />}
+      cricket={<CricketEcran />}
       entrainement={<EntrainementEcran />}
     />
   )
@@ -89,6 +96,7 @@ export const ResumePartieEcran = () => {
       matchId={(matchId ?? '') as MatchId}
       x01={<ResumeX01Ecran />}
       tourDuMonde={<ResumeTourDuMondeEcran />}
+      cricket={<ResumeCricketEcran />}
       entrainement={<ResumeEntrainementEcran />}
     />
   )

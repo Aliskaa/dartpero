@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Le téléphone couché pendant une partie : deux colonnes plutôt qu'une.
+   La condition porte sur la HAUTEUR autant que sur l'orientation — ce qui
+   manque en paysage, c'est la hauteur. Une tablette (ou un navigateur de
+   bureau), qui en a de reste, garde la disposition normale. */
+@custom-variant paysage (@media (orientation: landscape) and (max-height: 34rem));
+
 /* ------------------------------------------------------------------
    Charte « pub anglais / oche » — source de vérité : CLAUDE.md
    Principe : le décor est un pub, le tableau reste un tableau.

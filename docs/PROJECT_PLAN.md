@@ -9,6 +9,28 @@ validé.
 
 ---
 
+## 0. Où l'on en est
+
+**Lots 0 à 5c livrés**, app déployée sur https://dartpero.web.app. **248 tests verts**, `lint`
+et `typecheck` verts.
+
+Ce qu'il reste, par ordre de ce qui coûterait le plus cher à découvrir tard :
+
+1. **La validation sur vrai matériel** — le seul critère que les tests ne couvrent pas :
+   lisibilité des scores à 3 mètres dans un garage, confort des cibles au pouce debout, tenue
+   du wake lock sur une partie entière, **la bascule paysage sur un vrai téléphone couché**, et
+   un passage sur un **vrai iPhone** (installation par Safari « Ajouter à l'écran d'accueil »,
+   safe-area, disponibilité d'une voix française).
+2. **Le lot 5b, à finir ou à réduire** : un seul exercice solo au lieu de deux, et aucun suivi
+   de progression (voir le lot 5b).
+3. **Deux écrans du plan jamais faits** — `/historique/:id` et `/joueurs/:id` — à implémenter
+   ou à retirer de ce document (voir § 3).
+4. **Les décisions ouvertes** listées dans `CLAUDE.md` : les jeux fun restants (Killer,
+   Shanghai, Around the Clock), sync cloud (lot 6), i18n. Aucune n'est bloquante — le mode
+   paysage et le Cricket sont tranchés et livrés au lot 5c.
+
+---
+
 ## 1. Modèle de domaine
 
 Tout ce qui suit est **pur** : aucun import de React, Dexie, ni API navigateur. Pas de
@@ -40,14 +62,26 @@ modélisée explicitement, car elle compte dans la moyenne et dans les tentative
 
 Le match **est** une liste d'événements ; l'état affiché en est la **projection**.
 
-**Le journal ne contient que des faits bruts** — décision prise au lot 1 :
+**Le journal ne contient que des faits bruts** — décision prise au lot 1, étendue aux autres
+modes au lot 5 :
 
 ```
-MatchStarted   { config, playerIds[], startingPlayerIndex }
-VisitRecorded  { darts[] }
+X01Started                { config, playerIds[], startingPlayerIndex }
+TourDuMondeStarted        { config, playerIds[], startingPlayerIndex }
+CricketStarted            { config, playerIds[], startingPlayerIndex }
+CheckoutPracticeStarted   { config, playerIds[], startingPlayerIndex }
+RoundStarted              { target }          ← entraînement : le tirage est STOCKÉ
+VisitRecorded             { darts[] }         ← partagé par tous les modes
 ```
 
-Tout le reste est **déduit** et exposé en `MatchMilestone`, jamais persisté :
+⚠️ **Le mode se lit sur le premier événement du journal**, via un événement d'ouverture qui lui
+est propre — jamais via un champ `mode`. C'est ce qui rend les parties d'avant le lot 5a
+rejouables pour toujours en X01, sans migration.
+⚠️ Le type s'appelle `X01Started` mais son discriminant vaut toujours **`'MatchStarted'`** :
+cette chaîne est une donnée persistée, présente dans IndexedDB et dans les sauvegardes JSON
+déjà exportées. On corrige le nom du type, jamais la valeur sur le disque.
+
+Tout le reste est **déduit** et exposé en `X01Milestone`, jamais persisté :
 
 ```
 LegWon         { playerId, legNumber, dartsUsed }
@@ -70,13 +104,28 @@ Bénéfices directs :
 
 ### 1.4 Services purs
 
+**Transverses** (`domain/services/`) — ils n'appartiennent à aucun mode :
+
 | Service | Rôle |
 | --- | --- |
-| `x01Rules.applyVisit(state, darts)` | Applique une volée : décompte, détecte **bust** (reste < 0, reste == 1, reste == 0 sans double) et **checkout**. |
-| `x01Rules.projectMatch(events)` | Rejoue les événements → état courant (scores restants, joueur actif, legs/sets gagnés). |
-| `checkout.suggest(reste, dartsRestantes)` | Chemin conseillé. Retourne **« pas de finish »** sur les bogey numbers **169, 168, 166, 165, 163, 162, 159** et au-dessus de 170. |
-| `matchStats.compute(events)` | Moyenne 3 fléchettes, first 9, % doubles, 180/140+/100+/60+, meilleur leg, plus haut checkout. |
-| `gameModes/` | Couture *Strategy* — **pas encore créée** : X01 est le seul mode de la v1, on ne généralise qu'avec un 2ᵉ mode réel (lot 5). |
+| `resolveVisit(...)` | Juge une volée : décompte, détecte **bust** (reste < 0, reste == 1, reste == 0 sans double) et **checkout**. Ne dépend que de `{ doubleIn, doubleOut }`. |
+| `suggestCheckout(reste, dartsRestantes)` | Chemin conseillé. Retourne **« pas de finish »** sur les bogey numbers **169, 168, 166, 165, 163, 162, 159** et au-dessus de 170. |
+| `dartSearch` | La recherche de routes dont vivent les checkouts, les restes jouables de l'entraînement et les totaux impossibles du mode rapide — aucune liste codée en dur. |
+
+⚠️ `resolveVisit` et `suggestCheckout` étaient au X01 jusqu'au lot 5b ; ils en sont sortis
+parce qu'un mode n'a pas le droit d'en importer un autre. L'entraînement juge donc une manche
+avec **exactement la même fonction** que le X01 — une divergence sur la règle de bust serait
+le pire bug possible.
+
+**Par mode** (`domain/games/<mode>/`) :
+
+| Service | Rôle |
+| --- | --- |
+| `x01Rules.applyVisit` / `.project` | Applique une volée, rejoue les événements → état courant (scores restants, joueur actif, legs/sets gagnés). |
+| `computeX01Stats(events)` | Moyenne 3 fléchettes, first 9, % doubles, 180/140+/100+/60+, meilleur leg, plus haut checkout. |
+| `x01/career.ts` | Cumul de carrière depuis les **totaux bruts** (jamais une moyenne de moyennes). |
+| `tourDuMondeRules` · `cricketRules` · `checkoutPracticeRules` | Idem pour les trois autres modes. |
+| `games/index.ts` | La couture `GameMode` — **écrite au lot 5a**, quand un 2ᵉ mode réel est arrivé : `GameModeId`, `AnyMatchState`, et l'aiguillage sur le discriminant `mode`. Seul ce fichier connaît tous les modes. |
 
 ⚠️ Rappel de spécification : dans la moyenne, une volée *busted* marque **0 point** mais ses
 fléchettes **sont comptées**.
@@ -87,8 +136,24 @@ fléchettes **sont comptées**.
 
 ### Driving (ce que l'UI peut demander)
 
-`StartMatch` · `RecordVisit` · `UndoLastVisit` · `GetMatchState` · `GetCheckoutSuggestion` ·
-`GetMatchHistory` · `GetPlayerStats` · `ManagePlayers` · `ExportData` / `ImportData`
+**Partie X01** : `StartMatch` · `RecordVisit` · `UndoLastVisit` · `GetMatchState` ·
+`GetMatchStats` · `PreviewVisit` · `BuildVisitFromScore`
+**Autres modes** : `PlayTourDuMonde` · `PlayCricket` + `PreviewCricketVisit` ·
+`PlayCheckoutPractice`
+**Transverses** : `GetMatchMode` · `GetMatchHistory` · `GetOngoingMatch` · `DeleteMatch` ·
+`GetCheckoutSuggestion` · `GetPlayerStats` · `ManagePlayers` · `ManageBackup`
+
+- `PreviewVisit` et `BuildVisitFromScore` sont nés au lot 3 pour que l'UI ne réimplémente
+  jamais les règles : le premier évalue la volée en cours de saisie (elle n'est pas
+  persistée), le second traduit un total de volée en fléchettes pour le mode rapide.
+  `PreviewCricketVisit` (lot 5c) est le même service rendu au Cricket : sans lui, l'écran ne
+  saurait pas qu'une partie est gagnée avant la troisième fléchette.
+- `ManageBackup` remplace les `ExportData` / `ImportData` du cadrage : il ne manipule que des
+  objets JavaScript, donc il se teste sans navigateur. Le `Blob` et l'`<input type="file">`
+  restent dans l'UI — lire un fichier n'est pas un port.
+- ⚠️ Les ports X01 gardent des noms génériques (`StartMatch`, `RecordVisit`…) face à
+  `PlayTourDuMonde`. Leurs **types de retour** disent `X01State`, ce qui lève l'ambiguïté ;
+  les renommer reste à faire **si** l'asymétrie regêne.
 
 ### Driven (ce dont le cœur a besoin)
 
@@ -101,10 +166,11 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | `PlayerRepository` | Dexie | in-memory | **lot 2** ✅ |
 | `Clock` | horloge système | horloge qui avance d'un pas | **lot 2** ✅ |
 | `IdGenerator` | `crypto.randomUUID` | séquentiel (`id-1`, `id-2`…) | **lot 2** ✅ |
-| `ScreenLock` | Wake Lock API | null-object (API absente ailleurs) | lot 3 |
-| `Haptics` | Vibration API | null-object | lot 3 |
-| `Preferences` | localStorage | in-memory | lot 3 |
-| `Announcer` | Web Speech API | null-object | lot 5 |
+| `ScreenLock` | Wake Lock API | null-object (API absente ailleurs) | **lot 3** ✅ |
+| `Haptics` | Vibration API | null-object | **lot 3** ✅ |
+| `Preferences` | localStorage | in-memory | **lot 3** ✅ |
+| `RandomSource` | `crypto.getRandomValues` | tirage prévisible | **lot 5b** ✅ |
+| `Announcer` | Web Speech API | null-object | **lot 5b** ✅ |
 
 ---
 
@@ -112,19 +178,30 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 
 | Route | Écran | Lot |
 | --- | --- | --- |
-| `/` | Accueil — *Reprendre la partie* (si une partie est en cours), *Nouvelle partie*, accès rapide | 3 |
-| `/nouvelle-partie` | Configuration : jeu (301/501/701), joueurs, best-of legs/sets, double in/out | 3 |
-| `/partie/:id` | **Écran match** — le cœur de l'app | 3 |
-| `/partie/:id/resume` | Résumé de fin : vainqueur, stats du match, rejouer | 3 |
-| `/historique` | Liste des parties jouées | 4 |
-| `/historique/:id` | Détail d'une partie | 4 |
-| `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) | 4 |
-| `/joueurs/:id` | Stats cumulées d'un joueur | 4 |
-| `/entrainement` | Exercices solo | 5 |
-| `/reglages` | Préférences, export / import JSON, à propos | 4 |
+| `/` | Accueil — *Reprendre la partie* (si une partie est en cours), *Nouvelle partie*, accès rapide | 3 ✅ |
+| `/nouvelle-partie` | Configuration : mode de jeu, joueurs, best-of legs/sets, double in/out | 3 ✅ |
+| `/partie/:id` | **Écran de partie** — le cœur de l'app | 3 ✅ |
+| `/partie/:id/resume` | Résumé de fin : vainqueur, stats du match, rejouer | 3 ✅ |
+| `/entrainement` | Lancement d'une session d'entraînement solo | 5b ✅ |
+| `/historique` | Liste des parties jouées, tous modes, avec statut et suppression | 4 ✅ |
+| `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) | 4 ✅ |
+| `/statistiques` | Carrière : tableaux comparatifs classés | 4 ✅ |
+| `/reglages` | Préférences (voix, haptique), export / import JSON, à propos | 4 ✅ |
+| `/historique/:id` | Détail d'une partie | **jamais fait** |
+| `/joueurs/:id` | Stats cumulées d'un joueur | **jamais fait** |
 
-Navigation basse : **Jouer · Historique · Joueurs · Réglages** (4 entrées, icônes lucide,
-cibles ≥ 48 px, safe-area iOS).
+⚠️ **Une seule URL par partie**, quel que soit le mode : `PartieEcran` lit le mode sur le
+journal et rend l'écran correspondant. Un lien d'historique reste donc valable pour toujours.
+
+Les deux dernières lignes sont **une décision en suspens, pas un oubli** : l'écran
+`/statistiques` (lot 4) donne déjà les tableaux comparatifs classés, et l'historique porte
+déjà l'essentiel de chaque partie. À trancher : les écrans de détail apportent-ils assez pour
+exister, ou disparaissent-ils de ce plan ?
+
+Navigation basse : **Début · Joueurs · Stats · Parties · Réglages** — cinq entrées et non
+quatre, l'écran de statistiques ayant gagné sa place au lot 4. Icônes lucide `aria-hidden`,
+cibles ≥ 48 px, `env(safe-area-inset-bottom)`. Elle **n'apparaît pas** pendant une partie ni
+sur l'écran de configuration.
 
 ---
 
@@ -226,17 +303,88 @@ skeletons.
 **Fini quand** : on retrouve ses parties passées, ses moyennes progressent dans le temps, et
 la base peut être sauvegardée puis restaurée sur un autre téléphone.
 
+✅ **Fait — 135 tests verts.** La couleur d'un profil est une teinte **symbolique** (8 noms
+fermés dans le domaine, traduits en pixels dans `ui/couleurs.ts` seulement), et sans choix on
+prend la première libre. Migration Dexie **v1 → v2** pour les profils d'avant, testée en
+ouvrant une vraie base v1 avant de la relire en v2. L'import JSON **fusionne** et ne remplace
+jamais ; une entrée illisible est comptée puis ignorée plutôt que de faire échouer tout le
+fichier. Les stats sont des **tableaux comparatifs classés**, chacun sur sa première colonne.
+
 ---
 
-### Lot 5 — Entraînement solo & voix
+### Lot 5a — Tour du monde & la couture `GameMode`
 
-**Contenu** : `GameMode` d'entraînement — short-list à arbitrer à ce moment-là :
+**Contenu** : le deuxième mode de jeu réel, et avec lui l'aiguillage annoncé depuis le lot 1 —
+événement d'ouverture propre au mode, états discriminés, règles et écrans aiguillés.
+
+✅ **Fait — 167 tests verts.** Aucun dénominateur commun artificiel : chaque mode garde ses
+règles et son état complets, `games/index.ts` ne fait qu'aiguiller sur le discriminant `mode`,
+et TypeScript garantit qu'aucun cas n'est oublié. `MatchSummary` est une union discriminée,
+ouverte au seul endroit de l'UI qui en a besoin (`ApercuPartie`).
+Suivi d'un commit de **renommage** : ce qui décrit l'état et les règles d'un mode dit
+maintenant son nom (`MatchState` → `X01State`, `useMatch` → `useX01`…), tandis que ce qui
+désigne une partie tous modes confondus (`MatchId`, `MatchRepository`, `MatchEvent`) ne bouge
+pas. Deux gardes ajoutées au test d'architecture : **un mode n'importe jamais un autre mode**,
+ni dans le domaine ni dans les composants.
+
+---
+
+### Lot 5b — Entraînement solo & voix
+
+**Contenu** : `GameMode` d'entraînement — short-list arbitrée à ce moment-là :
 *Round the Doubles* (D1→D20 + bull), *Checkout Practice* (reste tiré au sort entre 41 et 170),
 *Scoring Drill* (10 volées, maximiser), *Bob's 27*. Plus l'**annonce vocale** (Web Speech API,
-port `Announcer`, désactivable) : « One hundred and eighty ! ».
+port `Announcer`, désactivable).
 
 **Fini quand** : au moins deux exercices sont jouables et leur progression est suivie dans le
 temps.
+
+🟡 **Livré à moitié — 201 tests verts.** **Checkout Practice** est jouable de bout en bout, et
+le troisième mode a coûté exactement ce qui était annoncé : un dossier, un événement
+d'ouverture, trois lignes dans chaque aiguillage. L'annonce vocale est là, en français,
+coupable depuis les réglages (avec un bouton « Essayer la voix », parce que toutes les voix
+françaises ne sont pas installées partout).
+**Le critère n'est pas atteint** : il n'y a **qu'un** exercice, et aucun suivi de progression
+— les statistiques de carrière restent volontairement au X01. À trancher : ajouter un second
+exercice de la short-list **plus** un écran de progression, ou réduire officiellement
+l'ambition du lot à un exercice unique.
+
+⚠️ La cible tirée est **écrite dans le journal** (`RoundStarted`), jamais retirée au rejeu :
+sans ça, annuler une volée redistribuerait les cartes et deviendrait un moyen de retomber sur
+un reste plus facile. Une session solo est **une partie comme une autre** : même dépôt, même
+historique, même sauvegarde.
+
+---
+
+### Lot 5c — Cricket & mode paysage
+
+**Contenu** : le **Cricket**, quatrième mode et premier des « jeux fun » du cadrage — donc le
+test grandeur nature de la couture. Plus le **mode paysage** pendant une partie, décision
+ouverte n° 2 depuis le lot 3.
+
+✅ **Fait — 248 tests verts** (37 pour le domaine et les use cases du Cricket, 9 pour son
+écran). Le mode a coûté le prix annoncé : un dossier `games/cricket/`, un événement
+d'ouverture, trois lignes dans chaque aiguillage. Le Cricket a en revanche demandé **deux**
+ports plutôt qu'un (`PlayCricket` et `PreviewCricketVisit`) : c'est le premier mode où la
+partie peut se gagner **sur la deuxième fléchette d'une volée**, et l'écran doit le savoir
+sans attendre la troisième.
+
+**Le paysage n'est pas un écran de plus, c'est une bascule de disposition** :
+`DispositionPartie` porte désormais l'ossature des quatre écrans de partie (bandeau, zone
+lecture, zone saisie) et passe en deux colonnes quand le téléphone est couché. La condition
+porte sur la **hauteur** autant que sur l'orientation (`@custom-variant paysage`) : ce qui
+manque au téléphone couché, c'est la hauteur, pas la largeur — une tablette garde donc la
+disposition normale.
+
+**Deux bugs antérieurs découverts en chemin**, tous deux invisibles jusqu'à ce qu'un mode
+non-X01 passe par là :
+- `backupSchema` ne validait que `MatchStarted` et `VisitRecorded` — une sauvegarde JSON
+  perdait silencieusement les parties de Tour du monde et d'entraînement à la réimportation ;
+- `GetOngoingMatchUseCase` projetait avec `X01Rules` au lieu de la couture — l'accueil ne
+  proposait jamais de reprendre une partie qui n'était pas un X01.
+
+**Reste à valider sur un vrai téléphone** : la bascule paysage en conditions réelles, et
+notamment le pavé du mode rapide, le seul assez haut pour demander un défilement.
 
 ---
 
@@ -251,9 +399,10 @@ c'est précisément ce que l'architecture hexagonale achète ici.
 
 | Risque | Parade |
 | --- | --- |
-| La saisie 3-taps ralentit la partie et agace | Mode rapide dès le lot 3, bascule S/D/T **persistante** (pas à re-sélectionner à chaque fléchette), raccourcis de score fréquents |
+| La saisie 3-taps ralentit la partie et agace | Mode rapide dès le lot 3 et raccourcis de score fréquents. ⚠️ La bascule S/D/T devait être **persistante** ; le lot 3 bis a **renversé** cette décision — elle retombe sur Simple après chaque fléchette. Un multiplicateur resté armé sans qu'on le voie compte trois T20 là où il y avait trois simples, et il faut ensuite retrouver *où* le score a dérapé : un clic de plus par triple coûte moins cher qu'un score faux |
 | Erreur de saisie en pleine partie | Undo illimité **et fiable** grâce à la projection d'événements — bouton toujours visible |
 | Écran qui s'éteint pendant une partie | Wake Lock dès le lot 3, avec null-object si l'API manque |
 | Perte du téléphone = perte de tout l'historique | Export / import JSON au lot 4 |
-| Sur-ingénierie des modes de jeu | Couture `GameMode` **légère** : X01 seul en v1, on ne généralise pas avant d'avoir un 2ᵉ mode réel (lot 5) |
+| Sur-ingénierie des modes de jeu | Couture `GameMode` **légère**, écrite au lot 5a seulement, quand un 2ᵉ mode réel est arrivé. Les 3ᵉ et 4ᵉ modes (lots 5b et 5c) ont confirmé le prix annoncé : un dossier, un événement d'ouverture, trois lignes d'aiguillage |
+| Un mode ajouté après coup oublié par le code transverse | Ce qui aiguille sur le mode doit **tout** aiguiller. Le lot 5c a trouvé deux endroits qui parlaient encore X01 en cachette (`backupSchema`, `GetOngoingMatch`) — d'où un test de sauvegarde qui exporte puis réimporte **une partie de chaque mode**, et non plus un X01 seul |
 | Règles X01 mal implémentées (bust, doubles) | La section 1 de ce plan **est** la suite de tests du lot 1 |

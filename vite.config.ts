@@ -28,7 +28,12 @@ export default defineConfig(({ mode }) => {
           start_url: '/',
           scope: '/',
           display: 'standalone',
-          orientation: 'portrait',
+          // ⚠️ PAS 'portrait' : une PWA installée obéit au manifeste, la
+          // rotation y était donc purement et simplement ignorée. Les écrans
+          // de partie ont une vraie disposition paysage (variante `paysage`
+          // dans `index.css`) ; il n'existe aucun moyen de n'ouvrir
+          // l'orientation que sur certaines routes.
+          orientation: 'any',
           background_color: '#0E1A13',
           theme_color: '#0E1A13',
           icons: [

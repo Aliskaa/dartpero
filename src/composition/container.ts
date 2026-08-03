@@ -19,7 +19,9 @@ import type { GetPlayerStats } from '@/core/application/ports/driving/GetPlayerS
 import type { ManageBackup } from '@/core/application/ports/driving/ManageBackup'
 import type { ManagePlayers } from '@/core/application/ports/driving/ManagePlayers'
 import type { PlayCheckoutPractice } from '@/core/application/ports/driving/PlayCheckoutPractice'
+import type { PlayCricket } from '@/core/application/ports/driving/PlayCricket'
 import type { PlayTourDuMonde } from '@/core/application/ports/driving/PlayTourDuMonde'
+import type { PreviewCricketVisit } from '@/core/application/ports/driving/PreviewCricketVisit'
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
@@ -36,7 +38,9 @@ import { GetPlayerStatsUseCase } from '@/core/application/use-cases/GetPlayerSta
 import { ManageBackupUseCase } from '@/core/application/use-cases/ManageBackupUseCase'
 import { ManagePlayersUseCase } from '@/core/application/use-cases/ManagePlayersUseCase'
 import { PlayCheckoutPracticeUseCase } from '@/core/application/use-cases/PlayCheckoutPracticeUseCase'
+import { PlayCricketUseCase } from '@/core/application/use-cases/PlayCricketUseCase'
 import { PlayTourDuMondeUseCase } from '@/core/application/use-cases/PlayTourDuMondeUseCase'
+import { PreviewCricketVisitUseCase } from '@/core/application/use-cases/PreviewCricketVisitUseCase'
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
@@ -101,9 +105,12 @@ export type Services = {
   readonly manageBackup: ManageBackup
   /** Le second mode de jeu. Voir la couture `GameModes` côté domaine. */
   readonly playTourDuMonde: PlayTourDuMonde
+  /** Le Cricket, standard ou cut-throat selon la configuration de la partie. */
+  readonly playCricket: PlayCricket
   /** L'entraînement solo au checkout (lot 5b). */
   readonly playCheckoutPractice: PlayCheckoutPractice
   readonly previewVisit: PreviewVisit
+  readonly previewCricketVisit: PreviewCricketVisit
   readonly buildVisitFromScore: BuildVisitFromScore
   readonly devices: Devices
 }
@@ -130,8 +137,10 @@ export const createServices = ({
   managePlayers: new ManagePlayersUseCase(players, ids, clock),
   manageBackup: new ManageBackupUseCase(matches, players, clock),
   playTourDuMonde: new PlayTourDuMondeUseCase(matches, players, clock, ids),
+  playCricket: new PlayCricketUseCase(matches, players, clock, ids),
   playCheckoutPractice: new PlayCheckoutPracticeUseCase(matches, players, clock, ids, random),
   previewVisit: new PreviewVisitUseCase(),
+  previewCricketVisit: new PreviewCricketVisitUseCase(),
   buildVisitFromScore: new BuildVisitFromScoreUseCase(),
   devices,
 })

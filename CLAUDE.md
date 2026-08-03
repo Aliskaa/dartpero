@@ -51,10 +51,10 @@ triviale et fiable (on se trompe de saisie très souvent en pleine partie).
 **momentanée** — elle retombe sur Simple après chaque fléchette) — c'est la **condition
 technique** des stats de doubles et de l'entraînement — **plus** un mode « rapide » (score de
 volée 0-180) basculable.
-- **Modes de jeu : X01 et Tour du monde** (lot 5a), puis **entraînement solo** (lot 5b).
-Cricket, Killer et Shanghai restent **hors périmètre v1** — mais la couture `GameMode`
-existe désormais **pour de vrai** (`src/core/domain/services/gameModes.ts`) et les
-accueillera sans refonte.
+- **Modes de jeu : X01 et Tour du monde** (lot 5a), **entraînement solo** (lot 5b), puis
+**Cricket** (lot 5c). Killer et Shanghai restent **hors périmètre v1** — la couture
+`GameMode` (`src/core/domain/games/index.ts`) les accueillera sans refonte, elle l'a
+maintenant prouvé deux fois.
 - **Réglages X01 par défaut** : **501**, **best-of 3 legs**, **double out** activé,
 **double in** désactivé. Tous modifiables à la création de partie.
 - **TypeScript partout.**
@@ -117,6 +117,36 @@ celui qui commence part avec une longueur d'avance imméritée.
 - **Départage** : parmi ceux qui ont bouclé, celui qui y a mis le **moins de fléchettes**.
 À égalité parfaite, **match nul** — on ne départage ni au hasard ni à l'ordre de passage.
 - Il n'y a ni leg, ni set, ni bust : la partie tient en un seul parcours.
+
+---
+
+## Règles du Cricket (référence — NE PAS improviser)
+
+Quatrième mode, ajouté au lot 5c. Le jeu tactique du lot : on n'y court pas après un score,
+on ferme des cibles avant les autres.
+
+- **Sept cibles** : **20, 19, 18, 17, 16, 15 et la bulle**. Comme pour le Tour du monde, la
+liste vit dans la config, donc dans le journal — une partie ancienne reste rejouable si la
+liste par défaut change un jour.
+- **Trois marques ferment une cible.** Un simple vaut 1 marque, un double 2, un triple 3 :
+un T20 ferme le 20 d'un coup. Les marques d'une même volée se cumulent normalement.
+- **Le surplus marque des points**, mais **seulement si la cible est encore ouverte chez au
+moins un adversaire**. Fermer le 20 avec un T20+T20 quand tout le monde l'a fermé ne
+rapporte rien : c'est du gaspillage, et c'est voulu.
+- ⚠️ **Une fléchette hors des sept cibles ne vaut rien** — ni marque, ni point. Le 12 n'existe
+pas au Cricket.
+- **Il n'y a pas de bust** : une volée ne peut jamais faire reculer. La volée fait toujours
+3 fléchettes, sauf celle qui gagne la partie.
+- **Victoire (variante standard)** : le premier joueur qui a **fermé les sept cibles** ET qui
+possède **un score supérieur ou égal** à celui de chaque adversaire. Fermer tout en étant
+mené ne gagne pas — il faut d'abord rattraper les points.
+- ⚠️ **Variante « cut-throat » : les points s'ajoutent aux ADVERSAIRES**, pas à soi. Marquer
+devient une punition qu'on distribue, et **le plus petit score gagne** : on l'emporte en
+ayant fermé les sept cibles avec un score **inférieur ou égal** à chacun. C'est la seule
+règle du projet où le sens de la comparaison s'inverse — elle est testée des deux côtés.
+- La partie tient en **un seul tour de table** : ni leg, ni set. À la différence du Tour du
+monde, **on ne finit pas le tour de table** : la condition de victoire du Cricket exige déjà
+d'être devant aux points, donc celui qui la remplit a mérité son avance.
 
 ---
 
@@ -266,8 +296,13 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 seule l'**échelle** du score suit (2 joueurs → `4rem`, 3 → `3rem`, 4 → `2.5rem`). Les colonnes
 sont à largeur fixe : c'est en alignant les scores d'une ligne à l'autre qu'on les compare.
 
-**Portrait** par défaut (téléphone posé contre un mur). Un mode paysage « tableau » reste une
-décision ouverte.
+**Portrait** par défaut (téléphone posé contre un mur). **Paysage** (téléphone couché) : les
+deux zones passent **côte à côte**, lecture à gauche et pavé à droite — empiler en paysage
+écraserait les deux, le tableau deviendrait illisible à 3 mètres et les touches passeraient
+sous le seuil des 48 px. La bascule est portée par `DispositionPartie` et vaut pour les quatre
+modes. ⚠️ Elle dépend de la **hauteur** autant que de l'orientation (variante `paysage`,
+définie dans `src/index.css`) : ce qui manque au téléphone couché, c'est la hauteur — une
+tablette et un navigateur de bureau gardent la disposition normale.
 
 ---
 
@@ -283,11 +318,13 @@ src/
 │  │  │  ├─ index.ts      la couture : GameModeId, AnyMatchState, GameModes
 │  │  │  ├─ x01/          config · rules · scoring · stats · career
 │  │  │  ├─ tour-du-monde/     config · rules
+│  │  │  ├─ cricket/           config · rules
 │  │  │  └─ checkout-practice/ config · rules      (solo)
 │  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, PlayerColor, ids
 │  │  ├─ entities/        Visit, Player          (transverses aux modes)
 │  │  ├─ events/          MatchEvent : X01Started | TourDuMondeStarted |
-│  │  │                   CheckoutPracticeStarted | RoundStarted | VisitRecorded
+│  │  │                   CricketStarted | CheckoutPracticeStarted |
+│  │  │                   RoundStarted | VisitRecorded
 │  │  └─ services/        dartSearch · checkout · visitOutcome
 │  │                      ⚠️ TRANSVERSES : un mode n'importe jamais un autre mode
 │  └─ application/
@@ -295,22 +332,25 @@ src/
 │     │                   BuildVisitFromScore, GetMatchState, GetCheckoutSuggestion,
 │     │                   GetMatchStats, GetMatchHistory, GetMatchMode,
 │     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
-│     │                   ManagePlayers, ManageBackup, PlayTourDuMonde
+│     │                   ManagePlayers, ManageBackup, PlayTourDuMonde,
+│     │                   PlayCricket, PreviewCricketVisit, PlayCheckoutPractice
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer
 │     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
 ├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
 ├─ ui/
-│  ├─ composants/         commun/ (dont ApercuPartie, qui ouvre l'union des modes)
-│  │                      x01/ · tour-du-monde/ · checkout-practice/
+│  ├─ composants/         commun/ (dont ApercuPartie, qui ouvre l'union des modes,
+│  │                      et DispositionPartie, l'ossature portrait/paysage)
+│  │                      x01/ · tour-du-monde/ · cricket/ · checkout-practice/
 │  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
-│  │                        checkout-practice/
+│  │                        cricket/ · checkout-practice/
 │  │                      + les écrans transverses : Accueil, Joueurs,
 │  │                        NouvellePartie, Historique, Statistiques, Réglages
-│  ├─ hooks/              useX01 · useTourDuMonde · useCheckoutPractice ·
-│  │                      useJoueurs · useAppareil (wake lock, préférences, voix)
+│  ├─ hooks/              useX01 · useTourDuMonde · useCricket ·
+│  │                      useCheckoutPractice · useJoueurs ·
+│  │                      useAppareil (wake lock, préférences, voix)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises)
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
@@ -375,7 +415,11 @@ par le composition root.
   règles comme des écrans. **167 tests verts.**
 - [x] **Lot 5b** — **Checkout Practice** (entraînement solo, troisième mode) + **annonce
   vocale** française désactivable (port `Announcer`). Ports `RandomSource` et `Announcer`,
-  règles de sortie rendues transverses. **192 tests verts.**
+  règles de sortie rendues transverses. **201 tests verts.**
+- [x] **Lot 5c** — **Cricket** (quatrième mode, variantes standard et cut-throat) et **mode
+  paysage** pendant une partie, porté par `DispositionPartie` pour les quatre écrans de jeu.
+  Deux bugs antérieurs corrigés au passage : `backupSchema` et `GetOngoingMatch` ne
+  connaissaient que le X01. **248 tests verts.**
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 ---
@@ -732,6 +776,66 @@ découpage que le domaine et les composants. Les noms de dossiers reprennent ceu
 - **Le pavé de saisie est celui du X01**, `rapide`/`onRapide` devenus optionnels : une manche
 d'entraînement dure une seule volée, un mode rapide n'y accélérerait rien.
 
+### Décisions du lot 5c (Cricket, mode paysage)
+
+**Le quatrième mode a coûté le même prix que le troisième** : un dossier `games/cricket/`, un
+événement d'ouverture, trois lignes dans chaque aiguillage. La couture tient toujours.
+
+- ⚠️ **Le Cricket a demandé DEUX ports, pas un** : `PlayCricket` et **`PreviewCricketVisit`**.
+C'est le premier mode où la partie peut se gagner **sur la deuxième fléchette d'une volée** ;
+sans un port de prévisualisation synchrone, l'écran attendrait une troisième fléchette qui ne
+viendra jamais avant d'annoncer le vainqueur. Même raison qu'au lot 3 pour `PreviewVisit`, et
+même règle : l'UI ne réimplémente jamais les règles, elle les interroge.
+- ⚠️ **La victoire est vérifiée pour TOUS les joueurs à la fin d'une volée**, pas seulement
+pour le lanceur. C'est le cas tordu du cut-throat : un joueur qui a tout fermé ne reçoit plus
+de points, tandis que ceux des autres montent — il peut donc devenir le plus bas **pendant le
+tour de quelqu'un d'autre**. Sans cette vérification, la partie continuerait alors qu'elle est
+gagnée, et personne ne comprendrait pourquoi.
+- **Les marques sont posées une par une**, pas trois d'un coup : un triple peut à la fois
+finir de fermer une cible **et** marquer des points avec ce qui dépasse. Compter le triple en
+bloc perdrait ce reliquat.
+- **Le pavé du Cricket n'a que les sept cibles**, plus `0` et `Annuler`. Afficher les vingt
+secteurs alors que dix-neuf d'entre eux ne valent rien serait un piège. La bascule S/D/T y
+est en revanche essentielle — c'est elle qui dit combien de marques la fléchette pose — et
+elle **retombe sur Simple** après chaque fléchette, comme au X01.
+- **La variante se choisit à la création de partie** (standard / cut-throat) et vit dans la
+config, donc dans le journal : une partie ancienne se rejoue avec la variante sous laquelle
+elle a été jouée.
+- **Les statistiques de carrière restent au X01**, comme pour le Tour du monde : la moyenne 3
+fléchettes n'a pas de sens quand dix-neuf secteurs sur vingt valent zéro.
+
+**Le mode paysage n'est pas un écran de plus, c'est une bascule de disposition.**
+
+- **`DispositionPartie` porte l'ossature des quatre écrans de jeu** (bandeau, zone lecture,
+zone saisie). Elle vivait recopiée dans chaque mode ; c'est le paysage qui a imposé de la
+remonter — quatre copies d'une disposition, c'est trois occasions de l'oublier.
+- ⚠️ **La bascule dépend de la HAUTEUR autant que de l'orientation** :
+`@custom-variant paysage (@media (orientation: landscape) and (max-height: 34rem))`. Ce qui
+manque au téléphone couché, c'est la hauteur, pas la largeur — une tablette en paysage a la
+place de garder la disposition normale, et un navigateur de bureau aussi. Écrire la condition
+sur la seule orientation aurait cassé l'affichage partout ailleurs.
+- **Pas de bouton de rotation, pas de préférence** : l'app suit le téléphone. Un réglage de
+plus à trouver pour une chose que le geste dit déjà serait de la friction — et le cadrage dit
+« zéro friction ».
+- **`orientation: 'any'` dans le manifeste PWA** (elle valait `'portrait'`) : sans ça, l'app
+installée resterait bloquée en portrait et la bascule ne servirait à rien sur le seul mode
+d'usage qui compte.
+- **Les pavés se compactent en paysage** (`paysage:` sur les hauteurs et les tailles de
+texte), mais **les cibles restent ≥ 48 px** : c'est un plancher, pas une variable
+d'ajustement. Le pavé du mode rapide est le seul qui puisse encore demander un défilement —
+marché assumé, il est secondaire.
+- **Aucun test n'a changé** en remontant les quatre écrans dans `DispositionPartie`, ce qui
+valide au passage que la refonte n'a touché à aucun comportement.
+
+**Deux bugs antérieurs découverts en chemin**, tous deux invisibles tant qu'on ne sortait pas
+du X01 — la leçon : *ce qui aiguille sur le mode doit tout aiguiller*.
+
+- **`backupSchema` ne validait que `MatchStarted` et `VisitRecorded`** : une sauvegarde JSON
+perdait silencieusement les parties de Tour du monde et d'entraînement à la réimportation.
+Le test de sauvegarde exporte désormais **une partie de chaque mode**, puis les relit.
+- **`GetOngoingMatchUseCase` projetait avec `X01Rules`** au lieu de la couture : l'accueil ne
+proposait jamais de reprendre une partie qui n'était pas un X01.
+
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode
 **RSC** (React Server Components) et l'exécution d'actions serveur — Dartpéro est une SPA
@@ -744,10 +848,11 @@ Décision : **on reste en 7.18**, à réévaluer si un correctif sort dans la br
 
 1. ~~**Alfa Slab One** conservée ou remplacée par Oswald 700 pour l'enseigne.~~ **Tranchée au
    lot 3 bis** : conservée, mais réservée à l'enseigne et au nom du vainqueur.
-2. **Mode paysage « tableau »** (téléphone à plat sur une table) — après le lot 3 si le besoin
-   se confirme.
-3. **Cricket / jeux fun** (Around the Clock, Killer, Shanghai) — hors v1, la couture
-   `GameMode` les accueillera.
+2. ~~**Mode paysage « tableau »** (téléphone à plat sur une table).~~ **Tranchée au lot 5c** :
+   la bascule est automatique, portée par `DispositionPartie`, et conditionnée à la hauteur
+   plutôt qu'à la seule orientation.
+3. ~~**Cricket**~~ **livré au lot 5c.** Restent les autres jeux fun (Around the Clock, Killer,
+   Shanghai) — hors v1, la couture `GameMode` les accueillera.
 4. **Sync cloud / classement entre potes** — hors v1 (lot 6 hypothétique). L'export/import
    JSON du lot 4 est le palliatif.
 5. **i18n** : FR seul pour l'instant (aucun besoin identifié).

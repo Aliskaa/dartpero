@@ -2,6 +2,7 @@ import { DomainError } from '../DomainError'
 import type { MatchEvent } from '../events/MatchEvent'
 import type { PlayerId } from '../value-objects/ids'
 import { CheckoutPracticeRules, type CheckoutPracticeState } from './checkout-practice/rules'
+import { CricketRules, type CricketState } from './cricket/rules'
 import { TourDuMondeRules, type TourDuMondeState } from './tour-du-monde/rules'
 import { X01Rules, type X01State } from './x01/rules'
 
@@ -18,12 +19,12 @@ import { X01Rules, type X01State } from './x01/rules'
  * Le troisième mode (l'entraînement au checkout, lot 5b) a coûté exactement ce
  * qui était annoncé : un dossier, un événement d'ouverture, trois lignes ici.
  */
-export const GAME_MODE_IDS = ['X01', 'TOUR_DU_MONDE', 'CHECKOUT_PRACTICE'] as const
+export const GAME_MODE_IDS = ['X01', 'TOUR_DU_MONDE', 'CRICKET', 'CHECKOUT_PRACTICE'] as const
 
 export type GameModeId = (typeof GAME_MODE_IDS)[number]
 
 /** L'état d'une partie, quel que soit son mode. */
-export type AnyMatchState = X01State | TourDuMondeState | CheckoutPracticeState
+export type AnyMatchState = X01State | TourDuMondeState | CricketState | CheckoutPracticeState
 
 /**
  * Le mode se lit sur le **premier événement du journal**, jamais sur un champ
@@ -34,6 +35,8 @@ export const modeOf = (events: readonly MatchEvent[]): GameModeId => {
   switch (events[0]?.type) {
     case 'TourDuMondeStarted':
       return 'TOUR_DU_MONDE'
+    case 'CricketStarted':
+      return 'CRICKET'
     case 'CheckoutPracticeStarted':
       return 'CHECKOUT_PRACTICE'
     case 'MatchStarted':
@@ -50,6 +53,8 @@ export const GameModes = {
     switch (modeOf(events)) {
       case 'TOUR_DU_MONDE':
         return TourDuMondeRules.project(events)
+      case 'CRICKET':
+        return CricketRules.project(events)
       case 'CHECKOUT_PRACTICE':
         return CheckoutPracticeRules.project(events)
       default:
@@ -63,6 +68,8 @@ export const GameModes = {
         return X01Rules.isFinished(state)
       case 'TOUR_DU_MONDE':
         return TourDuMondeRules.isFinished(state)
+      case 'CRICKET':
+        return CricketRules.isFinished(state)
       default:
         return CheckoutPracticeRules.isFinished(state)
     }
@@ -74,6 +81,8 @@ export const GameModes = {
         return X01Rules.currentPlayer(state).playerId
       case 'TOUR_DU_MONDE':
         return TourDuMondeRules.currentPlayer(state).playerId
+      case 'CRICKET':
+        return CricketRules.currentPlayer(state).playerId
       default:
         // Exercice solo : il n'y a jamais qu'un joueur.
         return state.playerId

@@ -4,13 +4,17 @@ import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary
 import type { Player } from '@/core/domain/entities/Player'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { Avatar } from '@/ui/composants/commun/Avatar'
-import { nomJoueur, pluriel } from '@/ui/labels'
+import { LIBELLE_VARIANTE_CRICKET, nomJoueur, pluriel } from '@/ui/labels'
 
 /** Le libellé des règles, en français — le cœur n'en fabrique jamais. */
 export const libelleRegles = (partie: MatchSummary): string => {
   if (partie.mode === 'TOUR_DU_MONDE') {
     const [premiere] = partie.config.targets
     return `Tour du monde · ${premiere ?? 20} → bulle`
+  }
+
+  if (partie.mode === 'CRICKET') {
+    return `Cricket ${LIBELLE_VARIANTE_CRICKET[partie.config.variant]} · ${partie.targetsTotal} cibles`
   }
 
   if (partie.mode === 'CHECKOUT_PRACTICE') {
@@ -96,6 +100,28 @@ export const ApercuPartie = ({ partie, profils, classe = false }: Props) => {
             <span className="chiffres w-14 text-right text-base font-bold text-craie-vive">
               {Math.round(partie.successPercent)}
               <span className="text-xs font-normal text-craie/50"> %</span>
+            </span>
+          </Ligne>
+        ))}
+      </ul>
+    )
+  }
+
+  if (partie.mode === 'CRICKET') {
+    return (
+      <ul className="flex flex-col gap-1.5">
+        {enTete(partie.players).map((joueur) => (
+          <Ligne
+            key={joueur.playerId}
+            nom={nomJoueur(joueur.name)}
+            couleur={profils.get(joueur.playerId)?.color ?? null}
+            gagnant={joueur.playerId === partie.winnerId}
+          >
+            <span className="chiffres text-xs text-craie/60">
+              {joueur.closedTargets}/{partie.targetsTotal}
+            </span>
+            <span className="chiffres w-12 text-right text-base font-bold text-craie-vive">
+              {joueur.score}
             </span>
           </Ligne>
         ))}
