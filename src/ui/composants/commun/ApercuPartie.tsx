@@ -13,6 +13,11 @@ export const libelleRegles = (partie: MatchSummary): string => {
     return `Tour du monde · ${premiere ?? 20} → bulle`
   }
 
+  if (partie.mode === 'CHECKOUT_PRACTICE') {
+    const { rounds, minTarget, maxTarget } = partie.config
+    return `Entraînement · ${rounds} sorties · ${minTarget} à ${maxTarget}`
+  }
+
   const options = [
     partie.config.doubleOut ? 'double out' : null,
     partie.config.doubleIn ? 'double in' : null,
@@ -73,6 +78,30 @@ export const ApercuPartie = ({ partie, profils, classe = false }: Props) => {
             (a.playerId === partie.winnerId ? -1 : 0) - (b.playerId === partie.winnerId ? -1 : 0),
         )
       : joueurs
+
+  if (partie.mode === 'CHECKOUT_PRACTICE') {
+    // Solo : une seule ligne, et c'est la réussite qui parle, pas un score.
+    return (
+      <ul className="flex flex-col gap-1.5">
+        {partie.players.map((joueur) => (
+          <Ligne
+            key={joueur.playerId}
+            nom={nomJoueur(joueur.name)}
+            couleur={profils.get(joueur.playerId)?.color ?? null}
+            gagnant={false}
+          >
+            <span className="chiffres text-xs text-craie/60">
+              {partie.roundsWon}/{partie.roundsPlayed}
+            </span>
+            <span className="chiffres w-14 text-right text-base font-bold text-craie-vive">
+              {Math.round(partie.successPercent)}
+              <span className="text-xs font-normal text-craie/50"> %</span>
+            </span>
+          </Ligne>
+        ))}
+      </ul>
+    )
+  }
 
   if (partie.mode === 'TOUR_DU_MONDE') {
     return (

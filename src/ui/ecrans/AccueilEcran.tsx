@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Play, WifiOff } from 'lucide-react'
+import { Play, Target, WifiOff } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import { ApercuPartie, libelleRegles } from '@/ui/composants/commun/ApercuPartie'
 import { Button } from '@/ui/composants/commun/Button'
@@ -47,15 +47,31 @@ export const AccueilEcran = () => {
         </Panneau>
       ) : null}
 
-      <Link
-        to="/nouvelle-partie"
-        className={[
-          'laiton-poli mt-auto inline-flex min-h-16 items-center justify-center gap-3 rounded-2xl px-6',
-          'font-score text-xl font-bold uppercase tracking-[0.15em]',
-        ].join(' ')}
-      >
-        Nouvelle partie
-      </Link>
+      <div className="mt-auto flex flex-col gap-2">
+        <Link
+          to="/nouvelle-partie"
+          className={[
+            'laiton-poli inline-flex min-h-16 items-center justify-center gap-3 rounded-2xl px-6',
+            'font-score text-xl font-bold uppercase tracking-[0.15em]',
+          ].join(' ')}
+        >
+          Nouvelle partie
+        </Link>
+
+        {/* L'entraînement se joue seul : il n'a pas sa place au même rang qu'une
+            partie entre potes, mais il doit rester à un doigt. */}
+        <Link
+          to="/entrainement"
+          className={[
+            'cadre-bois inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-6',
+            'font-score text-base font-bold uppercase tracking-[0.15em] text-craie',
+            'active:translate-y-[2px]',
+          ].join(' ')}
+        >
+          <Target aria-hidden="true" className="size-4" />
+          S’entraîner au checkout
+        </Link>
+      </div>
 
       <p className="flex items-center justify-center gap-2 text-center text-xs text-craie/60">
         <WifiOff aria-hidden="true" className="size-3.5" />

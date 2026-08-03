@@ -1,3 +1,4 @@
+import type { CheckoutPracticeConfig } from '../../../domain/games/checkout-practice/config'
 import type { TourDuMondeConfig } from '../../../domain/games/tour-du-monde/config'
 import type { X01Config } from '../../../domain/games/x01/config'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
@@ -44,6 +45,19 @@ export type TourDuMondeSummary = BaseSummary & {
 }
 
 /**
+ * Un exercice solo : pas d'adversaire, donc pas de vainqueur — `winnerId` y
+ * vaut toujours `null`. Ce qui compte, c'est le taux de réussite.
+ */
+export type CheckoutPracticeSummary = BaseSummary & {
+  readonly mode: 'CHECKOUT_PRACTICE'
+  readonly config: CheckoutPracticeConfig
+  readonly players: readonly SummaryPlayer[]
+  readonly roundsWon: number
+  readonly roundsPlayed: number
+  readonly successPercent: number
+}
+
+/**
  * Vue condensée d'un match, pour l'accueil (« reprendre la partie ») et
  * l'historique. Entièrement dérivée du journal : rien de tout ceci n'est stocké.
  *
@@ -52,4 +66,4 @@ export type TourDuMondeSummary = BaseSummary & {
  * champs seraient vides selon le mode, chacun porte exactement ce qu'il a — et
  * TypeScript force l'UI à traiter les deux cas.
  */
-export type MatchSummary = X01Summary | TourDuMondeSummary
+export type MatchSummary = X01Summary | TourDuMondeSummary | CheckoutPracticeSummary

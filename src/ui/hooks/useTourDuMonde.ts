@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { useServices } from '../providers/ServicesProvider'
+import { useVoix } from './useAppareil'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -21,6 +22,7 @@ const message = (erreur: unknown): string =>
 export const useTourDuMonde = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
+  const dire = useVoix()
 
   const requete = useQuery({
     queryKey: ['tourDuMonde', matchId],
@@ -47,6 +49,9 @@ export const useTourDuMonde = (matchId: MatchId) => {
 
         if (resultat.milestones.some((jalon) => jalon.type === 'TourCompleted')) {
           services.devices.haptics.success()
+          dire('Tour bouclé !')
+        } else if (resultat.visit.hits > 0) {
+          dire(`${resultat.visit.hits} touché${resultat.visit.hits > 1 ? 's' : ''}`)
         }
       } catch (cause) {
         setErreur(message(cause))
@@ -54,7 +59,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
         setOccupe(false)
       }
     },
-    [services, matchId, queryClient],
+    [services, matchId, queryClient, dire],
   )
 
   const ajouterFlechette = useCallback(

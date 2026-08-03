@@ -29,8 +29,21 @@ export const summarize = (
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
     finished: GameModes.isFinished(state),
-    winnerId: state.winnerId,
-    totalVisits: state.history.length,
+    // Un exercice solo n'a pas de vainqueur : on ne bat personne.
+    winnerId: state.mode === 'CHECKOUT_PRACTICE' ? null : state.winnerId,
+    totalVisits: GameModes.visitCount(state),
+  }
+
+  if (state.mode === 'CHECKOUT_PRACTICE') {
+    return {
+      ...commun,
+      mode: 'CHECKOUT_PRACTICE',
+      config: state.config,
+      players: [{ playerId: state.playerId, name: names.get(state.playerId) ?? null }],
+      roundsWon: state.roundsWon,
+      roundsPlayed: state.roundsPlayed,
+      successPercent: state.successPercent,
+    }
   }
 
   if (state.mode === 'TOUR_DU_MONDE') {

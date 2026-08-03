@@ -15,8 +15,9 @@ type Props = {
   readonly onFlechette: (dart: Dart) => void
   readonly onAnnuler: () => void
   readonly peutAnnuler: boolean
-  readonly rapide: boolean
-  readonly onRapide: () => void
+  /** Absents hors X01 : l'entraînement n'a pas de mode rapide. */
+  readonly rapide?: boolean
+  readonly onRapide?: () => void
   readonly desactive: boolean
 }
 
@@ -154,15 +155,17 @@ export const PaveFlechettes = ({
           })}
         </div>
 
-        <button
-          type="button"
-          aria-label="Saisie rapide"
-          aria-pressed={rapide}
-          onClick={onRapide}
-          className="touche flex min-h-14 w-14 shrink-0 items-center justify-center rounded-xl text-craie/75"
-        >
-          <Zap aria-hidden="true" className="size-5" />
-        </button>
+        {onRapide && (
+          <button
+            type="button"
+            aria-label="Saisie rapide"
+            aria-pressed={rapide}
+            onClick={onRapide}
+            className="touche flex min-h-14 w-14 shrink-0 items-center justify-center rounded-xl text-craie/75"
+          >
+            <Zap aria-hidden="true" className="size-5" />
+          </button>
+        )}
       </div>
     </section>
   )

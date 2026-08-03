@@ -3,10 +3,12 @@ import { Link, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { useServices } from '@/ui/providers/ServicesProvider'
-import { ResumeTourDuMondeEcran } from './ResumeTourDuMondeEcran'
-import { ResumeX01Ecran } from './ResumeX01Ecran'
-import { TourDuMondeEcran } from './TourDuMondeEcran'
-import { X01Ecran } from './X01Ecran'
+import { EntrainementEcran } from './checkout-practice/EntrainementEcran'
+import { ResumeEntrainementEcran } from './checkout-practice/ResumeEntrainementEcran'
+import { ResumeTourDuMondeEcran } from './tour-du-monde/ResumeTourDuMondeEcran'
+import { TourDuMondeEcran } from './tour-du-monde/TourDuMondeEcran'
+import { ResumeX01Ecran } from './x01/ResumeX01Ecran'
+import { X01Ecran } from './x01/X01Ecran'
 
 /**
  * L'aiguillage de la couture `GameMode`, côté écran.
@@ -32,10 +34,12 @@ const Aiguillage = ({
   matchId,
   x01,
   tourDuMonde,
+  entrainement,
 }: {
   readonly matchId: MatchId
   readonly x01: React.ReactNode
   readonly tourDuMonde: React.ReactNode
+  readonly entrainement: React.ReactNode
 }) => {
   const mode = useMode(matchId)
 
@@ -56,7 +60,14 @@ const Aiguillage = ({
     )
   }
 
-  return <>{mode.data === 'TOUR_DU_MONDE' ? tourDuMonde : x01}</>
+  switch (mode.data) {
+    case 'TOUR_DU_MONDE':
+      return <>{tourDuMonde}</>
+    case 'CHECKOUT_PRACTICE':
+      return <>{entrainement}</>
+    default:
+      return <>{x01}</>
+  }
 }
 
 export const PartieEcran = () => {
@@ -66,6 +77,7 @@ export const PartieEcran = () => {
       matchId={(matchId ?? '') as MatchId}
       x01={<X01Ecran />}
       tourDuMonde={<TourDuMondeEcran />}
+      entrainement={<EntrainementEcran />}
     />
   )
 }
@@ -77,6 +89,7 @@ export const ResumePartieEcran = () => {
       matchId={(matchId ?? '') as MatchId}
       x01={<ResumeX01Ecran />}
       tourDuMonde={<ResumeTourDuMondeEcran />}
+      entrainement={<ResumeEntrainementEcran />}
     />
   )
 }

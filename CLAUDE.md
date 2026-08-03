@@ -278,12 +278,15 @@ src/
 │  ├─ domain/
 │  │  ├─ games/           ← UN DOSSIER PAR MODE DE JEU
 │  │  │  ├─ index.ts      la couture : GameModeId, AnyMatchState, GameModes
-│  │  │  ├─ x01/          config · rules · checkout · scoring · stats · career
-│  │  │  └─ tour-du-monde/ config · rules
+│  │  │  ├─ x01/          config · rules · scoring · stats · career
+│  │  │  ├─ tour-du-monde/     config · rules
+│  │  │  └─ checkout-practice/ config · rules      (solo)
 │  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, PlayerColor, ids
 │  │  ├─ entities/        Visit, Player          (transverses aux modes)
-│  │  ├─ events/          MatchEvent : X01Started | TourDuMondeStarted | VisitRecorded
-│  │  └─ services/        dartSearch             (utilitaire transverse)
+│  │  ├─ events/          MatchEvent : X01Started | TourDuMondeStarted |
+│  │  │                   CheckoutPracticeStarted | RoundStarted | VisitRecorded
+│  │  └─ services/        dartSearch · checkout · visitOutcome
+│  │                      ⚠️ TRANSVERSES : un mode n'importe jamais un autre mode
 │  └─ application/
 │     ├─ ports/driving/   StartMatch, RecordVisit, UndoLastVisit, PreviewVisit,
 │     │                   BuildVisitFromScore, GetMatchState, GetCheckoutSuggestion,
@@ -291,17 +294,21 @@ src/
 │     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
 │     │                   ManagePlayers, ManageBackup, PlayTourDuMonde
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
-│     │                   Haptics, ScreenLock, Preferences   (Announcer → lot 5b)
+│     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer
 │     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
 ├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
 ├─ ui/
 │  ├─ composants/         commun/ (dont ApercuPartie, qui ouvre l'union des modes)
-│  │                      x01/ · tour-du-monde/   ← MÊME DÉCOUPAGE QUE LE DOMAINE
-│  ├─ ecrans/             PartieEcran (aiguillage) · X01Ecran · TourDuMondeEcran ·
-│  │                      ResumeX01Ecran · ResumeTourDuMondeEcran · …
-│  ├─ hooks/              useX01 · useTourDuMonde · useJoueurs · useAppareil
-│  └─ couleurs.ts (teintes) · labels.ts (tout le français)
+│  │                      x01/ · tour-du-monde/ · checkout-practice/
+│  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
+│  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
+│  │                        checkout-practice/
+│  │                      + les écrans transverses : Accueil, Joueurs,
+│  │                        NouvellePartie, Historique, Statistiques, Réglages
+│  ├─ hooks/              useX01 · useTourDuMonde · useCheckoutPractice ·
+│  │                      useJoueurs · useAppareil (wake lock, préférences, voix)
+│  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises)
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
 ```
@@ -363,7 +370,9 @@ par le composition root.
 - [x] **Lot 5a** — **Tour du monde**, deuxième mode de jeu, et la **couture `GameMode`** qui
   l'accueille : événement d'ouverture propre au mode, états discriminés, aiguillage des
   règles comme des écrans. **167 tests verts.**
-- [ ] **Lot 5b** — Entraînement solo (Checkout Practice) + annonce vocale (port `Announcer`)
+- [x] **Lot 5b** — **Checkout Practice** (entraînement solo, troisième mode) + **annonce
+  vocale** française désactivable (port `Announcer`). Ports `RandomSource` et `Announcer`,
+  règles de sortie rendues transverses. **192 tests verts.**
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 ---
@@ -682,6 +691,43 @@ Ce qui est réellement partagé descend dans `commun/`.
 (`StartMatch`, `RecordVisit`, `GetMatchState`…) face à `PlayTourDuMonde`. Leurs **types de
 retour** disent désormais `X01State`, ce qui lève l'ambiguïté à la lecture ; renommer les
 ports eux-mêmes serait le prolongement naturel mais n'était pas dans le périmètre.
+
+### Décisions du lot 5b (entraînement au checkout, annonce vocale)
+
+**Le troisième mode a coûté ce qui était annoncé** : un dossier `games/checkout-practice/`,
+un événement d'ouverture, trois lignes dans chaque aiguillage. La couture tient.
+
+- **L'entraînement est un mode de jeu, pas une catégorie à part.** Une session solo passe par
+`MatchRepository`, apparaît dans l'historique, se supprime et se sauvegarde comme le reste.
+Un exercice, c'est une partie à un joueur — lui inventer un dépôt séparé aurait dupliqué la
+moitié du lot 4 pour rien.
+- ⚠️ **La cible tirée est ÉCRITE dans le journal** (`RoundStarted`), jamais retirée au rejeu.
+L'aléa vient du port `RandomSource`, consulté une seule fois quand la manche s'ouvre. Sans ça,
+annuler une volée redistribuerait les cartes — et deviendrait un moyen de retomber sur un
+reste plus facile. Testé des deux côtés.
+- **Les restes jouables sont calculés, pas tabulés** : on garde ceux qu'une route de trois
+fléchettes peut clore, donc les bogey numbers s'excluent tout seuls. Même principe qu'au lot 3
+pour les totaux impossibles du mode rapide — aucune liste codée en dur à maintenir.
+- ⚠️ **`resolveVisit` et `checkout` sont devenus TRANSVERSES** (`domain/services/`), parce que
+la garde d'architecture du réagencement interdit à un mode d'en importer un autre — à juste
+titre. L'entraînement juge donc une manche avec **exactement la même fonction** que le X01 :
+une divergence sur la règle de bust serait le pire bug possible, invisible jusqu'à ce qu'un
+joueur perde une partie dessus. Leurs signatures ne dépendent plus que de
+`{ doubleIn, doubleOut }`, pas d'un `X01Config` complet.
+- **L'annonce vocale reçoit du texte déjà en français.** Le cœur ne fabrique aucun libellé
+(décision du lot 2) : `labels.ts` compose la phrase, l'adapter la prononce. ⚠️ Les nombres
+partent **en chiffres** (« 180 ») — la voix française les lit correctement, alors qu'écrire
+« cent quatre-vingts » ferait buter les voix qui épellent.
+- **La préférence de voix est relue à chaque annonce**, pas capturée au montage : sinon la
+couper depuis les réglages n'aurait d'effet qu'à la partie suivante.
+- **Un bouton « Essayer la voix » dans les réglages** : toutes les voix françaises ne sont pas
+installées partout, et mieux vaut découvrir le silence là qu'en pleine partie.
+- **`ui/ecrans/games/{x01,tour-du-monde,checkout-practice}/`** — les écrans suivent le même
+découpage que le domaine et les composants. Les noms de dossiers reprennent ceux du domaine
+(anglais) plutôt que d'être francisés : c'est la correspondance immédiate qui compte, et le
+`CLAUDE.md` réserve le français aux libellés, pas aux identifiants techniques.
+- **Le pavé de saisie est celui du X01**, `rapide`/`onRapide` devenus optionnels : une manche
+d'entraînement dure une seule volée, un mode rapide n'y accélérerait rien.
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode

@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Download, TriangleAlert, Upload, WifiOff } from 'lucide-react'
+import { Download, TriangleAlert, Upload, Volume2, VolumeX, WifiOff } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import type { ImportReport } from '@/core/application/ports/driving/ManageBackup'
 import { Button } from '@/ui/composants/commun/Button'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { MessageErreur } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
+import { CLE_VOIX, usePreference } from '@/ui/hooks/useAppareil'
 import { pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
@@ -72,6 +73,7 @@ export const ReglagesEcran = () => {
   const queryClient = useQueryClient()
   const champFichier = useRef<HTMLInputElement>(null)
   const idChamp = useId()
+  const [voix, setVoix] = usePreference(CLE_VOIX, true)
 
   const [rapport, setRapport] = useState<ImportReport | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -165,6 +167,66 @@ export const ReglagesEcran = () => {
 
           {erreur && <MessageErreur>{erreur}</MessageErreur>}
           {rapport && <Resume rapport={rapport} />}
+        </Panneau>
+
+        <Panneau titre="Annonce vocale" contenuClassName="flex flex-col gap-3 p-4">
+          <button
+            type="button"
+            aria-pressed={voix}
+            onClick={() => {
+              setVoix(!voix)
+              if (voix) services.devices.announcer.cancel()
+            }}
+            className={[
+              'flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4 text-left',
+              'transition-colors duration-150',
+              voix ? 'border-laiton/50 bg-laiton/10' : 'border-chene/55 bg-feutre/60',
+            ].join(' ')}
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              {voix ? (
+                <Volume2 aria-hidden="true" className="size-5 shrink-0 text-laiton-clair" />
+              ) : (
+                <VolumeX aria-hidden="true" className="size-5 shrink-0 text-craie/50" />
+              )}
+              <span className="min-w-0">
+                <span
+                  className={`block font-score text-sm font-bold uppercase tracking-widest ${
+                    voix ? 'text-laiton-clair' : 'text-craie/75'
+                  }`}
+                >
+                  Annoncer les volées
+                </span>
+                <span className="block truncate text-xs text-craie/60">
+                  Le score, les bust et les sorties, à voix haute
+                </span>
+              </span>
+            </span>
+
+            <span
+              aria-hidden="true"
+              className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-200 ${
+                voix ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-black/40'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 size-5 rounded-full transition-all duration-200 ${
+                  voix ? 'laiton-poli left-[1.6rem]' : 'left-0.5 bg-craie/45'
+                }`}
+              />
+            </span>
+          </button>
+
+          {/* Toutes les voix françaises ne sont pas installées partout : mieux
+              vaut l'entendre ici que de découvrir le silence en pleine partie. */}
+          <Button
+            variante="secondaire"
+            disabled={!voix}
+            onClick={() => services.devices.announcer.say('Cent quatre-vingts')}
+          >
+            <Volume2 aria-hidden="true" className="size-4" />
+            Essayer la voix
+          </Button>
         </Panneau>
 
         <Panneau titre="À propos" contenuClassName="flex flex-col gap-2 p-4">

@@ -1,7 +1,8 @@
 import { DomainError } from '../../DomainError'
-import type { Visit, VisitOutcome } from '../../entities/Visit'
+import type { Visit } from '../../entities/Visit'
 import type { MatchEvent, X01Milestone, X01Started } from '../../events/MatchEvent'
-import { Dart } from '../../value-objects/Dart'
+import { resolveVisit } from '../../services/visitOutcome'
+import type { Dart } from '../../value-objects/Dart'
 import type { PlayerId } from '../../value-objects/ids'
 import { Score } from '../../value-objects/Score'
 import type { X01Config } from './config'
@@ -35,83 +36,6 @@ const at = <T>(items: readonly T[], index: number, label: string): T => {
   const item = items[index]
   if (item === undefined) throw new DomainError(`${label}: no entry at index ${index}`)
   return item
-}
-
-type Resolution = {
-  readonly outcome: VisitOutcome
-  readonly scored: number
-  readonly remainingAfter: number
-  readonly hasOpenedAfter: boolean
-  readonly dartsUsed: number
-}
-
-/**
- * Bust : la volée entière est annulée et le score revient à sa valeur d'avant
- * la visite. L'ouverture (`double in`) est annulée elle aussi — la visite n'a
- * pas eu lieu, donc le double d'ouverture non plus.
- */
-const bust = (remainingBefore: number, hasOpened: boolean, dartsUsed: number): Resolution => ({
-  outcome: 'BUSTED',
-  scored: 0,
-  remainingAfter: remainingBefore,
-  hasOpenedAfter: hasOpened,
-  dartsUsed,
-})
-
-/**
- * Le cœur des règles X01. Voir la spécification dans CLAUDE.md.
- *
- * Bust si : reste < 0, reste == 1 (infinissable sur un double), ou reste == 0
- * sans que la dernière fléchette soit un double.
- */
-const resolveVisit = (
-  config: X01Config,
-  remainingBefore: number,
-  hasOpened: boolean,
-  darts: readonly Dart[],
-): Resolution => {
-  let current = remainingBefore
-  let opened = hasOpened
-  let dartsUsed = 0
-
-  for (const dart of darts) {
-    dartsUsed += 1
-
-    // Double in : tant qu'aucun double n'a été touché, la fléchette est perdue.
-    if (config.doubleIn && !opened) {
-      if (!Dart.isDouble(dart)) continue
-      opened = true
-    }
-
-    const next = current - Dart.points(dart)
-
-    if (next < 0) return bust(remainingBefore, hasOpened, dartsUsed)
-
-    if (next === 0) {
-      if (!config.doubleOut || Dart.isDouble(dart)) {
-        return {
-          outcome: 'CHECKOUT',
-          scored: remainingBefore,
-          remainingAfter: 0,
-          hasOpenedAfter: opened,
-          dartsUsed,
-        }
-      }
-      return bust(remainingBefore, hasOpened, dartsUsed)
-    }
-
-    if (next === 1 && config.doubleOut) return bust(remainingBefore, hasOpened, dartsUsed)
-
-    current = next
-  }
-
-  return {
-    outcome: 'SCORED',
-    scored: remainingBefore - current,
-    remainingAfter: current,
-    hasOpenedAfter: opened,
-    dartsUsed,
-  }
 }
 
 const start = (event: X01Started): X01State => {

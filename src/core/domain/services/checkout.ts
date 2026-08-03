@@ -1,7 +1,17 @@
-import { DomainError } from '../../DomainError'
-import { SETUP_DARTS } from '../../services/dartSearch'
-import { Dart, type SegmentNumber } from '../../value-objects/Dart'
-import type { X01Config } from './config'
+import { DomainError } from '../DomainError'
+import { Dart, type SegmentNumber } from '../value-objects/Dart'
+import { SETUP_DARTS } from './dartSearch'
+
+/**
+ * Sortir sur un double : la seule règle dont le calcul de checkout a besoin.
+ *
+ * Volontairement plus étroit que `X01Config` — ainsi ce module reste
+ * **transverse** et peut servir aussi bien au X01 qu'à l'entraînement au
+ * checkout, sans qu'un mode de jeu en importe un autre.
+ */
+export type SortieRules = {
+  readonly doubleOut: boolean
+}
 
 /** Checkout maximal en 3 fléchettes : T20 · T20 · Bull. */
 export const MAX_CHECKOUT = 170
@@ -29,7 +39,7 @@ const FINISHING_DOUBLES: readonly Dart[] = [
   Dart.bullseye(),
 ]
 
-const ORDERED_FINISHERS = (config: X01Config): readonly Dart[] =>
+const ORDERED_FINISHERS = (config: SortieRules): readonly Dart[] =>
   config.doubleOut ? FINISHING_DOUBLES : SETUP_DARTS
 
 const setupPour = (points: number, autoriserDouble: boolean): Dart | undefined =>
@@ -65,7 +75,7 @@ const finishEnDeux = (target: number, finishers: readonly Dart[]): readonly Dart
 export const suggestCheckout = (
   remaining: number,
   dartsLeft: number,
-  config: X01Config,
+  config: SortieRules,
 ): readonly Dart[] | null => {
   if (!Number.isInteger(dartsLeft) || dartsLeft < 1 || dartsLeft > 3) {
     throw new DomainError(`dartsLeft must be between 1 and 3, got ${dartsLeft}`)
@@ -99,7 +109,7 @@ export const suggestCheckout = (
  * Le joueur est-il « sur un double », c'est-à-dire à un reste qu'une seule
  * fléchette peut clore ? Sert à compter les tentatives de double dans les stats.
  */
-export const isOnACheckoutDouble = (remaining: number, config: X01Config): boolean => {
+export const isOnACheckoutDouble = (remaining: number, config: SortieRules): boolean => {
   if (!config.doubleOut) return false
   if (remaining === 50) return true
   return remaining >= 2 && remaining <= 40 && remaining % 2 === 0

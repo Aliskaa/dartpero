@@ -1,0 +1,105 @@
+import { ArrowLeft } from 'lucide-react'
+import { useEffect } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import type { MatchId } from '@/core/domain/value-objects/ids'
+import { Cartouche } from '@/ui/composants/checkout-practice/Cartouche'
+import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
+import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
+import { useWakeLock } from '@/ui/hooks/useAppareil'
+import { useCheckoutPractice } from '@/ui/hooks/useCheckoutPractice'
+import { useServices } from '@/ui/providers/ServicesProvider'
+
+export const EntrainementEcran = () => {
+  const { matchId } = useParams()
+  const identifiant = (matchId ?? '') as MatchId
+  const navigate = useNavigate()
+  const services = useServices()
+
+  const session = useCheckoutPractice(identifiant)
+  const { state, termine } = session
+
+  useWakeLock(state !== null && !termine)
+
+  useEffect(() => {
+    if (termine) navigate(`/partie/${identifiant}/resume`, { replace: true })
+  }, [termine, identifiant, navigate])
+
+  if (session.chargement) return <Spinner label="Préparation de l’entraînement…" />
+
+  if (session.erreurChargement || !state) {
+    return (
+      <EcranErreur
+        message="Cette séance est introuvable."
+        action={
+          <Link
+            to="/"
+            className="font-score text-sm uppercase tracking-widest text-laiton underline"
+          >
+            Retour à l’accueil
+          </Link>
+        }
+      />
+    )
+  }
+
+  // La route conseillée se recalcule à chaque fléchette : c'est l'intérêt même
+  // de l'exercice, apprendre le chemin autant que le toucher.
+  const suggestion =
+    session.resteAffiche > 1
+      ? services.getCheckoutSuggestion.execute({
+          remaining: session.resteAffiche,
+          dartsLeft: Math.max(1, 3 - session.dartsEnCours.length),
+          config: { doubleOut: true },
+        })
+      : null
+
+  return (
+    <div className="feutre-tapis flex min-h-dvh flex-col">
+      <header className="bois-veine flex items-center gap-3 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <Link
+          to="/"
+          aria-label="Retour à l’accueil"
+          className="grave -ml-1 flex size-10 shrink-0 items-center justify-center rounded-lg text-craie/80 active:bg-black/25"
+        >
+          <ArrowLeft aria-hidden="true" className="size-5" />
+        </Link>
+
+        <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
+          <span className="font-bold text-laiton-clair">Entraînement</span>
+          <span aria-hidden="true" className="text-craie/25">
+            |
+          </span>
+          <span>Checkout</span>
+        </p>
+      </header>
+
+      <div className="flex flex-1 flex-col gap-3 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <Cartouche
+          cible={session.cible}
+          resteAffiche={session.resteAffiche}
+          suggestion={suggestion}
+          dartsEnCours={session.dartsEnCours}
+          manche={Math.min(state.roundsPlayed + 1, state.config.rounds)}
+          total={state.config.rounds}
+          reussies={state.roundsWon}
+        />
+
+        {session.erreur && <MessageErreur>{session.erreur}</MessageErreur>}
+
+        <div className="mt-auto pt-2">
+          {/* Le même pavé qu'au X01 : on s'entraîne à sortir, donc on saisit
+              fléchette par fléchette. Pas de mode rapide, il n'aurait rien à
+              accélérer sur une manche d'une seule volée. */}
+          <PaveFlechettes
+            multiplicateur={session.multiplicateur}
+            onMultiplicateur={session.setMultiplicateur}
+            onFlechette={session.ajouterFlechette}
+            onAnnuler={() => void session.annuler()}
+            peutAnnuler={session.peutAnnuler}
+            desactive={session.occupe}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

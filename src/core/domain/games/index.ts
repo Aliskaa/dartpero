@@ -1,12 +1,12 @@
 import { DomainError } from '../DomainError'
 import type { MatchEvent } from '../events/MatchEvent'
-import type { Dart } from '../value-objects/Dart'
 import type { PlayerId } from '../value-objects/ids'
+import { CheckoutPracticeRules, type CheckoutPracticeState } from './checkout-practice/rules'
 import { TourDuMondeRules, type TourDuMondeState } from './tour-du-monde/rules'
 import { X01Rules, type X01State } from './x01/rules'
 
 /**
- * LA COUTURE `GameMode` — annoncée dès le lot 1, écrite au lot 5 seulement,
+ * LA COUTURE `GameMode` — annoncée dès le lot 1, écrite au lot 5a seulement,
  * quand un deuxième mode réel est arrivé. Généraliser plus tôt aurait été
  * inventer une abstraction sans savoir ce qu'elle devait abstraire.
  *
@@ -15,49 +15,75 @@ import { X01Rules, type X01State } from './x01/rules'
  * qu'aiguiller, sur le discriminant `mode` que porte chaque état. TypeScript
  * garantit alors qu'aucun cas n'est oublié.
  *
- * Le Cricket, s'il arrive un jour, s'ajoute ici : un événement d'ouverture, un
- * module de règles, trois lignes dans chaque aiguillage.
+ * Le troisième mode (l'entraînement au checkout, lot 5b) a coûté exactement ce
+ * qui était annoncé : un dossier, un événement d'ouverture, trois lignes ici.
  */
-export const GAME_MODE_IDS = ['X01', 'TOUR_DU_MONDE'] as const
+export const GAME_MODE_IDS = ['X01', 'TOUR_DU_MONDE', 'CHECKOUT_PRACTICE'] as const
 
 export type GameModeId = (typeof GAME_MODE_IDS)[number]
 
 /** L'état d'une partie, quel que soit son mode. */
-export type AnyMatchState = X01State | TourDuMondeState
+export type AnyMatchState = X01State | TourDuMondeState | CheckoutPracticeState
 
 /**
  * Le mode se lit sur le **premier événement du journal**, jamais sur un champ
- * ajouté après coup : les parties d'avant le lot 5 disent `X01Started` et se
- * rejouent en X01 pour toujours, sans migration.
+ * ajouté après coup : les parties d'avant le lot 5a portent `'MatchStarted'` et
+ * se rejouent en X01 pour toujours, sans migration.
  */
 export const modeOf = (events: readonly MatchEvent[]): GameModeId => {
-  const first = events[0]
-  if (first?.type === 'TourDuMondeStarted') return 'TOUR_DU_MONDE'
-  if (first?.type === 'MatchStarted') return 'X01'
-  throw new DomainError('A match log must start with an opening event')
+  switch (events[0]?.type) {
+    case 'TourDuMondeStarted':
+      return 'TOUR_DU_MONDE'
+    case 'CheckoutPracticeStarted':
+      return 'CHECKOUT_PRACTICE'
+    case 'MatchStarted':
+      return 'X01'
+    default:
+      throw new DomainError('A match log must start with an opening event')
+  }
 }
 
 export const GameModes = {
   modeOf,
 
-  project: (events: readonly MatchEvent[]): AnyMatchState =>
-    modeOf(events) === 'TOUR_DU_MONDE'
-      ? TourDuMondeRules.project(events)
-      : X01Rules.project(events),
+  project: (events: readonly MatchEvent[]): AnyMatchState => {
+    switch (modeOf(events)) {
+      case 'TOUR_DU_MONDE':
+        return TourDuMondeRules.project(events)
+      case 'CHECKOUT_PRACTICE':
+        return CheckoutPracticeRules.project(events)
+      default:
+        return X01Rules.project(events)
+    }
+  },
 
-  isFinished: (state: AnyMatchState): boolean =>
-    state.mode === 'X01' ? X01Rules.isFinished(state) : TourDuMondeRules.isFinished(state),
+  isFinished: (state: AnyMatchState): boolean => {
+    switch (state.mode) {
+      case 'X01':
+        return X01Rules.isFinished(state)
+      case 'TOUR_DU_MONDE':
+        return TourDuMondeRules.isFinished(state)
+      default:
+        return CheckoutPracticeRules.isFinished(state)
+    }
+  },
 
-  currentPlayerId: (state: AnyMatchState): PlayerId =>
-    state.mode === 'X01'
-      ? X01Rules.currentPlayer(state).playerId
-      : TourDuMondeRules.currentPlayer(state).playerId,
+  currentPlayerId: (state: AnyMatchState): PlayerId => {
+    switch (state.mode) {
+      case 'X01':
+        return X01Rules.currentPlayer(state).playerId
+      case 'TOUR_DU_MONDE':
+        return TourDuMondeRules.currentPlayer(state).playerId
+      default:
+        // Exercice solo : il n'y a jamais qu'un joueur.
+        return state.playerId
+    }
+  },
 
-  applyVisit: (state: AnyMatchState, darts: readonly Dart[]): AnyMatchState =>
-    state.mode === 'X01'
-      ? X01Rules.applyVisit(state, darts)
-      : TourDuMondeRules.applyVisit(state, darts),
+  /** Le nombre de volées enregistrées, commun à tous les modes. */
+  visitCount: (state: AnyMatchState): number =>
+    state.mode === 'CHECKOUT_PRACTICE' ? state.roundsPlayed : state.history.length,
 
-  /** Le nombre de volées déjà enregistrées, commun à tous les modes. */
-  visitCount: (state: AnyMatchState): number => state.history.length,
+  /** Un exercice solo n'a pas d'adversaire : il ne se « gagne » pas. */
+  isSolo: (mode: GameModeId): boolean => mode === 'CHECKOUT_PRACTICE',
 }

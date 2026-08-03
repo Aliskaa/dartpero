@@ -3,7 +3,9 @@ import { useCallback, useMemo, useState } from 'react'
 import type { RecordVisitResult } from '@/core/application/ports/driving/RecordVisit'
 import type { Dart, Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
+import { annonceVolee } from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
+import { useVoix } from './useAppareil'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -22,6 +24,7 @@ const message = (erreur: unknown): string =>
 export const useX01 = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
+  const dire = useVoix()
 
   const requete = useQuery({
     queryKey: ['match', matchId],
@@ -76,13 +79,15 @@ export const useX01 = (matchId: MatchId) => {
 
         if (resultat.visit.outcome === 'BUSTED') services.devices.haptics.error()
         else if (resultat.visit.outcome === 'CHECKOUT') services.devices.haptics.success()
+
+        dire(annonceVolee(resultat.visit.scored, resultat.visit.outcome))
       } catch (cause) {
         setErreur(message(cause))
       } finally {
         setOccupe(false)
       }
     },
-    [services, matchId, queryClient],
+    [services, matchId, queryClient, dire],
   )
 
   const ajouterFlechette = useCallback(

@@ -7,6 +7,30 @@ export const LIBELLE_ISSUE: Record<VisitOutcome, string> = {
   CHECKOUT: 'Sortie !',
 }
 
+/**
+ * Ce que la voix annonce à la fin d'une volée.
+ *
+ * ⚠️ Les nombres partent **en chiffres** (« 140 »), pas en lettres : la
+ * synthèse vocale française les prononce correctement toute seule, et écrire
+ * « cent quarante » ferait buter les voix qui lisent lettre à lettre.
+ *
+ * C'est ici, et nulle part ailleurs, que se décide ce qui est dit — le port
+ * `Announcer` ne reçoit que du texte déjà écrit.
+ */
+export const annonceVolee = (scored: number, outcome: VisitOutcome): string => {
+  if (outcome === 'BUSTED') return 'Bust'
+  if (outcome === 'CHECKOUT') return 'Sortie !'
+  return String(scored)
+}
+
+export const annonceIssue = (outcome: VisitOutcome): string =>
+  outcome === 'CHECKOUT' ? 'Sortie !' : outcome === 'BUSTED' ? 'Bust' : 'Raté'
+
+/** « À toi, Julien » — ce qu'on dit vraiment autour d'une cible. */
+export const annonceTour = (nom: string): string => `À toi, ${nom}`
+
+export const annonceCible = (libelle: string): string => `Cible : ${libelle}`
+
 export const JOUEUR_SUPPRIME = 'Joueur supprimé'
 
 export const nomJoueur = (nom: string | null): string => nom ?? JOUEUR_SUPPRIME

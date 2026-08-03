@@ -1,6 +1,6 @@
+import { isOnACheckoutDouble } from '../../services/checkout'
 import { Dart } from '../../value-objects/Dart'
 import type { PlayerId } from '../../value-objects/ids'
-import { isOnACheckoutDouble } from './checkout'
 import type { X01State } from './rules'
 
 export type X01PlayerStats = {

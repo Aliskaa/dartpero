@@ -1,0 +1,119 @@
+import { Target } from 'lucide-react'
+import type { Dart } from '@/core/domain/value-objects/Dart'
+import { Dart as DartVO } from '@/core/domain/value-objects/Dart'
+
+type Props = {
+  readonly cible: number | null
+  readonly resteAffiche: number
+  readonly suggestion: readonly Dart[] | null
+  readonly dartsEnCours: readonly Dart[]
+  readonly manche: number
+  readonly total: number
+  readonly reussies: number
+}
+
+/**
+ * ZONE LECTURE de l'entraînement.
+ *
+ * Le chiffre géant est le **reste à sortir** : c'est le seul nombre qui compte,
+ * et il descend à chaque fléchette. La cible tirée reste affichée à côté pour
+ * qu'on sache d'où l'on partait — sans quoi, après deux fléchettes, on ne sait
+ * plus si on a bien joué.
+ */
+export const Cartouche = ({
+  cible,
+  resteAffiche,
+  suggestion,
+  dartsEnCours,
+  manche,
+  total,
+  reussies,
+}: Props) => {
+  // Une route peut répéter la même cible : la clé porte le rang, mais elle est
+  // calculée ici pour rester une donnée stable.
+  const cibles = suggestion?.map((dart, rang) => ({
+    cle: `${rang}-${DartVO.label(dart)}`,
+    libelle: DartVO.label(dart),
+  }))
+
+  return (
+    <section aria-label="Manche en cours" className="flex flex-col gap-2.5">
+      <div className="cadre-bois animate-halo flex flex-col items-center gap-1 rounded-2xl px-4 py-5">
+        <p className="font-score text-[0.6rem] uppercase tracking-[0.3em] text-craie/60">
+          Sortie demandée
+        </p>
+
+        <output
+          aria-label="Reste à sortir"
+          className="chiffres trace-craie block text-[4.5rem] font-bold leading-none text-craie-vive"
+        >
+          <span key={resteAffiche} className="inline-block animate-pop-score">
+            {resteAffiche}
+          </span>
+        </output>
+
+        {cible !== null && resteAffiche !== cible && (
+          <p className="chiffres text-xs text-craie/55">
+            manche partie de <span className="font-bold text-craie/80">{cible}</span>
+          </p>
+        )}
+
+        <output aria-label="Volée en cours" className="mt-2 flex items-center gap-1.5">
+          {[0, 1, 2].map((rang) => {
+            const dart = dartsEnCours[rang]
+            return (
+              <span
+                key={rang}
+                className={[
+                  'chiffres flex h-7 min-w-12 items-center justify-center rounded-md text-xs font-bold',
+                  dart
+                    ? 'border border-laiton/60 bg-laiton/20 text-craie-vive'
+                    : 'border border-dashed border-craie/20 text-craie/20',
+                ].join(' ')}
+              >
+                {dart ? DartVO.label(dart) : '·'}
+              </span>
+            )
+          })}
+        </output>
+      </div>
+
+      {/* La route conseillée : on s'entraîne à sortir, autant apprendre le chemin. */}
+      <div className="min-h-11">
+        {cibles && (
+          <div
+            className={[
+              'flex animate-monter items-center justify-center gap-2.5 rounded-xl px-3 py-2',
+              'border border-vert-cible/60 bg-vert-cible/12',
+            ].join(' ')}
+          >
+            <Target aria-hidden="true" className="size-4 shrink-0 text-vert-cible" />
+            <span className="font-score text-[0.6rem] uppercase tracking-[0.28em] text-vert-cible">
+              Route
+            </span>
+            <span className="flex items-center gap-1.5">
+              {cibles.map((cible) => (
+                <span
+                  key={cible.cle}
+                  className="chiffres rounded-md border border-vert-cible/45 bg-feutre/70 px-2 py-0.5 text-base font-bold text-craie-vive"
+                >
+                  {cible.libelle}
+                </span>
+              ))}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-3 px-1">
+        <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
+          Manche <span className="chiffres font-bold text-craie">{manche}</span>
+          <span className="text-craie/40">/{total}</span>
+        </span>
+        <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
+          Réussies <span className="chiffres font-bold text-vert-cible">{reussies}</span>
+        </span>
+      </div>
+    </section>
+  )
+}

@@ -1,11 +1,16 @@
-import type { X01Config } from '../../../domain/games/x01/config'
+import type { SortieRules } from '../../../domain/services/checkout'
 import type { Dart } from '../../../domain/value-objects/Dart'
 
 export type CheckoutSuggestionQuery = {
   readonly remaining: number
   /** Fléchettes encore en main dans la volée en cours (1 à 3). */
   readonly dartsLeft: number
-  readonly config: X01Config
+  /**
+   * Volontairement plus étroit qu'un `X01Config` : sortir sur un double est la
+   * seule règle qui change le calcul. L'entraînement au checkout peut donc
+   * appeler ce port sans se fabriquer une fausse configuration de X01.
+   */
+  readonly config: SortieRules
 }
 
 /**

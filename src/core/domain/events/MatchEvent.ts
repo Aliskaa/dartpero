@@ -1,3 +1,4 @@
+import type { CheckoutPracticeConfig } from '../games/checkout-practice/config'
 import type { TourDuMondeConfig } from '../games/tour-du-monde/config'
 import type { X01Config } from '../games/x01/config'
 import type { Dart } from '../value-objects/Dart'
@@ -55,6 +56,27 @@ export type TourDuMondeStarted = {
   readonly startingPlayerIndex: number
 }
 
+/** L'ouverture d'une session d'entraînement au checkout (solo). */
+export type CheckoutPracticeStarted = {
+  readonly type: 'CheckoutPracticeStarted'
+  readonly config: CheckoutPracticeConfig
+  readonly playerIds: readonly PlayerId[]
+  readonly startingPlayerIndex: number
+}
+
+/**
+ * Une manche s'ouvre sur un reste **tiré au sort**.
+ *
+ * ⚠️ Le tirage est **stocké**, jamais rejoué : l'aléa vient du port
+ * `RandomSource` au moment où la manche commence, et le journal n'en garde que
+ * le résultat. Rejouer une session ancienne redonne donc exactement la même
+ * chose — sans quoi l'annulation changerait les cibles sous les pieds du joueur.
+ */
+export type RoundStarted = {
+  readonly type: 'RoundStarted'
+  readonly target: number
+}
+
 export type VisitRecorded = {
   readonly type: 'VisitRecorded'
   /** 1 à 3 fléchettes. Une volée s'arrête plus tôt sur un checkout ou un bust. */
@@ -66,7 +88,12 @@ export type VisitRecorded = {
  * trois fléchettes, que l'on décompte un 501 ou que l'on remonte le plateau.
  * Seule l'interprétation change, et elle appartient aux règles du mode.
  */
-export type MatchEvent = X01Started | TourDuMondeStarted | VisitRecorded
+export type MatchEvent =
+  | X01Started
+  | TourDuMondeStarted
+  | CheckoutPracticeStarted
+  | RoundStarted
+  | VisitRecorded
 
 /**
  * Les conséquences déduites d'une volée. Elles ne sont pas persistées : l'UI

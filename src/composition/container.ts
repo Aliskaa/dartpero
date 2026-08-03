@@ -1,9 +1,11 @@
+import type { Announcer } from '@/core/application/ports/driven/Announcer'
 import type { Clock } from '@/core/application/ports/driven/Clock'
 import type { Haptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
 import type { MatchRepository } from '@/core/application/ports/driven/MatchRepository'
 import type { PlayerRepository } from '@/core/application/ports/driven/PlayerRepository'
 import type { Preferences } from '@/core/application/ports/driven/Preferences'
+import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import type { BuildVisitFromScore } from '@/core/application/ports/driving/BuildVisitFromScore'
 import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
@@ -16,6 +18,7 @@ import type { GetOngoingMatch } from '@/core/application/ports/driving/GetOngoin
 import type { GetPlayerStats } from '@/core/application/ports/driving/GetPlayerStats'
 import type { ManageBackup } from '@/core/application/ports/driving/ManageBackup'
 import type { ManagePlayers } from '@/core/application/ports/driving/ManagePlayers'
+import type { PlayCheckoutPractice } from '@/core/application/ports/driving/PlayCheckoutPractice'
 import type { PlayTourDuMonde } from '@/core/application/ports/driving/PlayTourDuMonde'
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
@@ -32,18 +35,21 @@ import { GetOngoingMatchUseCase } from '@/core/application/use-cases/GetOngoingM
 import { GetPlayerStatsUseCase } from '@/core/application/use-cases/GetPlayerStatsUseCase'
 import { ManageBackupUseCase } from '@/core/application/use-cases/ManageBackupUseCase'
 import { ManagePlayersUseCase } from '@/core/application/use-cases/ManagePlayersUseCase'
+import { PlayCheckoutPracticeUseCase } from '@/core/application/use-cases/PlayCheckoutPracticeUseCase'
 import { PlayTourDuMondeUseCase } from '@/core/application/use-cases/PlayTourDuMondeUseCase'
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
 import { UndoLastVisitUseCase } from '@/core/application/use-cases/UndoLastVisitUseCase'
 import { createLocalStoragePreferences } from '@/infrastructure/device/LocalStoragePreferences'
+import { SpeechAnnouncer } from '@/infrastructure/device/SpeechAnnouncer'
 import { VibrationHaptics } from '@/infrastructure/device/VibrationHaptics'
 import { WakeLockScreenLock } from '@/infrastructure/device/WakeLockScreenLock'
 import { DexieMatchRepository } from '@/infrastructure/dexie/DexieMatchRepository'
 import { DexiePlayerRepository } from '@/infrastructure/dexie/DexiePlayerRepository'
 import { createDatabase } from '@/infrastructure/dexie/database'
 import { CryptoIdGenerator } from '@/infrastructure/system/CryptoIdGenerator'
+import { CryptoRandomSource } from '@/infrastructure/system/CryptoRandomSource'
 import { SystemClock } from '@/infrastructure/system/SystemClock'
 
 /**
@@ -58,6 +64,7 @@ export type Devices = {
   readonly screenLock: ScreenLock
   readonly haptics: Haptics
   readonly preferences: Preferences
+  readonly announcer: Announcer
 }
 
 export type Dependencies = {
@@ -65,6 +72,7 @@ export type Dependencies = {
   readonly players: PlayerRepository
   readonly clock: Clock
   readonly ids: IdGenerator
+  readonly random: RandomSource
   readonly devices: Devices
 }
 
@@ -93,6 +101,8 @@ export type Services = {
   readonly manageBackup: ManageBackup
   /** Le second mode de jeu. Voir la couture `GameModes` côté domaine. */
   readonly playTourDuMonde: PlayTourDuMonde
+  /** L'entraînement solo au checkout (lot 5b). */
+  readonly playCheckoutPractice: PlayCheckoutPractice
   readonly previewVisit: PreviewVisit
   readonly buildVisitFromScore: BuildVisitFromScore
   readonly devices: Devices
@@ -103,6 +113,7 @@ export const createServices = ({
   players,
   clock,
   ids,
+  random,
   devices,
 }: Dependencies): Services => ({
   startMatch: new StartMatchUseCase(matches, players, clock, ids),
@@ -119,6 +130,7 @@ export const createServices = ({
   managePlayers: new ManagePlayersUseCase(players, ids, clock),
   manageBackup: new ManageBackupUseCase(matches, players, clock),
   playTourDuMonde: new PlayTourDuMondeUseCase(matches, players, clock, ids),
+  playCheckoutPractice: new PlayCheckoutPracticeUseCase(matches, players, clock, ids, random),
   previewVisit: new PreviewVisitUseCase(),
   buildVisitFromScore: new BuildVisitFromScoreUseCase(),
   devices,
@@ -132,10 +144,12 @@ export const createBrowserDependencies = (): Dependencies => {
     players: new DexiePlayerRepository(db),
     clock: new SystemClock(),
     ids: new CryptoIdGenerator(),
+    random: new CryptoRandomSource(),
     devices: {
       screenLock: new WakeLockScreenLock(),
       haptics: new VibrationHaptics(),
       preferences: createLocalStoragePreferences(),
+      announcer: new SpeechAnnouncer(),
     },
   }
 }

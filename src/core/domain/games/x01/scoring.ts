@@ -1,7 +1,7 @@
 import { DomainError } from '../../DomainError'
+import { suggestCheckout } from '../../services/checkout'
 import { findExactScore } from '../../services/dartSearch'
 import { Dart } from '../../value-objects/Dart'
-import { suggestCheckout } from './checkout'
 import type { X01Config } from './config'
 
 /**
