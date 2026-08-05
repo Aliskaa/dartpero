@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Check, Play, UserPlus } from 'lucide-react'
+import { ArrowLeft, Check, ChevronsDown, Globe2, Grid3x3, Play, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import type { GameModeId } from '@/core/domain/games'
@@ -11,6 +11,7 @@ import {
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
+import { ACCENTS_MODE } from '@/ui/accents'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
 import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
@@ -78,15 +79,20 @@ const Choix = <T extends string | number>({
   )
 }
 
-const MODES: readonly { readonly id: GameModeId; readonly libelle: string }[] = [
-  { id: 'X01', libelle: 'X01' },
-  { id: 'TOUR_DU_MONDE', libelle: 'Tour du monde' },
-  { id: 'CRICKET', libelle: 'Cricket' },
+const MODES: readonly {
+  readonly id: Exclude<GameModeId, 'CHECKOUT_PRACTICE'>
+  readonly libelle: string
+  readonly accroche: string
+  readonly Icone: typeof Globe2
+}[] = [
+  { id: 'X01', libelle: 'X01', accroche: 'Décompte', Icone: ChevronsDown },
+  { id: 'TOUR_DU_MONDE', libelle: 'Tour du monde', accroche: '20 → bulle', Icone: Globe2 },
+  { id: 'CRICKET', libelle: 'Cricket', accroche: 'Fermer', Icone: Grid3x3 },
 ]
 
 /**
- * Le mode de jeu, en premier : c'est lui qui décide de tout le reste de
- * l'écran, donc il se choisit avant.
+ * Trois cartes distinctes — on sent le jeu choisi, pas seulement un segment
+ * qui glisse. L'accent du mode colore la carte active.
  */
 const ChoixMode = ({
   valeur,
@@ -94,46 +100,59 @@ const ChoixMode = ({
 }: {
   readonly valeur: GameModeId
   readonly onChange: (mode: GameModeId) => void
-}) => {
-  const rang = Math.max(
-    MODES.findIndex((option) => option.id === valeur),
-    0,
-  )
-
-  return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65">
-        Jeu
-      </legend>
-      <div
-        className="relative grid rounded-xl border border-chene/45 bg-feutre/70 p-1"
-        style={{ gridTemplateColumns: `repeat(${MODES.length}, minmax(0, 1fr))` }}
-      >
-        <span
-          aria-hidden="true"
-          style={{
-            width: `calc((100% - 0.5rem) / ${MODES.length})`,
-            transform: `translateX(${rang * 100}%)`,
-          }}
-          className="laiton-plat absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
-        />
-        {MODES.map((option) => (
+}) => (
+  <fieldset className="flex flex-col gap-2">
+    <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65">
+      Jeu
+    </legend>
+    <div className="grid grid-cols-3 gap-2">
+      {MODES.map((option) => {
+        const choisi = option.id === valeur
+        const accent = ACCENTS_MODE[option.id]
+        const Icone = option.Icone
+        return (
           <button
             key={option.id}
             type="button"
-            aria-pressed={option.id === valeur}
+            aria-pressed={choisi}
             onClick={() => onChange(option.id)}
-            className={`relative z-10 min-h-12 rounded-lg px-1 font-score text-[0.7rem] font-bold uppercase leading-tight tracking-wide transition-colors duration-150 ${
-              option.id === valeur ? 'text-[#1a1206]' : 'text-craie/75'
-            }`}
+            style={
+              choisi
+                ? {
+                    borderColor: accent.clair,
+                    backgroundColor: `color-mix(in srgb, ${accent.fond} 18%, transparent)`,
+                    boxShadow: `0 0 20px -10px ${accent.fond}`,
+                  }
+                : undefined
+            }
+            className={[
+              'flex min-h-[5.5rem] flex-col items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2',
+              'transition-colors duration-150',
+              choisi ? 'text-craie-vive' : 'border-chene/45 bg-feutre/60 text-craie/70',
+            ].join(' ')}
           >
-            {option.libelle}
+            <Icone
+              aria-hidden="true"
+              className="size-5"
+              style={choisi ? { color: accent.clair } : undefined}
+            />
+            <span
+              className="font-score text-[0.65rem] font-bold uppercase leading-tight tracking-wide"
+              style={choisi ? { color: accent.clair } : undefined}
+            >
+              {option.libelle}
+            </span>
+            <span
+              className={`text-[0.6rem] leading-none ${choisi ? 'text-craie/75' : 'text-craie/45'}`}
+            >
+              {option.accroche}
+            </span>
           </button>
-        ))}
-      </div>
-    </fieldset>
-  )
-}
+        )
+      })}
+    </div>
+  </fieldset>
+)
 
 /** Interrupteur de comptoir : la pastille de laiton glisse dans son rail. */
 const Bascule = ({

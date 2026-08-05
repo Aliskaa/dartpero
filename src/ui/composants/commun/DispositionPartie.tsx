@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react'
+import type { GameModeId } from '@/core/domain/games'
+import { variablesAccent } from '@/ui/accents'
 
 type Props = {
+  /** Pose l'accent du mode (halo, titre) sans toucher aux chiffres. */
+  readonly mode: GameModeId
   /** Le bandeau de chêne : où on en est, et par quelles règles on joue. */
   readonly enTete: ReactNode
   /** La ZONE LECTURE — ce qui se lit à 3 mètres. */
@@ -31,8 +35,8 @@ type Props = {
  * ne sont pas décoratives, sans elles une touche finit sous l'arrondi de
  * l'écran.
  */
-export const DispositionPartie = ({ enTete, children, saisie }: Props) => (
-  <div className="feutre-tapis flex min-h-dvh flex-col">
+export const DispositionPartie = ({ mode, enTete, children, saisie }: Props) => (
+  <div className="feutre-tapis flex min-h-dvh flex-col" style={variablesAccent(mode)}>
     <header
       className={[
         'bois-veine flex items-center gap-3 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]',

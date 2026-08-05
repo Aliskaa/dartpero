@@ -135,6 +135,19 @@ Aucune image bitmap : tout est CSS ou SVG inline. Ces classes **habillent le chr
 - **Alfa Slab** : enseigne + vainqueur uniquement. Titres d’écran = Oswald (`font-score`).
 - **Hiérarchie ligne X01** : (1) reste à 3 m · (2) volée à 1 m · (3) moy / fléchettes à 30 cm.
 
+### Accent par mode
+
+Le laiton reste la couleur de l’**app**. Chaque mode pose une teinte secondaire (`--color-accent-mode`), via `DispositionPartie` + `src/ui/accents.ts` :
+
+| Mode | Accent | Hex |
+| ---- | ------ | --- |
+| X01 | Laiton | `#C9A227` |
+| Tour du monde | Lagon | `#2C6E9B` |
+| Cricket | Cuivre | `#C1720F` |
+| Entraînement | Prune | `#8A4FA8` |
+
+Usage : halo du joueur actif, titre du bandeau, jetons / marques / encoches de volée, cartes de sélection de mode. **Jamais** derrière un chiffre de score.
+
 ---
 
 ## Composants réutilisables

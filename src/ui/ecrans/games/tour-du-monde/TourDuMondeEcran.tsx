@@ -49,6 +49,7 @@ export const TourDuMondeEcran = () => {
 
   return (
     <DispositionPartie
+      mode="TOUR_DU_MONDE"
       enTete={
         <>
           <Link
@@ -60,7 +61,7 @@ export const TourDuMondeEcran = () => {
           </Link>
 
           <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
-            <span className="font-bold text-laiton-clair">Tour du monde</span>
+            <span className="font-bold text-accent-mode-clair">Tour du monde</span>
             <span aria-hidden="true" className="text-craie/25">
               |
             </span>
@@ -69,7 +70,7 @@ export const TourDuMondeEcran = () => {
 
           {/* Le dernier tour de table : tout le monde a droit au même nombre de volées. */}
           {state.lastRound && (
-            <span className="grave shrink-0 animate-respirer rounded border border-laiton/60 bg-laiton/15 px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-laiton-clair">
+            <span className="grave shrink-0 animate-respirer rounded border border-accent-mode/60 bg-accent-mode/15 px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
               Dernier tour
             </span>
           )}
@@ -123,7 +124,7 @@ export const TourDuMondeEcran = () => {
               className={[
                 'chiffres flex h-8 min-w-14 items-center justify-center rounded-md text-sm font-bold',
                 dart
-                  ? 'border border-laiton/60 bg-laiton/20 text-craie-vive'
+                  ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
                   : 'border border-dashed border-craie/20 text-craie/20',
               ].join(' ')}
             >

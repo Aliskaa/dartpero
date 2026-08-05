@@ -79,12 +79,12 @@ export const LigneCible = ({
           <Avatar nom={nom} couleur={couleur} taille="xs" />
           <span
             className={`truncate font-score text-xs font-bold uppercase tracking-wider ${
-              actif ? 'text-laiton' : 'text-craie/70'
+              actif ? 'text-accent-mode-clair' : 'text-craie/70'
             }`}
           >
             {nom}
           </span>
-          {vainqueur && <Crown aria-hidden="true" className="size-3.5 shrink-0 text-laiton" />}
+          {vainqueur && <Crown aria-hidden="true" className="size-3.5 shrink-0 text-accent-mode" />}
         </p>
       </div>
 
@@ -105,7 +105,7 @@ export const LigneCible = ({
             aria-hidden="true"
             style={{ width: `${pourcentage}%` }}
             className={`h-full rounded-full transition-[width] duration-300 ${
-              boucle ? 'bg-vert-cible' : 'bg-laiton'
+              boucle ? 'bg-vert-cible' : 'bg-accent-mode'
             }`}
           />
         </div>

@@ -36,7 +36,7 @@ const EnTeteManche = ({
     </Link>
 
     <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
-      <span className="font-bold text-laiton-clair">Leg {legNumber + 1}</span>
+      <span className="font-bold text-accent-mode-clair">Leg {legNumber + 1}</span>
       {config.setsToWin > 1 && <span>· Set {setNumber + 1}</span>}
       <span aria-hidden="true" className="text-craie/25">
         |
@@ -47,12 +47,12 @@ const EnTeteManche = ({
 
     <span className="flex shrink-0 gap-1">
       {config.doubleIn && (
-        <span className="grave rounded border border-laiton/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-laiton-clair">
+        <span className="grave rounded border border-accent-mode/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
           DI
         </span>
       )}
       {config.doubleOut && (
-        <span className="grave rounded border border-laiton/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-laiton-clair">
+        <span className="grave rounded border border-accent-mode/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
           DO
         </span>
       )}
@@ -120,6 +120,7 @@ export const X01Ecran = () => {
 
   return (
     <DispositionPartie
+      mode="X01"
       enTete={
         <EnTeteManche
           config={state.config}

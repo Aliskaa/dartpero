@@ -69,7 +69,9 @@ const Jetons = ({
         <span
           key={jeton.cle}
           className={`size-2 rotate-45 rounded-[2px] ${
-            jeton.acquis ? 'bg-laiton shadow-[0_0_6px_-1px_var(--color-laiton)]' : 'bg-craie/20'
+            jeton.acquis
+              ? 'bg-accent-mode shadow-[0_0_6px_-1px_var(--color-accent-mode)]'
+              : 'bg-craie/20'
           }`}
         />
       ))}
@@ -158,12 +160,12 @@ export const LigneJoueur = ({
           <Avatar nom={nom} couleur={couleur} taille="xs" />
           <span
             className={`truncate font-score text-xs font-bold uppercase tracking-wider ${
-              actif ? 'text-laiton' : 'text-craie/70'
+              actif ? 'text-accent-mode-clair' : 'text-craie/70'
             }`}
           >
             {nom}
           </span>
-          {vainqueur && <Crown aria-hidden="true" className="size-3.5 shrink-0 text-laiton" />}
+          {vainqueur && <Crown aria-hidden="true" className="size-3.5 shrink-0 text-accent-mode" />}
         </p>
       </div>
 
@@ -184,7 +186,7 @@ export const LigneJoueur = ({
                   dart
                     ? bust
                       ? 'border border-rouge-cible/60 bg-rouge-cible/20 text-craie-vive line-through'
-                      : 'border border-laiton/50 bg-laiton/15 text-craie-vive'
+                      : 'border border-accent-mode/50 bg-accent-mode/15 text-craie-vive'
                     : 'border border-dashed border-craie/20 text-craie/25',
                 ].join(' ')}
               >

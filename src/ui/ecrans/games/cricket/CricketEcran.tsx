@@ -56,6 +56,7 @@ export const CricketEcran = () => {
 
   return (
     <DispositionPartie
+      mode="CRICKET"
       enTete={
         <>
           <Link
@@ -67,7 +68,7 @@ export const CricketEcran = () => {
           </Link>
 
           <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
-            <span className="font-bold text-laiton-clair">Cricket</span>
+            <span className="font-bold text-accent-mode-clair">Cricket</span>
             <span aria-hidden="true" className="text-craie/25">
               |
             </span>
@@ -124,7 +125,7 @@ export const CricketEcran = () => {
               className={[
                 'chiffres flex h-8 min-w-14 items-center justify-center rounded-md text-sm font-bold',
                 dart
-                  ? 'border border-laiton/60 bg-laiton/20 text-craie-vive'
+                  ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
                   : 'border border-dashed border-craie/20 text-craie/20',
               ].join(' ')}
             >

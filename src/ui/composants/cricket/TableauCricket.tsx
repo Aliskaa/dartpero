@@ -28,7 +28,7 @@ const Marques = ({ marques, morte }: { readonly marques: number; readonly morte:
     aria-hidden="true"
     className={[
       'mx-auto size-full',
-      morte ? 'text-craie/20' : marques >= 3 ? 'text-laiton' : 'text-craie-vive',
+      morte ? 'text-craie/20' : marques >= 3 ? 'text-accent-mode' : 'text-craie-vive',
     ].join(' ')}
     fill="none"
     stroke="currentColor"
@@ -125,13 +125,13 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
                   <Avatar nom={joueur.nom} couleur={joueur.couleur} taille="xs" />
                   <span
                     className={`truncate font-score text-xs font-bold uppercase tracking-wider ${
-                      joueur.actif ? 'text-laiton' : 'text-craie/70'
+                      joueur.actif ? 'text-accent-mode-clair' : 'text-craie/70'
                     }`}
                   >
                     {joueur.nom}
                   </span>
                   {joueur.vainqueur && (
-                    <Crown aria-hidden="true" className="size-3.5 shrink-0 text-laiton" />
+                    <Crown aria-hidden="true" className="size-3.5 shrink-0 text-accent-mode" />
                   )}
                 </span>
               </th>

@@ -30,6 +30,11 @@
   --color-rouge-cible: #c1272d;
   --color-vert-cible: #2e7d4f;
 
+  /* Accent du mode en cours — surchargé par DispositionPartie via style=.
+     Défaut = laiton (X01). Jamais derrière un chiffre de score. */
+  --color-accent-mode: #c9a227;
+  --color-accent-mode-clair: #f2dd93;
+
   --font-display: "Alfa Slab One", ui-serif, Georgia, serif;
   --font-score: "Oswald", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
@@ -83,19 +88,20 @@
   }
 }
 
-/* Le joueur actif respire : on sait à qui c'est le tour sans lire. */
+/* Le joueur actif respire : on sait à qui c'est le tour sans lire.
+   La teinte suit `--color-accent-mode` (laiton / lagon / cuivre / prune). */
 @keyframes halo {
   0%,
   100% {
     box-shadow:
-      0 0 0 2px var(--color-laiton),
-      0 0 22px -6px var(--color-laiton),
+      0 0 0 2px var(--color-accent-mode),
+      0 0 22px -6px var(--color-accent-mode),
       inset 0 1px 0 rgb(255 255 255 / 0.06);
   }
   50% {
     box-shadow:
-      0 0 0 2px var(--color-laiton),
-      0 0 40px -2px color-mix(in srgb, var(--color-laiton) 75%, transparent),
+      0 0 0 2px var(--color-accent-mode),
+      0 0 40px -2px color-mix(in srgb, var(--color-accent-mode) 75%, transparent),
       inset 0 1px 0 rgb(255 255 255 / 0.06);
   }
 }
