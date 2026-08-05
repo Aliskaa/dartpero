@@ -53,8 +53,33 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     resolve: {
+      // Deux pièges Rolldown / package exports qui noircissent l'écran en prod :
+      // 1. deux copies de React → `useMemo` sur dispatcher null ;
+      // 2. react-router@7 résout `dist/development` même en build, et le chunk
+      //    est embarqué deux fois → deux NavigationContext → « useLocation()
+      //    may be used only in the context of a <Router> ».
+      dedupe: ['react', 'react-dom', 'react-router', '@tanstack/react-query'],
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
+        react: fileURLToPath(new URL('./node_modules/react', import.meta.url)),
+        'react-dom': fileURLToPath(new URL('./node_modules/react-dom', import.meta.url)),
+        'react/jsx-runtime': fileURLToPath(
+          new URL('./node_modules/react/jsx-runtime.js', import.meta.url),
+        ),
+        'react/jsx-dev-runtime': fileURLToPath(
+          new URL('./node_modules/react/jsx-dev-runtime.js', import.meta.url),
+        ),
+        'react-router': fileURLToPath(
+          new URL(
+            mode === 'production'
+              ? './node_modules/react-router/dist/production/index.mjs'
+              : './node_modules/react-router/dist/development/index.mjs',
+            import.meta.url,
+          ),
+        ),
+        '@tanstack/react-query': fileURLToPath(
+          new URL('./node_modules/@tanstack/react-query/build/modern/index.js', import.meta.url),
+        ),
       },
     },
     server: {
