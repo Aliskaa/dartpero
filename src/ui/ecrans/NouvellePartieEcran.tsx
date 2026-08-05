@@ -237,8 +237,12 @@ export const NouvellePartieEcran = () => {
       await queryClient.invalidateQueries({ queryKey: CLE_JOUEURS })
       setNouveauNom('')
       basculer(joueur.id)
-    } catch {
-      setErreur('Ce pseudo n’est pas valide.')
+    } catch (cause) {
+      setErreur(
+        cause instanceof Error && cause.message === 'Player name already taken'
+          ? 'Ce pseudo est déjà pris.'
+          : 'Ce pseudo n’est pas valide.',
+      )
     }
   }
 

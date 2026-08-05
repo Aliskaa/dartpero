@@ -18,12 +18,17 @@ export class ManagePlayersUseCase implements ManagePlayers {
    * Sans couleur choisie, on prend la première encore libre : créer quatre
    * joueurs d'affilée donne quatre couleurs distinctes sans rien demander à
    * personne — « zéro friction au démarrage » est la règle du projet.
+   *
+   * Le pseudo est unique (sans tenir compte de la casse) : deux « Diego » à
+   * l'oche, c'est deux profils qu'on ne distingue plus à 3 mètres.
    */
   async create(name: string, color?: PlayerColor): Promise<Player> {
     const existants = await this.players.listAll()
+    const propre = Player.cleanName(name)
+    assurerPseudoLibre(propre, existants)
     const couleur = color ?? PlayerColor.nextAvailable(existants.map((joueur) => joueur.color))
 
-    const player = Player.create(PlayerId.of(this.ids.newId()), name, couleur, this.clock.now())
+    const player = Player.create(PlayerId.of(this.ids.newId()), propre, couleur, this.clock.now())
     await this.players.save(player)
     return player
   }
@@ -32,11 +37,16 @@ export class ManagePlayersUseCase implements ManagePlayers {
     const existant = await this.players.findById(id)
     if (!existant) throw new DomainError(`Unknown player: ${id}`)
 
+    const nom = changes.name !== undefined ? Player.cleanName(changes.name) : existant.name
+    if (changes.name !== undefined) {
+      assurerPseudoLibre(nom, await this.players.listAll(), id)
+    }
+
     // `createdAt` ne bouge jamais : c'est l'ancienneté du profil, pas sa
     // dernière modification.
     const modifie = Player.create(
       existant.id,
-      changes.name ?? existant.name,
+      nom,
       changes.color ?? existant.color,
       existant.createdAt,
     )
@@ -51,4 +61,13 @@ export class ManagePlayersUseCase implements ManagePlayers {
   listAll(): Promise<readonly Player[]> {
     return this.players.listAll()
   }
+}
+
+/** Compare les pseudos comme on les lit à distance : la casse ne compte pas. */
+const clePseudo = (nom: string): string => nom.toLocaleLowerCase('fr')
+
+const assurerPseudoLibre = (nom: string, existants: readonly Player[], sauf?: PlayerId): void => {
+  const cle = clePseudo(nom)
+  const pris = existants.some((joueur) => joueur.id !== sauf && clePseudo(joueur.name) === cle)
+  if (pris) throw new DomainError('Player name already taken')
 }

@@ -160,7 +160,13 @@ export const JoueursEcran = () => {
   const [erreur, setErreur] = useState<string | null>(null)
 
   const message = (cause: unknown) =>
-    setErreur(cause instanceof Error ? cause.message : 'Action impossible.')
+    setErreur(
+      cause instanceof Error && cause.message === 'Player name already taken'
+        ? 'Ce pseudo est déjà pris.'
+        : cause instanceof Error
+          ? cause.message
+          : 'Action impossible.',
+    )
 
   const ajouter = async () => {
     if (nouveauNom.trim() === '') return
@@ -169,8 +175,12 @@ export const JoueursEcran = () => {
       await services.managePlayers.create(nouveauNom)
       await rafraichir()
       setNouveauNom('')
-    } catch {
-      setErreur('Ce pseudo n’est pas valide : 1 à 20 caractères.')
+    } catch (cause) {
+      setErreur(
+        cause instanceof Error && cause.message === 'Player name already taken'
+          ? 'Ce pseudo est déjà pris.'
+          : 'Ce pseudo n’est pas valide : 1 à 20 caractères.',
+      )
     }
   }
 

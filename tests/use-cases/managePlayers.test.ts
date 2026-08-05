@@ -25,6 +25,26 @@ describe('ManagePlayers', () => {
     await expect(services.managePlayers.create('K'.repeat(21))).rejects.toThrow(DomainError)
   })
 
+  it('refuse un pseudo déjà pris, même en changeant la casse', async () => {
+    await services.managePlayers.create('Diego')
+    await expect(services.managePlayers.create('diego')).rejects.toThrow(DomainError)
+    await expect(services.managePlayers.create('Diego')).rejects.toThrow(DomainError)
+  })
+
+  it('refuse de renommer vers un pseudo déjà pris', async () => {
+    const diego = await services.managePlayers.create('Diego')
+    await services.managePlayers.create('Lucky')
+    await expect(services.managePlayers.update(diego.id, { name: 'lucky' })).rejects.toThrow(
+      DomainError,
+    )
+    // Garder son propre pseudo (ou seulement changer la casse affichée) reste OK.
+    await expect(services.managePlayers.update(diego.id, { name: 'Diego' })).resolves.toMatchObject(
+      {
+        name: 'Diego',
+      },
+    )
+  })
+
   it('donne une couleur distincte à chaque nouveau profil', async () => {
     const noms = ['Kevin', 'Julien', 'Paul', 'Marc']
     const couleurs: string[] = []
