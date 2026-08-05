@@ -92,6 +92,7 @@ export const useCricket = (matchId: MatchId) => {
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
       setDartsEnCours(suite)
+      setDerniereVolee(null)
 
       // Le multiplicateur retombe sur SIMPLE après chaque fléchette : il ne
       // reste jamais armé à l'insu du joueur. La règle vit dans le hook, pas

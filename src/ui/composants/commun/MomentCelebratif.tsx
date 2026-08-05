@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export type MomentCelebratifData = {
   /** Change → rejoue l'animation (typiquement un timestamp + type). */
@@ -18,16 +18,36 @@ type Props = {
  *
  * ⚠️ `pointer-events-none` : il ne doit jamais bloquer le pavé. Il vit hors de
  * la saisie, disparaît tout seul, et `prefers-reduced-motion` coupe l'éclat.
+ *
+ * ⚠️ On s'accroche à `moment.cle`, pas à l'objet : le parent recalcule un
+ * nouvel objet à chaque rendu, et un effet sur la référence réafficherait le
+ * leg précédent pendant tout le leg suivant.
  */
 export const MomentCelebratif = ({ moment, dureeMs = 2200 }: Props) => {
   const [affiche, setAffiche] = useState<MomentCelebratifData | null>(null)
+  const cleVue = useRef<string | null>(null)
+  const momentRef = useRef(moment)
+  momentRef.current = moment
+
+  const cle = moment?.cle ?? null
 
   useEffect(() => {
-    if (!moment) return
-    setAffiche(moment)
+    if (cle === null) {
+      setAffiche(null)
+      return
+    }
+
+    // Même jalon déjà consommé : on ne le rejoue pas (re-renders du match).
+    if (cleVue.current === cle) return
+
+    const data = momentRef.current
+    if (!data) return
+
+    cleVue.current = cle
+    setAffiche(data)
     const timer = window.setTimeout(() => setAffiche(null), dureeMs)
     return () => window.clearTimeout(timer)
-  }, [moment, dureeMs])
+  }, [cle, dureeMs])
 
   if (!affiche) return null
 

@@ -72,6 +72,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
       setDartsEnCours(suite)
+      setDerniereVolee(null)
 
       // Trois fléchettes : la volée est close. Le domaine tronquera lui-même si
       // le tour a été bouclé avant la troisième.

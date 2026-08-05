@@ -97,6 +97,8 @@ export const useX01 = (matchId: MatchId) => {
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
       setDartsEnCours(suite)
+      // La célébration du leg précédent ne doit pas survivre à la reprise du jeu.
+      setDerniereVolee(null)
 
       // Le multiplicateur retombe sur SIMPLE après chaque fléchette : il ne
       // reste jamais armé à l'insu du joueur. C'est ici et pas dans le pavé,
@@ -118,6 +120,8 @@ export const useX01 = (matchId: MatchId) => {
   const enregistrerScore = useCallback(
     async (total: number, dartsUsed: number) => {
       if (!state || !joueurCourant || occupe || termine) return
+
+      setDerniereVolee(null)
 
       const sortie = state.config.doubleOut && joueurCourant.remaining - total === 0
       const darts = services.buildVisitFromScore.execute({
