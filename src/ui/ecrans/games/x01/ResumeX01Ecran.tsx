@@ -80,24 +80,30 @@ export const ResumeX01Ecran = () => {
         phrase={stats.data.winnerId ? phraseVictoire(identifiant) : undefined}
       >
         {joueurs.length > 1 && (
-          <p className="chiffres mt-4 flex items-center gap-3 text-2xl font-bold text-craie/80">
-            {joueurs.map((joueur, index) => (
-              <span key={joueur.playerId} className="flex items-center gap-3">
-                {index > 0 && (
-                  <span aria-hidden="true" className="text-craie/25">
-                    –
+          <div className="mt-4 flex flex-col items-center gap-1">
+            <p className="font-score text-[0.6rem] uppercase tracking-[0.28em] text-craie/55">
+              Legs
+            </p>
+            <p className="chiffres flex items-center gap-3 text-2xl font-bold text-craie/80">
+              {joueurs.map((joueur, index) => (
+                <span key={joueur.playerId} className="flex items-center gap-3">
+                  {index > 0 && (
+                    <span aria-hidden="true" className="text-craie/25">
+                      –
+                    </span>
+                  )}
+                  <span
+                    title={nomJoueur(profils.get(joueur.playerId)?.name ?? null)}
+                    className={
+                      joueur.playerId === stats.data.winnerId ? 'text-accent-mode' : 'text-craie/50'
+                    }
+                  >
+                    {joueur.legsWon}
                   </span>
-                )}
-                <span
-                  className={
-                    joueur.playerId === stats.data.winnerId ? 'text-accent-mode' : 'text-craie/50'
-                  }
-                >
-                  {joueur.legsWonInSet}
                 </span>
-              </span>
-            ))}
-          </p>
+              ))}
+            </p>
+          </div>
         )}
       </TableauHonneur>
 
