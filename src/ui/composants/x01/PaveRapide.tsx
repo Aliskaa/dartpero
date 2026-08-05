@@ -201,7 +201,7 @@ export const PaveRapide = ({
           onClick={onRapide}
           className={[
             'flex min-h-14 items-center justify-center rounded-xl',
-            rapide ? 'laiton-poli' : 'touche text-craie/75',
+            rapide ? 'laiton-plat' : 'touche text-craie/75',
           ].join(' ')}
         >
           <Zap aria-hidden="true" className="size-5" />

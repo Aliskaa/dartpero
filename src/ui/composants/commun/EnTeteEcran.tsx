@@ -6,11 +6,12 @@ type Props = {
   readonly action?: ReactNode
 }
 
-/** L'en-tête commun des écrans de navigation : où je suis, et ce que j'y fais. */
+/** L'en-tête commun des écrans de navigation : où je suis, et ce que j'y fais.
+ *  Oswald pour la tâche — Alfa Slab reste réservée à l'enseigne. */
 export const EnTeteEcran = ({ titre, sousTitre, action }: Props) => (
   <header className="flex items-end justify-between gap-3 px-4 pt-[max(1.25rem,env(safe-area-inset-top))]">
     <div className="min-w-0">
-      <h1 className="font-display text-3xl text-laiton drop-shadow-[0_2px_0_rgba(0,0,0,0.55)]">
+      <h1 className="font-score text-3xl font-bold uppercase tracking-wide text-craie-vive">
         {titre}
       </h1>
       {sousTitre && (

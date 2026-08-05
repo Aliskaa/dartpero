@@ -14,7 +14,6 @@ import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
 import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
-import { Enseigne } from '@/ui/composants/commun/Logo'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { CLE_JOUEURS, useJoueurs } from '@/ui/hooks/useJoueurs'
 import { LIBELLE_VARIANTE_CRICKET } from '@/ui/labels'
@@ -25,9 +24,8 @@ const BEST_OF = [1, 3, 5, 7] as const
 const MAX_JOUEURS = 4
 
 /**
- * Sélecteur segmenté : un rail d'ardoise, un curseur de laiton qui glisse
- * jusqu'à l'option retenue. Le mouvement dit le changement mieux qu'un
- * changement de couleur seul.
+ * Sélecteur segmenté : un rail d'ardoise, un curseur de laiton **plat** qui
+ * glisse. Le relief poli est réservé au CTA — ici il saturait l'écran.
  */
 const Choix = <T extends string | number>({
   legende,
@@ -51,7 +49,7 @@ const Choix = <T extends string | number>({
         {legende}
       </legend>
       <div
-        className="relative grid rounded-xl border border-chene/60 bg-feutre/70 p-1"
+        className="relative grid rounded-xl border border-chene/45 bg-feutre/70 p-1"
         style={{ gridTemplateColumns: `repeat(${valeurs.length}, minmax(0, 1fr))` }}
       >
         <span
@@ -60,7 +58,7 @@ const Choix = <T extends string | number>({
             width: `calc((100% - 0.5rem) / ${valeurs.length})`,
             transform: `translateX(${rang * 100}%)`,
           }}
-          className="laiton-poli absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
+          className="laiton-plat absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
         />
         {valeurs.map((option) => (
           <button
@@ -108,7 +106,7 @@ const ChoixMode = ({
         Jeu
       </legend>
       <div
-        className="relative grid rounded-xl border border-chene/60 bg-feutre/70 p-1"
+        className="relative grid rounded-xl border border-chene/45 bg-feutre/70 p-1"
         style={{ gridTemplateColumns: `repeat(${MODES.length}, minmax(0, 1fr))` }}
       >
         <span
@@ -117,7 +115,7 @@ const ChoixMode = ({
             width: `calc((100% - 0.5rem) / ${MODES.length})`,
             transform: `translateX(${rang * 100}%)`,
           }}
-          className="laiton-poli absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
+          className="laiton-plat absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
         />
         {MODES.map((option) => (
           <button
@@ -178,7 +176,7 @@ const Bascule = ({
     >
       <span
         className={`absolute top-0.5 size-5 rounded-full transition-all duration-200 ${
-          actif ? 'laiton-poli left-[1.6rem]' : 'left-0.5 bg-craie/45'
+          actif ? 'laiton-plat left-[1.6rem]' : 'left-0.5 bg-craie/45'
         }`}
       />
     </span>
@@ -270,15 +268,17 @@ export const NouvellePartieEcran = () => {
         <Link
           to="/"
           aria-label="Retour à l’accueil"
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-chene/60 bg-ardoise text-craie/80 active:bg-chene/30"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-chene/45 bg-ardoise text-craie/80 active:bg-chene/30"
         >
           <ArrowLeft aria-hidden="true" className="size-5" />
         </Link>
         <div className="min-w-0">
-          <p className="font-score text-[0.6rem] uppercase tracking-[0.3em] text-craie/60">
+          <h1 className="font-score text-2xl font-bold uppercase tracking-wide text-craie-vive">
             Nouvelle partie
+          </h1>
+          <p className="font-score text-[0.6rem] uppercase tracking-[0.25em] text-craie/60">
+            Joueurs · règles · lancer
           </p>
-          <Enseigne className="text-2xl" />
         </div>
       </header>
 

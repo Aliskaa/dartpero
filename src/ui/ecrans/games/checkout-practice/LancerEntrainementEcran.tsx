@@ -127,7 +127,7 @@ export const LancerEntrainementEcran = () => {
               aria-pressed={serie === rounds}
               onClick={() => setRounds(serie)}
               className={`chiffres min-h-12 rounded-xl text-lg font-bold ${
-                serie === rounds ? 'laiton-poli' : 'touche text-craie/75'
+                serie === rounds ? 'laiton-plat' : 'touche text-craie/75'
               }`}
             >
               {serie}

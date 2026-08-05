@@ -50,7 +50,7 @@ export const LigneCible = ({
     <article
       aria-current={actif ? 'true' : undefined}
       className={[
-        'cadre-bois relative flex items-center gap-3 overflow-hidden rounded-2xl pl-4 pr-3',
+        'ligne-tableau relative flex items-center gap-3 overflow-hidden rounded-2xl pl-4 pr-3',
         compact ? 'py-2' : 'py-3',
         'transition-opacity duration-300',
         actif ? 'animate-halo' : 'opacity-75',
@@ -105,7 +105,7 @@ export const LigneCible = ({
             aria-hidden="true"
             style={{ width: `${pourcentage}%` }}
             className={`h-full rounded-full transition-[width] duration-300 ${
-              boucle ? 'bg-vert-cible' : 'laiton-poli'
+              boucle ? 'bg-vert-cible' : 'bg-laiton'
             }`}
           />
         </div>

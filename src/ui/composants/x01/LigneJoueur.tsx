@@ -8,7 +8,7 @@ import { moyenne as formatMoyenne } from '@/ui/labels'
 
 /**
  * La volée montrée sur la ligne : celle **en cours** pour le joueur actif,
- * la **dernière enregistrée** pour les autres. C'est la question qui revient le
+ * la dernière enregistrée pour les autres. C'est la question qui revient le
  * plus souvent autour d'une cible — « t'as mis quoi, là ? ».
  */
 export type VoleeAffichee = {
@@ -96,13 +96,12 @@ type Props = {
 /**
  * ZONE LECTURE — une ligne par joueur, quel que soit leur nombre.
  *
- * La disposition ne change jamais : seule l'échelle respire, pour que le score
- * reste le plus gros possible à deux joueurs sans qu'il faille deux composants.
- * Les colonnes sont à largeur fixe, sinon les scores ne s'alignent plus d'une
- * ligne à l'autre — et c'est justement en les alignant qu'on les compare.
+ * Hiérarchie visuelle (refonte « tableau de score ») :
+ * 1. à 3 m — reste + qui joue (craie-vive, actif net / inactif atténué) ;
+ * 2. à 1 m — volée + total ;
+ * 3. à 30 cm — moyenne / fléchettes / jetons, jamais concurrents du score.
  *
- * Règle de la charte : le chiffre du score est en craie quasi-blanche sur
- * feutre sombre ; le bois, le laiton et la couleur du profil restent au cadre.
+ * Pas de cadre bois ici : le chrome mangeait le contraste du chiffre.
  */
 export const LigneJoueur = ({
   nom,
@@ -129,7 +128,7 @@ export const LigneJoueur = ({
     <article
       aria-current={actif ? 'true' : undefined}
       className={[
-        'cadre-bois relative flex items-center gap-3 overflow-hidden rounded-2xl pl-4 pr-3',
+        'ligne-tableau relative flex items-center gap-3 overflow-hidden rounded-2xl pl-4 pr-3',
         HAUTEUR[echelle],
         'transition-opacity duration-300',
         bust ? 'animate-secousse' : '',
@@ -143,7 +142,7 @@ export const LigneJoueur = ({
         className={`absolute inset-y-0 left-0 w-1.5 ${bust ? 'bg-rouge-cible' : ''}`}
       />
 
-      {/* Le score, en colonne à largeur fixe pour qu'il s'aligne d'une ligne à l'autre. */}
+      {/* Niveau 1 — le score, colonne fixe pour l'aligner d'une ligne à l'autre. */}
       <div className={`flex shrink-0 flex-col items-start ${COLONNE_SCORE[echelle]}`}>
         <output
           aria-label={`Score restant de ${nom}`}
@@ -168,11 +167,11 @@ export const LigneJoueur = ({
         </p>
       </div>
 
-      {/* La volée : trois encoches, toujours, pour que les lignes restent alignées. */}
-      <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
+      {/* Niveau 2 — la volée : trois encoches toujours, pour garder l'alignement. */}
+      <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
         <output
           aria-label={enSaisie ? 'Volée en cours' : `Dernière volée de ${nom}`}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1.5"
         >
           {[0, 1, 2].map((rang) => {
             const dart = volee?.darts[rang]
@@ -180,13 +179,13 @@ export const LigneJoueur = ({
               <span
                 key={rang}
                 className={[
-                  'chiffres flex h-7 min-w-11 items-center justify-center rounded-md',
-                  'text-xs font-bold transition-colors duration-150',
+                  'chiffres flex h-8 min-w-12 items-center justify-center rounded-md',
+                  'text-sm font-bold transition-colors duration-150',
                   dart
                     ? bust
                       ? 'border border-rouge-cible/60 bg-rouge-cible/20 text-craie-vive line-through'
-                      : 'border border-laiton/60 bg-laiton/20 text-craie-vive'
-                    : 'border border-dashed border-craie/15 text-craie/20',
+                      : 'border border-laiton/50 bg-laiton/15 text-craie-vive'
+                    : 'border border-dashed border-craie/20 text-craie/25',
                 ].join(' ')}
               >
                 {dart ? DartVO.label(dart) : '·'}
@@ -205,8 +204,8 @@ export const LigneJoueur = ({
           </span>
         ) : (
           <span
-            className={`chiffres text-lg font-bold leading-none ${
-              volee && volee.darts.length > 0 ? 'text-craie' : 'text-craie/20'
+            className={`chiffres text-xl font-bold leading-none ${
+              volee && volee.darts.length > 0 ? 'text-craie' : 'text-craie/25'
             }`}
           >
             {volee && volee.darts.length > 0 ? volee.total : '—'}
@@ -214,17 +213,18 @@ export const LigneJoueur = ({
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-1 text-craie/70">
+      {/* Niveau 3 — détail de près : jamais au même poids que le reste. */}
+      <div className="flex shrink-0 flex-col items-end gap-1 text-craie/65">
         <Jetons gagnes={legsGagnes} requis={legsRequis} libelle="Legs" />
         {setsRequis > 1 && <Jetons gagnes={setsGagnes} requis={setsRequis} libelle="Sets" />}
 
-        <span className="flex items-center gap-1 font-score text-[0.7rem] uppercase tracking-wider">
-          <IconeFlechette className="size-3.5" />
-          <span className="chiffres font-bold text-craie">{flechettes}</span>
+        <span className="flex items-center gap-1 font-score text-[0.65rem] uppercase tracking-wider">
+          <IconeFlechette className="size-3 opacity-80" />
+          <span className="chiffres font-semibold text-craie/80">{flechettes}</span>
         </span>
-        <span className="flex items-center gap-1 font-score text-[0.7rem] uppercase tracking-wider">
+        <span className="flex items-center gap-1 font-score text-[0.65rem] uppercase tracking-wider">
           moy
-          <span className="chiffres font-bold text-craie">{formatMoyenne(moyenne)}</span>
+          <span className="chiffres font-semibold text-craie/80">{formatMoyenne(moyenne)}</span>
         </span>
       </div>
     </article>

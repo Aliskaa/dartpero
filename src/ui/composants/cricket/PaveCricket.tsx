@@ -102,7 +102,7 @@ export const PaveCricket = ({
               width: 'calc((100% - 0.5rem) / 3)',
               transform: `translateX(${rang * 100}%)`,
             }}
-            className="laiton-poli absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
+            className="laiton-plat absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
           />
           {MULTIPLICATEURS.map(({ valeur, libelle }) => {
             const actif = valeur === multiplicateur

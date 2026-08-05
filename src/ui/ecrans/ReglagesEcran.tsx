@@ -211,7 +211,7 @@ export const ReglagesEcran = () => {
             >
               <span
                 className={`absolute top-0.5 size-5 rounded-full transition-all duration-200 ${
-                  voix ? 'laiton-poli left-[1.6rem]' : 'left-0.5 bg-craie/45'
+                  voix ? 'laiton-plat left-[1.6rem]' : 'left-0.5 bg-craie/45'
                 }`}
               />
             </span>

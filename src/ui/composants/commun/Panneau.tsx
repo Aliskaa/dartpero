@@ -13,9 +13,9 @@ type Props = {
 }
 
 /**
- * Le panneau du pub : une ardoise dans un cadre de bois, coiffée d'un bandeau
- * de chêne veiné dès qu'elle porte un intitulé. C'est le conteneur par défaut
- * de tout ce qui n'est pas le tableau des scores.
+ * Conteneur secondaire : ardoise + filet, sans bandeau de bois systématique.
+ * Le veinage bois reste réservé au bandeau de match et à la nav — là où il
+ * ancre « on est en partie », pas sur chaque carte de réglages.
  */
 export const Panneau = ({
   titre,
@@ -26,13 +26,14 @@ export const Panneau = ({
   contenuClassName = 'p-4',
   ...reste
 }: Props) => (
-  <section {...reste} className={`cadre-bois overflow-hidden rounded-2xl ${className}`}>
+  <section
+    {...reste}
+    className={`overflow-hidden rounded-2xl border border-chene/40 bg-ardoise ${className}`}
+  >
     {(titre || enTete) && (
-      <header className="bois-veine flex items-center justify-between gap-3 px-4 py-2.5">
+      <header className="flex items-center justify-between gap-3 border-b border-chene/35 px-4 py-2.5">
         {titre ? (
-          <h2 className="grave font-score text-xs uppercase tracking-[0.28em] text-laiton-clair">
-            {titre}
-          </h2>
+          <h2 className="font-score text-xs uppercase tracking-[0.28em] text-laiton">{titre}</h2>
         ) : (
           enTete
         )}

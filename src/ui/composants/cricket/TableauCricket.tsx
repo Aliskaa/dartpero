@@ -111,7 +111,7 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
               key={joueur.playerId}
               aria-current={joueur.actif ? 'true' : undefined}
               className={[
-                'cadre-bois transition-opacity duration-300',
+                'ligne-tableau transition-opacity duration-300',
                 joueur.actif ? 'animate-halo' : 'opacity-75',
               ].join(' ')}
             >
