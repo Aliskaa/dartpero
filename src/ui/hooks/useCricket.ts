@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
+import type { CricketVisitResult } from '@/core/application/ports/driving/PlayCricket'
 import type { Dart, Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { annonceCricket } from '@/ui/labels'
@@ -35,6 +36,7 @@ export const useCricket = (matchId: MatchId) => {
   const state = requete.data ?? null
   const [dartsEnCours, setDartsEnCours] = useState<readonly Dart[]>([])
   const [multiplicateur, setMultiplicateur] = useState<Multiplier>('SIMPLE')
+  const [derniereVolee, setDerniereVolee] = useState<CricketVisitResult | null>(null)
   const [occupe, setOccupe] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
 
@@ -62,6 +64,7 @@ export const useCricket = (matchId: MatchId) => {
         const resultat = await services.playCricket.recordVisit(matchId, darts)
         queryClient.setQueryData(['cricket', matchId], resultat.state)
         setDartsEnCours([])
+        setDerniereVolee(resultat)
 
         const gagnee = resultat.milestones.some((jalon) => jalon.type === 'MatchFinished')
         if (gagnee || resultat.visit.closed.length > 0) services.devices.haptics.success()
@@ -123,6 +126,7 @@ export const useCricket = (matchId: MatchId) => {
     try {
       const revenu = await services.playCricket.undoLastVisit(matchId)
       queryClient.setQueryData(['cricket', matchId], revenu)
+      setDerniereVolee(null)
       services.devices.haptics.tap()
     } catch (cause) {
       setErreur(message(cause))
@@ -142,6 +146,7 @@ export const useCricket = (matchId: MatchId) => {
     dartsEnCours,
     multiplicateur,
     setMultiplicateur,
+    derniereVolee,
     ajouterFlechette,
     annuler,
     peutAnnuler: dartsEnCours.length > 0 || (state?.history.length ?? 0) > 0,

@@ -90,3 +90,18 @@ export const dateHeure = (horodatage: number): string =>
 /** « 3 parties », « 1 partie » — l'accord au singulier revient partout. */
 export const pluriel = (nombre: number, singulier: string, pluriel = `${singulier}s`): string =>
   `${nombre} ${nombre > 1 ? pluriel : singulier}`
+
+/** Phrases d'ambiance pour les résumés — le côté apéro, hors saisie. */
+export const PHRASE_VICTOIRE = [
+  'Ça se fête autour de la cible.',
+  'Une tournée pour le vainqueur.',
+  'Le tableau a parlé.',
+  'Bien joué — on remet ça ?',
+] as const
+
+export const phraseVictoire = (graine: string): string => {
+  let hash = 0
+  for (let i = 0; i < graine.length; i += 1) hash = (hash * 31 + graine.charCodeAt(i)) | 0
+  const index = Math.abs(hash) % PHRASE_VICTOIRE.length
+  return PHRASE_VICTOIRE[index] ?? PHRASE_VICTOIRE[0]
+}

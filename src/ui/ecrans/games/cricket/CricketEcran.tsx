@@ -6,6 +6,7 @@ import { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
+import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
 import { PaveCricket } from '@/ui/composants/cricket/PaveCricket'
 import { TableauCricket } from '@/ui/composants/cricket/TableauCricket'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
@@ -53,6 +54,22 @@ export const CricketEcran = () => {
   const mortes = state.config.targets.map((_, index) =>
     affiche.players.every((joueur) => (joueur.marks[index] ?? 0) >= MARKS_TO_CLOSE),
   )
+
+  const fermeture = partie.derniereVolee?.milestones.find((m) => m.type === 'TargetClosed')
+  const partieGagnee = partie.derniereVolee?.milestones.find((m) => m.type === 'MatchFinished')
+  const moment = partieGagnee
+    ? {
+        cle: `partie-${partie.derniereVolee?.state.history.length}`,
+        titre: 'Partie !',
+        detail: nomJoueur(profils.get(partieGagnee.winnerId)?.name ?? null),
+      }
+    : fermeture && fermeture.type === 'TargetClosed'
+      ? {
+          cle: `ferme-${fermeture.target}-${partie.derniereVolee?.state.history.length}`,
+          titre: 'Fermée !',
+          detail: fermeture.target === 'BULL' ? 'Bulle' : String(fermeture.target),
+        }
+      : null
 
   return (
     <DispositionPartie
@@ -134,6 +151,8 @@ export const CricketEcran = () => {
           )
         })}
       </output>
+
+      <MomentCelebratif moment={moment} />
 
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
     </DispositionPartie>

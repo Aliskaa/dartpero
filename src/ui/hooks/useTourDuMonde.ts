@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
+import type { TourDuMondeVisitResult } from '@/core/application/ports/driving/PlayTourDuMonde'
 import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { useServices } from '../providers/ServicesProvider'
@@ -32,6 +33,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
 
   const state = requete.data ?? null
   const [dartsEnCours, setDartsEnCours] = useState<readonly Dart[]>([])
+  const [derniereVolee, setDerniereVolee] = useState<TourDuMondeVisitResult | null>(null)
   const [occupe, setOccupe] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
 
@@ -46,6 +48,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
         const resultat = await services.playTourDuMonde.recordVisit(matchId, darts)
         queryClient.setQueryData(['tourDuMonde', matchId], resultat.state)
         setDartsEnCours([])
+        setDerniereVolee(resultat)
 
         if (resultat.milestones.some((jalon) => jalon.type === 'TourCompleted')) {
           services.devices.haptics.success()
@@ -96,6 +99,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     try {
       const revenu = await services.playTourDuMonde.undoLastVisit(matchId)
       queryClient.setQueryData(['tourDuMonde', matchId], revenu)
+      setDerniereVolee(null)
       services.devices.haptics.tap()
     } catch (cause) {
       setErreur(message(cause))
@@ -129,6 +133,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     termine,
     dartsEnCours,
     apercu,
+    derniereVolee,
     ajouterFlechette,
     annuler,
     peutAnnuler: dartsEnCours.length > 0 || (state?.history.length ?? 0) > 0,

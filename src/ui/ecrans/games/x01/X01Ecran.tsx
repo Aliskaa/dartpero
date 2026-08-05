@@ -6,12 +6,15 @@ import type { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
+import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
+import { momentDepuisVoleeX01 } from '@/ui/composants/x01/momentVolee'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
 import { PaveRapide } from '@/ui/composants/x01/PaveRapide'
 import { Tableau } from '@/ui/composants/x01/Tableau'
 import { usePreference, useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useX01 } from '@/ui/hooks/useX01'
+import { nomJoueur } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const CLE_MODE_RAPIDE = 'saisie-rapide'
@@ -107,6 +110,18 @@ export const X01Ecran = () => {
     (stats.data?.players ?? []).map((joueur) => [joueur.playerId, joueur.average3]),
   )
 
+  const heroMilestone = match.derniereVolee?.milestones.find(
+    (m) => m.type === 'MatchFinished' || m.type === 'SetWon' || m.type === 'LegWon',
+  )
+  const heroId =
+    heroMilestone == null
+      ? undefined
+      : heroMilestone.type === 'MatchFinished'
+        ? heroMilestone.winnerId
+        : heroMilestone.playerId
+  const heroNom = heroId ? nomJoueur(profils.get(heroId)?.name ?? null) : undefined
+  const moment = momentDepuisVoleeX01(match.derniereVolee, heroNom)
+
   // « Annuler » et la bascule de mode vivent DANS le pavé, sur sa dernière
   // rangée : le bas de l'écran est la seule zone qu'on atteint sans changer la
   // prise du téléphone.
@@ -153,6 +168,8 @@ export const X01Ecran = () => {
         profils={profils}
         moyennes={moyennes}
       />
+
+      <MomentCelebratif moment={moment} />
 
       {match.erreur && <MessageErreur>{match.erreur}</MessageErreur>}
     </DispositionPartie>

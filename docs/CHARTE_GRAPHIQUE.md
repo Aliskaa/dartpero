@@ -146,7 +146,13 @@ Le laiton reste la couleur de l’**app**. Chaque mode pose une teinte secondair
 | Cricket | Cuivre | `#C1720F` |
 | Entraînement | Prune | `#8A4FA8` |
 
-Usage : halo du joueur actif, titre du bandeau, jetons / marques / encoches de volée, cartes de sélection de mode. **Jamais** derrière un chiffre de score.
+### Moments de célébration (P3)
+
+Hors saisie uniquement — jamais pendant qu’on tape une volée :
+
+- **`MomentCelebratif`** : bandeau vert éphémère (leg / set / sortie / tour bouclé / cible fermée), `pointer-events-none`, ~2,2 s.
+- **`TableauHonneur`** : podium des résumés (avatar + couronne + phrase d’ambiance), accent du mode + éclat.
+- Phrase tirée de `phraseVictoire(matchId)` — déterministe, pas de `Math.random`.
 
 ---
 

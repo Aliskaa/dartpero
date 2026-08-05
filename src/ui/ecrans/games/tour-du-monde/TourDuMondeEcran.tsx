@@ -4,12 +4,13 @@ import { Link, useNavigate, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
+import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
 import { LigneCible, libelleCible } from '@/ui/composants/tour-du-monde/LigneCible'
 import { PaveCibles } from '@/ui/composants/tour-du-monde/PaveCibles'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useTourDuMonde } from '@/ui/hooks/useTourDuMonde'
-import { nomJoueur } from '@/ui/labels'
+import { nomJoueur, pluriel } from '@/ui/labels'
 
 export const TourDuMondeEcran = () => {
   const { matchId } = useParams()
@@ -46,6 +47,16 @@ export const TourDuMondeEcran = () => {
 
   const total = state.config.targets.length
   const compact = state.players.length > 2
+
+  const tour = partie.derniereVolee?.milestones.find((m) => m.type === 'TourCompleted')
+  const moment =
+    tour && tour.type === 'TourCompleted'
+      ? {
+          cle: `tour-${tour.playerId}-${tour.darts}`,
+          titre: 'Bouclé !',
+          detail: `${nomJoueur(profils.get(tour.playerId)?.name ?? null)} · ${pluriel(tour.darts, 'fléchette', 'fléchettes')}`,
+        }
+      : null
 
   return (
     <DispositionPartie
@@ -133,6 +144,8 @@ export const TourDuMondeEcran = () => {
           )
         })}
       </output>
+
+      <MomentCelebratif moment={moment} />
 
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
     </DispositionPartie>

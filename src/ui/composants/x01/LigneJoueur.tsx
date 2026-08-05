@@ -201,8 +201,12 @@ export const LigneJoueur = ({
             Bust — annulée
           </span>
         ) : sortie ? (
-          <span className="font-score text-xs font-bold uppercase tracking-widest text-vert-cible">
-            Sortie !
+          <span className="relative overflow-hidden font-score text-xs font-bold uppercase tracking-widest text-vert-cible">
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-transparent via-vert-cible/40 to-transparent animate-eclat"
+            />
+            <span className="relative">Sortie !</span>
           </span>
         ) : (
           <span

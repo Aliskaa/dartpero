@@ -3,9 +3,9 @@ import { House, RotateCcw, Target } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { Button } from '@/ui/composants/commun/Button'
-import { Cible } from '@/ui/composants/commun/Cible'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
+import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /** Un mot sur la performance — encourageant sans être malhonnête. */
@@ -53,32 +53,23 @@ export const ResumeEntrainementEcran = () => {
 
   return (
     <main className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
-      <section className="cadre-bois relative animate-monter overflow-hidden rounded-3xl px-6 py-7 text-center">
-        <Cible
-          className="pointer-events-none absolute -right-16 -top-16 size-56 opacity-[0.09]"
-          avecNumeros
-        />
+      <TableauHonneur
+        mode="CHECKOUT_PRACTICE"
+        surtitre="Séance terminée"
+        phrase={appreciation(pourcentage)}
+      >
+        <output
+          aria-label="Taux de réussite"
+          className="chiffres trace-craie mt-3 block text-[4.5rem] font-bold leading-none text-craie-vive"
+        >
+          {pourcentage}
+          <span className="text-3xl font-normal text-craie/60"> %</span>
+        </output>
 
-        <div className="relative flex flex-col items-center">
-          <p className="font-score text-[0.65rem] uppercase tracking-[0.35em] text-craie/60">
-            Séance terminée
-          </p>
-
-          <output
-            aria-label="Taux de réussite"
-            className="chiffres trace-craie mt-3 block text-[4.5rem] font-bold leading-none text-craie-vive"
-          >
-            {pourcentage}
-            <span className="text-3xl font-normal text-craie/60"> %</span>
-          </output>
-
-          <p className="mt-1 font-score text-sm uppercase tracking-[0.2em] text-vert-cible">
-            {state.roundsWon} sortie{state.roundsWon > 1 ? 's' : ''} sur {state.roundsPlayed}
-          </p>
-
-          <p className="mt-3 max-w-xs text-sm text-craie/70">{appreciation(pourcentage)}</p>
-        </div>
-      </section>
+        <p className="mt-1 font-score text-sm uppercase tracking-[0.2em] text-vert-cible">
+          {state.roundsWon} sortie{state.roundsWon > 1 ? 's' : ''} sur {state.roundsPlayed}
+        </p>
+      </TableauHonneur>
 
       <Panneau titre="Les sorties réussies" contenuClassName="p-3">
         {reussies.length === 0 ? (
@@ -104,7 +95,7 @@ export const ResumeEntrainementEcran = () => {
       <div className="mt-auto grid gap-2 pt-1">
         <Button taille="lg" onClick={() => navigate('/entrainement')}>
           <RotateCcw aria-hidden="true" className="size-5" />
-          Refaire une série
+          Nouvelle série
         </Button>
         <Button variante="secondaire" onClick={() => navigate('/')}>
           <House aria-hidden="true" className="size-4" />
