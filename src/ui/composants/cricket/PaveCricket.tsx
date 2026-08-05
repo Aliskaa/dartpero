@@ -25,16 +25,11 @@ type Props = {
  * Le pavé du X01 aligne les vingt secteurs ; ici dix-neuf d'entre eux ne font
  * strictement rien. Les proposer inviterait à saisir des fléchettes sans effet
  * et ferait douter : « je l'ai tapée, pourquoi rien n'a bougé ? ». Tout ce qui
- * tombe hors des sept cibles se saisit donc avec la touche `0`, qui dit
- * exactement ce qui s'est passé au jeu : rien.
+ * tombe hors des sept cibles se saisit donc avec « Hors », qui dit exactement
+ * ce qui s'est passé au jeu : rien.
  *
- * En échange, les touches sont énormes — la lisibilité que le cadrage réclame,
- * enfin obtenue sans compromis.
- *
- * La bascule S/D/T est celle du X01, et pour la même raison : ici elle vaut une,
- * deux ou trois **marques**. Elle est donc **momentanée** (la remise à Simple
- * vit dans `useCricket`), et l'exposant annonce les marques plutôt que les
- * points — c'est ce qui compte au Cricket.
+ * La bascule S/D/T est momentanée (remise à Simple dans `useCricket`) ; l'exposant
+ * annonce les marques plutôt que les points.
  */
 export const PaveCricket = ({
   cibles,
@@ -64,7 +59,7 @@ export const PaveCricket = ({
               onClick={() => onFlechette(Dart.of(cible, multiplicateur))}
               title={bulle && bullInterdit ? 'Il n’existe pas de triple bull' : undefined}
               className={[
-                'touche chiffres relative min-h-16 rounded-xl text-2xl font-bold text-craie-vive',
+                'touche chiffres relative min-h-14 rounded-xl text-2xl font-bold text-craie-vive',
                 'paysage:min-h-12 paysage:text-xl',
                 bulle ? 'border-rouge-cible/70 bg-rouge-cible/25' : '',
               ].join(' ')}
@@ -72,7 +67,7 @@ export const PaveCricket = ({
               {marques > 1 && (
                 <span
                   aria-hidden="true"
-                  className="absolute right-1.5 top-1 font-score text-[0.6rem] font-bold leading-none text-laiton"
+                  className="absolute right-1.5 top-1 font-score text-[0.65rem] font-bold leading-none text-accent-mode-clair"
                 >
                   ×{marques}
                 </span>
@@ -87,15 +82,15 @@ export const PaveCricket = ({
           disabled={desactive}
           /* Une fléchette hors des sept cibles ne vaut rien : elle ignore la bascule. */
           onClick={() => onFlechette(Dart.miss())}
-          className="touche chiffres min-h-16 rounded-xl text-xl font-bold text-craie/60 paysage:min-h-12"
+          className="touche min-h-14 rounded-xl font-score text-base font-bold uppercase tracking-wider text-craie/65 paysage:min-h-12"
         >
-          0
+          Hors
         </button>
       </div>
 
       {/* La rangée du pouce, identique à celle du X01. */}
       <div className="flex gap-1.5">
-        <div className="relative grid flex-1 grid-cols-3 rounded-xl border border-chene/60 bg-feutre/70 p-1">
+        <div className="relative grid flex-1 grid-cols-3 rounded-xl border border-chene/45 bg-feutre/70 p-1">
           <span
             aria-hidden="true"
             style={{
@@ -128,10 +123,10 @@ export const PaveCricket = ({
           type="button"
           disabled={desactive || !peutAnnuler}
           onClick={onAnnuler}
-          aria-label="Annuler"
-          className="touche flex min-h-14 w-14 shrink-0 items-center justify-center rounded-xl border-chene text-craie"
+          className="touche flex min-h-12 shrink-0 items-center gap-1.5 rounded-xl px-3 font-score text-xs font-bold uppercase tracking-wider text-craie"
         >
-          <Undo2 aria-hidden="true" className="size-5" />
+          <Undo2 aria-hidden="true" className="size-4" />
+          Annuler
         </button>
       </div>
     </section>

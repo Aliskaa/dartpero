@@ -14,6 +14,28 @@ import { useCricket } from '@/ui/hooks/useCricket'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { LIBELLE_VARIANTE_CRICKET, nomJoueur } from '@/ui/labels'
 
+/** Les trois encoches de la volée, collées au pavé — « t’as mis quoi, là ? ». */
+const VoleeEnCours = ({ darts }: { readonly darts: readonly Dart[] }) => (
+  <output aria-label="Volée en cours" className="mb-2 flex items-center justify-center gap-1.5">
+    {[0, 1, 2].map((rang) => {
+      const dart = darts[rang]
+      return (
+        <span
+          key={rang}
+          className={[
+            'chiffres flex h-9 min-w-14 items-center justify-center rounded-md text-sm font-bold',
+            dart
+              ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
+              : 'border border-dashed border-craie/25 text-craie/25',
+          ].join(' ')}
+        >
+          {dart ? Dart.label(dart) : '·'}
+        </span>
+      )
+    })}
+  </output>
+)
+
 export const CricketEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
@@ -92,27 +114,38 @@ export const CricketEcran = () => {
             <span>{LIBELLE_VARIANTE_CRICKET[state.config.variant]}</span>
           </p>
 
-          {/* En cut-throat, marquer est un cadeau empoisonné : le rappel reste affiché. */}
-          {cutThroat && (
-            <span className="grave shrink-0 rounded border border-rouge-cible/60 bg-rouge-cible/15 px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-craie">
-              Le plus bas gagne
-            </span>
-          )}
+          {/* Rappel de la condition de victoire — standard vs cut-throat. */}
+          <span
+            className={[
+              'grave shrink-0 rounded border px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider',
+              cutThroat
+                ? 'border-rouge-cible/60 bg-rouge-cible/15 text-craie'
+                : 'border-accent-mode/50 bg-accent-mode/10 text-accent-mode-clair',
+            ].join(' ')}
+          >
+            {cutThroat ? 'Le plus bas gagne' : 'Ferme + mène'}
+          </span>
         </>
       }
       saisie={
-        <PaveCricket
-          cibles={state.config.targets}
-          multiplicateur={partie.multiplicateur}
-          onMultiplicateur={partie.setMultiplicateur}
-          onFlechette={partie.ajouterFlechette}
-          onAnnuler={() => void partie.annuler()}
-          peutAnnuler={partie.peutAnnuler}
-          desactive={partie.occupe}
-        />
+        <>
+          <VoleeEnCours darts={partie.dartsEnCours} />
+          <PaveCricket
+            cibles={state.config.targets}
+            multiplicateur={partie.multiplicateur}
+            onMultiplicateur={partie.setMultiplicateur}
+            onFlechette={partie.ajouterFlechette}
+            onAnnuler={() => void partie.annuler()}
+            peutAnnuler={partie.peutAnnuler}
+            desactive={partie.occupe}
+          />
+        </>
       }
     >
-      <section aria-label="Tableau des scores">
+      <section
+        aria-label="Tableau des scores"
+        className="flex min-h-0 flex-1 flex-col justify-center"
+      >
         <TableauCricket
           cibles={state.config.targets}
           mortes={mortes}
@@ -131,26 +164,6 @@ export const CricketEcran = () => {
           })}
         />
       </section>
-
-      {/* Les fléchettes de la volée en cours, dans leurs encoches. */}
-      <output aria-label="Volée en cours" className="flex items-center justify-center gap-1.5">
-        {[0, 1, 2].map((rang) => {
-          const dart = partie.dartsEnCours[rang]
-          return (
-            <span
-              key={rang}
-              className={[
-                'chiffres flex h-8 min-w-14 items-center justify-center rounded-md text-sm font-bold',
-                dart
-                  ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
-                  : 'border border-dashed border-craie/20 text-craie/20',
-              ].join(' ')}
-            >
-              {dart ? Dart.label(dart) : '·'}
-            </span>
-          )
-        })}
-      </output>
 
       <MomentCelebratif moment={moment} />
 

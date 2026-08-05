@@ -96,7 +96,7 @@ describe('Cricket — écran de jeu', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await waitFor(() => expect(pointsDe('Kevin')).toHaveTextContent('0'))
 
-    for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: '0' }))
+    for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: 'Hors' }))
 
     await waitFor(() => expect(pointsDe('Julien').closest('[aria-current]')).not.toBeNull())
   })
@@ -116,9 +116,9 @@ describe('Cricket — écran de jeu', () => {
     // Kevin ferme le 20 et le 19, puis rend la main.
     await flechette(utilisateur, '20', 'Triple')
     await flechette(utilisateur, '19', 'Triple')
-    await utilisateur.click(screen.getByRole('button', { name: '0' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Hors' }))
 
-    for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: '0' }))
+    for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: 'Hors' }))
     await waitFor(() => expect(pointsDe('Kevin').closest('[aria-current]')).not.toBeNull())
 
     // La bulle en deux fléchettes : tout est fermé, la partie est jouée.
