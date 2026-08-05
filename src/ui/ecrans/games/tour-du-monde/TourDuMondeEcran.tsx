@@ -1,6 +1,7 @@
 import { ArrowLeft } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
@@ -11,6 +12,28 @@ import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useTourDuMonde } from '@/ui/hooks/useTourDuMonde'
 import { nomJoueur, pluriel } from '@/ui/labels'
+
+/** Les trois encoches de la volée, collées au pavé — « t’as mis quoi, là ? ». */
+const VoleeEnCours = ({ darts }: { readonly darts: readonly Dart[] }) => (
+  <output aria-label="Volée en cours" className="mb-2 flex items-center justify-center gap-1.5">
+    {[0, 1, 2].map((rang) => {
+      const dart = darts[rang]
+      return (
+        <span
+          key={rang}
+          className={[
+            'chiffres flex h-9 min-w-14 items-center justify-center rounded-md text-sm font-bold',
+            dart
+              ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
+              : 'border border-dashed border-craie/25 text-craie/25',
+          ].join(' ')}
+        >
+          {dart ? libelleCible(dart.segment) : '·'}
+        </span>
+      )
+    })}
+  </output>
+)
 
 export const TourDuMondeEcran = () => {
   const { matchId } = useParams()
@@ -88,15 +111,21 @@ export const TourDuMondeEcran = () => {
         </>
       }
       saisie={
-        <PaveCibles
-          onFlechette={partie.ajouterFlechette}
-          onAnnuler={() => void partie.annuler()}
-          peutAnnuler={partie.peutAnnuler}
-          desactive={partie.occupe}
-        />
+        <>
+          <VoleeEnCours darts={partie.dartsEnCours} />
+          <PaveCibles
+            onFlechette={partie.ajouterFlechette}
+            onAnnuler={() => void partie.annuler()}
+            peutAnnuler={partie.peutAnnuler}
+            desactive={partie.occupe}
+          />
+        </>
       }
     >
-      <section aria-label="Tableau des scores" className="flex flex-col gap-2">
+      <section
+        aria-label="Tableau des scores"
+        className="flex min-h-0 flex-1 flex-col justify-center gap-2"
+      >
         {state.players.map((joueur, index) => {
           const actif = index === state.currentPlayerIndex && !state.finished
           const profil = profils.get(joueur.playerId)
@@ -124,26 +153,6 @@ export const TourDuMondeEcran = () => {
           )
         })}
       </section>
-
-      {/* Les fléchettes de la volée en cours, dans leurs encoches. */}
-      <output aria-label="Volée en cours" className="flex items-center justify-center gap-1.5">
-        {[0, 1, 2].map((rang) => {
-          const dart = partie.dartsEnCours[rang]
-          return (
-            <span
-              key={rang}
-              className={[
-                'chiffres flex h-8 min-w-14 items-center justify-center rounded-md text-sm font-bold',
-                dart
-                  ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
-                  : 'border border-dashed border-craie/20 text-craie/20',
-              ].join(' ')}
-            >
-              {dart ? libelleCible(dart.segment) : '·'}
-            </span>
-          )
-        })}
-      </output>
 
       <MomentCelebratif moment={moment} />
 

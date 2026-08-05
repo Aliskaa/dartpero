@@ -35,13 +35,13 @@ export const PaveCibles = ({ onFlechette, onAnnuler, peutAnnuler, desactive }: P
       ))}
     </div>
 
-    <div className="grid grid-cols-4 gap-1.5">
+    <div className="flex gap-1.5">
       <button
         type="button"
         disabled={desactive}
         onClick={() => onFlechette(Dart.bull())}
         className={[
-          'touche col-span-2 min-h-[3.25rem] rounded-xl border-rouge-cible/70 bg-rouge-cible/25',
+          'touche min-h-[3.25rem] flex-1 rounded-xl border-rouge-cible/70 bg-rouge-cible/25',
           'font-score text-base font-bold uppercase tracking-widest text-craie-vive',
           'paysage:min-h-12',
         ].join(' ')}
@@ -53,19 +53,19 @@ export const PaveCibles = ({ onFlechette, onAnnuler, peutAnnuler, desactive }: P
         type="button"
         disabled={desactive}
         onClick={() => onFlechette(Dart.miss())}
-        className="touche chiffres min-h-[3.25rem] rounded-xl text-lg font-bold text-craie/60 paysage:min-h-12"
+        className="touche min-h-[3.25rem] shrink-0 rounded-xl px-4 font-score text-base font-bold uppercase tracking-wider text-craie/65 paysage:min-h-12"
       >
-        0
+        Hors
       </button>
 
       <button
         type="button"
         disabled={desactive || !peutAnnuler}
         onClick={onAnnuler}
-        aria-label="Annuler"
-        className="touche flex min-h-[3.25rem] items-center justify-center rounded-xl border-chene text-craie paysage:min-h-12"
+        className="touche flex min-h-[3.25rem] shrink-0 items-center gap-1.5 rounded-xl px-3 font-score text-xs font-bold uppercase tracking-wider text-craie paysage:min-h-12"
       >
-        <Undo2 aria-hidden="true" className="size-5" />
+        <Undo2 aria-hidden="true" className="size-4" />
+        Annuler
       </button>
     </div>
   </section>

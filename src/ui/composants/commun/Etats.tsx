@@ -31,9 +31,9 @@ export const EmptyState = ({
   readonly description: string
   readonly action?: ReactNode
 }) => (
-  <div className="cadre-bois flex animate-monter flex-col items-center gap-3 rounded-2xl px-6 py-10 text-center">
+  <div className="flex animate-monter flex-col items-center gap-3 rounded-2xl border border-chene/40 bg-ardoise px-6 py-10 text-center">
     <Cible className="size-14 opacity-60" />
-    <p className="font-display text-xl text-laiton">{titre}</p>
+    <p className="font-score text-lg font-bold uppercase tracking-wide text-laiton">{titre}</p>
     <p className="max-w-xs text-sm text-craie/70">{description}</p>
     {action}
   </div>

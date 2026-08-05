@@ -8,7 +8,7 @@ import { couleurJoueur } from '@/ui/couleurs'
 export const libelleCible = (cible: Segment | null): string => {
   if (cible === null) return '—'
   if (cible === 'BULL') return 'Bulle'
-  if (cible === 'MISS') return '0'
+  if (cible === 'MISS') return 'Hors'
   return String(cible)
 }
 
@@ -51,9 +51,9 @@ export const LigneCible = ({
       aria-current={actif ? 'true' : undefined}
       className={[
         'ligne-tableau relative flex items-center gap-3 overflow-hidden rounded-2xl pl-4 pr-3',
-        compact ? 'py-2' : 'py-3',
+        compact ? 'py-2.5' : 'py-3.5',
         'transition-opacity duration-300',
-        actif ? 'animate-halo' : 'opacity-75',
+        actif ? 'animate-halo' : 'opacity-80',
       ].join(' ')}
     >
       <span
@@ -63,24 +63,26 @@ export const LigneCible = ({
       />
 
       {/* La cible du moment, à la place du score géant. */}
-      <div className={`flex shrink-0 flex-col items-center ${compact ? 'w-20' : 'w-24'}`}>
+      <div className={`flex shrink-0 flex-col items-center ${compact ? 'w-20' : 'w-28'}`}>
         <output
           aria-label={`Cible de ${nom}`}
           className={[
             'chiffres trace-craie block font-bold leading-none',
             boucle ? 'text-vert-cible' : 'text-craie-vive',
-            compact ? 'text-4xl' : 'text-5xl',
+            compact ? 'text-5xl' : 'text-6xl',
           ].join(' ')}
         >
-          {boucle ? <Flag aria-hidden="true" className="mx-auto size-9" /> : libelleCible(cible)}
+          <span key={String(cible)} className="inline-block animate-pop-score">
+            {boucle ? <Flag aria-hidden="true" className="mx-auto size-10" /> : libelleCible(cible)}
+          </span>
         </output>
 
-        <p className="mt-1 flex min-w-0 max-w-full items-center gap-1.5">
-          <Avatar nom={nom} couleur={couleur} taille="xs" />
+        <p className="mt-1.5 flex min-w-0 max-w-full items-center gap-1.5">
+          <Avatar nom={nom} couleur={couleur} taille={compact ? 'xs' : 'sm'} />
           <span
-            className={`truncate font-score text-xs font-bold uppercase tracking-wider ${
-              actif ? 'text-accent-mode-clair' : 'text-craie/70'
-            }`}
+            className={`truncate font-score font-bold uppercase tracking-wider ${
+              compact ? 'text-xs' : 'text-sm'
+            } ${actif ? 'text-accent-mode-clair' : 'text-craie'}`}
           >
             {nom}
           </span>
@@ -88,19 +90,19 @@ export const LigneCible = ({
         </p>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="font-score text-[0.6rem] uppercase tracking-[0.2em] text-craie/60">
+          <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/65">
             Parcours
           </span>
-          <span className="chiffres text-sm font-bold text-craie">
+          <span className={`chiffres font-bold text-craie-vive ${compact ? 'text-lg' : 'text-xl'}`}>
             {validees}
             <span className="font-normal text-craie/50">/{total}</span>
           </span>
         </div>
 
-        {/* La barre de laiton : on voit qui mène sans lire un chiffre. */}
-        <div className="h-2 overflow-hidden rounded-full border border-chene/50 bg-feutre/70">
+        {/* La barre d'accent : on voit qui mène sans lire un chiffre. */}
+        <div className="h-2.5 overflow-hidden rounded-full border border-chene/50 bg-feutre/70">
           <div
             aria-hidden="true"
             style={{ width: `${pourcentage}%` }}
@@ -110,7 +112,7 @@ export const LigneCible = ({
           />
         </div>
 
-        <span className="font-score text-[0.65rem] uppercase tracking-wider text-craie/60">
+        <span className="font-score text-[0.65rem] uppercase tracking-wider text-craie/65">
           {flechettes} fléchette{flechettes > 1 ? 's' : ''}
         </span>
       </div>
