@@ -28,7 +28,7 @@ import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { usePreference } from '@/ui/hooks/useAppareil'
 import { CLE_JOUEURS, useJoueurs } from '@/ui/hooks/useJoueurs'
-import { LIBELLE_VARIANTE_CRICKET } from '@/ui/labels'
+import { LIBELLE_VARIANTE_CRICKET, libelleLegs } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /**
@@ -36,19 +36,32 @@ import { useServices } from '@/ui/providers/ServicesProvider'
  *
  * Entre potes on enchaîne quatre ou cinq parties avec la même formule : les
  * re-choisir à chaque fois était une dizaine de taps pour rien. Le port
- * `Preferences` servait déjà à la voix et au mode rapide, il sert maintenant
- * aussi à ça.
+ * `Preferences` servait déjà à la voix, il sert maintenant aussi à ça.
  */
 const CLE_MODE = 'partie:mode'
 const CLE_VARIANTE = 'partie:variante-cricket'
 const CLE_SCORE = 'partie:score'
-const CLE_BEST_OF = 'partie:best-of'
+/**
+ * ⚠️ Nouvelle clé, et pas un renommage : l'ancienne (`partie:best-of`)
+ * contenait un **best-of** (3, 5, 7). Relue telle quelle comme un nombre de
+ * legs à gagner, elle ferait jouer des parties deux fois plus longues sans
+ * prévenir. Une clé neuve repart proprement sur le défaut.
+ */
+const CLE_LEGS = 'partie:legs'
 const CLE_DOUBLE_OUT = 'partie:double-out'
 const CLE_DOUBLE_IN = 'partie:double-in'
 const CLE_SELECTION = 'partie:joueurs'
 
 const SCORES = [301, 501, 701] as const
-const BEST_OF = [1, 3, 5, 7] as const
+
+/**
+ * Le nombre de legs à **gagner**, pas le nombre de legs joués.
+ *
+ * Les quatre valeurs sont exactement celles des anciens BO1 / BO3 / BO5 / BO7 —
+ * seul le libellé change. Voir `libelleLegs` : « best of » ne veut plus rien
+ * dire dès qu'on est plus de deux à la ligne de lancer.
+ */
+const LEGS = [1, 2, 3, 4] as const
 const MAX_JOUEURS = 4
 
 /**
@@ -60,13 +73,16 @@ const Choix = <T extends string | number>({
   valeurs,
   valeur,
   onChange,
+  aide,
   libelle = (option) => String(option),
 }: {
   readonly legende: string
   readonly valeurs: readonly T[]
   readonly valeur: T
   readonly onChange: (valeur: T) => void
-  /** Par défaut la valeur elle-même : les scores et les best-of se lisent tels quels. */
+  /** Une ligne sous le rail, quand le chiffre seul ne dit pas ce qu'il fait. */
+  readonly aide?: string
+  /** Par défaut la valeur elle-même : les scores et les legs se lisent tels quels. */
   readonly libelle?: (valeur: T) => string
 }) => {
   const rang = Math.max(valeurs.indexOf(valeur), 0)
@@ -102,6 +118,7 @@ const Choix = <T extends string | number>({
           </button>
         ))}
       </div>
+      {aide && <p className="text-xs leading-snug text-craie/60">{aide}</p>}
     </fieldset>
   )
 }
@@ -240,8 +257,8 @@ export const NouvellePartieEcran = () => {
   const [mode, setMode] = usePreference<GameModeId>(CLE_MODE, 'X01')
   const [variante, setVariante] = usePreference<CricketVariant>(CLE_VARIANTE, 'STANDARD')
   const [score, setScore] = usePreference<(typeof SCORES)[number]>(CLE_SCORE, 501)
-  const [bestOf, setBestOf] = usePreference<(typeof BEST_OF)[number]>(CLE_BEST_OF, 3)
-  const [doubleOut, setDoubleOut] = usePreference(CLE_DOUBLE_OUT, true)
+  const [legs, setLegs] = usePreference<(typeof LEGS)[number]>(CLE_LEGS, 2)
+  const [doubleOut, setDoubleOut] = usePreference(CLE_DOUBLE_OUT, false)
   const [doubleIn, setDoubleIn] = usePreference(CLE_DOUBLE_IN, false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [occupe, setOccupe] = useState(false)
@@ -287,6 +304,20 @@ export const NouvellePartieEcran = () => {
     ...(joueurs.data ?? []).filter((joueur) => !selection.includes(joueur.id)),
   ]
 
+  /**
+   * Ce que « premier à N legs » veut dire ce soir-là, en clair.
+   *
+   * C'est précisément l'information que « BO3 » escamotait : à trois ou quatre,
+   * le nombre de legs joués n'est plus borné par le format, il dépend de qui
+   * gagne quoi. Autant le dire au moment où on choisit.
+   */
+  const aideLegs =
+    legs === 1
+      ? 'Un seul leg : le premier qui sort gagne la partie.'
+      : selection.length > 2
+        ? `Le premier à ${legs} legs gagne — à ${selection.length} joueurs, la partie peut en durer davantage.`
+        : `Le premier à ${legs} legs gagne la partie.`
+
   /** Qui commence — la seule information que les numéros ne disent pas tout haut. */
   const premier =
     selection.length > 1 ? joueurs.data?.find((joueur) => joueur.id === selection[0]) : undefined
@@ -327,7 +358,7 @@ export const NouvellePartieEcran = () => {
           playerIds: selection,
           config: X01Config.create({
             startingScore: score,
-            legsToWin: X01Config.legsForBestOf(bestOf),
+            legsToWin: legs,
             doubleOut,
             doubleIn,
           }),
@@ -517,11 +548,16 @@ export const NouvellePartieEcran = () => {
         ) : (
           <>
             <Choix legende="Score de départ" valeurs={SCORES} valeur={score} onChange={setScore} />
+            {/* « Best of 3 » comptait les legs JOUÉS — une convention à deux
+                joueurs. À trois ou quatre, « premier à 2 » peut demander six
+                legs : le libellé mentait. On affiche donc ce que le domaine
+                stocke depuis toujours, le nombre de legs à gagner. */}
             <Choix
-              legende="Best of (legs)"
-              valeurs={BEST_OF}
-              valeur={bestOf}
-              onChange={setBestOf}
+              legende="Legs à gagner"
+              valeurs={LEGS}
+              valeur={legs}
+              onChange={setLegs}
+              aide={aideLegs}
             />
 
             <div className="flex flex-col gap-2">
@@ -553,7 +589,7 @@ export const NouvellePartieEcran = () => {
             `Cricket ${LIBELLE_VARIANTE_CRICKET[variante]} · 20 → 15 · bulle`
           ) : (
             <>
-              {score} · BO{bestOf} · {doubleOut ? 'double out' : 'sortie libre'}
+              {score} · {libelleLegs(legs)} · {doubleOut ? 'double out' : 'sortie libre'}
               {doubleIn && ' · double in'}
             </>
           )}

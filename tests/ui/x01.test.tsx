@@ -172,30 +172,15 @@ describe('Écran de match', () => {
     expect(await screen.findByText('Pas de finish')).toBeInTheDocument()
   })
 
-  it('enregistre un score de volée en mode rapide', async () => {
-    const utilisateur = userEvent.setup()
+  /**
+   * ⚠️ Deux tests vivaient ici, sur la saisie rapide (un score de volée plutôt
+   * que trois fléchettes). Le mode a été retiré du projet après usage réel :
+   * on ne s'en servait jamais. Voir le `CLAUDE.md`.
+   */
+  it('n’offre plus de bascule vers une saisie rapide', async () => {
     await partie()
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
 
-    await utilisateur.click(screen.getByRole('button', { name: /rapide/i }))
-    await utilisateur.click(screen.getByRole('button', { name: '100' }))
-    await utilisateur.click(screen.getByRole('button', { name: /valider/i }))
-
-    await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('401'))
-  })
-
-  it('refuse un score de volée impossible', async () => {
-    const utilisateur = userEvent.setup()
-    await partie()
-    await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
-
-    await utilisateur.click(screen.getByRole('button', { name: /rapide/i }))
-    await utilisateur.click(screen.getByRole('button', { name: '1' }))
-    await utilisateur.click(screen.getByRole('button', { name: '7' }))
-    await utilisateur.click(screen.getByRole('button', { name: '9' }))
-    await utilisateur.click(screen.getByRole('button', { name: /valider/i }))
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(/impossible/i)
-    expect(scoreDe('Kevin')).toHaveTextContent('501')
+    expect(screen.queryByRole('button', { name: /rapide/i })).not.toBeInTheDocument()
   })
 })

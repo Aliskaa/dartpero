@@ -7,7 +7,6 @@ import type { PlayerRepository } from '@/core/application/ports/driven/PlayerRep
 import type { Preferences } from '@/core/application/ports/driven/Preferences'
 import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
-import type { BuildVisitFromScore } from '@/core/application/ports/driving/BuildVisitFromScore'
 import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
 import type { GetMatchHistory } from '@/core/application/ports/driving/GetMatchHistory'
@@ -27,7 +26,6 @@ import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
 import type { RestartMatch } from '@/core/application/ports/driving/RestartMatch'
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
 import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVisit'
-import { BuildVisitFromScoreUseCase } from '@/core/application/use-cases/BuildVisitFromScoreUseCase'
 import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseCase'
 import { GetCheckoutSuggestionUseCase } from '@/core/application/use-cases/GetCheckoutSuggestionUseCase'
 import { GetMatchHistoryUseCase } from '@/core/application/use-cases/GetMatchHistoryUseCase'
@@ -115,7 +113,6 @@ export type Services = {
   readonly playCheckoutPractice: PlayCheckoutPractice
   readonly previewVisit: PreviewVisit
   readonly previewCricketVisit: PreviewCricketVisit
-  readonly buildVisitFromScore: BuildVisitFromScore
   readonly devices: Devices
 }
 
@@ -161,7 +158,6 @@ export const createServices = ({
     playCheckoutPractice,
     previewVisit: new PreviewVisitUseCase(),
     previewCricketVisit: new PreviewCricketVisitUseCase(),
-    buildVisitFromScore: new BuildVisitFromScoreUseCase(),
     devices,
   }
 }

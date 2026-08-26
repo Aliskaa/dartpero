@@ -78,8 +78,7 @@ export const EntrainementEcran = () => {
       }
       saisie={
         /* Le même pavé qu'au X01 : on s'entraîne à sortir, donc on saisit
-           fléchette par fléchette. Pas de mode rapide, il n'aurait rien à
-           accélérer sur une manche d'une seule volée. */
+           fléchette par fléchette — c'est le seul mode de saisie du projet. */
         <PaveFlechettes
           multiplicateur={session.multiplicateur}
           onMultiplicateur={session.setMultiplicateur}

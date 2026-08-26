@@ -24,7 +24,7 @@ describe('Parcours complet', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Ajouter' }))
     await waitFor(() => expect(screen.getByRole('button', { name: /kevin/i })).toBeInTheDocument())
 
-    await utilisateur.click(screen.getByRole('button', { name: '1' })) // best-of 1 leg
+    await utilisateur.click(screen.getByRole('button', { name: '1' })) // un seul leg à gagner
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 
     // --- Match : 180, 180, puis sortie sur 141 ---

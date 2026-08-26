@@ -4,7 +4,7 @@ import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary
 import type { Player } from '@/core/domain/entities/Player'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { Avatar } from '@/ui/composants/commun/Avatar'
-import { LIBELLE_VARIANTE_CRICKET, nomJoueur, pluriel } from '@/ui/labels'
+import { LIBELLE_VARIANTE_CRICKET, libelleLegs, nomJoueur, pluriel } from '@/ui/labels'
 
 /** Le libellé des règles, en français — le cœur n'en fabrique jamais. */
 export const libelleRegles = (partie: MatchSummary): string => {
@@ -29,7 +29,7 @@ export const libelleRegles = (partie: MatchSummary): string => {
 
   return [
     `X01 · ${partie.config.startingScore}`,
-    `BO${partie.config.legsToWin * 2 - 1}`,
+    libelleLegs(partie.config.legsToWin),
     ...options,
   ].join(' · ')
 }

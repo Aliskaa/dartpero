@@ -47,16 +47,28 @@ secondes, portant leurs stats **sur cet appareil**. Filet de sécurité obligato
 - **Le match est une liste d'événements** (`MatchEvent[]`), l'état affiché est une
 **projection** rejouée depuis ces événements. C'est le choix qui rend l'**annulation**
 triviale et fiable (on se trompe de saisie très souvent en pleine partie).
-- **Saisie hybride** : fléchette par fléchette par défaut (grille 1-20 + 25, bascule S/D/T
-**momentanée** — elle retombe sur Simple après chaque fléchette) — c'est la **condition
-technique** des stats de doubles et de l'entraînement — **plus** un mode « rapide » (score de
-volée 0-180) basculable.
+- **Saisie fléchette par fléchette, et elle seule** (grille 1-20 + 25, bascule S/D/T
+**momentanée** — elle retombe sur Simple après chaque fléchette) : c'est la **condition
+technique** des stats de doubles et de l'entraînement.
+⚠️ **La « saisie hybride » n'existe plus.** Le mode « rapide » (un score de volée 0-180 au
+lieu de trois fléchettes) était une décision de cadrage ; l'utilisateur l'a **retiré après
+plusieurs parties réelles, faute de s'en servir**. Décision renversée en connaissance de
+cause, pas par oubli — ne pas la « restaurer » en croyant réparer un accident (voir
+l'incident `61b60ac` plus bas, qui lui en était un). Tout le code est parti avec :
+`PaveRapide`, le port `BuildVisitFromScore`, son use case, `x01/scoring.ts` (`composeVisit`)
+et `findExactScore`. Récupérable dans l'historique à `d531a7e` si l'envie revenait.
 - **Modes de jeu : X01 et Tour du monde** (lot 5a), **entraînement solo** (lot 5b), puis
 **Cricket** (lot 5c). Killer et Shanghai restent **hors périmètre v1** — la couture
 `GameMode` (`src/core/domain/games/index.ts`) les accueillera sans refonte, elle l'a
 maintenant prouvé deux fois.
-- **Réglages X01 par défaut** : **501**, **best-of 3 legs**, **double out** activé,
+- **Réglages X01 par défaut** : **501**, **2 legs à gagner**, **double out** activé,
 **double in** désactivé. Tous modifiables à la création de partie.
+⚠️ **On ne dit plus « best of N ».** C'est une convention à **deux** joueurs : elle compte
+les legs *joués*, et ne tient que parce qu'à deux, « premier à 2 » ne peut pas dépasser 3
+legs. À trois ou quatre, la même partie peut en durer six — le libellé mentait. Le domaine
+a toujours stocké `legsToWin` (« premier à N ») : c'est désormais ce que l'UI affiche, via
+`libelleLegs` / `libelleLegsCourt` (`src/ui/labels.ts`). `X01Config.legsForBestOf` survit
+pour le défaut et ses tests, mais **plus aucun écran ne l'appelle**.
 - **TypeScript partout.**
 - **Stack frontend figée** : React 19 + TS + **Vite** (`vite-plugin-pwa`), **React Router**,
 **TanStack Query**, **Tailwind CSS v4** + design system maison dans
@@ -288,7 +300,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 
 ```
 ┌──────────────────────────────────┐
-│ ←  LEG 2 | 501 · BO3       [DO]  │  bandeau de chêne veiné
+│ ← LEG 2 | 501 · PREMIER À 2 [DO] │  bandeau de match
 ├──────────────────────────────────┤
 │ JOUEUR          │ VOLÉE │  RESTE │  en-têtes EN INVERSION (craie pleine)
 │▌■ KEVIN         │  140  │    361 │  ZONE LECTURE — une ligne par joueur
@@ -302,7 +314,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 │  11 12 13 14 15                  │  valeur réelle en exposant hors simple
 │  16 17 18 19 20                  │
 │  [25] [0] [   ↶ Annuler   ]      │  pas de touche BULL : c'est DOUBLE + 25
-│  [SIMPLE][DOUBLE][TRIPLE] [⚡]    │  rangée du pouce ; retombe sur SIMPLE
+│  [SIMPLE][DOUBLE][TRIPLE]        │  rangée du pouce ; retombe sur SIMPLE
 └──────────────────────────────────┘             après chaque fléchette
 ```
 
@@ -332,7 +344,7 @@ src/
 │  ├─ domain/
 │  │  ├─ games/           ← UN DOSSIER PAR MODE DE JEU
 │  │  │  ├─ index.ts      la couture : GameModeId, AnyMatchState, GameModes
-│  │  │  ├─ x01/          config · rules · scoring · stats · career
+│  │  │  ├─ x01/          config · rules · stats · career
 │  │  │  ├─ tour-du-monde/     config · rules
 │  │  │  ├─ cricket/           config · rules
 │  │  │  └─ checkout-practice/ config · rules      (solo)
@@ -346,7 +358,7 @@ src/
 │  └─ application/
 │     ├─ ports/driving/   StartMatch, RestartMatch, RecordVisit, UndoLastVisit,
 │  │                   PreviewVisit,
-│     │                   BuildVisitFromScore, GetMatchState, GetCheckoutSuggestion,
+│     │                   GetMatchState, GetCheckoutSuggestion,
 │     │                   GetMatchStats, GetMatchHistory, GetMatchMode,
 │     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
 │     │                   ManagePlayers, ManageBackup, PlayTourDuMonde,
@@ -445,6 +457,13 @@ par le composition root.
   inversion, filets épais, bâtons de comptage, **angle vif partout** (tokens de rayon à 0,
   `rounded-*` retirées de tout `src/ui`). Vérifié à l'écran, pas seulement en tests.
   **263 tests verts, aucun modifié.**
+- [x] **Lot « ce que l'usage a tranché »** — deux décisions de cadrage renversées **par la
+  pratique**, pas par le code : le **« best of N » remplacé par « premier à N legs »** (il ne
+  voulait plus rien dire à trois ou quatre joueurs, où la partie peut durer plus de legs que
+  le format n'en annonce), et le **mode rapide retiré** après plusieurs soirées sans jamais
+  s'en servir — pavé, port, use case, `composeVisit` et `findExactScore` compris.
+  **255 tests verts** (−7 sur `composeVisit`, −2 sur la saisie rapide, +1 qui interdit son
+  retour discret).
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 ---
@@ -546,13 +565,12 @@ et détecter qu'elle est close (3 fléchettes, bust ou sortie). Elle n'est envoy
 - **Un seul bouton « Annuler »**, qui fait ce qu'on attend : il retire la fléchette qu'on vient
 de taper si la volée est en cours, sinon il annule la dernière volée **enregistrée** (même si
 elle avait gagné un leg).
-- **Le mode rapide fabrique des fléchettes synthétiques** (`composeVisit`) : le total et le
-nombre de fléchettes sont exacts — donc scores, legs et moyennes aussi — mais le détail
-« quelle fléchette a touché quoi » est inventé. C'est le marché assumé du mode rapide. Il
-rejette les 9 totaux impossibles en 3 fléchettes (179, 178, 176, 175, 173, 172, 169, 166, 163),
-découverts par la même recherche que les checkouts, sans liste codée en dur.
-- **Sur une sortie en mode rapide, l'app demande le nombre de fléchettes utilisées** : c'est la
-seule information que le total ne porte pas, et elle change la moyenne comme le « meilleur leg ».
+- ~~**Le mode rapide fabrique des fléchettes synthétiques** (`composeVisit`)~~ et ~~**sur une
+sortie, l'app demande le nombre de fléchettes utilisées**~~ — **caduc** : le mode rapide a été
+retiré du projet (voir § Décisions structurantes). Ce qu'il faut en retenir, parce que la
+technique resservira : les 9 totaux impossibles en 3 fléchettes (179, 178, 176, 175, 173, 172,
+169, 166, 163) n'étaient **jamais codés en dur** — ils tombaient tout seuls de la même
+recherche que les checkouts, qui rendait `null` sur un total hors d'atteinte.
 - **`Services.devices`** (`screenLock`, `haptics`, `preferences`) est une **exception assumée**
 à la règle « UI → use cases uniquement » : ce sont des ports *driven* consommés par la coquille
 UI. Ils ne portent aucune règle métier, les emballer dans des use cases serait de la cérémonie.
@@ -585,13 +603,12 @@ choisie (lot 4), il n'y a qu'à la préférer à cet endroit. Le domaine n'a pas
 - **Le pavé affiche la valeur réelle de la touche dès qu'on quitte le simple** (le « 20 »
 porte un « 60 » en exposant en mode triple). C'est la faute de saisie n° 1, et le badge est
 `aria-hidden` — le nom accessible du bouton reste « 20 », donc les tests aussi.
-- **L'écran de match a enfin un en-tête** : leg/set en cours, score de départ, best-of,
-badges DI/DO, et surtout un **bouton retour** — il n'existait aucun moyen de quitter une
-partie en cours.
-- **Le mode rapide projette le reste avant validation** et annonce « Bust » ou « Sortie » : on
-tape un total de tête, une erreur de dizaine est vite arrivée.
+- **L'écran de match a enfin un en-tête** : leg/set en cours, score de départ, format
+(« premier à N »), badges DI/DO, et surtout un **bouton retour** — il n'existait aucun moyen
+de quitter une partie en cours.
+- ~~**Le mode rapide projette le reste avant validation**~~ — **caduc**, le mode a été retiré.
 - **Les icônes sont toujours `aria-hidden`.** Sans ça elles entreraient dans le nom accessible
-des boutons (« ⚡ Rapide » au lieu de « Rapide ») et casseraient les requêtes par rôle.
+des boutons (« ↶ Annuler » au lieu de « Annuler ») et casseraient les requêtes par rôle.
 - **Un `<h2>` de panneau ne doit jamais reprendre un nom déjà porté par un `<h1>`** : dans le
 résumé, la carte de stats d'un joueur utilise `Panneau enTete=` (contenu libre) et non
 `titre=`, sinon `getByRole('heading', { name: 'Kevin' })` trouve deux éléments.
@@ -798,8 +815,9 @@ installées partout, et mieux vaut découvrir le silence là qu'en pleine partie
 découpage que le domaine et les composants. Les noms de dossiers reprennent ceux du domaine
 (anglais) plutôt que d'être francisés : c'est la correspondance immédiate qui compte, et le
 `CLAUDE.md` réserve le français aux libellés, pas aux identifiants techniques.
-- **Le pavé de saisie est celui du X01**, `rapide`/`onRapide` devenus optionnels : une manche
-d'entraînement dure une seule volée, un mode rapide n'y accélérerait rien.
+- **Le pavé de saisie est celui du X01** — à l'époque avec `rapide`/`onRapide` rendus
+optionnels, puisqu'une manche d'entraînement dure une seule volée. Ces deux props ont depuis
+disparu avec le mode rapide : le pavé n'a plus qu'une forme, pour les quatre modes.
 
 ### Décisions du lot 5c (Cricket, mode paysage)
 
@@ -847,8 +865,8 @@ installée resterait bloquée en portrait et la bascule ne servirait à rien sur
 d'usage qui compte.
 - **Les pavés se compactent en paysage** (`paysage:` sur les hauteurs et les tailles de
 texte), mais **les cibles restent ≥ 48 px** : c'est un plancher, pas une variable
-d'ajustement. Le pavé du mode rapide est le seul qui puisse encore demander un défilement —
-marché assumé, il est secondaire.
+d'ajustement. (Le pavé du mode rapide était le seul à pouvoir encore demander un défilement —
+il n'existe plus, plus aucun pavé ne défile.)
 - **Aucun test n'a changé** en remontant les quatre écrans dans `DispositionPartie`, ce qui
 valide au passage que la refonte n'a touché à aucun comportement.
 
@@ -900,9 +918,12 @@ numéros d'ordre de passage, et deux touches restées bordées de vert et de mar
 
 ⚠️ **Incident à connaître** : le commit `61b60ac` (mise à jour de dépendances, hors lot) a
 **supprimé `PaveRapide.tsx`**, le bloc ⚡ de `PaveFlechettes` et la ligne de test qui les
-couvrait — laissant deux tests rouges. Le **mode rapide est une décision structurante** du
-cadrage : il a été restauré depuis `cc8faf7`. À surveiller si d'autres commits « de
-dépendances » touchent `src/ui`.
+couvrait — laissant deux tests rouges. Il a été restauré depuis `cc8faf7`. À surveiller si
+d'autres commits « de dépendances » touchent `src/ui`.
+**Épilogue** : le mode rapide a finalement été retiré **volontairement** par l'utilisateur
+(lot « saisie unique »), après l'avoir gardé plusieurs parties sans jamais s'en servir. Ne
+pas confondre les deux disparitions : la première était un accident, la seconde un verdict
+d'usage.
 
 ### Décisions du lot UX (l'usage avant la peinture)
 
@@ -934,8 +955,8 @@ exercice, pas la même série — rejouer des restes qu'on connaît déjà n'ent
 « Changer les règles » en secondaire, « Accueil » en discret. Avant, la seule action offerte
 renvoyait sur un formulaire **remis à zéro** : une dizaine de taps entre deux parties, alors
 qu'on en enchaîne quatre ou cinq par soirée.
-- **Les réglages de partie passent par le port `Preferences`**, qui servait déjà à la voix et
-au mode rapide. ⚠️ La sélection de joueurs mémorisée est **dérivée et filtrée** sur les profils
+- **Les réglages de partie passent par le port `Preferences`**, qui servait déjà à la voix.
+⚠️ La sélection de joueurs mémorisée est **dérivée et filtrée** sur les profils
 qui existent encore, jamais stockée en état : un profil supprimé depuis resterait sinon coché
 en fantôme et ferait échouer le lancement sur un joueur inconnu.
 - **L'ordre de passage était déjà l'ordre des taps** — il fallait tout décocher pour
@@ -952,10 +973,10 @@ rejoue aucune règle pour savoir à qui était le tour d'avant.
 - **Écarté du lot** : la touche T20 dédiée. Proposée puis retirée par l'utilisateur — la
 bascule momentanée reste le seul chemin vers un triple.
 
-⚠️ **`npm run lint` est rouge sur ~20 fichiers pour cause de CRLF**, y compris des fichiers
-jamais modifiés (`src/index.css`, `src/ui/accents.ts`…). C'est un problème de checkout Windows
-(`core.autocrlf`) antérieur à ce lot, pas une régression : Biome veut du LF. À régler d'un coup
-avec un `.gitattributes` (`* text eol=lf`) puis un `biome check --write`, dans un commit dédié.
+~~⚠️ **`npm run lint` est rouge sur ~20 fichiers pour cause de CRLF**~~ — **réglé depuis** :
+`biome check .` passe sur les 181 fichiers. Il n'y a toujours **pas de `.gitattributes`** :
+si des CRLF reviennent après un clone frais sous Windows (`core.autocrlf`), c'est là qu'il
+faudra les arrêter (`* text eol=lf`), suivi d'un `biome check --write` dans un commit dédié.
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode

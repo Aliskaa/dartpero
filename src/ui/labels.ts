@@ -153,6 +153,26 @@ export const dateHeure = (horodatage: number): string =>
 export const pluriel = (nombre: number, singulier: string, pluriel = `${singulier}s`): string =>
   `${nombre} ${nombre > 1 ? pluriel : singulier}`
 
+/**
+ * Le format du match, en français — et **plus jamais en « best of »**.
+ *
+ * ⚠️ « Best of 3 » est une convention à **deux** joueurs : elle compte les legs
+ * *joués*, et n'a de sens que parce qu'à deux, « premier à 2 » ne peut pas
+ * dépasser 3 legs. À trois ou quatre, la même partie peut en durer six sans
+ * que personne ne triche — le libellé mentait donc dès qu'on était plus de
+ * deux. Le domaine, lui, a toujours stocké `legsToWin` (« premier à N ») :
+ * c'est ce qu'on affiche désormais, tel quel.
+ */
+export const libelleLegs = (legsToWin: number): string =>
+  legsToWin === 1 ? '1 leg' : `premier à ${legsToWin} legs`
+
+/**
+ * La même chose pour le bandeau de match, où chaque caractère compte : le mot
+ * « leg » y est déjà posé juste avant par le numéro de leg en cours.
+ */
+export const libelleLegsCourt = (legsToWin: number): string =>
+  legsToWin === 1 ? '1 leg' : `premier à ${legsToWin}`
+
 /** Phrases d'ambiance pour les résumés — le côté apéro, hors saisie. */
 export const PHRASE_VICTOIRE = [
   'Ça se fête autour de la cible.',

@@ -132,31 +132,6 @@ export const useX01 = (matchId: MatchId) => {
     [services, state, joueurCourant, occupe, termine, dartsEnCours, enregistrer],
   )
 
-  /** Saisie rapide : un score de volée plutôt que trois fléchettes. */
-  const enregistrerScore = useCallback(
-    async (total: number, dartsUsed: number) => {
-      if (!state || !joueurCourant || occupe || termine) return
-
-      setDerniereVolee(null)
-
-      const sortie = state.config.doubleOut && joueurCourant.remaining - total === 0
-      const darts = services.buildVisitFromScore.execute({
-        config: state.config,
-        total,
-        dartsUsed,
-        finishOnDouble: sortie,
-      })
-
-      if (!darts) {
-        services.devices.haptics.error()
-        setErreur(`${total} est impossible en ${dartsUsed} fléchette${dartsUsed > 1 ? 's' : ''}.`)
-        return
-      }
-      await enregistrer(darts)
-    },
-    [services, state, joueurCourant, occupe, termine, enregistrer],
-  )
-
   /**
    * Un seul bouton d'annulation, qui fait ce qu'on attend : retirer la
    * fléchette qu'on vient de taper si la volée est en cours, sinon annuler la
@@ -213,7 +188,6 @@ export const useX01 = (matchId: MatchId) => {
     multiplicateur,
     setMultiplicateur,
     ajouterFlechette,
-    enregistrerScore,
     annuler,
     annulation,
     peutAnnuler: dartsEnCours.length > 0 || (state?.history.length ?? 0) > 0,

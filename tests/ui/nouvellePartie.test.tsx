@@ -72,7 +72,7 @@ describe('Création de partie — réglages retenus', () => {
     await utilisateur.click(joueur('Kevin'))
     await utilisateur.click(joueur('Julien'))
     await utilisateur.click(screen.getByRole('button', { name: '301' }))
-    await utilisateur.click(screen.getByRole('button', { name: '5' }))
+    await utilisateur.click(screen.getByRole('button', { name: '3' }))
     premiere.unmount()
 
     ouvrir(services)
@@ -80,7 +80,7 @@ describe('Création de partie — réglages retenus', () => {
     await waitFor(() => expect(joueur('Kevin')).toHaveAttribute('aria-pressed', 'true'))
     expect(joueur('Julien')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: '301' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: '5' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '3' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   /**

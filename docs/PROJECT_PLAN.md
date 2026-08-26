@@ -110,7 +110,7 @@ Bénéfices directs :
 | --- | --- |
 | `resolveVisit(...)` | Juge une volée : décompte, détecte **bust** (reste < 0, reste == 1, reste == 0 sans double) et **checkout**. Ne dépend que de `{ doubleIn, doubleOut }`. |
 | `suggestCheckout(reste, dartsRestantes)` | Chemin conseillé. Retourne **« pas de finish »** sur les bogey numbers **169, 168, 166, 165, 163, 162, 159** et au-dessus de 170. |
-| `dartSearch` | La recherche de routes dont vivent les checkouts, les restes jouables de l'entraînement et les totaux impossibles du mode rapide — aucune liste codée en dur. |
+| `dartSearch` | L'espace de recherche (`SETUP_DARTS`) dont vivent les checkouts et les restes jouables de l'entraînement — aucune liste codée en dur. Sa recherche exacte (`findExactScore`) est partie avec le mode rapide. |
 
 ⚠️ `resolveVisit` et `suggestCheckout` étaient au X01 jusqu'au lot 5b ; ils en sont sortis
 parce qu'un mode n'a pas le droit d'en importer un autre. L'entraînement juge donc une manche
@@ -137,15 +137,16 @@ fléchettes **sont comptées**.
 ### Driving (ce que l'UI peut demander)
 
 **Partie X01** : `StartMatch` · `RecordVisit` · `UndoLastVisit` · `GetMatchState` ·
-`GetMatchStats` · `PreviewVisit` · `BuildVisitFromScore`
+`GetMatchStats` · `PreviewVisit`
 **Autres modes** : `PlayTourDuMonde` · `PlayCricket` + `PreviewCricketVisit` ·
 `PlayCheckoutPractice`
 **Transverses** : `GetMatchMode` · `GetMatchHistory` · `GetOngoingMatch` · `DeleteMatch` ·
 `GetCheckoutSuggestion` · `GetPlayerStats` · `ManagePlayers` · `ManageBackup`
 
-- `PreviewVisit` et `BuildVisitFromScore` sont nés au lot 3 pour que l'UI ne réimplémente
-  jamais les règles : le premier évalue la volée en cours de saisie (elle n'est pas
-  persistée), le second traduit un total de volée en fléchettes pour le mode rapide.
+- `PreviewVisit` est né au lot 3 pour que l'UI ne réimplémente jamais les règles : il évalue
+  la volée en cours de saisie, qui n'est pas persistée. ⚠️ Il avait un jumeau,
+  `BuildVisitFromScore`, qui traduisait un total de volée en fléchettes pour le mode rapide —
+  **tous deux retirés avec ce mode**.
   `PreviewCricketVisit` (lot 5c) est le même service rendu au Cricket : sans lui, l'écran ne
   saurait pas qu'une partie est gagnée avant la troisième fléchette.
 - `ManageBackup` remplace les `ExportData` / `ImportData` du cadrage : il ne manipule que des
@@ -179,7 +180,7 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | Route | Écran | Lot |
 | --- | --- | --- |
 | `/` | Accueil — *Reprendre la partie* (si une partie est en cours), *Nouvelle partie*, accès rapide | 3 ✅ |
-| `/nouvelle-partie` | Configuration : mode de jeu, joueurs, best-of legs/sets, double in/out | 3 ✅ |
+| `/nouvelle-partie` | Configuration : mode de jeu, joueurs, legs à gagner, double in/out | 3 ✅ |
 | `/partie/:id` | **Écran de partie** — le cœur de l'app | 3 ✅ |
 | `/partie/:id/resume` | Résumé de fin : vainqueur, stats du match, rejouer | 3 ✅ |
 | `/entrainement` | Lancement d'une session d'entraînement solo | 5b ✅ |
@@ -234,7 +235,8 @@ et une page « Dartpéro » s'affiche aux couleurs de la charte.
 - Double in : tant qu'aucun double n'a été touché, rien ne décompte.
 - Checkout : 170 = T20·T20·Bull · les **7 bogey numbers** renvoient « pas de finish » ·
   suggestion cohérente avec les fléchettes restantes (ex. 40 avec 1 fléchette → D20).
-- Legs/sets : alternance du joueur qui commence à chaque leg · best-of 3 s'arrête à 2 legs.
+- Legs/sets : alternance du joueur qui commence à chaque leg · « premier à 2 legs » s'arrête
+  au deuxième leg gagné, quel que soit le nombre de joueurs.
 - Undo : rejouer `events.slice(0, -1)` restaure **exactement** l'état précédent.
 - Stats : moyenne 3 fléchettes avec une volée *busted* dans le lot · first 9 · % doubles ·
   meilleur leg.
@@ -274,7 +276,8 @@ Le lot qui rend l'app réellement utilisable.
 - Accueil + configuration de partie.
 - **Écran match** : zone lecture (chiffres géants, joueur actif en halo laiton, moyenne en
   direct) + zone saisie (grille S/D/T) — voir la maquette dans `CLAUDE.md`.
-- **Mode rapide** basculable (pavé 0-180 + raccourcis 26/41/45/60/100/140/180).
+- ~~**Mode rapide** basculable (pavé 0-180 + raccourcis 26/41/45/60/100/140/180).~~ Livré au
+  lot 3, puis **retiré** : plusieurs soirées sans jamais s'en servir.
 - **Suggestion de checkout** dès reste ≤ 170, écran de sortie dédié sous 100.
 - **Annulation** (bouton visible en permanence, pas caché dans un menu).
 - **Wake Lock** + **vibration** à la validation.
@@ -287,7 +290,7 @@ Android, écran allumé, hors ligne. **C'est le jalon « utilisable ».**
 joueur, configuration, leg de 501 gagné en 9 fléchettes, arrivée automatique sur le résumé.
 Deux ports driving ont été ajoutés pour que l'UI ne réimplémente jamais les règles :
 `PreviewVisit` (évalue la volée en cours de saisie) et `BuildVisitFromScore` (traduit un score
-de volée en fléchettes pour le mode rapide).
+de volée en fléchettes pour le mode rapide — **retiré depuis, avec son mode**).
 ⚠️ **Reste à valider sur un vrai téléphone** — c'est le seul critère que les tests ne couvrent
 pas : lisibilité à 3 m, confort des cibles au pouce, tenue du wake lock en conditions réelles.
 
@@ -383,8 +386,8 @@ non-X01 passe par là :
 - `GetOngoingMatchUseCase` projetait avec `X01Rules` au lieu de la couture — l'accueil ne
   proposait jamais de reprendre une partie qui n'était pas un X01.
 
-**Reste à valider sur un vrai téléphone** : la bascule paysage en conditions réelles, et
-notamment le pavé du mode rapide, le seul assez haut pour demander un défilement.
+**Reste à valider sur un vrai téléphone** : la bascule paysage en conditions réelles. (Le
+pavé du mode rapide était le seul assez haut pour demander un défilement — il n'existe plus.)
 
 ---
 
@@ -399,7 +402,7 @@ c'est précisément ce que l'architecture hexagonale achète ici.
 
 | Risque | Parade |
 | --- | --- |
-| La saisie 3-taps ralentit la partie et agace | Mode rapide dès le lot 3 et raccourcis de score fréquents. ⚠️ La bascule S/D/T devait être **persistante** ; le lot 3 bis a **renversé** cette décision — elle retombe sur Simple après chaque fléchette. Un multiplicateur resté armé sans qu'on le voie compte trois T20 là où il y avait trois simples, et il faut ensuite retrouver *où* le score a dérapé : un clic de plus par triple coûte moins cher qu'un score faux |
+| La saisie 3-taps ralentit la partie et agace | Parade prévue : mode rapide dès le lot 3 et raccourcis de score fréquents. ⚠️ **Le risque ne s'est pas matérialisé** : après plusieurs soirées, le mode rapide n'avait jamais servi — il a été retiré. La saisie 3-taps tient très bien. ⚠️ La bascule S/D/T devait être **persistante** ; le lot 3 bis a **renversé** cette décision — elle retombe sur Simple après chaque fléchette. Un multiplicateur resté armé sans qu'on le voie compte trois T20 là où il y avait trois simples, et il faut ensuite retrouver *où* le score a dérapé : un clic de plus par triple coûte moins cher qu'un score faux |
 | Erreur de saisie en pleine partie | Undo illimité **et fiable** grâce à la projection d'événements — bouton toujours visible |
 | Écran qui s'éteint pendant une partie | Wake Lock dès le lot 3, avec null-object si l'API manque |
 | Perte du téléphone = perte de tout l'historique | Export / import JSON au lot 4 |

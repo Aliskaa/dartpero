@@ -9,15 +9,12 @@ import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etat
 import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
 import { momentDepuisVoleeX01 } from '@/ui/composants/x01/momentVolee'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
-import { PaveRapide } from '@/ui/composants/x01/PaveRapide'
 import { Tableau } from '@/ui/composants/x01/Tableau'
-import { usePreference, useWakeLock } from '@/ui/hooks/useAppareil'
+import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useX01 } from '@/ui/hooks/useX01'
-import { nomJoueur } from '@/ui/labels'
+import { libelleLegsCourt, nomJoueur } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
-
-export const CLE_MODE_RAPIDE = 'saisie-rapide'
 
 /** Le bandeau de chêne : où on en est, et par quelles règles on joue. */
 const EnTeteManche = ({
@@ -45,7 +42,7 @@ const EnTeteManche = ({
         |
       </span>
       <span className="chiffres">{config.startingScore}</span>
-      <span>· BO{config.legsToWin * 2 - 1}</span>
+      <span>· {libelleLegsCourt(config.legsToWin)}</span>
     </p>
 
     <span className="flex shrink-0 gap-1">
@@ -69,7 +66,6 @@ export const X01Ecran = () => {
   const services = useServices()
   const navigate = useNavigate()
   const profils = useProfils()
-  const [rapide, setRapide] = usePreference(CLE_MODE_RAPIDE, false)
 
   const match = useX01(identifiant)
   const { state, joueurCourant, termine } = match
@@ -122,15 +118,12 @@ export const X01Ecran = () => {
   const heroNom = heroId ? nomJoueur(profils.get(heroId)?.name ?? null) : undefined
   const moment = momentDepuisVoleeX01(match.derniereVolee, heroNom)
 
-  // « Annuler » et la bascule de mode vivent DANS le pavé, sur sa dernière
-  // rangée : le bas de l'écran est la seule zone qu'on atteint sans changer la
-  // prise du téléphone.
+  // « Annuler » vit DANS le pavé, sur sa dernière rangée : le bas de l'écran
+  // est la seule zone qu'on atteint sans changer la prise du téléphone.
   const actions = {
     onAnnuler: () => void match.annuler(),
     peutAnnuler: match.peutAnnuler,
     annulation: match.annulation,
-    rapide,
-    onRapide: () => setRapide(!rapide),
     desactive: match.occupe,
   }
 
@@ -145,20 +138,12 @@ export const X01Ecran = () => {
         />
       }
       saisie={
-        rapide ? (
-          <PaveRapide
-            reste={joueurCourant.remaining}
-            onScore={(total, dartsUsed) => void match.enregistrerScore(total, dartsUsed)}
-            {...actions}
-          />
-        ) : (
-          <PaveFlechettes
-            multiplicateur={match.multiplicateur}
-            onMultiplicateur={match.setMultiplicateur}
-            onFlechette={match.ajouterFlechette}
-            {...actions}
-          />
-        )
+        <PaveFlechettes
+          multiplicateur={match.multiplicateur}
+          onMultiplicateur={match.setMultiplicateur}
+          onFlechette={match.ajouterFlechette}
+          {...actions}
+        />
       }
     >
       <Tableau
