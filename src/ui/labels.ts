@@ -1,3 +1,4 @@
+import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 
 /** Le cœur reste en anglais ; tout le français de l'app vit ici. */
@@ -123,6 +124,28 @@ export const annonceCricket = ({
 export const LIBELLE_VARIANTE_CRICKET: Record<'STANDARD' | 'CUT_THROAT', string> = {
   STANDARD: 'Standard',
   CUT_THROAT: 'Cut-throat',
+}
+
+/**
+ * Les fenêtres de statistiques, côté français.
+ *
+ * ⚠️ Libellés **courts** : les quatre tiennent sur un rail de 358 px en
+ * portrait, et « Depuis toujours » n'y entrerait pas. « Tout » suffit — c'est
+ * la légende du rail (« Période ») qui donne le sens.
+ */
+export const LIBELLE_PERIODE: Record<StatsPeriod, string> = {
+  TODAY: "Aujourd'hui",
+  LAST_7_DAYS: '7 jours',
+  LAST_30_DAYS: '30 jours',
+  ALL_TIME: 'Tout',
+}
+
+/** La même chose au fil du texte, où la place ne manque pas. */
+export const PERIODE_EN_TOUTES_LETTRES: Record<StatsPeriod, string> = {
+  TODAY: "aujourd'hui",
+  LAST_7_DAYS: 'ces 7 derniers jours',
+  LAST_30_DAYS: 'ces 30 derniers jours',
+  ALL_TIME: 'toutes parties confondues',
 }
 
 export const JOUEUR_SUPPRIME = 'Joueur supprimé'

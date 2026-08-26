@@ -27,6 +27,26 @@ export class TickingClock implements Clock {
   }
 }
 
+/**
+ * Horloge que le test déplace à la main.
+ *
+ * Indispensable dès qu'une donnée est **datée** : `TickingClock` avance d'une
+ * seconde, donc toutes les parties qu'elle crée tombent le même soir — ce qui
+ * ne permet pas de vérifier un filtre de période.
+ */
+export class SettableClock implements Clock {
+  constructor(private courant = Date.UTC(2026, 7, 26, 12)) {}
+
+  now(): number {
+    return this.courant
+  }
+
+  /** Se placer à un instant précis, en heure locale du test. */
+  regler(instant: number): void {
+    this.courant = instant
+  }
+}
+
 /** Identifiants prévisibles : id-1, id-2, id-3… */
 export class SequentialIdGenerator implements IdGenerator {
   private compteur = 0
@@ -53,7 +73,7 @@ export class CyclingRandomSource implements RandomSource {
   }
 }
 
-export const fakeDependencies = (): Dependencies => ({
+export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Dependencies => ({
   matches: new InMemoryMatchRepository(),
   players: new InMemoryPlayerRepository(),
   clock: new TickingClock(),
@@ -65,10 +85,13 @@ export const fakeDependencies = (): Dependencies => ({
     preferences: createMemoryPreferences(),
     announcer: NullAnnouncer,
   },
+  ...surcharges,
 })
 
 /** Le vrai composition root, câblé sur des adapters en mémoire. */
-export const fakeServices = (): { services: Services; dependencies: Dependencies } => {
-  const dependencies = fakeDependencies()
+export const fakeServices = (
+  surcharges: Partial<Dependencies> = {},
+): { services: Services; dependencies: Dependencies } => {
+  const dependencies = fakeDependencies(surcharges)
   return { services: createServices(dependencies), dependencies }
 }

@@ -24,6 +24,7 @@ import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { ACCENTS_MODE } from '@/ui/accents'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
+import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { usePreference } from '@/ui/hooks/useAppareil'
@@ -63,65 +64,6 @@ const SCORES = [301, 501, 701] as const
  */
 const LEGS = [1, 2, 3, 4] as const
 const MAX_JOUEURS = 4
-
-/**
- * Sélecteur segmenté : un rail d'ardoise, un curseur de laiton **plat** qui
- * glisse. Le relief poli est réservé au CTA — ici il saturait l'écran.
- */
-const Choix = <T extends string | number>({
-  legende,
-  valeurs,
-  valeur,
-  onChange,
-  aide,
-  libelle = (option) => String(option),
-}: {
-  readonly legende: string
-  readonly valeurs: readonly T[]
-  readonly valeur: T
-  readonly onChange: (valeur: T) => void
-  /** Une ligne sous le rail, quand le chiffre seul ne dit pas ce qu'il fait. */
-  readonly aide?: string
-  /** Par défaut la valeur elle-même : les scores et les legs se lisent tels quels. */
-  readonly libelle?: (valeur: T) => string
-}) => {
-  const rang = Math.max(valeurs.indexOf(valeur), 0)
-
-  return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65">
-        {legende}
-      </legend>
-      <div
-        className="relative grid border border-chene/45 bg-feutre/70 p-1"
-        style={{ gridTemplateColumns: `repeat(${valeurs.length}, minmax(0, 1fr))` }}
-      >
-        <span
-          aria-hidden="true"
-          style={{
-            width: `calc((100% - 0.5rem) / ${valeurs.length})`,
-            transform: `translateX(${rang * 100}%)`,
-          }}
-          className="laiton-plat absolute inset-y-1 left-1 transition-transform duration-200 ease-out"
-        />
-        {valeurs.map((option) => (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={option === valeur}
-            onClick={() => onChange(option)}
-            className={`chiffres relative z-10 min-h-12 text-lg font-bold transition-colors duration-150 ${
-              option === valeur ? 'text-[#1a1206]' : 'text-craie/75'
-            }`}
-          >
-            {libelle(option)}
-          </button>
-        ))}
-      </div>
-      {aide && <p className="text-xs leading-snug text-craie/60">{aide}</p>}
-    </fieldset>
-  )
-}
 
 const MODES: readonly {
   readonly id: Exclude<GameModeId, 'CHECKOUT_PRACTICE'>
@@ -527,7 +469,7 @@ export const NouvellePartieEcran = () => {
           </p>
         ) : mode === 'CRICKET' ? (
           <>
-            <Choix
+            <ChoixSegmente
               legende="Comptage"
               valeurs={CRICKET_VARIANTS}
               valeur={variante}
@@ -547,12 +489,17 @@ export const NouvellePartieEcran = () => {
           </>
         ) : (
           <>
-            <Choix legende="Score de départ" valeurs={SCORES} valeur={score} onChange={setScore} />
+            <ChoixSegmente
+              legende="Score de départ"
+              valeurs={SCORES}
+              valeur={score}
+              onChange={setScore}
+            />
             {/* « Best of 3 » comptait les legs JOUÉS — une convention à deux
                 joueurs. À trois ou quatre, « premier à 2 » peut demander six
                 legs : le libellé mentait. On affiche donc ce que le domaine
                 stocke depuis toujours, le nombre de legs à gagner. */}
-            <Choix
+            <ChoixSegmente
               legende="Legs à gagner"
               valeurs={LEGS}
               valeur={legs}

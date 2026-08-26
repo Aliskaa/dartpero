@@ -277,7 +277,11 @@ dupliquer de variante ad hoc : `Button` (primaire laiton / secondaire cadre bois
 danger, tailles `md` et `lg`), `Avatar` (pastille couleur + initiales), `Cible` (plateau de
 fléchettes en SVG génératif), `Enseigne` + `LogoHero`, `Panneau` (ardoise dans un cadre bois,
 bandeau `titre` en `<h2>` **ou** `enTete` libre), `StatTile`, `EmptyState`, `Skeleton`,
-`Spinner` / `SpinnerLigne`, `MessageErreur`, `EcranErreur`.
+`Spinner` / `SpinnerLigne`, `MessageErreur`, `EcranErreur`, `ChoixSegmente` (le rail à
+curseur de laiton, tailles `md` et `sm`), `CarteImpacts` (la carte de chaleur du plateau).
+La géométrie du plateau — ordre des secteurs, rayons des anneaux — vit dans
+`geometrieCible.ts`, partagée par `Cible` et `CarteImpacts` : deux copies de ces rayons
+finiraient par ne plus se superposer.
 Côté match : `CarteJoueur` (dans `composants/match/`) porte le score géant, les jetons de legs
 et la volée en cours.
 
@@ -353,7 +357,7 @@ src/
 │  │  ├─ events/          MatchEvent : X01Started | TourDuMondeStarted |
 │  │  │                   CricketStarted | CheckoutPracticeStarted |
 │  │  │                   RoundStarted | VisitRecorded
-│  │  └─ services/        dartSearch · checkout · visitOutcome
+│  │  └─ services/        dartSearch · checkout · visitOutcome · dartboardHits
 │  │                      ⚠️ TRANSVERSES : un mode n'importe jamais un autre mode
 │  └─ application/
 │     ├─ ports/driving/   StartMatch, RestartMatch, RecordVisit, UndoLastVisit,
@@ -464,7 +468,17 @@ par le composition root.
   s'en servir — pavé, port, use case, `composeVisit` et `findExactScore` compris.
   **255 tests verts** (−7 sur `composeVisit`, −2 sur la saisie rapide, +1 qui interdit son
   retour discret).
+- [x] **Lot « ce qu'on regarde après la partie »** — deux idées reprises à une app du Play
+  Store (captures fournies par l'utilisateur, **hors dépôt**) : la **carte des impacts** (où les fléchettes se
+  plantent, dessinée sur un plateau) et le **filtre de période** (Aujourd'hui / 7 j / 30 j /
+  Tout) sur l'écran Statistiques. Nouveau service transverse `dartboardHits`, port
+  `GetPlayerStats` qui prend une fenêtre de temps, `ChoixSegmente` remonté dans `commun/`.
+  **275 tests verts**, relu à l'écran — trois défauts n'auraient pas été vus autrement.
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
+
+**Écarté de ce lot, en attente d'arbitrage** (proposé le même jour, non retenu pour l'instant) :
+le filtre de mode sur l'historique, l'ordre de passage aléatoire au lancement, et
+`legsPlayed` dans `CareerStats` (« 12 legs gagnés » ne dit rien sans son dénominateur).
 
 ---
 
@@ -985,6 +999,87 @@ faudra les arrêter (`* text eol=lf`), suivi d'un `biome check --write` dans un 
 Décision : **on reste en 7.18**, à réévaluer si un correctif sort dans la branche 7.12+.
 
 ---
+
+### Décisions du lot « ce qu'on regarde après la partie »
+
+Deux idées prises à une app du Play Store (captures fournies par l'utilisateur, **hors
+dépôt** — `docs/exemples/` est ignoré), et **seulement
+deux** : le reste de cette app a été écarté explicitement — « Sauver / Ne sauvez pas » en fin
+de partie, l'annulation posée sur l'écran de résumé, un pavé à sept colonnes sous le plancher
+des 48 px, et un « Double % » qui mesure la longueur du leg plutôt que l'adresse.
+
+**La carte des impacts** — la seule statistique du projet qui mesure le bras.
+
+- ⚠️ **`dartboardHits` est TRANSVERSE** (`domain/services/`), comme `visitOutcome` et
+`checkout` : une fléchette dans le triple 20 est le même geste qu'on décompte un 501 ou qu'on
+ferme une cible. Le service ne connaît donc **aucun mode**, seulement des fléchettes — c'est
+ce qui lui permet de vivre là sans qu'un mode ait à en importer un autre.
+- **Mais le cumul reste au X01**, comme le reste de l'écran. Ce n'est pas une hésitation :
+mélanger un Tour du monde à la carte montrerait **l'itinéraire imposé** (20, puis 19, puis
+18…) et non la visée. Le service est transverse, son alimentation ne l'est pas encore ; le
+jour où l'écran gagnera un filtre de mode, il n'y aura rien à réécrire.
+- **La carte voyage dans `PlayerCareer`, pas derrière un port à part.** Elle se calcule sur
+**exactement** les mêmes projections que les moyennes ; l'exposer séparément obligerait à
+rejouer tous les journaux une deuxième fois.
+- ⚠️ **L'attribution des fléchettes passe par la projection, jamais par le journal.**
+`VisitRecorded` ne porte pas de `playerId` (décision du lot 1) : c'est `state.history` qui
+dit à qui était la volée. Un test le vérifie explicitement, parce que c'est exactement le
+genre de raccourci qu'on serait tenté de prendre.
+- **Une fléchette qui fait bust compte dans la carte** : elle a bien touché le plateau. Même
+convention que la moyenne 3 fléchettes, et pour la même raison.
+- ⚠️ **Ce n'est PAS la `Cible` décorative avec un calque par-dessus.** Sur un plateau déjà
+rouge, vert, crème et noir, une couche de chaleur ne se lit pas — on ne sait plus si le rouge
+est la cible ou la donnée. Le plateau est donc réduit à sa **structure** (des cases, des fils,
+vingt numéros) et la seule couleur de l'image est la donnée. C'est la feuille de match
+appliquée à un graphique. Un dégradé d'opacité piloté par les données n'est pas le « zéro
+dégradé » de la charte : c'est de la donnée, pas du décor.
+- **L'échelle est relative à chaque joueur** : la case la plus touchée est toujours à fond. On
+compare des **formes** (« je dérive vers le 5 »), pas des volumes — le volume se lit dans le
+tableau des moyennes, à sa place.
+- **À égalité, la case qui vaut le plus passe devant** dans le classement des cases. Sans ce
+départage, trois cases à trois touches s'annonçaient « S2, S3, S7 » : l'ordre de rangement du
+plateau, pas un résultat.
+
+**Le filtre de période** — « qui est chaud ce soir » plutôt que « qui est bon depuis toujours ».
+
+- **Le port prend un identifiant, pas une date** (`TODAY` / `LAST_7_DAYS` / `LAST_30_DAYS` /
+`ALL_TIME`), et c'est le **use case** qui le résout avec le port `Clock`. Faire calculer la
+borne par l'UI aurait remis un `Date.now()` dans l'application et rendu le filtre intestable.
+- ⚠️ **`Date` est utilisée dans le use case comme CALENDRIER, jamais comme horloge.** L'instant
+courant vient de `Clock` ; `Date` ne sert qu'à savoir où tombe **minuit local**, ce qu'aucune
+arithmétique en millisecondes ne sait faire (une journée fait 23 ou 25 heures deux fois par
+an, et `setDate` gère ce décalage tout seul). Les tests construisent leurs bornes en heure
+locale pour la même raison : écrites en UTC, ils dépendraient du fuseau de la machine.
+- ⚠️ **Une partie appartient à la soirée où elle a COMMENCÉ** (`createdAt`), pas à celle où on
+l'a touchée en dernier. Celle qu'on finit à 00h10 s'est bien jouée ce soir-là ; la couper en
+deux ne rendrait service à personne. Testé.
+- **« Tout » par défaut, jamais « Aujourd'hui ».** Un jour sans partie ouvrirait l'écran sur
+du vide et l'app aurait l'air d'avoir tout perdu. La période n'est pas mémorisée non plus :
+un « Aujourd'hui » retenu de la semaine dernière ferait exactement le même effet.
+- ⚠️ **Deux écrans vides, pas un.** « Aucune partie au compteur » appelle à jouer ; « Rien sur
+cette période » invite à élargir la fenêtre. Les confondre ferait croire à une base effacée —
+c'est la pire chose que cet écran puisse dire. Testé des deux côtés.
+- **La période fait partie de la `queryKey`** : chaque fenêtre garde son cache, revenir sur
+« Tout » est instantané.
+
+**Ce que la relecture à l'écran a rattrapé** (Chrome piloté par `playwright-core`, 390 × 844,
+base semée directement dans IndexedDB — les tests étaient verts pendant ce temps) :
+
+- le **« 20 » rogné en haut de chaque plateau** : les numéros vivent à 48,6 du centre, donc le
+haut du glyphe sortait d'une `viewBox` calée à 100. Aucune requête par rôle ne dit qu'un
+glyphe est coupé. Corrigé par une `viewBox` qui déborde de 4 unités. ⚠️ **`Cible` a le même
+défaut latent** (`fontSize` 4,6 à 48,6) — invisible tant qu'elle reste à 12 % d'opacité sur
+l'accueil, à corriger si elle sert un jour en grand ;
+- **les cases chaudes fusionnaient en un disque doré** chez un joueur qui arrose : quinze
+secteurs voisins à la même intensité, et plus ni secteur ni anneau distinguable. Les fils de
+craie ne suffisent pas, ils s'effacent sous le laiton — chaque case allumée est donc **cernée
+du fond**. C'est le traitement habituel d'une carte choroplèthe, et il ne coûte rien.
+
+**Au passage** : `ChoixSegmente` (le rail à curseur de laiton) vivait recopié dans
+`NouvellePartieEcran` ; il est remonté dans `commun/` avec une taille `sm`, plutôt que d'en
+écrire une deuxième variante pour le filtre. Et `fakeServices` accepte désormais des
+surcharges de dépendances — `SettableClock` était impossible à injecter sans ça, donc tout
+filtre daté était intestable.
 
 ## Décisions ouvertes
 

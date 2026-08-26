@@ -149,7 +149,7 @@ export const createServices = ({
     getMatchHistory: new GetMatchHistoryUseCase(matches, players),
     getMatchMode: new GetMatchModeUseCase(matches),
     getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
-    getPlayerStats: new GetPlayerStatsUseCase(matches, players),
+    getPlayerStats: new GetPlayerStatsUseCase(matches, players, clock),
     deleteMatch: new DeleteMatchUseCase(matches),
     managePlayers: new ManagePlayersUseCase(players, ids, clock),
     manageBackup: new ManageBackupUseCase(matches, players, clock),

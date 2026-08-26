@@ -13,3 +13,5 @@ coverage/
 .env.development.local
 .env.test.local
 .env.production.local
+# Captures de références externes : utiles pour la conception, hors du dépôt.
+docs/exemples/

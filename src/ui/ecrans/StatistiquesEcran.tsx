@@ -1,10 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
-import type { PlayerCareer } from '@/core/application/ports/driving/GetPlayerStats'
+import { useState } from 'react'
+import {
+  type PlayerCareer,
+  STATS_PERIODS,
+  type StatsPeriod,
+} from '@/core/application/ports/driving/GetPlayerStats'
 import { Avatar } from '@/ui/composants/commun/Avatar'
+import { CarteImpacts } from '@/ui/composants/commun/CarteImpacts'
+import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { EmptyState, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
-import { moyenne, nomJoueur, pluriel } from '@/ui/labels'
+import {
+  LIBELLE_PERIODE,
+  moyenne,
+  nomJoueur,
+  PERIODE_EN_TOUTES_LETTRES,
+  pluriel,
+} from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 type Colonne = {
@@ -145,12 +158,50 @@ const TABLEAUX: readonly { readonly titre: string; readonly colonnes: readonly C
   },
 ]
 
+/**
+ * LES CARTES D'IMPACTS — la seule chose de cet écran qui parle du bras.
+ *
+ * Une carte par joueur, côte à côte : c'est un écran de comparaison, et une
+ * carte isolée derrière un sélecteur de joueur casserait ça. L'ordre est celui
+ * des autres tableaux, donc la meilleure moyenne en premier.
+ */
+const Impacts = ({ joueurs }: { readonly joueurs: readonly PlayerCareer[] }) => {
+  const seul = joueurs.length === 1
+
+  return (
+    <Panneau titre="Où tapent les fléchettes">
+      <div
+        className={`grid gap-x-4 gap-y-5 ${
+          seul ? 'mx-auto max-w-[15rem] grid-cols-1' : 'grid-cols-2'
+        }`}
+      >
+        {joueurs.map((joueur) => (
+          <CarteImpacts key={joueur.playerId} nom={nomJoueur(joueur.name)} hits={joueur.hits} />
+        ))}
+      </div>
+      <p className="mt-4 text-xs leading-snug text-craie/60">
+        Plus une case est dorée, plus elle a été touchée — l'échelle est propre à chaque joueur. Une
+        dérive se voit là bien avant de se sentir au bras.
+      </p>
+    </Panneau>
+  )
+}
+
 export const StatistiquesEcran = () => {
   const services = useServices()
 
+  /**
+   * ⚠️ « Tout » par défaut, jamais « Aujourd'hui » : un jour sans partie
+   * ouvrirait l'écran sur du vide, et l'app aurait l'air d'avoir tout perdu.
+   * Le filtre est là, à portée de pouce, pour celui qui veut la soirée.
+   */
+  const [periode, setPeriode] = useState<StatsPeriod>('ALL_TIME')
+
   const stats = useQuery({
-    queryKey: ['statistiquesJoueurs'],
-    queryFn: () => services.getPlayerStats.execute(),
+    // La période fait partie de la clé : chaque fenêtre garde son cache, donc
+    // revenir sur « Tout » est instantané.
+    queryKey: ['statistiquesJoueurs', periode],
+    queryFn: () => services.getPlayerStats.execute(periode),
   })
 
   const joueurs = stats.data ?? []
@@ -162,28 +213,50 @@ export const StatistiquesEcran = () => {
         titre="Statistiques"
         sousTitre={
           joueurs.length === 0
-            ? 'Toutes parties confondues'
-            : `${pluriel(flechettes, 'fléchette lancée', 'fléchettes lancées')}`
+            ? PERIODE_EN_TOUTES_LETTRES[periode]
+            : `${pluriel(flechettes, 'fléchette lancée', 'fléchettes lancées')} · ${PERIODE_EN_TOUTES_LETTRES[periode]}`
         }
       />
 
       <div className="flex flex-col gap-3 px-4">
+        <ChoixSegmente
+          legende="Période"
+          taille="sm"
+          valeurs={STATS_PERIODS}
+          valeur={periode}
+          onChange={setPeriode}
+          libelle={(option) => LIBELLE_PERIODE[option]}
+        />
+
         {stats.isPending ? (
           <SpinnerLigne label="Calcul des statistiques…" />
         ) : joueurs.length === 0 ? (
-          <EmptyState
-            titre="Aucune partie au compteur"
-            description="Jouez une première partie : moyennes, 180 et checkouts se cumuleront ici, partie après partie."
-          />
-        ) : (
-          TABLEAUX.map((tableau) => (
-            <TableauComparatif
-              key={tableau.titre}
-              titre={tableau.titre}
-              colonnes={tableau.colonnes}
-              joueurs={joueurs}
+          // ⚠️ Deux vides très différents : « je n'ai jamais joué » appelle une
+          // invitation, « rien ce soir » appelle un élargissement de la fenêtre.
+          // Les confondre ferait croire à une base effacée.
+          periode === 'ALL_TIME' ? (
+            <EmptyState
+              titre="Aucune partie au compteur"
+              description="Jouez une première partie : moyennes, 180 et checkouts se cumuleront ici, partie après partie."
             />
-          ))
+          ) : (
+            <EmptyState
+              titre="Rien sur cette période"
+              description={`Aucune partie de X01 ${PERIODE_EN_TOUTES_LETTRES[periode]}. Élargissez la fenêtre pour retrouver les précédentes.`}
+            />
+          )
+        ) : (
+          <>
+            {TABLEAUX.map((tableau) => (
+              <TableauComparatif
+                key={tableau.titre}
+                titre={tableau.titre}
+                colonnes={tableau.colonnes}
+                joueurs={joueurs}
+              />
+            ))}
+            <Impacts joueurs={joueurs} />
+          </>
         )}
       </div>
     </main>

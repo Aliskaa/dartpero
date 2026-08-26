@@ -5,7 +5,7 @@ import App from '@/App'
 import type { Services } from '@/composition/container'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
-import { fakeServices } from '../fakes'
+import { fakeServices, SettableClock } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 
 const T20 = [Dart.triple(20), Dart.triple(20), Dart.triple(20)]
@@ -151,6 +151,88 @@ describe('Écran Statistiques', () => {
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     expect(await screen.findByText(/aucune partie au compteur/i)).toBeInTheDocument()
+  })
+
+  it('restreint le cumul à la soirée quand on le demande', async () => {
+    const utilisateur = userEvent.setup()
+    const horloge = new SettableClock(new Date(2026, 7, 26, 21).getTime())
+    const { services } = fakeServices({ clock: horloge })
+    const kevin = await services.managePlayers.create('Kevin')
+
+    const ancienne = async (instant: number) => {
+      horloge.regler(instant)
+      const matchId = await services.startMatch.execute({
+        playerIds: [kevin.id],
+        config: X01Config.create({ legsToWin: 1 }),
+      })
+      await services.recordVisit.execute({ matchId, darts: T20 })
+    }
+
+    await ancienne(new Date(2026, 6, 3, 20).getTime())
+    await ancienne(new Date(2026, 7, 26, 20).getTime())
+    horloge.regler(new Date(2026, 7, 26, 21).getTime())
+
+    renderWithServices(<App />, { services, route: '/statistiques' })
+
+    // « Tout » par défaut : les deux parties sont au compteur.
+    const palmares = await screen.findByRole('table', { name: 'Palmarès' })
+    expect(within(palmares).getByText('2')).toBeInTheDocument()
+
+    await utilisateur.click(screen.getByRole('button', { name: "Aujourd'hui" }))
+
+    await waitFor(() => {
+      const cejour = screen.getByRole('table', { name: 'Palmarès' })
+      expect(within(cejour).queryByText('2')).not.toBeInTheDocument()
+    })
+  })
+
+  it('distingue « rien ce soir » de « jamais joué »', async () => {
+    const utilisateur = userEvent.setup()
+    const horloge = new SettableClock(new Date(2026, 7, 26, 21).getTime())
+    const { services } = fakeServices({ clock: horloge })
+    const kevin = await services.managePlayers.create('Kevin')
+
+    horloge.regler(new Date(2026, 6, 3, 20).getTime())
+    const matchId = await services.startMatch.execute({
+      playerIds: [kevin.id],
+      config: X01Config.create({ legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({ matchId, darts: T20 })
+    horloge.regler(new Date(2026, 7, 26, 21).getTime())
+
+    renderWithServices(<App />, { services, route: '/statistiques' })
+    await screen.findByRole('table', { name: 'Palmarès' })
+
+    await utilisateur.click(screen.getByRole('button', { name: "Aujourd'hui" }))
+
+    // ⚠️ Surtout pas « Aucune partie au compteur » : la base est intacte, et le
+    // faire croire serait la pire chose que cet écran puisse dire.
+    expect(await screen.findByText(/rien sur cette période/i)).toBeInTheDocument()
+    expect(screen.queryByText(/aucune partie au compteur/i)).not.toBeInTheDocument()
+  })
+
+  it('dessine une carte d’impacts qui nomme les cases les plus touchées', async () => {
+    const { services } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+
+    const matchId = await services.startMatch.execute({
+      playerIds: [kevin.id],
+      config: X01Config.create({ legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({ matchId, darts: T20 })
+    await services.recordVisit.execute({
+      matchId,
+      darts: [Dart.single(5), Dart.single(5), Dart.miss()],
+    })
+
+    renderWithServices(<App />, { services, route: '/statistiques' })
+
+    // La couleur ne se teste pas ; le nom accessible, lui, porte la donnée —
+    // et c'est aussi ce qu'un lecteur d'écran restitue.
+    expect(
+      await screen.findByRole('img', { name: /Kevin : T20 3 fois, S5 2 fois, sur 6 fléchettes/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Hors cible ×1')).toBeInTheDocument()
   })
 })
 
