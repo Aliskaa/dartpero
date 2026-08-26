@@ -1,11 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { CricketVisitResult } from '@/core/application/ports/driving/PlayCricket'
-import type { Dart, Multiplier } from '@/core/domain/value-objects/Dart'
+import { type Dart, Dart as DartVO, type Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { annonceCricket } from '@/ui/labels'
+import { annonceCricket, annonceFinDeVolee, libelleAnnulation, nomJoueur } from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
+import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
+import { useProfils } from './useJoueurs'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -26,6 +28,12 @@ export const useCricket = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
   const dire = useVoix()
+
+  // Les pseudos, pour appeler le joueur suivant par son nom. Gardés dans une
+  // ref : la Map est reconstruite à chaque rendu.
+  const profils = useProfils()
+  const profilsRef = useRef(profils)
+  profilsRef.current = profils
 
   const requete = useQuery({
     queryKey: ['cricket', matchId],
@@ -75,7 +83,9 @@ export const useCricket = (matchId: MatchId) => {
           gagnee,
           cutThroat: resultat.state.config.variant === 'CUT_THROAT',
         })
-        if (annonce) dire(annonce)
+        // Une volée blanche ne se commente pas, mais elle passe quand même la
+        // main : sans l'appel, personne ne saurait que c'est à lui.
+        dire(annonceFinDeVolee(annonce, prochainJoueur(resultat.state, profilsRef.current)))
       } catch (cause) {
         setErreur(message(cause))
       } finally {
@@ -136,6 +146,16 @@ export const useCricket = (matchId: MatchId) => {
     }
   }, [services, state, matchId, dartsEnCours.length, queryClient])
 
+  /** Ce que le bouton va défaire, écrit dessus — voir `libelleAnnulation`. */
+  const annulation = useMemo(() => {
+    const derniereFlechette = dartsEnCours.at(-1)
+    if (derniereFlechette) return libelleAnnulation(DartVO.label(derniereFlechette), null)
+
+    const volee = state?.history.at(-1)
+    if (!volee) return libelleAnnulation(null, null)
+    return libelleAnnulation(null, nomJoueur(profils.get(volee.playerId)?.name ?? null))
+  }, [dartsEnCours, state, profils])
+
   return {
     state,
     /** Le tableau à afficher : l'état réel augmenté de la volée en cours. */
@@ -150,6 +170,7 @@ export const useCricket = (matchId: MatchId) => {
     derniereVolee,
     ajouterFlechette,
     annuler,
+    annulation,
     peutAnnuler: dartsEnCours.length > 0 || (state?.history.length ?? 0) > 0,
     occupe,
     erreur,

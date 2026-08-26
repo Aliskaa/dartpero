@@ -117,6 +117,7 @@ export const TourDuMondeEcran = () => {
             onFlechette={partie.ajouterFlechette}
             onAnnuler={() => void partie.annuler()}
             peutAnnuler={partie.peutAnnuler}
+            annulation={partie.annulation}
             desactive={partie.occupe}
           />
         </>

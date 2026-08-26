@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { House, RotateCcw, Target } from 'lucide-react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Target } from 'lucide-react'
+import { Link, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { Button } from '@/ui/composants/commun/Button'
+import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
@@ -20,7 +20,6 @@ export const ResumeEntrainementEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
   const services = useServices()
-  const navigate = useNavigate()
 
   const session = useQuery({
     queryKey: ['entrainementResume', identifiant],
@@ -92,16 +91,11 @@ export const ResumeEntrainementEcran = () => {
         )}
       </Panneau>
 
-      <div className="mt-auto grid gap-2 pt-1">
-        <Button taille="lg" onClick={() => navigate('/entrainement')}>
-          <RotateCcw aria-hidden="true" className="size-5" />
-          Nouvelle série
-        </Button>
-        <Button variante="secondaire" onClick={() => navigate('/')}>
-          <House aria-hidden="true" className="size-4" />
-          Accueil
-        </Button>
-      </div>
+      <ActionsFinDePartie
+        matchId={identifiant}
+        versReglages="/entrainement"
+        libelleReglages="Changer l’exercice"
+      />
     </main>
   )
 }

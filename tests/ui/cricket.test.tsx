@@ -84,7 +84,7 @@ describe('Cricket — écran de jeu', () => {
     await flechette(utilisateur, '20', 'Triple')
     expect(screen.getByText('20 : fermée')).toBeInTheDocument()
 
-    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
     await waitFor(() => expect(screen.queryByText('20 : fermée')).toBeNull())
   })
 
@@ -157,7 +157,7 @@ describe('Cricket — création et historique', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Ajouter' }))
     await waitFor(() => expect(screen.getByRole('button', { name: /kevin/i })).toBeInTheDocument())
 
-    await utilisateur.click(screen.getByRole('button', { name: 'Cricket' }))
+    await utilisateur.click(screen.getByRole('button', { name: /Cricket/i }))
 
     const regles = screen.getByRole('region', { name: 'Règles' })
     expect(within(regles).getByRole('button', { name: 'Cut-throat' })).toBeInTheDocument()

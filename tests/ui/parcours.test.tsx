@@ -52,6 +52,14 @@ describe('Parcours complet', () => {
     expect(screen.getByText('Plus haut checkout').nextElementSibling).toHaveTextContent('141')
     // La moyenne et le « first 9 » valent tous deux 167 sur un leg de 9 fléchettes.
     expect(screen.getAllByText('167,0')).toHaveLength(2)
+
+    // --- « On remet ça » : même joueur, mêmes règles, un tap ---
+    // C'était le geste manquant : le seul bouton offert renvoyait sur un
+    // formulaire de configuration remis à zéro.
+    await utilisateur.click(screen.getByRole('button', { name: /on remet ça/i }))
+
+    await waitFor(() => expect(score()).toHaveTextContent('501'))
+    expect(screen.queryByText('Vainqueur')).not.toBeInTheDocument()
   })
 
   it('propose de reprendre une partie déjà commencée', async () => {

@@ -328,7 +328,8 @@ src/
 │  │  └─ services/        dartSearch · checkout · visitOutcome
 │  │                      ⚠️ TRANSVERSES : un mode n'importe jamais un autre mode
 │  └─ application/
-│     ├─ ports/driving/   StartMatch, RecordVisit, UndoLastVisit, PreviewVisit,
+│     ├─ ports/driving/   StartMatch, RestartMatch, RecordVisit, UndoLastVisit,
+│  │                   PreviewVisit,
 │     │                   BuildVisitFromScore, GetMatchState, GetCheckoutSuggestion,
 │     │                   GetMatchStats, GetMatchHistory, GetMatchMode,
 │     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
@@ -420,6 +421,12 @@ par le composition root.
   paysage** pendant une partie, porté par `DispositionPartie` pour les quatre écrans de jeu.
   Deux bugs antérieurs corrigés au passage : `backupSchema` et `GetOngoingMatch` ne
   connaissaient que le X01. **248 tests verts.**
+- [x] **Lot UX** — cinq frictions d'usage corrigées avant toute refonte visuelle : la voix
+  qui appelle le joueur suivant, « On remet ça », les réglages de partie mémorisés, l'ordre de
+  passage réordonnable, et le bouton « Annuler » qui dit ce qu'il va défaire. Nouveau port
+  `RestartMatch`. **263 tests verts.**
+- [ ] **Lot visuel (piste E)** — « La feuille de match » : colonnes réelles avec en-têtes,
+  filets épais, **angle vif partout** (le `rounded-2xl` généralisé est la cible n° 1).
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 ---
@@ -835,6 +842,59 @@ perdait silencieusement les parties de Tour du monde et d'entraînement à la r�
 Le test de sauvegarde exporte désormais **une partie de chaque mode**, puis les relit.
 - **`GetOngoingMatchUseCase` projetait avec `X01Rules`** au lieu de la couture : l'accueil ne
 proposait jamais de reprendre une partie qui n'était pas un X01.
+
+### Décisions du lot UX (l'usage avant la peinture)
+
+Cinq frictions relevées **dans le code**, pas d'impression : trois d'entre elles ne faisaient
+que brancher des choses déjà écrites et jamais appelées.
+
+- ⚠️ **`annonceTour` (« À toi, Julien ») existait depuis le lot 5b et n'était appelée nulle
+part.** La voix disait « 80 » sans dire pour qui ni à qui c'était le tour — alors que le
+téléphone est posé à deux mètres du lanceur et que la voix est le seul canal qui porte
+jusque-là. Corrigé pour les trois modes de groupe.
+- ⚠️ **Une seule phrase par volée, jamais deux appels.** `SpeechAnnouncer.say` commence par
+`speechSynthesis.cancel()` (une annonce en retard vaut moins que le silence) : dire le score
+puis le tour ferait taire le score. D'où `annonceFinDeVolee(resultat, prochain)`, qui compose
+« 180. À toi, Julien » en un énoncé. `resultat` peut être `null` — une volée blanche au
+Cricket ne se commente pas, mais elle passe quand même la main, et **ça**, il faut le dire.
+- **On n'appelle personne en fin de partie ni en solo** : `prochainJoueur` rend `null`. Le
+helper vit dans `ui/hooks/tourDeTable.ts` et son paramètre est **structurel**, pas l'union des
+états : importer les trois modes ferait de lui un endroit qui les connaît tous, rôle réservé
+à la couture `GameModes`.
+- ⚠️ **`RestartMatch` rappelle les lancements existants, il ne recopie PAS l'événement
+d'ouverture** dans un journal neuf. C'est la seule façon qu'une relance passe par exactement
+les mêmes contrôles qu'un premier départ : profil supprimé entre-temps, validation des règles,
+et le tirage d'une nouvelle cible en entraînement. Recopier l'ouverture aurait dupliqué ces
+trois décisions, donc créé trois occasions de diverger. Le use case est donc un **composeur** :
+ses dépendances sont les quatre ports de lancement, injectés par le composition root.
+- **Corollaire assumé** : un entraînement relancé **retire ses cibles**. On refait le même
+exercice, pas la même série — rejouer des restes qu'on connaît déjà n'entraînerait personne.
+- **`ActionsFinDePartie` sert les quatre résumés.** « On remet ça » passe en action principale,
+« Changer les règles » en secondaire, « Accueil » en discret. Avant, la seule action offerte
+renvoyait sur un formulaire **remis à zéro** : une dizaine de taps entre deux parties, alors
+qu'on en enchaîne quatre ou cinq par soirée.
+- **Les réglages de partie passent par le port `Preferences`**, qui servait déjà à la voix et
+au mode rapide. ⚠️ La sélection de joueurs mémorisée est **dérivée et filtrée** sur les profils
+qui existent encore, jamais stockée en état : un profil supprimé depuis resterait sinon coché
+en fantôme et ferait échouer le lancement sur un joueur inconnu.
+- **L'ordre de passage était déjà l'ordre des taps** — il fallait tout décocher pour
+intervertir deux joueurs. Deux chevrons de **48 px** (le plancher tactile, pas une variable
+d'ajustement) et une ligne qui nomme celui qui commence.
+- ⚠️ **Le bouton « Annuler » a deux étiquettes, pas une.** Une touche fait une demi-largeur
+d'écran : « Annuler la volée de Julien » n'y tient pas. `libelleAnnulation` rend donc un
+`{ court, complet }` — le court s'affiche, le complet est le nom accessible. Comme le court
+est contenu mot pour mot dans le complet, la règle « label in name » (WCAG 2.5.3) tient. Ce
+qui lève l'ambiguïté, c'est le **changement visible** : « Annuler T20 » dès qu'une fléchette
+est plantée, « Annuler » tout court signifiant désormais « la dernière volée ».
+- **L'auteur de la dernière volée se lit sur `Visit.playerId`**, dans la projection. L'UI ne
+rejoue aucune règle pour savoir à qui était le tour d'avant.
+- **Écarté du lot** : la touche T20 dédiée. Proposée puis retirée par l'utilisateur — la
+bascule momentanée reste le seul chemin vers un triple.
+
+⚠️ **`npm run lint` est rouge sur ~20 fichiers pour cause de CRLF**, y compris des fichiers
+jamais modifiés (`src/index.css`, `src/ui/accents.ts`…). C'est un problème de checkout Windows
+(`core.autocrlf`) antérieur à ce lot, pas une régression : Biome veut du LF. À régler d'un coup
+avec un `.gitattributes` (`* text eol=lf`) puis un `biome check --write`, dans un commit dédié.
 
 - **`npm audit`** : 1 vulnérabilité « high » sur **react-router 7.12→8.2**
 (*RSC Mode CSRF Bypass*, GHSA-qwww-vcr4-c8h2). **Non exploitable ici** : elle vise le mode

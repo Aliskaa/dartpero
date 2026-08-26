@@ -32,6 +32,68 @@ export const annonceTour = (nom: string): string => `À toi, ${nom}`
 export const annonceCible = (libelle: string): string => `Cible : ${libelle}`
 
 /**
+ * Ce que la voix dit à la fin d'une volée : le résultat, **puis à qui c'est le
+ * tour**. C'est le seul canal qui porte jusqu'à l'oche — le téléphone est posé
+ * à deux mètres et personne ne va lire l'écran entre deux volées.
+ *
+ * ⚠️ Une **seule** phrase, jamais deux appels successifs : l'adapter coupe
+ * l'énoncé en cours à chaque `say` (une annonce en retard vaut moins que le
+ * silence), donc annoncer le score puis le tour ferait taire le score.
+ *
+ * `resultat` peut être `null` — une volée blanche au Cricket ne se commente
+ * pas, mais elle passe quand même la main, et ça, il faut le dire.
+ * `prochain` est `null` en solo et en fin de partie : on ne rappelle pas à un
+ * joueur seul que c'est encore à lui, et on n'enchaîne pas sur la victoire.
+ */
+export const annonceFinDeVolee = (resultat: string | null, prochain: string | null): string => {
+  if (prochain === null) return resultat ?? ''
+  if (resultat === null) return annonceTour(prochain)
+  return `${resultat}. ${annonceTour(prochain)}`
+}
+
+/**
+ * Ce que le bouton d'annulation va **vraiment** défaire.
+ *
+ * ⚠️ Deux formes, et c'est volontaire. Une touche de pavé fait une demi-largeur
+ * d'écran : « Annuler la volée de Julien » n'y tient pas. Le `court` s'affiche,
+ * le `complet` sert de nom accessible — et comme le court est contenu mot pour
+ * mot dans le complet, la règle « label in name » (WCAG 2.5.3) est respectée.
+ */
+export type Annulation = {
+  /** Ce qui est écrit sur la touche. */
+  readonly court: string
+  /** Le nom accessible, qui peut nommer le joueur. */
+  readonly complet: string
+}
+
+/** Le libellé neutre, quand il n'y a rien à annuler (la touche est désactivée). */
+export const ANNULATION_NEUTRE: Annulation = { court: 'Annuler', complet: 'Annuler' }
+
+/**
+ * Un seul bouton, deux comportements (la fléchette en cours, ou la dernière
+ * volée enregistrée) : c'est la bonne ergonomie, mais une étiquette unique
+ * laissait deviner lequel s'appliquerait. À trois autour d'un téléphone, dans
+ * un garage, on ne devine pas — surtout quand le second cas peut dé-gagner un
+ * leg sans prévenir.
+ */
+export const libelleAnnulation = (
+  flechette: string | null,
+  auteurDerniereVolee: string | null,
+): Annulation => {
+  // Une fléchette est plantée : c'est elle qu'on retire, et son nom tient sur
+  // la touche. C'est ce changement visible d'étiquette qui lève l'ambiguïté —
+  // « Annuler » tout court veut désormais dire « la dernière volée ».
+  if (flechette !== null) {
+    const libelle = `Annuler ${flechette}`
+    return { court: libelle, complet: libelle }
+  }
+  if (auteurDerniereVolee !== null) {
+    return { court: 'Annuler', complet: `Annuler la volée de ${auteurDerniereVolee}` }
+  }
+  return ANNULATION_NEUTRE
+}
+
+/**
  * Ce que la voix dit d'une volée de Cricket — court, comme au X01.
  *
  * On annonce en priorité les points, parce que c'est ce qui change le

@@ -66,7 +66,7 @@ describe('Tour du monde — écran de jeu', () => {
     await utilisateur.click(screen.getByRole('button', { name: '20' }))
     expect(cibleDe('Kevin')).toHaveTextContent('19')
 
-    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('20'))
   })
 
@@ -199,7 +199,7 @@ describe('Création de partie', () => {
     const regles = await screen.findByRole('region', { name: 'Règles' })
     expect(within(regles).getByRole('button', { name: '501' })).toBeInTheDocument()
 
-    await utilisateur.click(screen.getByRole('button', { name: 'Tour du monde' }))
+    await utilisateur.click(screen.getByRole('button', { name: /Tour du monde/i }))
 
     // Score de départ et double out n'ont aucun sens ici : ils disparaissent.
     expect(within(regles).queryByRole('button', { name: '501' })).toBeNull()
@@ -216,7 +216,7 @@ describe('Création de partie', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Ajouter' }))
     await waitFor(() => expect(screen.getByRole('button', { name: /kevin/i })).toBeInTheDocument())
 
-    await utilisateur.click(screen.getByRole('button', { name: 'Tour du monde' }))
+    await utilisateur.click(screen.getByRole('button', { name: /Tour du monde/i }))
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 
     expect(await screen.findByLabelText('Cible de Kevin')).toBeInTheDocument()

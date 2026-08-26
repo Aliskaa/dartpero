@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { House, RotateCcw } from 'lucide-react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { variablesAccent } from '@/ui/accents'
+import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { Avatar } from '@/ui/composants/commun/Avatar'
-import { Button } from '@/ui/composants/commun/Button'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
@@ -16,7 +15,6 @@ export const ResumeTourDuMondeEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
   const services = useServices()
-  const navigate = useNavigate()
   const profils = useProfils()
 
   const partie = useQuery({
@@ -120,16 +118,7 @@ export const ResumeTourDuMondeEcran = () => {
         </ol>
       </Panneau>
 
-      <div className="mt-auto grid gap-2 pt-1">
-        <Button taille="lg" onClick={() => navigate('/nouvelle-partie')}>
-          <RotateCcw aria-hidden="true" className="size-5" />
-          Nouvelle partie
-        </Button>
-        <Button variante="secondaire" onClick={() => navigate('/')}>
-          <House aria-hidden="true" className="size-4" />
-          Accueil
-        </Button>
-      </div>
+      <ActionsFinDePartie matchId={identifiant} />
     </main>
   )
 }

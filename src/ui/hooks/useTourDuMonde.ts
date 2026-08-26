@@ -1,10 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { TourDuMondeVisitResult } from '@/core/application/ports/driving/PlayTourDuMonde'
-import type { Dart } from '@/core/domain/value-objects/Dart'
+import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
+import { annonceFinDeVolee, libelleAnnulation, nomJoueur } from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
+import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
+import { useProfils } from './useJoueurs'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -24,6 +27,12 @@ export const useTourDuMonde = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
   const dire = useVoix()
+
+  // Les pseudos, pour appeler le joueur suivant par son nom. Gardés dans une
+  // ref : la Map est reconstruite à chaque rendu.
+  const profils = useProfils()
+  const profilsRef = useRef(profils)
+  profilsRef.current = profils
 
   const requete = useQuery({
     queryKey: ['tourDuMonde', matchId],
@@ -50,12 +59,22 @@ export const useTourDuMonde = (matchId: MatchId) => {
         setDartsEnCours([])
         setDerniereVolee(resultat)
 
-        if (resultat.milestones.some((jalon) => jalon.type === 'TourCompleted')) {
-          services.devices.haptics.success()
-          dire('Tour bouclé !')
-        } else if (resultat.visit.hits > 0) {
-          dire(`${resultat.visit.hits} touché${resultat.visit.hits > 1 ? 's' : ''}`)
-        }
+        const boucle = resultat.milestones.some((jalon) => jalon.type === 'TourCompleted')
+        if (boucle) services.devices.haptics.success()
+
+        // Le résultat, puis à qui c'est le tour. Une volée sans touche ne se
+        // commente pas, mais elle passe quand même la main.
+        const touches = resultat.visit.hits
+        dire(
+          annonceFinDeVolee(
+            boucle
+              ? 'Tour bouclé !'
+              : touches > 0
+                ? `${touches} touché${touches > 1 ? 's' : ''}`
+                : null,
+            prochainJoueur(resultat.state, profilsRef.current),
+          ),
+        )
       } catch (cause) {
         setErreur(message(cause))
       } finally {
@@ -126,6 +145,16 @@ export const useTourDuMonde = (matchId: MatchId) => {
     return { validees: index, cible: state.config.targets[index] ?? null }
   })()
 
+  /** Ce que le bouton va défaire, écrit dessus — voir `libelleAnnulation`. */
+  const annulation = useMemo(() => {
+    const derniereFlechette = dartsEnCours.at(-1)
+    if (derniereFlechette) return libelleAnnulation(DartVO.label(derniereFlechette), null)
+
+    const volee = state?.history.at(-1)
+    if (!volee) return libelleAnnulation(null, null)
+    return libelleAnnulation(null, nomJoueur(profils.get(volee.playerId)?.name ?? null))
+  }, [dartsEnCours, state, profils])
+
   return {
     state,
     chargement: requete.isPending,
@@ -137,6 +166,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     derniereVolee,
     ajouterFlechette,
     annuler,
+    annulation,
     peutAnnuler: dartsEnCours.length > 0 || (state?.history.length ?? 0) > 0,
     occupe,
     erreur,

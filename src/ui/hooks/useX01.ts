@@ -1,11 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { RecordVisitResult } from '@/core/application/ports/driving/RecordVisit'
-import type { Dart, Multiplier } from '@/core/domain/value-objects/Dart'
+import { type Dart, Dart as DartVO, type Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { annonceVolee } from '@/ui/labels'
+import { annonceFinDeVolee, annonceVolee, libelleAnnulation, nomJoueur } from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
+import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
+import { useProfils } from './useJoueurs'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -25,6 +27,13 @@ export const useX01 = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
   const dire = useVoix()
+
+  // Les pseudos, pour appeler le joueur suivant par son nom. Gardés dans une
+  // ref : la Map est reconstruite à chaque rendu, la mettre en dépendance
+  // recréerait tous les callbacks du hook pour rien.
+  const profils = useProfils()
+  const profilsRef = useRef(profils)
+  profilsRef.current = profils
 
   const requete = useQuery({
     queryKey: ['match', matchId],
@@ -80,7 +89,14 @@ export const useX01 = (matchId: MatchId) => {
         if (resultat.visit.outcome === 'BUSTED') services.devices.haptics.error()
         else if (resultat.visit.outcome === 'CHECKOUT') services.devices.haptics.success()
 
-        dire(annonceVolee(resultat.visit.scored, resultat.visit.outcome))
+        // Le score, puis à qui c'est le tour : le téléphone est posé à deux
+        // mètres du lanceur, la voix est le seul canal qui porte jusque-là.
+        dire(
+          annonceFinDeVolee(
+            annonceVolee(resultat.visit.scored, resultat.visit.outcome),
+            prochainJoueur(resultat.state, profilsRef.current),
+          ),
+        )
       } catch (cause) {
         setErreur(message(cause))
       } finally {
@@ -169,6 +185,20 @@ export const useX01 = (matchId: MatchId) => {
     }
   }, [services, state, matchId, dartsEnCours.length, queryClient])
 
+  /**
+   * Ce que le bouton va défaire, écrit dessus. L'auteur de la dernière volée
+   * se lit sur la **projection** (`Visit.playerId`), jamais recalculé ici :
+   * l'UI ne rejoue aucune règle, elle lit ce que le domaine a déduit.
+   */
+  const annulation = useMemo(() => {
+    const derniereFlechette = dartsEnCours.at(-1)
+    if (derniereFlechette) return libelleAnnulation(DartVO.label(derniereFlechette), null)
+
+    const volee = state?.history.at(-1)
+    if (!volee) return libelleAnnulation(null, null)
+    return libelleAnnulation(null, nomJoueur(profils.get(volee.playerId)?.name ?? null))
+  }, [dartsEnCours, state, profils])
+
   return {
     state,
     chargement: requete.isPending,
@@ -185,6 +215,7 @@ export const useX01 = (matchId: MatchId) => {
     ajouterFlechette,
     enregistrerScore,
     annuler,
+    annulation,
     peutAnnuler: dartsEnCours.length > 0 || (state?.history.length ?? 0) > 0,
     occupe,
     erreur,

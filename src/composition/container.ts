@@ -24,6 +24,7 @@ import type { PlayTourDuMonde } from '@/core/application/ports/driving/PlayTourD
 import type { PreviewCricketVisit } from '@/core/application/ports/driving/PreviewCricketVisit'
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
+import type { RestartMatch } from '@/core/application/ports/driving/RestartMatch'
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
 import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVisit'
 import { BuildVisitFromScoreUseCase } from '@/core/application/use-cases/BuildVisitFromScoreUseCase'
@@ -43,6 +44,7 @@ import { PlayTourDuMondeUseCase } from '@/core/application/use-cases/PlayTourDuM
 import { PreviewCricketVisitUseCase } from '@/core/application/use-cases/PreviewCricketVisitUseCase'
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
+import { RestartMatchUseCase } from '@/core/application/use-cases/RestartMatchUseCase'
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
 import { UndoLastVisitUseCase } from '@/core/application/use-cases/UndoLastVisitUseCase'
 import { createLocalStoragePreferences } from '@/infrastructure/device/LocalStoragePreferences'
@@ -91,6 +93,8 @@ export type Dependencies = {
  */
 export type Services = {
   readonly startMatch: StartMatch
+  /** « On remet ça » : relance une partie terminée à l'identique. */
+  readonly restartMatch: RestartMatch
   readonly recordVisit: RecordVisit
   readonly undoLastVisit: UndoLastVisit
   readonly getMatchState: GetMatchState
@@ -122,28 +126,45 @@ export const createServices = ({
   ids,
   random,
   devices,
-}: Dependencies): Services => ({
-  startMatch: new StartMatchUseCase(matches, players, clock, ids),
-  recordVisit: new RecordVisitUseCase(matches, clock),
-  undoLastVisit: new UndoLastVisitUseCase(matches, clock),
-  getMatchState: new GetMatchStateUseCase(matches),
-  getCheckoutSuggestion: new GetCheckoutSuggestionUseCase(),
-  getMatchStats: new GetMatchStatsUseCase(matches),
-  getMatchHistory: new GetMatchHistoryUseCase(matches, players),
-  getMatchMode: new GetMatchModeUseCase(matches),
-  getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
-  getPlayerStats: new GetPlayerStatsUseCase(matches, players),
-  deleteMatch: new DeleteMatchUseCase(matches),
-  managePlayers: new ManagePlayersUseCase(players, ids, clock),
-  manageBackup: new ManageBackupUseCase(matches, players, clock),
-  playTourDuMonde: new PlayTourDuMondeUseCase(matches, players, clock, ids),
-  playCricket: new PlayCricketUseCase(matches, players, clock, ids),
-  playCheckoutPractice: new PlayCheckoutPracticeUseCase(matches, players, clock, ids, random),
-  previewVisit: new PreviewVisitUseCase(),
-  previewCricketVisit: new PreviewCricketVisitUseCase(),
-  buildVisitFromScore: new BuildVisitFromScoreUseCase(),
-  devices,
-})
+}: Dependencies): Services => {
+  // Les quatre lancements sont gardés sous la main : « on remet ça » les
+  // rappelle tels quels plutôt que de recopier un journal, pour qu'une relance
+  // passe par exactement les mêmes contrôles qu'un premier départ.
+  const startMatch = new StartMatchUseCase(matches, players, clock, ids)
+  const playTourDuMonde = new PlayTourDuMondeUseCase(matches, players, clock, ids)
+  const playCricket = new PlayCricketUseCase(matches, players, clock, ids)
+  const playCheckoutPractice = new PlayCheckoutPracticeUseCase(matches, players, clock, ids, random)
+
+  return {
+    startMatch,
+    restartMatch: new RestartMatchUseCase(
+      matches,
+      startMatch,
+      playTourDuMonde,
+      playCricket,
+      playCheckoutPractice,
+    ),
+    recordVisit: new RecordVisitUseCase(matches, clock),
+    undoLastVisit: new UndoLastVisitUseCase(matches, clock),
+    getMatchState: new GetMatchStateUseCase(matches),
+    getCheckoutSuggestion: new GetCheckoutSuggestionUseCase(),
+    getMatchStats: new GetMatchStatsUseCase(matches),
+    getMatchHistory: new GetMatchHistoryUseCase(matches, players),
+    getMatchMode: new GetMatchModeUseCase(matches),
+    getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
+    getPlayerStats: new GetPlayerStatsUseCase(matches, players),
+    deleteMatch: new DeleteMatchUseCase(matches),
+    managePlayers: new ManagePlayersUseCase(players, ids, clock),
+    manageBackup: new ManageBackupUseCase(matches, players, clock),
+    playTourDuMonde,
+    playCricket,
+    playCheckoutPractice,
+    previewVisit: new PreviewVisitUseCase(),
+    previewCricketVisit: new PreviewCricketVisitUseCase(),
+    buildVisitFromScore: new BuildVisitFromScoreUseCase(),
+    devices,
+  }
+}
 
 /** Câblage réel : IndexedDB, horloge système, identifiants cryptographiques. */
 export const createBrowserDependencies = (): Dependencies => {

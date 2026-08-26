@@ -1,5 +1,6 @@
 import { Undo2 } from 'lucide-react'
 import { Dart, type Multiplier, type Segment } from '@/core/domain/value-objects/Dart'
+import { ANNULATION_NEUTRE, type Annulation } from '@/ui/labels'
 
 const MULTIPLICATEURS: readonly { readonly valeur: Multiplier; readonly libelle: string }[] = [
   { valeur: 'SIMPLE', libelle: 'Simple' },
@@ -16,6 +17,8 @@ type Props = {
   readonly onFlechette: (dart: Dart) => void
   readonly onAnnuler: () => void
   readonly peutAnnuler: boolean
+  /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
+  readonly annulation?: Annulation
   readonly desactive: boolean
 }
 
@@ -38,6 +41,7 @@ export const PaveCricket = ({
   onFlechette,
   onAnnuler,
   peutAnnuler,
+  annulation = ANNULATION_NEUTRE,
   desactive,
 }: Props) => {
   const rang = MULTIPLICATEURS.findIndex((option) => option.valeur === multiplicateur)
@@ -123,10 +127,11 @@ export const PaveCricket = ({
           type="button"
           disabled={desactive || !peutAnnuler}
           onClick={onAnnuler}
+          aria-label={annulation.complet}
           className="touche flex min-h-12 shrink-0 items-center gap-1.5 rounded-xl px-3 font-score text-xs font-bold uppercase tracking-wider text-craie"
         >
-          <Undo2 aria-hidden="true" className="size-4" />
-          Annuler
+          <Undo2 aria-hidden="true" className="size-4 shrink-0" />
+          {annulation.court}
         </button>
       </div>
     </section>

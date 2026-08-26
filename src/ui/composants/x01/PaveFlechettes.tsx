@@ -1,5 +1,6 @@
 import { Undo2, Zap } from 'lucide-react'
 import { Dart, type Multiplier, SEGMENT_NUMBERS } from '@/core/domain/value-objects/Dart'
+import { ANNULATION_NEUTRE, type Annulation } from '@/ui/labels'
 
 const MULTIPLICATEURS: readonly { readonly valeur: Multiplier; readonly libelle: string }[] = [
   { valeur: 'SIMPLE', libelle: 'Simple' },
@@ -15,6 +16,8 @@ type Props = {
   readonly onFlechette: (dart: Dart) => void
   readonly onAnnuler: () => void
   readonly peutAnnuler: boolean
+  /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
+  readonly annulation?: Annulation
   /** Absents hors X01 : l'entraînement n'a pas de mode rapide. */
   readonly rapide?: boolean
   readonly onRapide?: () => void
@@ -46,6 +49,7 @@ export const PaveFlechettes = ({
   onFlechette,
   onAnnuler,
   peutAnnuler,
+  annulation = ANNULATION_NEUTRE,
   rapide,
   onRapide,
   desactive,
@@ -113,14 +117,15 @@ export const PaveFlechettes = ({
           type="button"
           disabled={desactive || !peutAnnuler}
           onClick={onAnnuler}
+          aria-label={annulation.complet}
           className={[
-            'touche col-span-2 flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl',
+            'touche col-span-2 flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-2',
             'border-chene font-score text-sm font-bold uppercase tracking-widest text-craie',
             'paysage:min-h-12',
           ].join(' ')}
         >
-          <Undo2 aria-hidden="true" className="size-4" />
-          Annuler
+          <Undo2 aria-hidden="true" className="size-4 shrink-0" />
+          <span className="truncate">{annulation.court}</span>
         </button>
       </div>
 

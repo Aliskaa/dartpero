@@ -1,5 +1,6 @@
 import { Check, Delete, Eraser, Undo2, Zap } from 'lucide-react'
 import { useState } from 'react'
+import { ANNULATION_NEUTRE, type Annulation } from '@/ui/labels'
 
 const RACCOURCIS = [26, 41, 45, 60, 85, 100, 140, 180] as const
 const TOUCHES = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
@@ -9,6 +10,8 @@ type Props = {
   readonly onScore: (total: number, dartsUsed: number) => void
   readonly onAnnuler: () => void
   readonly peutAnnuler: boolean
+  /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
+  readonly annulation?: Annulation
   readonly rapide: boolean
   readonly onRapide: () => void
   readonly desactive: boolean
@@ -33,6 +36,7 @@ export const PaveRapide = ({
   onScore,
   onAnnuler,
   peutAnnuler,
+  annulation = ANNULATION_NEUTRE,
   rapide,
   onRapide,
   desactive,
@@ -185,13 +189,14 @@ export const PaveRapide = ({
           type="button"
           disabled={desactive || !peutAnnuler}
           onClick={onAnnuler}
+          aria-label={annulation.complet}
           className={[
-            'touche flex min-h-14 items-center justify-center gap-2 rounded-xl',
+            'touche flex min-h-14 items-center justify-center gap-2 rounded-xl px-2',
             'border-chene font-score text-sm font-bold uppercase tracking-widest text-craie',
           ].join(' ')}
         >
-          <Undo2 aria-hidden="true" className="size-4" />
-          Annuler
+          <Undo2 aria-hidden="true" className="size-4 shrink-0" />
+          <span className="truncate">{annulation.court}</span>
         </button>
 
         <button

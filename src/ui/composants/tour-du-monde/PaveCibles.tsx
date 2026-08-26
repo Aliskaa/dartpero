@@ -1,10 +1,13 @@
 import { Undo2 } from 'lucide-react'
 import { Dart, SEGMENT_NUMBERS } from '@/core/domain/value-objects/Dart'
+import { ANNULATION_NEUTRE, type Annulation } from '@/ui/labels'
 
 type Props = {
   readonly onFlechette: (dart: Dart) => void
   readonly onAnnuler: () => void
   readonly peutAnnuler: boolean
+  /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
+  readonly annulation?: Annulation
   readonly desactive: boolean
 }
 
@@ -19,7 +22,13 @@ type Props = {
  * On gagne une rangée par rapport au pavé X01, ce qui laisse la place aux
  * grandes cibles de la zone de lecture.
  */
-export const PaveCibles = ({ onFlechette, onAnnuler, peutAnnuler, desactive }: Props) => (
+export const PaveCibles = ({
+  onFlechette,
+  onAnnuler,
+  peutAnnuler,
+  annulation = ANNULATION_NEUTRE,
+  desactive,
+}: Props) => (
   <section aria-label="Saisie des cibles touchées" className="flex flex-col gap-1.5">
     <div className="grid grid-cols-5 gap-1.5">
       {SEGMENT_NUMBERS.map((numero) => (
@@ -62,10 +71,11 @@ export const PaveCibles = ({ onFlechette, onAnnuler, peutAnnuler, desactive }: P
         type="button"
         disabled={desactive || !peutAnnuler}
         onClick={onAnnuler}
+        aria-label={annulation.complet}
         className="touche flex min-h-[3.25rem] shrink-0 items-center gap-1.5 rounded-xl px-3 font-score text-xs font-bold uppercase tracking-wider text-craie paysage:min-h-12"
       >
-        <Undo2 aria-hidden="true" className="size-4" />
-        Annuler
+        <Undo2 aria-hidden="true" className="size-4 shrink-0" />
+        {annulation.court}
       </button>
     </div>
   </section>

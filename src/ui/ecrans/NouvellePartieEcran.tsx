@@ -1,5 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Check, ChevronsDown, Globe2, Grid3x3, Play, UserPlus } from 'lucide-react'
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronsDown,
+  ChevronUp,
+  Globe2,
+  Grid3x3,
+  Play,
+  UserPlus,
+} from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import type { GameModeId } from '@/core/domain/games'
@@ -16,9 +26,26 @@ import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
 import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
+import { usePreference } from '@/ui/hooks/useAppareil'
 import { CLE_JOUEURS, useJoueurs } from '@/ui/hooks/useJoueurs'
 import { LIBELLE_VARIANTE_CRICKET } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
+
+/**
+ * Les réglages de la dernière partie, relus au prochain lancement.
+ *
+ * Entre potes on enchaîne quatre ou cinq parties avec la même formule : les
+ * re-choisir à chaque fois était une dizaine de taps pour rien. Le port
+ * `Preferences` servait déjà à la voix et au mode rapide, il sert maintenant
+ * aussi à ça.
+ */
+const CLE_MODE = 'partie:mode'
+const CLE_VARIANTE = 'partie:variante-cricket'
+const CLE_SCORE = 'partie:score'
+const CLE_BEST_OF = 'partie:best-of'
+const CLE_DOUBLE_OUT = 'partie:double-out'
+const CLE_DOUBLE_IN = 'partie:double-in'
+const CLE_SELECTION = 'partie:joueurs'
 
 const SCORES = [301, 501, 701] as const
 const BEST_OF = [1, 3, 5, 7] as const
@@ -208,25 +235,50 @@ export const NouvellePartieEcran = () => {
   const queryClient = useQueryClient()
   const joueurs = useJoueurs()
 
-  const [selection, setSelection] = useState<readonly PlayerId[]>([])
+  const [memorisee, setSelection] = usePreference<readonly PlayerId[]>(CLE_SELECTION, [])
   const [nouveauNom, setNouveauNom] = useState('')
-  const [mode, setMode] = useState<GameModeId>('X01')
-  const [variante, setVariante] = useState<CricketVariant>('STANDARD')
-  const [score, setScore] = useState<(typeof SCORES)[number]>(501)
-  const [bestOf, setBestOf] = useState<(typeof BEST_OF)[number]>(3)
-  const [doubleOut, setDoubleOut] = useState(true)
-  const [doubleIn, setDoubleIn] = useState(false)
+  const [mode, setMode] = usePreference<GameModeId>(CLE_MODE, 'X01')
+  const [variante, setVariante] = usePreference<CricketVariant>(CLE_VARIANTE, 'STANDARD')
+  const [score, setScore] = usePreference<(typeof SCORES)[number]>(CLE_SCORE, 501)
+  const [bestOf, setBestOf] = usePreference<(typeof BEST_OF)[number]>(CLE_BEST_OF, 3)
+  const [doubleOut, setDoubleOut] = usePreference(CLE_DOUBLE_OUT, true)
+  const [doubleIn, setDoubleIn] = usePreference(CLE_DOUBLE_IN, false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [occupe, setOccupe] = useState(false)
 
-  const basculer = (id: PlayerId) =>
-    setSelection((actuelle) =>
-      actuelle.includes(id)
-        ? actuelle.filter((autre) => autre !== id)
-        : actuelle.length >= MAX_JOUEURS
-          ? actuelle
-          : [...actuelle, id],
-    )
+  /**
+   * ⚠️ La sélection mémorisée est **filtrée sur les profils qui existent
+   * encore** : un joueur supprimé depuis la dernière partie resterait sinon
+   * coché en fantôme, et le lancement échouerait sur un profil inconnu.
+   * Elle est dérivée plutôt que stockée en état, donc elle se répare toute
+   * seule dès que la liste des profils arrive.
+   */
+  const selection = joueurs.data
+    ? memorisee.filter((id) => joueurs.data.some((joueur) => joueur.id === id))
+    : []
+
+  const basculer = (id: PlayerId) => {
+    if (selection.includes(id)) setSelection(selection.filter((autre) => autre !== id))
+    else if (selection.length < MAX_JOUEURS) setSelection([...selection, id])
+  }
+
+  /**
+   * L'ordre de passage, enfin modifiable. C'était déjà l'ordre des taps — il
+   * fallait tout décocher pour intervertir deux joueurs, alors que « qui
+   * commence » n'est jamais neutre.
+   */
+  const deplacer = (rang: number, pas: -1 | 1) => {
+    const cible = rang + pas
+    if (cible < 0 || cible >= selection.length) return
+    const suite = [...selection]
+    const [joueur] = suite.splice(rang, 1)
+    if (joueur) suite.splice(cible, 0, joueur)
+    setSelection(suite)
+  }
+
+  /** Qui commence — la seule information que les numéros ne disent pas tout haut. */
+  const premier =
+    selection.length > 1 ? joueurs.data?.find((joueur) => joueur.id === selection[0]) : undefined
 
   const ajouterJoueur = async () => {
     const nom = nouveauNom.trim()
@@ -323,13 +375,13 @@ export const NouvellePartieEcran = () => {
               const rang = selection.indexOf(joueur.id)
               const choisi = rang >= 0
               return (
-                <li key={joueur.id}>
+                <li key={joueur.id} className="flex items-center gap-2">
                   <button
                     type="button"
                     aria-pressed={choisi}
                     onClick={() => basculer(joueur.id)}
                     className={[
-                      'flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 text-left',
+                      'flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl border px-3 text-left',
                       'transition-colors duration-150',
                       choisi
                         ? 'border-laiton/60 bg-laiton/10 shadow-[0_0_20px_-10px_var(--color-laiton)]'
@@ -357,10 +409,43 @@ export const NouvellePartieEcran = () => {
                       </span>
                     )}
                   </button>
+
+                  {/* L'ordre de passage se change ici. Deux cibles de 48 px —
+                      le plancher tactile du projet — visibles seulement quand
+                      le joueur est de la partie et qu'il y a de quoi trier. */}
+                  {choisi && selection.length > 1 && (
+                    <span className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        aria-label={`Faire jouer ${joueur.name} plus tôt`}
+                        disabled={rang === 0}
+                        onClick={() => deplacer(rang, -1)}
+                        className="touche flex size-12 items-center justify-center rounded-xl text-craie/80 disabled:opacity-30"
+                      >
+                        <ChevronUp aria-hidden="true" className="size-5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Faire jouer ${joueur.name} plus tard`}
+                        disabled={rang === selection.length - 1}
+                        onClick={() => deplacer(rang, 1)}
+                        className="touche flex size-12 items-center justify-center rounded-xl text-craie/80 disabled:opacity-30"
+                      >
+                        <ChevronDown aria-hidden="true" className="size-5" />
+                      </button>
+                    </span>
+                  )}
                 </li>
               )
             })}
           </ul>
+        )}
+
+        {/* L'ordre des numéros n'était écrit nulle part : on le dit. */}
+        {premier && (
+          <p className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
+            Ordre de passage · {premier.name} commence
+          </p>
         )}
 
         <form

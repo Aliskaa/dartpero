@@ -2,9 +2,9 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from '@/App'
-import type { Services } from '@/composition/container'
+import { createServices, type Services } from '@/composition/container'
 import { X01Config, type X01ConfigInput } from '@/core/domain/games/x01/config'
-import { fakeServices } from '../fakes'
+import { fakeDependencies, fakeServices } from '../fakes'
 import { flechette } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
@@ -23,6 +23,28 @@ const partie = async (config: X01ConfigInput = {}) => {
 }
 
 const scoreDe = (nom: string) => screen.getByLabelText(`Score restant de ${nom}`)
+
+/** Une partie dont on écoute la voix : le port `Announcer`, en mémoire. */
+const partieSonore = async () => {
+  const dependencies = fakeDependencies()
+  const dit: string[] = []
+  services = createServices({
+    ...dependencies,
+    devices: {
+      ...dependencies.devices,
+      announcer: { say: (texte: string) => dit.push(texte), cancel: () => {} },
+    },
+  })
+
+  const kevin = await services.managePlayers.create('Kevin')
+  const julien = await services.managePlayers.create('Julien')
+  const matchId = await services.startMatch.execute({
+    playerIds: [kevin.id, julien.id],
+    config: X01Config.create(),
+  })
+  renderWithServices(<App />, { services, route: `/partie/${matchId}` })
+  return dit
+}
 
 describe('Écran de match', () => {
   beforeEach(() => {
@@ -94,6 +116,48 @@ describe('Écran de match', () => {
 
     await utilisateur.click(screen.getByRole('button', { name: /annuler/i }))
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
+  })
+
+  /**
+   * Un seul bouton, deux comportements : il doit dire lequel s'appliquera.
+   * Sans ça, on découvre après coup qu'on vient de dé-gagner un leg.
+   */
+  it('écrit sur le bouton ce que l’annulation va défaire', async () => {
+    const utilisateur = userEvent.setup()
+    await partie()
+    await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
+
+    // Rien de saisi : c'est la dernière volée enregistrée qui partirait — et il
+    // n'y en a pas encore, donc le libellé reste neutre.
+    expect(screen.getByRole('button', { name: 'Annuler' })).toBeDisabled()
+
+    await flechette(utilisateur, '20', 'Triple')
+    expect(screen.getByRole('button', { name: 'Annuler T20' })).toBeEnabled()
+
+    await flechette(utilisateur, '20')
+    await flechette(utilisateur, '20')
+
+    // La volée est enregistrée : le bouton nomme maintenant son auteur.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Annuler la volée de Kevin' })).toBeEnabled(),
+    )
+  })
+
+  /**
+   * Le téléphone est posé à deux mètres du lanceur : la voix est le seul canal
+   * qui porte jusque-là. Elle disait le score sans jamais dire à qui c'était le
+   * tour — `annonceTour` était écrite et n'était appelée nulle part.
+   */
+  it('annonce le score PUIS le joueur suivant, en une seule phrase', async () => {
+    const utilisateur = userEvent.setup()
+    const dit = await partieSonore()
+    await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
+
+    await flechette(utilisateur, '20', 'Triple')
+    await flechette(utilisateur, '20', 'Triple')
+    await flechette(utilisateur, '20', 'Triple')
+
+    await waitFor(() => expect(dit).toEqual(['180. À toi, Julien']))
   })
 
   it('affiche la sortie conseillée dès que le reste le permet', async () => {

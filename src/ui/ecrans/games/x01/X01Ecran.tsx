@@ -128,6 +128,7 @@ export const X01Ecran = () => {
   const actions = {
     onAnnuler: () => void match.annuler(),
     peutAnnuler: match.peutAnnuler,
+    annulation: match.annulation,
     rapide,
     onRapide: () => setRapide(!rapide),
     desactive: match.occupe,
