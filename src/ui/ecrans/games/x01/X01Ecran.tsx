@@ -9,7 +9,6 @@ import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etat
 import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
 import { momentDepuisVoleeX01 } from '@/ui/composants/x01/momentVolee'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
-import { PaveRapide } from '@/ui/composants/x01/PaveRapide'
 import { Tableau } from '@/ui/composants/x01/Tableau'
 import { usePreference, useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
@@ -145,20 +144,12 @@ export const X01Ecran = () => {
         />
       }
       saisie={
-        rapide ? (
-          <PaveRapide
-            reste={joueurCourant.remaining}
-            onScore={(total, dartsUsed) => void match.enregistrerScore(total, dartsUsed)}
-            {...actions}
-          />
-        ) : (
-          <PaveFlechettes
-            multiplicateur={match.multiplicateur}
-            onMultiplicateur={match.setMultiplicateur}
-            onFlechette={match.ajouterFlechette}
-            {...actions}
-          />
-        )
+        <PaveFlechettes
+          multiplicateur={match.multiplicateur}
+          onMultiplicateur={match.setMultiplicateur}
+          onFlechette={match.ajouterFlechette}
+          {...actions}
+        />
       }
     >
       <Tableau

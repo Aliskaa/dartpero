@@ -189,7 +189,6 @@ describe('Écran de match', () => {
     await partie()
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
 
-    await utilisateur.click(screen.getByRole('button', { name: /rapide/i }))
     await utilisateur.click(screen.getByRole('button', { name: '1' }))
     await utilisateur.click(screen.getByRole('button', { name: '7' }))
     await utilisateur.click(screen.getByRole('button', { name: '9' }))

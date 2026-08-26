@@ -1,4 +1,4 @@
-import { Undo2, Zap } from 'lucide-react'
+import { Undo2 } from 'lucide-react'
 import { Dart, type Multiplier, SEGMENT_NUMBERS } from '@/core/domain/value-objects/Dart'
 import { ANNULATION_NEUTRE, type Annulation } from '@/ui/labels'
 
@@ -18,9 +18,6 @@ type Props = {
   readonly peutAnnuler: boolean
   /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
   readonly annulation?: Annulation
-  /** Absents hors X01 : l'entraînement n'a pas de mode rapide. */
-  readonly rapide?: boolean
-  readonly onRapide?: () => void
   readonly desactive: boolean
 }
 
@@ -50,8 +47,6 @@ export const PaveFlechettes = ({
   onAnnuler,
   peutAnnuler,
   annulation = ANNULATION_NEUTRE,
-  rapide,
-  onRapide,
   desactive,
 }: Props) => {
   const rang = MULTIPLICATEURS.findIndex((option) => option.valeur === multiplicateur)
@@ -160,18 +155,6 @@ export const PaveFlechettes = ({
             )
           })}
         </div>
-
-        {onRapide && (
-          <button
-            type="button"
-            aria-label="Saisie rapide"
-            aria-pressed={rapide}
-            onClick={onRapide}
-            className="touche flex min-h-14 w-14 shrink-0 items-center justify-center rounded-xl text-craie/75"
-          >
-            <Zap aria-hidden="true" className="size-5" />
-          </button>
-        )}
       </div>
     </section>
   )

@@ -5,12 +5,34 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 
+const srcAlias = fileURLToPath(new URL('./src', import.meta.url))
+
 // `npm run dev`        → http://localhost:5173 (localhost est un contexte sécurisé :
 //                        Wake Lock, vibration et PWA y fonctionnent déjà).
 // `npm run dev:mobile` → https://<IP-PC>:5173, requis pour tester depuis le téléphone
 //                        sur le même WiFi (certificat auto-signé à accepter).
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const mobile = mode === 'mobile'
+
+  // Alias absolus : uniquement au `vite build`. En test / dev ils recréent
+  // le bug (deux React) qu'ils corrigent dans le bundle Rolldown.
+  const alias: Record<string, string> = { '@': srcAlias }
+  if (command === 'build') {
+    alias.react = fileURLToPath(new URL('./node_modules/react', import.meta.url))
+    alias['react-dom'] = fileURLToPath(new URL('./node_modules/react-dom', import.meta.url))
+    alias['react/jsx-runtime'] = fileURLToPath(
+      new URL('./node_modules/react/jsx-runtime.js', import.meta.url),
+    )
+    alias['react/jsx-dev-runtime'] = fileURLToPath(
+      new URL('./node_modules/react/jsx-dev-runtime.js', import.meta.url),
+    )
+    alias['react-router'] = fileURLToPath(
+      new URL('./node_modules/react-router/dist/production/index.js', import.meta.url),
+    )
+    alias['@tanstack/react-query'] = fileURLToPath(
+      new URL('./node_modules/@tanstack/react-query/build/modern/index.js', import.meta.url),
+    )
+  }
 
   return {
     plugins: [
@@ -53,40 +75,18 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     resolve: {
-      // Deux pièges Rolldown / package exports qui noircissent l'écran en prod :
-      // 1. deux copies de React → `useMemo` sur dispatcher null ;
-      // 2. react-router@7 résout `dist/development` même en build, et le chunk
-      //    est embarqué deux fois → deux NavigationContext → « useLocation()
-      //    may be used only in the context of a <Router> ».
       dedupe: ['react', 'react-dom', 'react-router', '@tanstack/react-query'],
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
-        react: fileURLToPath(new URL('./node_modules/react', import.meta.url)),
-        'react-dom': fileURLToPath(new URL('./node_modules/react-dom', import.meta.url)),
-        'react/jsx-runtime': fileURLToPath(
-          new URL('./node_modules/react/jsx-runtime.js', import.meta.url),
-        ),
-        'react/jsx-dev-runtime': fileURLToPath(
-          new URL('./node_modules/react/jsx-dev-runtime.js', import.meta.url),
-        ),
-        'react-router': fileURLToPath(
-          new URL(
-            mode === 'production'
-              ? './node_modules/react-router/dist/production/index.mjs'
-              : './node_modules/react-router/dist/development/index.mjs',
-            import.meta.url,
-          ),
-        ),
-        '@tanstack/react-query': fileURLToPath(
-          new URL('./node_modules/@tanstack/react-query/build/modern/index.js', import.meta.url),
-        ),
-      },
+      alias,
     },
     server: {
       host: mobile,
       port: 5173,
     },
     test: {
+      // `threads` (défaut) casse la collecte des suites sous Vite 8 / Windows :
+      // describe lit `runner.config` alors que le runner n'est pas injecté.
+      // `vmForks` isole correctement chaque fichier.
+      pool: 'vmForks',
       environment: 'jsdom',
       setupFiles: ['./tests/setup.ts'],
       include: ['tests/**/*.test.{ts,tsx}'],
