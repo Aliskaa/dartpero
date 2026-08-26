@@ -108,6 +108,11 @@ export const Tableau = ({
       <div className={`bandeau-feuille ${GRILLE_LIGNE} py-1`} aria-hidden="true">
         <span className="entete-colonne px-3 text-feutre/70">Joueur</span>
         <span className="entete-colonne px-1 text-center text-feutre/70">Volée</span>
+        {/* « Legs » à 0.18em déborderait de ses 32 px : la colonne la plus
+            étroite relâche son interlettrage. */}
+        <span className="entete-colonne px-1 text-center tracking-[0.08em] text-feutre/70">
+          Legs
+        </span>
         <span className="entete-colonne px-1 text-center text-feutre/70">Reste</span>
       </div>
 
@@ -148,7 +153,6 @@ export const Tableau = ({
               setsGagnes={joueur.setsWon}
               setsRequis={state.config.setsToWin}
               moyenne={moyennes.get(joueur.playerId) ?? 0}
-              flechettes={joueur.dartsThrownInLeg}
               echelle={echelle}
             />
           )
