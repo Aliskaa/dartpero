@@ -50,10 +50,10 @@ export const LigneCible = ({
     <article
       aria-current={actif ? 'true' : undefined}
       className={[
-        'ligne-tableau relative flex items-center gap-3 overflow-hidden rounded-2xl pl-4 pr-3',
+        'ligne-tableau relative flex items-center gap-3 overflow-hidden pl-4 pr-3',
         compact ? 'py-2.5' : 'py-3.5',
         'transition-opacity duration-300',
-        actif ? 'animate-halo' : 'opacity-80',
+        actif ? 'au-lancer' : 'opacity-70',
       ].join(' ')}
     >
       <span
@@ -102,11 +102,11 @@ export const LigneCible = ({
         </div>
 
         {/* La barre d'accent : on voit qui mène sans lire un chiffre. */}
-        <div className="h-2.5 overflow-hidden rounded-full border border-chene/50 bg-feutre/70">
+        <div className="h-2.5 overflow-hidden border border-chene/50 bg-feutre/70">
           <div
             aria-hidden="true"
             style={{ width: `${pourcentage}%` }}
-            className={`h-full rounded-full transition-[width] duration-300 ${
+            className={`h-full transition-[width] duration-300 ${
               boucle ? 'bg-vert-cible' : 'bg-accent-mode'
             }`}
           />

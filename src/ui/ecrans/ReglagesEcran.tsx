@@ -48,7 +48,7 @@ const Resume = ({ rapport }: { readonly rapport: ImportReport }) => {
   return (
     <div
       role="status"
-      className="rounded-xl border border-vert-cible/60 bg-vert-cible/12 px-4 py-3 text-sm text-craie"
+      className="border border-vert-cible/60 bg-vert-cible/12 px-4 py-3 text-sm text-craie"
     >
       <p className="font-score text-xs uppercase tracking-widest text-vert-cible">
         Sauvegarde restaurée
@@ -178,7 +178,7 @@ export const ReglagesEcran = () => {
               if (voix) services.devices.announcer.cancel()
             }}
             className={[
-              'flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4 text-left',
+              'flex min-h-14 items-center justify-between gap-3 border px-4 text-left',
               'transition-colors duration-150',
               voix ? 'border-laiton/50 bg-laiton/10' : 'border-chene/55 bg-feutre/60',
             ].join(' ')}
@@ -205,12 +205,12 @@ export const ReglagesEcran = () => {
 
             <span
               aria-hidden="true"
-              className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-200 ${
+              className={`relative h-7 w-12 shrink-0 border transition-colors duration-200 ${
                 voix ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-black/40'
               }`}
             >
               <span
-                className={`absolute top-0.5 size-5 rounded-full transition-all duration-200 ${
+                className={`absolute top-0.5 size-5 transition-all duration-200 ${
                   voix ? 'laiton-plat left-[1.6rem]' : 'left-0.5 bg-craie/45'
                 }`}
               />

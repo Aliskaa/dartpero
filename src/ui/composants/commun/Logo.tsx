@@ -23,7 +23,7 @@ export const Enseigne = ({ className = '' }: { readonly className?: string }) =>
  */
 export const LogoHero = () => (
   <div className="relative flex flex-col items-center">
-    <div className="pointer-events-none absolute -top-6 flex w-full justify-center opacity-25">
+    <div className="pointer-events-none absolute -top-6 flex w-full justify-center opacity-[0.12]">
       {/* Pas de `blur` ici : un filtre sur un SVG en rotation continue force un
           repaint à chaque image, et l'app doit rester fluide sur vieux mobile. */}
       <Cible className="size-56 animate-tourner-lent" avecNumeros />

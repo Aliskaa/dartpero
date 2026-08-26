@@ -77,7 +77,7 @@ const Choix = <T extends string | number>({
         {legende}
       </legend>
       <div
-        className="relative grid rounded-xl border border-chene/45 bg-feutre/70 p-1"
+        className="relative grid border border-chene/45 bg-feutre/70 p-1"
         style={{ gridTemplateColumns: `repeat(${valeurs.length}, minmax(0, 1fr))` }}
       >
         <span
@@ -86,7 +86,7 @@ const Choix = <T extends string | number>({
             width: `calc((100% - 0.5rem) / ${valeurs.length})`,
             transform: `translateX(${rang * 100}%)`,
           }}
-          className="laiton-plat absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
+          className="laiton-plat absolute inset-y-1 left-1 transition-transform duration-200 ease-out"
         />
         {valeurs.map((option) => (
           <button
@@ -94,7 +94,7 @@ const Choix = <T extends string | number>({
             type="button"
             aria-pressed={option === valeur}
             onClick={() => onChange(option)}
-            className={`chiffres relative z-10 min-h-12 rounded-lg text-lg font-bold transition-colors duration-150 ${
+            className={`chiffres relative z-10 min-h-12 text-lg font-bold transition-colors duration-150 ${
               option === valeur ? 'text-[#1a1206]' : 'text-craie/75'
             }`}
           >
@@ -153,7 +153,7 @@ const ChoixMode = ({
                 : undefined
             }
             className={[
-              'flex min-h-[5.5rem] flex-col items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2',
+              'flex min-h-[5.5rem] flex-col items-center justify-center gap-1.5 border px-1.5 py-2',
               'transition-colors duration-150',
               choisi ? 'text-craie-vive' : 'border-chene/45 bg-feutre/60 text-craie/70',
             ].join(' ')}
@@ -198,7 +198,7 @@ const Bascule = ({
     aria-pressed={actif}
     onClick={() => onChange(!actif)}
     className={[
-      'flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4 text-left',
+      'flex min-h-14 items-center justify-between gap-3 border px-4 text-left',
       'transition-colors duration-150',
       actif ? 'border-laiton/50 bg-laiton/10' : 'border-chene/55 bg-feutre/60',
     ].join(' ')}
@@ -216,12 +216,12 @@ const Bascule = ({
 
     <span
       aria-hidden="true"
-      className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-200 ${
+      className={`relative h-7 w-12 shrink-0 border transition-colors duration-200 ${
         actif ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-black/40'
       }`}
     >
       <span
-        className={`absolute top-0.5 size-5 rounded-full transition-all duration-200 ${
+        className={`absolute top-0.5 size-5 transition-all duration-200 ${
           actif ? 'laiton-plat left-[1.6rem]' : 'left-0.5 bg-craie/45'
         }`}
       />
@@ -275,6 +275,17 @@ export const NouvellePartieEcran = () => {
     if (joueur) suite.splice(cible, 0, joueur)
     setSelection(suite)
   }
+
+  /**
+   * La liste AFFICHÉE : les joueurs retenus d'abord, dans leur ordre de
+   * passage, puis les autres. Sans ça, monter un joueur ne changeait que son
+   * numéro — sa ligne, elle, ne bougeait pas, et le badge contredisait la
+   * position. Une flèche doit déplacer ce qu'on voit.
+   */
+  const ordonnes = [
+    ...selection.flatMap((id) => (joueurs.data ?? []).filter((joueur) => joueur.id === id)),
+    ...(joueurs.data ?? []).filter((joueur) => !selection.includes(joueur.id)),
+  ]
 
   /** Qui commence — la seule information que les numéros ne disent pas tout haut. */
   const premier =
@@ -343,7 +354,7 @@ export const NouvellePartieEcran = () => {
         <Link
           to="/"
           aria-label="Retour à l’accueil"
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-chene/45 bg-ardoise text-craie/80 active:bg-chene/30"
+          className="flex size-11 shrink-0 items-center justify-center border border-chene/45 bg-ardoise text-craie/80 active:bg-chene/30"
         >
           <ArrowLeft aria-hidden="true" className="size-5" />
         </Link>
@@ -371,7 +382,7 @@ export const NouvellePartieEcran = () => {
           <SpinnerLigne label="Chargement des profils…" />
         ) : (
           <ul className="flex flex-col gap-2">
-            {(joueurs.data ?? []).map((joueur) => {
+            {ordonnes.map((joueur) => {
               const rang = selection.indexOf(joueur.id)
               const choisi = rang >= 0
               return (
@@ -381,7 +392,7 @@ export const NouvellePartieEcran = () => {
                     aria-pressed={choisi}
                     onClick={() => basculer(joueur.id)}
                     className={[
-                      'flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl border px-3 text-left',
+                      'flex min-h-14 min-w-0 flex-1 items-center gap-3 border px-3 text-left',
                       'transition-colors duration-150',
                       choisi
                         ? 'border-laiton/60 bg-laiton/10 shadow-[0_0_20px_-10px_var(--color-laiton)]'
@@ -397,13 +408,13 @@ export const NouvellePartieEcran = () => {
                       {joueur.name}
                     </span>
                     {choisi ? (
-                      <span className="chiffres flex size-7 shrink-0 items-center justify-center rounded-full border border-laiton/60 bg-laiton/20 text-xs font-bold text-laiton-clair">
+                      <span className="chiffres flex size-7 shrink-0 items-center justify-center border border-laiton/60 bg-laiton/20 text-xs font-bold text-laiton-clair">
                         n°{rang + 1}
                       </span>
                     ) : (
                       <span
                         aria-hidden="true"
-                        className="flex size-7 shrink-0 items-center justify-center rounded-full border border-craie/20 text-craie/40"
+                        className="flex size-7 shrink-0 items-center justify-center border border-craie/20 text-craie/40"
                       >
                         +
                       </span>
@@ -420,7 +431,7 @@ export const NouvellePartieEcran = () => {
                         aria-label={`Faire jouer ${joueur.name} plus tôt`}
                         disabled={rang === 0}
                         onClick={() => deplacer(rang, -1)}
-                        className="touche flex size-12 items-center justify-center rounded-xl text-craie/80 disabled:opacity-30"
+                        className="touche flex size-12 items-center justify-center text-craie/80 disabled:opacity-30"
                       >
                         <ChevronUp aria-hidden="true" className="size-5" />
                       </button>
@@ -429,7 +440,7 @@ export const NouvellePartieEcran = () => {
                         aria-label={`Faire jouer ${joueur.name} plus tard`}
                         disabled={rang === selection.length - 1}
                         onClick={() => deplacer(rang, 1)}
-                        className="touche flex size-12 items-center justify-center rounded-xl text-craie/80 disabled:opacity-30"
+                        className="touche flex size-12 items-center justify-center text-craie/80 disabled:opacity-30"
                       >
                         <ChevronDown aria-hidden="true" className="size-5" />
                       </button>
@@ -461,7 +472,7 @@ export const NouvellePartieEcran = () => {
             value={nouveauNom}
             onChange={(evenement) => setNouveauNom(evenement.target.value)}
             className={[
-              'min-h-12 flex-1 rounded-xl border border-chene/60 bg-feutre/70 px-4',
+              'min-h-12 flex-1 border border-chene/60 bg-feutre/70 px-4',
               'text-craie placeholder:text-craie/40',
             ].join(' ')}
           />
@@ -477,7 +488,7 @@ export const NouvellePartieEcran = () => {
 
         {/* Le Tour du monde n'a rien à régler : le parcours est le parcours. */}
         {mode === 'TOUR_DU_MONDE' ? (
-          <p className="rounded-xl border border-chene/50 bg-feutre/60 px-4 py-3 text-sm text-craie/75">
+          <p className="border border-chene/50 bg-feutre/60 px-4 py-3 text-sm text-craie/75">
             On part du <strong className="text-craie">20</strong> et on descend jusqu’au 1, puis on
             finit sur la <strong className="text-craie">bulle</strong>. Simple, double ou triple :
             peu importe, il suffit de toucher le secteur. Quand quelqu’un boucle, le tour de table
@@ -493,7 +504,7 @@ export const NouvellePartieEcran = () => {
               libelle={(option) => LIBELLE_VARIANTE_CRICKET[option]}
             />
 
-            <p className="rounded-xl border border-chene/50 bg-feutre/60 px-4 py-3 text-sm text-craie/75">
+            <p className="border border-chene/50 bg-feutre/60 px-4 py-3 text-sm text-craie/75">
               Sept cibles à fermer en trois touches : <strong className="text-craie">20</strong> à{' '}
               <strong className="text-craie">15</strong> et la{' '}
               <strong className="text-craie">bulle</strong>. Une cible fermée chez soi mais pas chez

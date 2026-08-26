@@ -3,11 +3,11 @@ import { Play, Target, Users } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import type { Player } from '@/core/domain/entities/Player'
 import { ApercuPartie, libelleRegles } from '@/ui/composants/commun/ApercuPartie'
-import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
 import { Skeleton } from '@/ui/composants/commun/Etats'
 import { LogoHero } from '@/ui/composants/commun/Logo'
 import { Panneau } from '@/ui/composants/commun/Panneau'
+import { couleurJoueur } from '@/ui/couleurs'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
@@ -17,7 +17,7 @@ const SignalAccueil = ({ joueurs }: { readonly joueurs: readonly Player[] }) => 
     return (
       <Panneau aria-label="Premiers pas" className="animate-monter">
         <div className="flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-chene/40 bg-feutre/80 text-laiton">
+          <span className="flex size-11 shrink-0 items-center justify-center border border-chene/40 bg-feutre/80 text-laiton">
             <Users aria-hidden="true" className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -39,25 +39,43 @@ const SignalAccueil = ({ joueurs }: { readonly joueurs: readonly Player[] }) => 
     )
   }
 
-  const apercu = joueurs.slice(0, 4)
+  const apercu = joueurs.slice(0, 5)
 
+  // La feuille du soir : une liste numérotée plutôt que des pastilles
+  // superposées. On y lit qui est là, dans l'ordre où on les a inscrits.
   return (
-    <div className="animate-monter flex flex-col items-center gap-3 py-1">
-      <div className="flex items-center -space-x-2">
-        {apercu.map((joueur) => (
-          <Avatar key={joueur.id} nom={joueur.name} couleur={joueur.color} taille="md" />
-        ))}
-        {joueurs.length > 4 && (
-          <span className="flex size-10 items-center justify-center rounded-full border border-chene/50 bg-ardoise font-score text-xs font-bold text-craie/70">
-            +{joueurs.length - 4}
-          </span>
-        )}
+    <section aria-label="Joueurs inscrits" className="feuille animate-monter flex flex-col">
+      <div className="bandeau-feuille flex items-baseline justify-between px-3 py-1">
+        <span className="entete-colonne text-feutre/70">Ce soir à l’oche</span>
+        <span className="chiffres text-xs font-bold text-feutre/70">{joueurs.length}</span>
       </div>
-      <p className="font-score text-[0.7rem] uppercase tracking-[0.22em] text-craie/65">
-        {joueurs.length} joueur{joueurs.length > 1 ? 's' : ''} · prêt
-        {joueurs.length > 1 ? 's' : ''} à jouer
-      </p>
-    </div>
+
+      <ul className="flex flex-col">
+        {apercu.map((joueur, rang) => (
+          <li
+            key={joueur.id}
+            className="ligne-tableau flex items-center gap-3 px-3 py-2 last:border-b-0"
+          >
+            <span className="chiffres w-4 shrink-0 text-xs font-bold text-craie/45">
+              {rang + 1}
+            </span>
+            <span
+              aria-hidden="true"
+              style={{ backgroundColor: couleurJoueur(joueur.color).fond }}
+              className="size-3 shrink-0"
+            />
+            <span className="min-w-0 flex-1 truncate font-score text-sm uppercase tracking-[0.08em] text-craie">
+              {joueur.name}
+            </span>
+          </li>
+        ))}
+        {joueurs.length > apercu.length && (
+          <li className="px-3 py-2 font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/50">
+            + {joueurs.length - apercu.length} autre{joueurs.length - apercu.length > 1 ? 's' : ''}
+          </li>
+        )}
+      </ul>
+    </section>
   )
 }
 
@@ -106,7 +124,7 @@ export const AccueilEcran = () => {
         <Link
           to="/nouvelle-partie"
           className={[
-            'laiton-poli inline-flex min-h-16 items-center justify-center gap-3 rounded-2xl px-6',
+            'laiton-poli inline-flex min-h-16 items-center justify-center gap-3 px-6',
             'font-score text-xl font-bold uppercase tracking-[0.15em]',
           ].join(' ')}
         >
@@ -118,9 +136,9 @@ export const AccueilEcran = () => {
         <Link
           to="/entrainement"
           className={[
-            'inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-chene/45 bg-ardoise px-6',
+            'inline-flex min-h-14 items-center justify-center gap-2 border-2 border-craie/55 px-6',
             'font-score text-base font-bold uppercase tracking-[0.15em] text-craie',
-            'active:translate-y-[1px] active:bg-ardoise-claire',
+            'active:bg-craie active:text-feutre',
           ].join(' ')}
         >
           <Target aria-hidden="true" className="size-4" />

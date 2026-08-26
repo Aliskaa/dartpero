@@ -26,14 +26,14 @@ const CartePartie = ({
   const [confirme, setConfirme] = useState(false)
 
   return (
-    <li className="overflow-hidden rounded-2xl border border-chene/40 bg-ardoise">
+    <li className="overflow-hidden border border-chene/40 bg-ardoise">
       <header className="flex items-center justify-between gap-2 border-b border-chene/35 px-3 py-2">
         <span className="font-score text-[0.65rem] uppercase tracking-widest text-craie/75">
           {dateHeure(partie.createdAt)}
         </span>
         <span
           className={[
-            'rounded-full border px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider',
+            'border px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider',
             partie.finished
               ? 'border-vert-cible/60 bg-vert-cible/20 text-vert-cible'
               : 'border-laiton/60 bg-laiton/15 text-laiton-clair',
@@ -54,7 +54,7 @@ const CartePartie = ({
           <button
             type="button"
             onClick={onOuvrir}
-            className="touche flex min-h-12 items-center justify-center gap-2 rounded-xl font-score text-sm font-bold uppercase tracking-widest text-craie"
+            className="touche flex min-h-12 items-center justify-center gap-2 font-score text-sm font-bold uppercase tracking-widest text-craie"
           >
             {partie.finished ? 'Voir le résumé' : 'Reprendre'}
             <ChevronRight aria-hidden="true" className="size-4" />
@@ -71,7 +71,7 @@ const CartePartie = ({
               await onSupprimer()
             }}
             className={[
-              'flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 px-4',
+              'flex min-h-12 items-center justify-center gap-2 border-2 px-4',
               'font-score text-sm font-bold uppercase tracking-widest transition-colors',
               confirme
                 ? 'border-rouge-cible bg-rouge-cible/30 text-craie-vive'

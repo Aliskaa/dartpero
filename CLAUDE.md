@@ -205,10 +205,16 @@ et **jamais** une suggestion bidon : **169, 168, 166, 165, 163, 162, 159**.
 
 ## Charte graphique — « pub anglais / oche »
 
-**Principe directeur : le décor est un pub, le tableau reste un tableau.**
-Bois, laiton et feutre habillent le *chrome* (bordures, en-têtes, boutons, fonds). Ils ne
-passent **jamais** derrière un chiffre de score : les nombres lus à 3 mètres sont en craie
-quasi-blanche sur feutre sombre.
+**Principe directeur : « la feuille de match ».** *(piste E, lot visuel)*
+Le décor n'est plus une matière, c'est une **structure** : la fiche de ligue punaisée derrière
+le bar. Des colonnes, des filets épais, des cases qu'on remplit. **Zéro dégradé, zéro biseau,
+zéro angle arrondi.** Bois, laiton et feutre restent la palette, mais ils ne modèlent plus
+rien : le laiton ne sert qu'à marquer la ligne de celui qui lance, le bois se replie sur les
+cadres. Les nombres lus à 3 mètres sont en craie quasi-blanche sur feutre sombre.
+
+⚠️ **Angle vif partout.** Les tokens `--radius-*` valent **0** dans `@theme`, et les classes
+`rounded-*` ont été retirées de tout `src/ui`. Remettre un rayon dans le `@theme` les
+rallumerait toutes d'un coup — c'est le point de contrôle unique.
 
 **Palette** (tokens `@theme` dans `src/index.css`)
 
@@ -238,14 +244,21 @@ en luminosité basse.
 | `font-sans`    | **Barlow** (400/600)    | Corps, boutons, listes, stats.                                                                                   |
 
 
-**Matières** (classes de `@layer components` dans `src/index.css`) — aucune image, tout est
-CSS ou SVG inline :
-`.feutre-tapis` (dégradé + vignette + grain) · `.cadre-bois` (encadrement de chêne, technique
-double-`background` peinte dans la bordure) · `.bois-veine` (bandeau d'en-tête veiné) ·
-`.laiton-poli` (métal biseauté, reflet spéculaire, s'enfonce à l'appui) · `.ardoise-craie`
-(panneau) · `.touche` (touche de pavé avec épaisseur et enfoncement) · `.chiffres`
-(tabular-nums) · `.trace-craie` (halo de poudre sous les grands chiffres) · `.grave` (texte
-gravé dans le bois) · `.filet-laiton` · `.chargement-balai`.
+**Vocabulaire de la feuille** (classes de `@layer components` dans `src/index.css`) — aucune
+image, tout est CSS ou SVG inline :
+`.feutre-tapis` (le sol) · **`.feuille`** (le conteneur : ardoise cerclée d'un filet de craie
+de 3 px) · **`.bandeau-feuille`** (en-tête **en inversion** : craie pleine, texte sombre —
+réservé aux en-têtes de colonnes) · **`.bandeau-match`** (bandeau de partie, sombre, refermé
+par un filet de 3 px) · **`.bandeau-bas`** (la nav) · **`.entete-colonne`** (libellé de
+colonne) · `.ligne-tableau` (une ligne : un filet, rien d'autre) · **`.au-lancer`** (filet de
+laiton **dans** la marge + voile — remplace le halo) · **`.filet-colonne`** ·
+**`.ligne-saisie`** (la ligne sur laquelle une fléchette est « écrite ») · `.cadre-bois`
+(encadrement plat) · `.ardoise-craie` (panneau) · `.laiton-poli` (laiton **plein et plat**,
+tranche franche de 4 px) · `.touche` (filet de craie, tranche de 2 px, **s'inverse** à
+l'appui) · `.chiffres` · `.trace-craie` · `.grave` · `.filet-laiton` · `.chargement-balai`.
+
+⚠️ **`.bois-veine` et l'animation `halo` ont été supprimées** : le veinage tirait l'œil vers
+le décor, et une fiche ne rayonne pas. Le joueur au lancer se signale par `.au-lancer`.
 
 **Composants réutilisables** dans `src/ui/composants/commun/` — toujours réutiliser, ne jamais
 dupliquer de variante ad hoc : `Button` (primaire laiton / secondaire cadre bois / discret /
@@ -277,11 +290,12 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 ┌──────────────────────────────────┐
 │ ←  LEG 2 | 501 · BO3       [DO]  │  bandeau de chêne veiné
 ├──────────────────────────────────┤
-│ ▌ 141  │T20│ 20│ · │ ◆◇  ➤ 6     │  ZONE LECTURE — une ligne par joueur
-│   KEVIN│      80     │ moy 58,4  │  score géant + volée en cours + total
-│ ▌ 286  │D25│ 19│ 18│ ◇◇  ➤ 6     │  liseré = couleur du profil
-│   JULIEN│     87     │ moy 94,5  │  actif = halo laiton qui respire
-│  ⌖ SORTIE  T20 · T11 · D24       │  ruban vert dès reste ≤ 170
+│ JOUEUR          │ VOLÉE │  RESTE │  en-têtes EN INVERSION (craie pleine)
+│▌■ KEVIN         │  140  │    361 │  ZONE LECTURE — une ligne par joueur
+│  T20  T20  S20  │moy 140│  ‖ 3 f │  ▌ = filet de laiton : c'est son tour
+│ ■ JULIEN        │   83  │    418 │  ■ = carré à la couleur du profil
+│  T19  S19  S7   │moy 83 │  ‖ 3 f │  fléchettes écrites sur leur ligne
+│ ⌖ SORTIE   T20   T7   D20        │  dernière ligne, filet vert, ≤ 170
 ├──────────────────────────────────┤
 │   1⁶⁰ 2  3  4  5                 │  ZONE SAISIE
 │   6  7  8  9 10                  │  cibles ≥ 48 px, touches en relief
@@ -293,8 +307,10 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 ```
 
 **Une ligne par joueur, toujours** — la disposition ne change pas avec le nombre de joueurs,
-seule l'**échelle** du score suit (2 joueurs → `4rem`, 3 → `3rem`, 4 → `2.5rem`). Les colonnes
-sont à largeur fixe : c'est en alignant les scores d'une ligne à l'autre qu'on les compare.
+seule l'**échelle** du reste suit (2 joueurs → `4.25rem`, 3 → `3.25rem`, 4 → `2.5rem`). Les
+deux dernières colonnes sont à **largeur fixe** (`GRILLE_LIGNE`, exportée par `LigneJoueur` et
+réutilisée par la ligne d'en-têtes) : c'est en alignant les chiffres d'une ligne à l'autre
+qu'on les compare, et il faut pour ça que les colonnes existent vraiment.
 
 **Portrait** par défaut (téléphone posé contre un mur). **Paysage** (téléphone couché) : les
 deux zones passent **côte à côte**, lecture à gauche et pavé à droite — empiler en paysage
@@ -425,8 +441,10 @@ par le composition root.
   qui appelle le joueur suivant, « On remet ça », les réglages de partie mémorisés, l'ordre de
   passage réordonnable, et le bouton « Annuler » qui dit ce qu'il va défaire. Nouveau port
   `RestartMatch`. **263 tests verts.**
-- [ ] **Lot visuel (piste E)** — « La feuille de match » : colonnes réelles avec en-têtes,
-  filets épais, **angle vif partout** (le `rounded-2xl` généralisé est la cible n° 1).
+- [x] **Lot visuel — piste E, « La feuille de match »** : colonnes réelles avec en-têtes en
+  inversion, filets épais, bâtons de comptage, **angle vif partout** (tokens de rayon à 0,
+  `rounded-*` retirées de tout `src/ui`). Vérifié à l'écran, pas seulement en tests.
+  **263 tests verts, aucun modifié.**
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 ---
@@ -842,6 +860,49 @@ perdait silencieusement les parties de Tour du monde et d'entraînement à la r�
 Le test de sauvegarde exporte désormais **une partie de chaque mode**, puis les relit.
 - **`GetOngoingMatchUseCase` projetait avec `X01Rules`** au lieu de la couture : l'accueil ne
 proposait jamais de reprendre une partie qui n'était pas un X01.
+
+### Décisions du lot visuel (piste E, « la feuille de match »)
+
+Trois pistes avaient été proposées (« La Cible », « La Feuille de match », « Le Boîtier »).
+L'utilisateur a tranché pour **E**, la plus sobre et la plus lisible — celle qui remplace le
+décor par de la **structure**.
+
+- ⚠️ **L'angle vif a un point de contrôle unique** : les tokens `--radius-*` à 0 dans
+`@theme`. Les classes `rounded-*` ont été retirées de `src/ui` par-dessus, pour qu'on ne lise
+pas dans le code une intention que le CSS annule. Les deux ensemble, pas l'un ou l'autre.
+- **Le tableau est un vrai tableau** : une ligne d'en-têtes (`Joueur` / `Volée` / `Reste`) en
+inversion craie, puis une ligne par joueur sur la même grille. `GRILLE_LIGNE` est exportée par
+`LigneJoueur` et consommée par `Tableau` — une seule définition de colonnes, donc aucun
+désalignement possible entre l'en-tête et les lignes.
+- ⚠️ **Le halo qui respire est mort, remplacé par `.au-lancer`** : un filet de laiton dans la
+marge et un voile. Une fiche ne rayonne pas, et un `box-shadow` animé en continu coûte un
+repaint par image sur un vieux téléphone. Les quatre modes ont suivi.
+- **Les legs se comptent en bâtons** (`Batons`), quatre traits barrés par un cinquième. Volé à
+la piste B, comme annoncé : à trois mètres l'œil reconnaît un paquet de cinq sans compter, là
+où il devait dénombrer des losanges.
+- **Les fléchettes sont écrites sur une ligne** (`.ligne-saisie`), comme sur une feuille qu'on
+remplirait au stylo — et non dans des pastilles. Les trois emplacements restent toujours
+présents : c'est ce qui garde l'alignement d'une ligne à l'autre.
+- **La suggestion de sortie est devenue la dernière ligne de la feuille**, filet vert et
+cibles alignées sous les colonnes de fléchettes. Elle ne flotte plus au-dessus du tableau.
+- **La touche s'inverse à l'appui** (craie pleine, texte sombre) au lieu de s'enfoncer dans un
+dégradé : c'est le signal le plus fort possible, et il ne coûte pas un pixel de relief.
+- **`StatTile` réserve deux lignes au libellé.** Sans cette hauteur fixe, « Plus haut
+checkout » repoussait son chiffre bien plus bas que celui de « 180 » et la rangée cessait
+d'être comparable — or on ne la lit que pour comparer.
+- **L'accueil devient la feuille du soir** : une liste numérotée des joueurs plutôt que des
+pastilles superposées. La cible qui tourne recule à 12 % d'opacité — sur une fiche, le décor
+ne concurrence pas le nom.
+- **Vérifié à l'écran.** Le lot a été relu sur captures (Chrome piloté par `playwright-core`,
+390 × 844) et non seulement au vert des tests : trois défauts n'auraient pas été vus autrement
+— la feuille qui flottait en haut d'une zone vide, l'ordre affiché qui contredisait les
+numéros d'ordre de passage, et deux touches restées bordées de vert et de marron.
+
+⚠️ **Incident à connaître** : le commit `61b60ac` (mise à jour de dépendances, hors lot) a
+**supprimé `PaveRapide.tsx`**, le bloc ⚡ de `PaveFlechettes` et la ligne de test qui les
+couvrait — laissant deux tests rouges. Le **mode rapide est une décision structurante** du
+cadrage : il a été restauré depuis `cc8faf7`. À surveiller si d'autres commits « de
+dépendances » touchent `src/ui`.
 
 ### Décisions du lot UX (l'usage avant la peinture)
 

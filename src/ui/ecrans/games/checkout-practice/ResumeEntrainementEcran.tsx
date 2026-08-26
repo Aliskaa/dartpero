@@ -80,7 +80,7 @@ export const ResumeEntrainementEcran = () => {
             {reussies.map((round) => (
               <li
                 key={round.cle}
-                className="flex items-center gap-1.5 rounded-xl border border-vert-cible/50 bg-vert-cible/12 px-3 py-1.5"
+                className="flex items-center gap-1.5 border border-vert-cible/50 bg-vert-cible/12 px-3 py-1.5"
               >
                 <Target aria-hidden="true" className="size-3.5 shrink-0 text-vert-cible" />
                 <span className="chiffres text-base font-bold text-craie-vive">{round.target}</span>

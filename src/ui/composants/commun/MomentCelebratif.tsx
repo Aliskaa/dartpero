@@ -57,7 +57,7 @@ export const MomentCelebratif = ({ moment, dureeMs = 2200 }: Props) => {
       role="status"
       aria-live="polite"
       className={[
-        'pointer-events-none relative overflow-hidden rounded-xl',
+        'pointer-events-none relative overflow-hidden',
         'border border-vert-cible/55 bg-vert-cible/18 px-4 py-3 text-center',
         'shadow-[0_0_28px_-8px_var(--color-vert-cible)]',
         'animate-monter',

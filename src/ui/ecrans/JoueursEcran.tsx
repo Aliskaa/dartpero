@@ -33,7 +33,7 @@ const ChoixCouleur = ({
           onClick={() => onChange(couleur)}
           style={{ backgroundColor: COULEURS[couleur].fond, borderColor: COULEURS[couleur].bord }}
           className={[
-            'flex size-11 items-center justify-center rounded-full border-2 transition-transform',
+            'flex size-11 items-center justify-center border-2 transition-transform',
             choisie ? 'scale-110 ring-2 ring-laiton ring-offset-2 ring-offset-ardoise' : '',
           ].join(' ')}
         >
@@ -68,7 +68,7 @@ const CarteProfil = ({
 
   if (!edition) {
     return (
-      <li className="flex items-center gap-3 rounded-2xl border border-chene/40 bg-ardoise px-3 py-2.5">
+      <li className="flex items-center gap-3 border border-chene/40 bg-ardoise px-3 py-2.5">
         <Avatar nom={joueur.name} couleur={joueur.color} />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-score text-base uppercase tracking-wide text-craie">
@@ -82,7 +82,7 @@ const CarteProfil = ({
           type="button"
           aria-label={`Modifier ${joueur.name}`}
           onClick={ouvrir}
-          className="touche flex size-11 shrink-0 items-center justify-center rounded-xl text-craie/75"
+          className="touche flex size-11 shrink-0 items-center justify-center text-craie/75"
         >
           <Pencil aria-hidden="true" className="size-4" />
         </button>
@@ -91,7 +91,7 @@ const CarteProfil = ({
   }
 
   return (
-    <li className="flex flex-col gap-3 rounded-2xl border border-chene/40 bg-ardoise p-3">
+    <li className="flex flex-col gap-3 border border-chene/40 bg-ardoise p-3">
       <div className="flex items-center gap-3">
         <Avatar nom={nom || joueur.name} couleur={couleur} />
         <input
@@ -99,7 +99,7 @@ const CarteProfil = ({
           value={nom}
           maxLength={20}
           onChange={(evenement) => setNom(evenement.target.value)}
-          className="min-h-12 min-w-0 flex-1 rounded-xl border border-chene/60 bg-feutre/70 px-3 font-score text-base uppercase tracking-wide text-craie"
+          className="min-h-12 min-w-0 flex-1 border border-chene/60 bg-feutre/70 px-3 font-score text-base uppercase tracking-wide text-craie"
         />
       </div>
 
@@ -227,7 +227,7 @@ export const JoueursEcran = () => {
             value={nouveauNom}
             maxLength={20}
             onChange={(evenement) => setNouveauNom(evenement.target.value)}
-            className="min-h-12 min-w-0 flex-1 rounded-xl border border-chene/60 bg-feutre/70 px-4 text-craie placeholder:text-craie/40"
+            className="min-h-12 min-w-0 flex-1 border border-chene/60 bg-feutre/70 px-4 text-craie placeholder:text-craie/40"
           />
           <Button type="submit" disabled={nouveauNom.trim() === ''}>
             <UserPlus aria-hidden="true" className="size-4" />

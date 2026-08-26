@@ -124,17 +124,17 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
               aria-current={joueur.actif ? 'true' : undefined}
               className={[
                 'ligne-tableau transition-opacity duration-300',
-                joueur.actif ? 'animate-halo' : 'opacity-80',
+                joueur.actif ? 'au-lancer' : 'opacity-70',
               ].join(' ')}
             >
               <th
                 scope="row"
-                className={`relative rounded-l-2xl pl-3 pr-1 text-left ${compact ? 'py-2.5' : 'py-3.5'}`}
+                className={`relative pl-3 pr-1 text-left ${compact ? 'py-2.5' : 'py-3.5'}`}
               >
                 <span
                   aria-hidden="true"
                   style={{ backgroundColor: teinte.fond }}
-                  className="absolute inset-y-1.5 left-0 w-1.5 rounded-full"
+                  className="absolute inset-y-1.5 left-0 w-1.5"
                 />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="flex min-w-0 items-center gap-1.5">
@@ -181,7 +181,7 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
                 )
               })}
 
-              <td className={`rounded-r-2xl pr-3 text-right ${compact ? 'py-2' : 'py-3'}`}>
+              <td className={`pr-3 text-right ${compact ? 'py-2' : 'py-3'}`}>
                 <output
                   aria-label={`Points de ${joueur.nom}`}
                   className={[

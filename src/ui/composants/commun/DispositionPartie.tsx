@@ -39,7 +39,7 @@ export const DispositionPartie = ({ mode, enTete, children, saisie }: Props) => 
   <div className="feutre-tapis flex min-h-dvh flex-col" style={variablesAccent(mode)}>
     <header
       className={[
-        'bois-veine flex items-center gap-3 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]',
+        'bandeau-match flex items-center gap-3 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]',
         'paysage:pb-1 paysage:pt-[max(0.25rem,env(safe-area-inset-top))]',
       ].join(' ')}
     >
@@ -54,7 +54,7 @@ export const DispositionPartie = ({ mode, enTete, children, saisie }: Props) => 
         'paysage:pr-[max(0.5rem,env(safe-area-inset-right))]',
       ].join(' ')}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-3 paysage:justify-center">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">{children}</div>
 
       <div
         className={[

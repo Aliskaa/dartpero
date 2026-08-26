@@ -19,7 +19,7 @@ export const SpinnerLigne = ({ label = 'Chargement…' }: { readonly label?: str
 
 /** Ardoise vierge, en attendant que la requête réponde. */
 export const Skeleton = ({ className = '' }: { readonly className?: string }) => (
-  <div aria-hidden="true" className={`chargement-balai rounded-xl bg-ardoise/80 ${className}`} />
+  <div aria-hidden="true" className={`chargement-balai bg-ardoise/80 ${className}`} />
 )
 
 export const EmptyState = ({
@@ -31,7 +31,7 @@ export const EmptyState = ({
   readonly description: string
   readonly action?: ReactNode
 }) => (
-  <div className="flex animate-monter flex-col items-center gap-3 rounded-2xl border border-chene/40 bg-ardoise px-6 py-10 text-center">
+  <div className="flex animate-monter flex-col items-center gap-3 border border-chene/40 bg-ardoise px-6 py-10 text-center">
     <Cible className="size-14 opacity-60" />
     <p className="font-score text-lg font-bold uppercase tracking-wide text-laiton">{titre}</p>
     <p className="max-w-xs text-sm text-craie/70">{description}</p>
@@ -43,7 +43,7 @@ export const MessageErreur = ({ children }: { readonly children: ReactNode }) =>
   <p
     role="alert"
     className={[
-      'animate-monter rounded-xl border-2 border-rouge-cible/70 bg-rouge-cible/15 px-4 py-3',
+      'animate-monter border-2 border-rouge-cible/70 bg-rouge-cible/15 px-4 py-3',
       'text-sm text-craie shadow-[0_0_20px_-8px_var(--color-rouge-cible)]',
     ].join(' ')}
   >

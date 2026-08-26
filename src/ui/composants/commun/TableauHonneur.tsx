@@ -35,7 +35,7 @@ type Props = {
 export const TableauHonneur = ({ mode, surtitre, vainqueur, exAequo, children, phrase }: Props) => (
   <section
     style={variablesAccent(mode)}
-    className="ligne-tableau relative animate-monter overflow-hidden rounded-3xl px-6 py-7 text-center"
+    className="feuille relative animate-monter overflow-hidden px-6 py-7 text-center"
   >
     <span
       aria-hidden="true"

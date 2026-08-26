@@ -9,6 +9,7 @@ import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etat
 import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
 import { momentDepuisVoleeX01 } from '@/ui/composants/x01/momentVolee'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
+import { PaveRapide } from '@/ui/composants/x01/PaveRapide'
 import { Tableau } from '@/ui/composants/x01/Tableau'
 import { usePreference, useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
@@ -32,7 +33,7 @@ const EnTeteManche = ({
     <Link
       to="/"
       aria-label="Retour à l’accueil"
-      className="grave -ml-1 flex size-10 shrink-0 items-center justify-center rounded-lg text-craie/80 active:bg-black/25"
+      className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie/80 active:bg-black/25"
     >
       <ArrowLeft aria-hidden="true" className="size-5" />
     </Link>
@@ -49,12 +50,12 @@ const EnTeteManche = ({
 
     <span className="flex shrink-0 gap-1">
       {config.doubleIn && (
-        <span className="grave rounded border border-accent-mode/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
+        <span className="grave border border-accent-mode/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
           DI
         </span>
       )}
       {config.doubleOut && (
-        <span className="grave rounded border border-accent-mode/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
+        <span className="grave border border-accent-mode/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
           DO
         </span>
       )}
@@ -144,12 +145,20 @@ export const X01Ecran = () => {
         />
       }
       saisie={
-        <PaveFlechettes
-          multiplicateur={match.multiplicateur}
-          onMultiplicateur={match.setMultiplicateur}
-          onFlechette={match.ajouterFlechette}
-          {...actions}
-        />
+        rapide ? (
+          <PaveRapide
+            reste={joueurCourant.remaining}
+            onScore={(total, dartsUsed) => void match.enregistrerScore(total, dartsUsed)}
+            {...actions}
+          />
+        ) : (
+          <PaveFlechettes
+            multiplicateur={match.multiplicateur}
+            onMultiplicateur={match.setMultiplicateur}
+            onFlechette={match.ajouterFlechette}
+            {...actions}
+          />
+        )
       }
     >
       <Tableau

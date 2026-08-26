@@ -26,17 +26,10 @@ export const Panneau = ({
   contenuClassName = 'p-4',
   ...reste
 }: Props) => (
-  <section
-    {...reste}
-    className={`overflow-hidden rounded-2xl border border-chene/40 bg-ardoise ${className}`}
-  >
+  <section {...reste} className={`ardoise-craie overflow-hidden ${className}`}>
     {(titre || enTete) && (
-      <header className="flex items-center justify-between gap-3 border-b border-chene/35 px-4 py-2.5">
-        {titre ? (
-          <h2 className="font-score text-xs uppercase tracking-[0.28em] text-laiton">{titre}</h2>
-        ) : (
-          enTete
-        )}
+      <header className="flex items-center justify-between gap-3 border-b-2 border-craie/35 bg-craie/[0.06] px-4 py-2.5">
+        {titre ? <h2 className="entete-colonne text-laiton">{titre}</h2> : enTete}
         {action}
       </header>
     )}

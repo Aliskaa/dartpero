@@ -23,7 +23,7 @@ const VoleeEnCours = ({ darts }: { readonly darts: readonly Dart[] }) => (
         <span
           key={rang}
           className={[
-            'chiffres flex h-9 min-w-14 items-center justify-center rounded-md text-sm font-bold',
+            'chiffres flex h-9 min-w-14 items-center justify-center text-sm font-bold',
             dart
               ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
               : 'border border-dashed border-craie/25 text-craie/25',
@@ -101,7 +101,7 @@ export const CricketEcran = () => {
           <Link
             to="/"
             aria-label="Retour à l’accueil"
-            className="grave -ml-1 flex size-10 shrink-0 items-center justify-center rounded-lg text-craie/80 active:bg-black/25"
+            className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie/80 active:bg-black/25"
           >
             <ArrowLeft aria-hidden="true" className="size-5" />
           </Link>
@@ -117,7 +117,7 @@ export const CricketEcran = () => {
           {/* Rappel de la condition de victoire — standard vs cut-throat. */}
           <span
             className={[
-              'grave shrink-0 rounded border px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider',
+              'grave shrink-0 border px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider',
               cutThroat
                 ? 'border-rouge-cible/60 bg-rouge-cible/15 text-craie'
                 : 'border-accent-mode/50 bg-accent-mode/10 text-accent-mode-clair',

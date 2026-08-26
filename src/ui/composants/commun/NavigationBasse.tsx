@@ -26,7 +26,7 @@ const ONGLETS: readonly Onglet[] = [
 export const NavigationBasse = () => (
   <nav
     aria-label="Navigation principale"
-    className="bois-veine sticky bottom-0 z-20 flex shrink-0 pb-[env(safe-area-inset-bottom)]"
+    className="bandeau-bas sticky bottom-0 z-20 flex shrink-0 pb-[env(safe-area-inset-bottom)]"
   >
     {ONGLETS.map(({ to, libelle, Icone }) => (
       <NavLink
@@ -48,7 +48,7 @@ export const NavigationBasse = () => (
             {/* Le trait de laiton sous l'onglet actif : lisible même de biais. */}
             <span
               aria-hidden="true"
-              className={`h-0.5 w-6 rounded-full ${isActive ? 'bg-laiton' : 'bg-transparent'}`}
+              className={`h-[3px] w-8 ${isActive ? 'bg-laiton' : 'bg-transparent'}`}
             />
           </>
         )}

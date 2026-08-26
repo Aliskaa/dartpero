@@ -37,7 +37,7 @@ export const PaveCibles = ({
           type="button"
           disabled={desactive}
           onClick={() => onFlechette(Dart.single(numero))}
-          className="touche chiffres min-h-[3.25rem] rounded-xl text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
+          className="touche chiffres min-h-[3.25rem] text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
         >
           {numero}
         </button>
@@ -50,7 +50,7 @@ export const PaveCibles = ({
         disabled={desactive}
         onClick={() => onFlechette(Dart.bull())}
         className={[
-          'touche min-h-[3.25rem] flex-1 rounded-xl border-rouge-cible/70 bg-rouge-cible/25',
+          'touche min-h-[3.25rem] flex-1 border-rouge-cible/70 bg-rouge-cible/25',
           'font-score text-base font-bold uppercase tracking-widest text-craie-vive',
           'paysage:min-h-12',
         ].join(' ')}
@@ -62,7 +62,7 @@ export const PaveCibles = ({
         type="button"
         disabled={desactive}
         onClick={() => onFlechette(Dart.miss())}
-        className="touche min-h-[3.25rem] shrink-0 rounded-xl px-4 font-score text-base font-bold uppercase tracking-wider text-craie/65 paysage:min-h-12"
+        className="touche min-h-[3.25rem] shrink-0 px-4 font-score text-base font-bold uppercase tracking-wider text-craie/65 paysage:min-h-12"
       >
         Hors
       </button>
@@ -72,7 +72,7 @@ export const PaveCibles = ({
         disabled={desactive || !peutAnnuler}
         onClick={onAnnuler}
         aria-label={annulation.complet}
-        className="touche flex min-h-[3.25rem] shrink-0 items-center gap-1.5 rounded-xl px-3 font-score text-xs font-bold uppercase tracking-wider text-craie paysage:min-h-12"
+        className="touche flex min-h-[3.25rem] shrink-0 items-center gap-1.5 px-3 font-score text-xs font-bold uppercase tracking-wider text-craie paysage:min-h-12"
       >
         <Undo2 aria-hidden="true" className="size-4 shrink-0" />
         {annulation.court}

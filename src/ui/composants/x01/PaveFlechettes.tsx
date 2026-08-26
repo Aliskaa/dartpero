@@ -1,4 +1,4 @@
-import { Undo2 } from 'lucide-react'
+import { Undo2, Zap } from 'lucide-react'
 import { Dart, type Multiplier, SEGMENT_NUMBERS } from '@/core/domain/value-objects/Dart'
 import { ANNULATION_NEUTRE, type Annulation } from '@/ui/labels'
 
@@ -18,6 +18,9 @@ type Props = {
   readonly peutAnnuler: boolean
   /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
   readonly annulation?: Annulation
+  /** Absents hors X01 : l’entraînement n’a pas de mode rapide. */
+  readonly rapide?: boolean
+  readonly onRapide?: () => void
   readonly desactive: boolean
 }
 
@@ -47,6 +50,8 @@ export const PaveFlechettes = ({
   onAnnuler,
   peutAnnuler,
   annulation = ANNULATION_NEUTRE,
+  rapide,
+  onRapide,
   desactive,
 }: Props) => {
   const rang = MULTIPLICATEURS.findIndex((option) => option.valeur === multiplicateur)
@@ -62,7 +67,7 @@ export const PaveFlechettes = ({
             type="button"
             disabled={desactive}
             onClick={() => onFlechette(Dart.of(numero, multiplicateur))}
-            className="touche chiffres relative min-h-[3.25rem] rounded-xl text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
+            className="touche chiffres relative min-h-[3.25rem] text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
           >
             {/* La valeur réelle n'apparaît que si elle diffère du numéro : en
                 simple elle serait du bruit, en triple elle évite la faute. */}
@@ -85,7 +90,7 @@ export const PaveFlechettes = ({
           disabled={desactive || bullInterdit}
           onClick={() => onFlechette(Dart.of('BULL', multiplicateur))}
           title={bullInterdit ? 'Il n’existe pas de triple bull' : undefined}
-          className="touche chiffres relative min-h-[3.25rem] rounded-xl border-vert-cible/60 text-lg font-bold text-craie-vive paysage:min-h-12"
+          className="touche chiffres relative min-h-[3.25rem] text-lg font-bold text-craie-vive paysage:min-h-12"
         >
           {multiplicateur === 'DOUBLE' && (
             <span
@@ -103,7 +108,7 @@ export const PaveFlechettes = ({
           disabled={desactive}
           /* Une fléchette manquée n'a ni double ni triple : elle ignore la bascule. */
           onClick={() => onFlechette(Dart.miss())}
-          className="touche chiffres min-h-[3.25rem] rounded-xl text-lg font-bold text-craie/60 paysage:min-h-12"
+          className="touche chiffres min-h-[3.25rem] text-lg font-bold text-craie/60 paysage:min-h-12"
         >
           0
         </button>
@@ -114,8 +119,8 @@ export const PaveFlechettes = ({
           onClick={onAnnuler}
           aria-label={annulation.complet}
           className={[
-            'touche col-span-2 flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-2',
-            'border-chene font-score text-sm font-bold uppercase tracking-widest text-craie',
+            'touche col-span-2 flex min-h-[3.25rem] items-center justify-center gap-2 px-2',
+            'font-score text-sm font-bold uppercase tracking-widest text-craie',
             'paysage:min-h-12',
           ].join(' ')}
         >
@@ -126,7 +131,7 @@ export const PaveFlechettes = ({
 
       {/* La rangée du pouce : ce qu'on actionne le plus, là où on l'atteint le mieux. */}
       <div className="flex gap-1.5">
-        <div className="relative grid flex-1 grid-cols-3 rounded-xl border border-chene/60 bg-feutre/70 p-1">
+        <div className="relative grid flex-1 grid-cols-3 border border-chene/60 bg-feutre/70 p-1">
           {/* Le curseur glisse : on voit le changement même du coin de l'œil. */}
           <span
             aria-hidden="true"
@@ -134,7 +139,7 @@ export const PaveFlechettes = ({
               width: 'calc((100% - 0.5rem) / 3)',
               transform: `translateX(${rang * 100}%)`,
             }}
-            className="laiton-plat absolute inset-y-1 left-1 rounded-lg transition-transform duration-200 ease-out"
+            className="laiton-plat absolute inset-y-1 left-1 transition-transform duration-200 ease-out"
           />
           {MULTIPLICATEURS.map(({ valeur, libelle }) => {
             const actif = valeur === multiplicateur
@@ -145,7 +150,7 @@ export const PaveFlechettes = ({
                 aria-pressed={actif}
                 onClick={() => onMultiplicateur(valeur)}
                 className={[
-                  'relative z-10 min-h-12 rounded-lg font-score text-sm font-bold uppercase',
+                  'relative z-10 min-h-12 font-score text-sm font-bold uppercase',
                   'tracking-widest transition-colors duration-150',
                   actif ? 'text-[#1a1206]' : 'text-craie/75',
                 ].join(' ')}
@@ -155,6 +160,21 @@ export const PaveFlechettes = ({
             )
           })}
         </div>
+
+        {onRapide && (
+          <button
+            type="button"
+            aria-label="Saisie rapide"
+            aria-pressed={rapide}
+            onClick={onRapide}
+            className={[
+              'flex min-h-14 w-14 shrink-0 items-center justify-center',
+              rapide ? 'laiton-plat' : 'touche text-craie/75',
+            ].join(' ')}
+          >
+            <Zap aria-hidden="true" className="size-5" />
+          </button>
+        )}
       </div>
     </section>
   )

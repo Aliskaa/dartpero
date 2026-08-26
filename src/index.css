@@ -35,6 +35,20 @@
   --color-accent-mode: #c9a227;
   --color-accent-mode-clair: #f2dd93;
 
+  /* ANGLE VIF PARTOUT - decision de charte, pas un oubli.
+     Aucun objet du decor n'a de coin rond : ni l'ardoise, ni la plaque de
+     laiton, ni la feuille de match punaisee derriere le bar. Les tokens de
+     rayon valent donc 0, et les classes `rounded-*` ont ete retirees de
+     `src/ui`. Remettre un rayon ici les rallumerait toutes d'un coup. */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+
   --font-display: "Alfa Slab One", ui-serif, Georgia, serif;
   --font-score: "Oswald", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
@@ -43,7 +57,6 @@
      l'utilisateur a demandé moins d'animations. */
   --animate-pop-score: pop-score 360ms cubic-bezier(0.2, 1.5, 0.4, 1);
   --animate-secousse: secousse 440ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
-  --animate-halo: halo 2.8s ease-in-out infinite;
   --animate-monter: monter 280ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
   --animate-craie: craie 340ms ease-out both;
   --animate-eclat: eclat 900ms ease-out both;
@@ -85,24 +98,6 @@
   }
   80% {
     transform: translateX(-1px);
-  }
-}
-
-/* Le joueur actif respire : on sait à qui c'est le tour sans lire.
-   La teinte suit `--color-accent-mode` (laiton / lagon / cuivre / prune). */
-@keyframes halo {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 2px var(--color-accent-mode),
-      0 0 22px -6px var(--color-accent-mode),
-      inset 0 1px 0 rgb(255 255 255 / 0.06);
-  }
-  50% {
-    box-shadow:
-      0 0 0 2px var(--color-accent-mode),
-      0 0 40px -2px color-mix(in srgb, var(--color-accent-mode) 75%, transparent),
-      inset 0 1px 0 rgb(255 255 255 / 0.06);
   }
 }
 
@@ -202,166 +197,151 @@
 
 @layer components {
   /* ---------------------------------------------------------------
-     MATIÈRES — elles habillent le chrome, jamais un chiffre de score.
+     « LA FEUILLE DE MATCH » — la fiche de ligue punaisée derrière le bar.
+     Des colonnes, des filets épais, des cases qu'on remplit.
+
+     Principe : ZÉRO effet de matière, ZÉRO dégradé sous un chiffre. Ce qui
+     structure la lecture, ce sont les filets et les colonnes, pas le relief.
+     Le bois se replie sur le cadre extérieur ; le laiton ne sert plus qu'à
+     une chose : marquer la ligne de celui qui lance.
      --------------------------------------------------------------- */
 
-  /* Le tapis de feutre : dégradé sourd, vignette de bord, grain.
-     Aucune image à charger, tout est en CSS et en SVG inline. */
+  /* Le tapis : le sol de l'app, sur lequel la feuille est posée. */
   .feutre-tapis {
     background-color: var(--color-feutre);
     background-image:
-      radial-gradient(120% 85% at 50% -10%, rgba(46, 125, 79, 0.16), transparent 60%),
-      radial-gradient(100% 70% at 50% 110%, rgba(0, 0, 0, 0.55), transparent 62%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+      radial-gradient(120% 85% at 50% -10%, rgba(46, 125, 79, 0.12), transparent 60%),
+      radial-gradient(100% 70% at 50% 110%, rgba(0, 0, 0, 0.5), transparent 62%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
     background-attachment: fixed, fixed, scroll;
   }
 
-  /* Cadre de bois 9-slice : un vrai encadrement, pas une bordure marron.
-     La technique double-background peint le bois dans la bordure uniquement. */
+  /* LA FEUILLE : le conteneur de tout ce qui se lit. Un filet de craie de
+     3 px, pas une bordure marron à 40 % — c'est ce trait qui dit « fiche ». */
+  .feuille {
+    background-color: var(--color-ardoise);
+    border: 3px solid var(--color-craie);
+  }
+
+  /* Le bandeau d'en-tête, EN INVERSION : craie pleine, texte sombre. Rien ne
+     dit « en-tête de tableau » aussi vite qu'une bande inversée. */
+  .bandeau-feuille {
+    background-color: var(--color-craie);
+    color: var(--color-feutre);
+    border-bottom: 3px solid var(--color-feutre);
+  }
+
+  /* Le bandeau de match : il reste SOMBRE (le titre et les badges se lisent
+     en craie), mais il se referme sur un filet franc de 3 px. L'inversion est
+     réservée aux en-têtes de colonnes, là où elle dit « tableau ». */
+  .bandeau-match {
+    background-color: var(--color-feutre-nuit);
+    border-bottom: 3px solid var(--color-craie);
+  }
+
+  /* La barre du bas : sombre, refermée par un filet franc. */
+  .bandeau-bas {
+    background-color: var(--color-feutre-nuit);
+    border-top: 3px solid var(--color-craie);
+  }
+
+  /* Les en-têtes de colonnes de la feuille. */
+  .entete-colonne {
+    font-family: var(--font-score);
+    font-weight: 600;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-craie) 62%, transparent);
+  }
+
+  /* Une ligne de la feuille : un filet, et rien d'autre. Le chiffre doit
+     gagner sur le chrome à trois mètres. */
+  .ligne-tableau {
+    background-color: transparent;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-craie) 28%, transparent);
+  }
+
+  /* La ligne de celui qui lance : un filet de laiton DANS la marge, et un
+     voile. Pas de halo qui déborde — une fiche ne rayonne pas. */
+  .au-lancer {
+    background-color: color-mix(in srgb, var(--color-accent-mode) 12%, transparent);
+    box-shadow: inset 5px 0 0 var(--color-accent-mode);
+  }
+
+  /* Séparateur de colonnes : plus discret que le filet de ligne, sinon la
+     grille devient un quadrillage et on ne lit plus rien. */
+  .filet-colonne {
+    border-left: 1px solid color-mix(in srgb, var(--color-craie) 18%, transparent);
+  }
+
+  /* La ligne sur laquelle une fléchette est « écrite », comme au stylo. */
+  .ligne-saisie {
+    border-bottom: 1.5px solid color-mix(in srgb, var(--color-craie) 45%, transparent);
+  }
+
+  /* Cadre de bois : réduit à un encadrement PLAT. Le veinage peint dans la
+     bordure a disparu avec la piste E — il tirait l'œil vers le décor. */
   .cadre-bois {
-    border: 3px solid transparent;
-    background-image:
-      linear-gradient(var(--color-ardoise), var(--color-ardoise)),
-      linear-gradient(
-        152deg,
-        var(--color-chene-clair) 0%,
-        var(--color-chene) 22%,
-        var(--color-chene-sombre) 46%,
-        var(--color-chene) 68%,
-        var(--color-chene-clair) 100%
-      );
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
-    box-shadow:
-      inset 0 0 0 1px rgb(0 0 0 / 0.5),
-      0 6px 18px -8px rgb(0 0 0 / 0.85);
+    border: 3px solid var(--color-chene);
+    background-color: var(--color-ardoise);
   }
 
-  /* Bandeau de bois des en-têtes : veinage horizontal discret. */
-  .bois-veine {
-    background-color: var(--color-chene-sombre);
-    background-image:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--color-chene-clair) 55%, transparent),
-        transparent 42%
-      ),
-      repeating-linear-gradient(
-        92deg,
-        rgb(0 0 0 / 0.16) 0 2px,
-        transparent 2px 7px,
-        rgb(255 255 255 / 0.04) 7px 8px,
-        transparent 8px 14px
-      );
-    box-shadow:
-      inset 0 -1px 0 rgb(0 0 0 / 0.6),
-      inset 0 1px 0 rgb(255 255 255 / 0.08);
+  /* Panneau secondaire (stats, listes, réglages) : la même feuille, en filet
+     simple. Elle était écrite depuis le lot 3 bis et n'était jamais appelée. */
+  .ardoise-craie {
+    background-color: var(--color-ardoise);
+    border: 1px solid color-mix(in srgb, var(--color-craie) 30%, transparent);
   }
 
-  /* Laiton poli : boutons primaires, médaillons. Reflet spéculaire + biseau. */
+  /* Laiton : PLEIN et PLAT, avec une tranche franche dessous. Un bouton
+     tamponné, pas un bouton moulé — le biseau et le reflet spéculaire
+     appartenaient au comptoir, pas à la fiche. */
   .laiton-poli {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    background-image: linear-gradient(
-      180deg,
-      var(--color-laiton-clair) 0%,
-      #dcbc4e 20%,
-      var(--color-laiton) 48%,
-      #a8871d 78%,
-      var(--color-laiton-sombre) 100%
-    );
+    background-color: var(--color-laiton);
     color: #1a1206;
-    text-shadow: 0 1px 0 rgb(255 255 255 / 0.35);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.6),
-      inset 0 -2px 0 rgb(0 0 0 / 0.28),
-      0 3px 0 #4b380b,
-      0 8px 16px -8px rgb(0 0 0 / 0.9);
-  }
-
-  /* Le trait de lumière qui court sur le métal. */
-  .laiton-poli::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-image: linear-gradient(
-      104deg,
-      transparent 34%,
-      rgb(255 255 255 / 0.42) 47%,
-      transparent 58%
-    );
+    box-shadow: 0 4px 0 var(--color-laiton-sombre);
   }
 
   .laiton-poli:active:not(:disabled) {
-    transform: translateY(2px);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.4),
-      inset 0 -1px 0 rgb(0 0 0 / 0.3),
-      0 1px 0 #4b380b;
+    transform: translateY(4px);
+    box-shadow: 0 0 0 var(--color-laiton-sombre);
   }
 
-  /* Laiton plat : curseur de sélection, pastilles. Le relief poli reste
-     réservé au CTA primaire et au pavé — ailleurs il fait du bruit. */
   .laiton-plat {
     background-color: var(--color-laiton);
     color: #1a1206;
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-laiton-clair) 55%, transparent);
   }
 
-  /* Ligne de score : ardoise + liseré, sans cadre bois — le chiffre doit
-     gagner sur le chrome à 3 mètres. */
-  .ligne-tableau {
-    background-color: var(--color-ardoise);
-    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.04), transparent 50%);
-    border: 1px solid color-mix(in srgb, var(--color-chene) 45%, transparent);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.04),
-      0 4px 14px -8px rgb(0 0 0 / 0.75);
-  }
-
-  /* Ardoise de pub : fond des panneaux secondaires (stats, listes). */
-  .ardoise-craie {
-    background-color: var(--color-ardoise);
-    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.045), transparent 46%);
-    border: 1px solid color-mix(in srgb, var(--color-chene) 65%, transparent);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 2px 8px -4px rgb(0 0 0 / 0.7);
-  }
-
-  /* Touche du pavé de saisie : elle a une épaisseur, et elle s'enfonce.
-     C'est le seul retour visuel dont dispose celui qui tape sans regarder. */
+  /* Touche du pavé : un filet de craie et une tranche de 2 px. Elle a encore
+     une épaisseur — c'est le seul retour dont dispose celui qui tape sans
+     regarder — mais plus aucun dégradé. */
   .touche {
-    background-color: var(--color-ardoise-claire);
-    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(0 0 0 / 0.22));
-    border: 1px solid color-mix(in srgb, var(--color-chene) 60%, transparent);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.12),
-      0 3px 0 rgb(0 0 0 / 0.45),
-      0 6px 12px -6px rgb(0 0 0 / 0.8);
+    background-color: transparent;
+    border: 1px solid color-mix(in srgb, var(--color-craie) 34%, transparent);
+    box-shadow: 0 2px 0 color-mix(in srgb, var(--color-craie) 18%, transparent);
     transition:
       transform 90ms ease-out,
-      box-shadow 90ms ease-out,
-      background-color 120ms ease-out;
+      background-color 90ms ease-out,
+      color 90ms ease-out;
   }
 
+  /* À l'appui, la touche s'INVERSE : craie pleine, texte sombre. Le signal le
+     plus fort possible, et il ne coûte pas un pixel de relief. */
   .touche:active:not(:disabled) {
-    transform: translateY(3px);
-    background-color: color-mix(in srgb, var(--color-laiton) 28%, var(--color-ardoise-claire));
-    box-shadow:
-      inset 0 2px 4px rgb(0 0 0 / 0.45),
-      0 0 0 1px color-mix(in srgb, var(--color-laiton) 55%, transparent);
+    transform: translateY(2px);
+    background-color: var(--color-craie);
+    color: var(--color-feutre);
+    box-shadow: none;
   }
 
   .touche:disabled {
-    opacity: 0.35;
+    opacity: 0.3;
     box-shadow: none;
   }
 
   /* ---------------------------------------------------------------
-     TYPOGRAPHIE DU TABLEAU
+     TYPOGRAPHIE DE LA FEUILLE
      --------------------------------------------------------------- */
 
   /* Tous les chiffres qui changent en direct : largeur fixe, pas de danse. */
@@ -371,25 +351,20 @@
     letter-spacing: 0.01em;
   }
 
-  /* La poudre de craie : un halo sourd sous les grands chiffres, qui les
-     décolle du feutre sans jamais réduire le contraste. */
+  /* Un souffle de craie sous les grands chiffres : assez pour les décoller du
+     feutre, jamais assez pour en flouter le bord. */
   .trace-craie {
-    text-shadow:
-      0 0 1px rgb(255 255 255 / 0.55),
-      0 0 14px rgb(242 232 213 / 0.28),
-      0 2px 3px rgb(0 0 0 / 0.6);
+    text-shadow: 0 0 10px rgb(242 232 213 / 0.22);
   }
 
-  /* Étiquette gravée dans le bois ou l'ardoise. */
   .grave {
-    text-shadow: 0 1px 0 rgb(0 0 0 / 0.75);
+    text-shadow: 0 1px 0 rgb(0 0 0 / 0.6);
   }
 
   /* ---------------------------------------------------------------
-     UTILITAIRES D'AMBIANCE
+     UTILITAIRES
      --------------------------------------------------------------- */
 
-  /* Chargement : une lueur qui balaie la surface, façon craie qu'on efface. */
   .chargement-balai {
     background-image: linear-gradient(
       100deg,
@@ -403,13 +378,7 @@
 
   /* Filet de laiton : sépare deux zones sans poser une bordure lourde. */
   .filet-laiton {
-    background-image: linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in srgb, var(--color-laiton) 70%, transparent) 22%,
-      color-mix(in srgb, var(--color-laiton) 70%, transparent) 78%,
-      transparent
-    );
+    background-color: color-mix(in srgb, var(--color-laiton) 70%, transparent);
   }
 }
 

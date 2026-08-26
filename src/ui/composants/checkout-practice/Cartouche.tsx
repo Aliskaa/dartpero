@@ -38,7 +38,7 @@ export const Cartouche = ({
 
   return (
     <section aria-label="Manche en cours" className="flex flex-col gap-2.5">
-      <div className="cadre-bois animate-halo flex flex-col items-center gap-1 rounded-2xl px-4 py-5">
+      <div className="feuille flex flex-col items-center gap-1 px-4 py-5">
         <p className="font-score text-[0.6rem] uppercase tracking-[0.3em] text-craie/60">
           Sortie demandée
         </p>
@@ -65,7 +65,7 @@ export const Cartouche = ({
               <span
                 key={rang}
                 className={[
-                  'chiffres flex h-7 min-w-12 items-center justify-center rounded-md text-xs font-bold',
+                  'chiffres flex h-7 min-w-12 items-center justify-center text-xs font-bold',
                   dart
                     ? 'border border-laiton/60 bg-laiton/20 text-craie-vive'
                     : 'border border-dashed border-craie/20 text-craie/20',
@@ -83,7 +83,7 @@ export const Cartouche = ({
         {cibles && (
           <div
             className={[
-              'flex animate-monter items-center justify-center gap-2.5 rounded-xl px-3 py-2',
+              'flex animate-monter items-center justify-center gap-2.5 px-3 py-2',
               'border border-vert-cible/60 bg-vert-cible/12',
             ].join(' ')}
           >
@@ -95,7 +95,7 @@ export const Cartouche = ({
               {cibles.map((cible) => (
                 <span
                   key={cible.cle}
-                  className="chiffres rounded-md border border-vert-cible/45 bg-feutre/70 px-2 py-0.5 text-base font-bold text-craie-vive"
+                  className="chiffres border border-vert-cible/45 bg-feutre/70 px-2 py-0.5 text-base font-bold text-craie-vive"
                 >
                   {cible.libelle}
                 </span>

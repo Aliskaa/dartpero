@@ -5,7 +5,7 @@ import type { X01State } from '@/core/domain/games/x01/rules'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { nomJoueur } from '@/ui/labels'
-import { type Echelle, LigneJoueur, type VoleeAffichee } from './LigneJoueur'
+import { type Echelle, GRILLE_LIGNE, LigneJoueur, type VoleeAffichee } from './LigneJoueur'
 
 type Props = {
   readonly state: X01State
@@ -49,25 +49,14 @@ const RubanSortie = ({
 
   if (cibles) {
     return (
-      <div
-        className={[
-          'flex animate-monter items-center justify-center gap-2.5 rounded-xl px-3 py-2',
-          'border border-vert-cible/60 bg-vert-cible/12',
-          'shadow-[0_0_24px_-10px_var(--color-vert-cible)]',
-        ].join(' ')}
-      >
+      <div className="flex animate-monter items-center gap-3 border-t-2 border-vert-cible bg-vert-cible/12 px-3 py-2">
         <Target aria-hidden="true" className="size-4 shrink-0 text-vert-cible" />
-        <span className="font-score text-[0.6rem] uppercase tracking-[0.28em] text-vert-cible">
-          Sortie
-        </span>
-        <span className="flex items-center gap-1.5">
+        <span className="entete-colonne text-vert-cible">Sortie</span>
+        <span className="flex flex-1 items-center justify-end gap-2">
           {cibles.map((cible) => (
             <span
               key={cible.cle}
-              className={[
-                'chiffres rounded-md border border-vert-cible/45 bg-feutre/70 px-2 py-0.5',
-                'text-base font-bold text-craie-vive',
-              ].join(' ')}
+              className="ligne-saisie chiffres min-w-[3rem] pb-0.5 text-center text-base font-bold text-craie-vive"
             >
               {cible.libelle}
             </span>
@@ -79,11 +68,9 @@ const RubanSortie = ({
 
   if (aucunFinish) {
     return (
-      <div className="flex items-center justify-center gap-2 rounded-xl border border-chene/50 bg-ardoise/60 px-3 py-2">
-        <CircleOff aria-hidden="true" className="size-4 shrink-0 text-craie/60" />
-        <span className="font-score text-sm uppercase tracking-widest text-craie/65">
-          Pas de finish
-        </span>
+      <div className="flex items-center gap-3 border-t border-craie/25 px-3 py-2">
+        <CircleOff aria-hidden="true" className="size-4 shrink-0 text-craie/55" />
+        <span className="entete-colonne">Pas de finish</span>
       </div>
     )
   }
@@ -115,8 +102,16 @@ export const Tableau = ({
   const volees = dernieresVolees(state)
 
   return (
-    <section aria-label="Tableau des scores" className="flex flex-col gap-2">
-      <div className="flex flex-col gap-2">
+    <section aria-label="Tableau des scores" className="feuille flex flex-col">
+      {/* Les en-têtes de colonnes, EN INVERSION : rien ne dit « tableau »
+          aussi vite qu'une bande de craie pleine en haut de la fiche. */}
+      <div className={`bandeau-feuille ${GRILLE_LIGNE} py-1`} aria-hidden="true">
+        <span className="entete-colonne px-3 text-feutre/70">Joueur</span>
+        <span className="entete-colonne px-1 text-center text-feutre/70">Volée</span>
+        <span className="entete-colonne px-1 text-center text-feutre/70">Reste</span>
+      </div>
+
+      <div className="flex flex-col">
         {state.players.map((joueur, index) => {
           const actif = index === state.currentPlayerIndex && state.winnerId === null
           const profil = profils.get(joueur.playerId)

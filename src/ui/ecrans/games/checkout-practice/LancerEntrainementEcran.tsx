@@ -47,7 +47,7 @@ export const LancerEntrainementEcran = () => {
         <Link
           to="/"
           aria-label="Retour à l’accueil"
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-chene/60 bg-ardoise text-craie/80 active:bg-chene/30"
+          className="flex size-11 shrink-0 items-center justify-center border border-chene/60 bg-ardoise text-craie/80 active:bg-chene/30"
         >
           <ArrowLeft aria-hidden="true" className="size-5" />
         </Link>
@@ -92,7 +92,7 @@ export const LancerEntrainementEcran = () => {
                     aria-pressed={actif}
                     onClick={() => setChoisi(profil.id)}
                     className={[
-                      'flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 text-left',
+                      'flex min-h-14 w-full items-center gap-3 border px-3 text-left',
                       'transition-colors duration-150',
                       actif
                         ? 'border-laiton/60 bg-laiton/10 shadow-[0_0_20px_-10px_var(--color-laiton)]'
@@ -126,7 +126,7 @@ export const LancerEntrainementEcran = () => {
               type="button"
               aria-pressed={serie === rounds}
               onClick={() => setRounds(serie)}
-              className={`chiffres min-h-12 rounded-xl text-lg font-bold ${
+              className={`chiffres min-h-12 text-lg font-bold ${
                 serie === rounds ? 'laiton-plat' : 'touche text-craie/75'
               }`}
             >

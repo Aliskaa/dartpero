@@ -36,9 +36,8 @@ export const Avatar = ({ nom, couleur, taille = 'md', className = '' }: Props) =
         borderColor: teinte.bord,
       }}
       className={[
-        'inline-flex shrink-0 items-center justify-center rounded-full border-2',
+        'inline-flex shrink-0 items-center justify-center border',
         'font-score font-bold uppercase tracking-wide',
-        'shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_-2px_rgba(0,0,0,0.8)]',
         TAILLES[taille],
         className,
       ].join(' ')}
