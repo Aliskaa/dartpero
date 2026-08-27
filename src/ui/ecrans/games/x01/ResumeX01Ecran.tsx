@@ -1,29 +1,70 @@
 import { useQuery } from '@tanstack/react-query'
-import { Crown } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import type { X01PlayerStats } from '@/core/domain/games/x01/stats'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { variablesAccent } from '@/ui/accents'
 import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
-import { Avatar } from '@/ui/composants/commun/Avatar'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
-import { StatTile } from '@/ui/composants/commun/StatTile'
+import { PanneauImpacts } from '@/ui/composants/commun/PanneauImpacts'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
+import { type LigneStat, TableauJoueurs } from '@/ui/composants/commun/TableauJoueurs'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { moyenne, nomJoueur, phraseVictoire } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-/** Les huit chiffres qui se commentent au comptoir, dans cet ordre. */
-const tuiles = (joueur: X01PlayerStats) => [
-  { libelle: 'Moyenne', valeur: moyenne(joueur.average3), accent: true },
-  { libelle: 'First 9', valeur: moyenne(joueur.first9Average), accent: true },
-  { libelle: '180', valeur: joueur.count180 },
-  { libelle: '140+', valeur: joueur.count140plus },
-  { libelle: '100+', valeur: joueur.count100plus },
-  { libelle: '% doubles', valeur: Math.round(joueur.checkoutPercent), suffixe: '%' },
-  { libelle: 'Meilleur leg', valeur: joueur.bestLegDarts ?? '—' },
-  { libelle: 'Plus haut checkout', valeur: joueur.highestCheckout || '—' },
+/**
+ * Les chiffres qui se commentent au comptoir, dans cet ordre.
+ *
+ * ⚠️ « Fléchettes » ferme la liste plutôt que d'être relégué en coin de
+ * panneau : c'est le **dénominateur de la moyenne**, et une moyenne de 60 sur
+ * 12 fléchettes ne vaut pas la même chose que sur 90.
+ */
+const LIGNES: readonly LigneStat<X01PlayerStats>[] = [
+  {
+    libelle: 'Moyenne',
+    valeur: (j) => moyenne(j.average3),
+    meilleur: (j) => j.average3,
+    accent: true,
+  },
+  {
+    libelle: 'First 9',
+    valeur: (j) => moyenne(j.first9Average),
+    meilleur: (j) => j.first9Average,
+    accent: true,
+  },
+  {
+    libelle: 'Meilleure volée',
+    valeur: (j) => j.highestVisit,
+    meilleur: (j) => j.highestVisit,
+  },
+  { libelle: '180', valeur: (j) => j.count180, meilleur: (j) => j.count180 },
+  { libelle: '140+', valeur: (j) => j.count140plus, meilleur: (j) => j.count140plus },
+  { libelle: '100+', valeur: (j) => j.count100plus, meilleur: (j) => j.count100plus },
+  {
+    libelle: '% doubles',
+    valeur: (j) => `${Math.round(j.checkoutPercent)} %`,
+    meilleur: (j) => j.checkoutPercent,
+  },
+  {
+    // Le seul classement du projet où **petit** vaut mieux que grand.
+    libelle: 'Meilleur leg',
+    valeur: (j) => j.bestLegDarts ?? '—',
+    meilleur: (j) => (j.bestLegDarts === null ? Number.NEGATIVE_INFINITY : -j.bestLegDarts),
+  },
+  {
+    libelle: 'Plus haut checkout',
+    valeur: (j) => j.highestCheckout || '—',
+    meilleur: (j) => j.highestCheckout,
+  },
+  {
+    // ⚠️ Aucun meneur : lancer plus de fléchettes n'est pas un exploit,
+    // c'est souvent le contraire. Un score constant les met tous à égalité,
+    // donc la ligne ne dore personne.
+    libelle: 'Fléchettes',
+    valeur: (j) => j.dartsThrown,
+    meilleur: () => 0,
+  },
 ]
 
 export const ResumeX01Ecran = () => {
@@ -106,43 +147,31 @@ export const ResumeX01Ecran = () => {
         )}
       </TableauHonneur>
 
-      <div className="flex flex-col gap-3">
-        {joueurs.map((joueur) => {
-          const profil = profils.get(joueur.playerId)
-          const nom = nomJoueur(profil?.name ?? null)
-          return (
-            <Panneau
-              key={joueur.playerId}
-              aria-label={`Statistiques de ${nom}`}
-              /* Un `<h2>` porterait le même nom que le titre du vainqueur : ici
-                 c'est la section qui est nommée, pas un intitulé de plus. */
-              enTete={
-                <span className="flex min-w-0 items-center gap-2">
-                  <Avatar nom={nom} couleur={profil?.color ?? null} taille="sm" />
-                  <span className="grave truncate font-score text-sm uppercase tracking-widest text-craie">
-                    {nom}
-                  </span>
-                  {joueur.playerId === stats.data.winnerId && (
-                    <Crown aria-hidden="true" className="size-4 shrink-0 text-accent-mode" />
-                  )}
-                </span>
-              }
-              action={
-                <span className="chiffres shrink-0 text-[0.65rem] uppercase tracking-widest text-craie/60">
-                  {joueur.dartsThrown} fléchettes
-                </span>
-              }
-              contenuClassName="p-3"
-            >
-              <dl className="grid grid-cols-4 gap-1.5">
-                {tuiles(joueur).map((tuile) => (
-                  <StatTile key={tuile.libelle} {...tuile} />
-                ))}
-              </dl>
-            </Panneau>
-          )
-        })}
-      </div>
+      <Panneau titre="La feuille" contenuClassName="overflow-x-auto p-3">
+        <TableauJoueurs
+          libelle="Statistiques de la partie"
+          colonnes={joueurs.map((joueur) => {
+            const profil = profils.get(joueur.playerId)
+            return {
+              id: joueur.playerId,
+              nom: nomJoueur(profil?.name ?? null),
+              couleur: profil?.color ?? null,
+              vainqueur: joueur.playerId === stats.data.winnerId,
+            }
+          })}
+          joueurs={joueurs}
+          lignes={LIGNES}
+        />
+      </Panneau>
+
+      <PanneauImpacts
+        joueurs={joueurs.map((joueur) => ({
+          id: joueur.playerId,
+          nom: nomJoueur(profils.get(joueur.playerId)?.name ?? null),
+          hits: joueur.hits,
+        }))}
+        aide="Les fléchettes de cette partie seulement. L'échelle est propre à chaque joueur : on compare des formes, pas des volumes."
+      />
 
       <ActionsFinDePartie matchId={identifiant} />
     </main>

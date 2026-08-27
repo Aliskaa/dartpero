@@ -1,3 +1,4 @@
+import { DartboardHits } from '../../services/dartboardHits'
 import type { PlayerId } from '../../value-objects/ids'
 import type { X01PlayerStats, X01Stats } from './stats'
 
@@ -38,6 +39,8 @@ export type CareerStats = {
   readonly bestLegDarts: number | null
   readonly highestCheckout: number
   readonly highestVisit: number
+  /** Où ses fléchettes se sont plantées, toutes parties cumulées. */
+  readonly hits: DartboardHits
 }
 
 type Accumulator = {
@@ -59,6 +62,7 @@ type Accumulator = {
   bestLegDarts: number | null
   highestCheckout: number
   highestVisit: number
+  hits: DartboardHits
 }
 
 const nouvelAccumulateur = (): Accumulator => ({
@@ -80,6 +84,7 @@ const nouvelAccumulateur = (): Accumulator => ({
   bestLegDarts: null,
   highestCheckout: 0,
   highestVisit: 0,
+  hits: DartboardHits.empty(),
 })
 
 const moyenne = (points: number, darts: number): number => (darts === 0 ? 0 : (points / darts) * 3)
@@ -119,6 +124,10 @@ const cumuler = (acc: Accumulator, joueur: X01PlayerStats, gagnant: boolean): vo
   acc.bestLegDarts = plusCourt(acc.bestLegDarts, joueur.bestLegDarts)
   acc.highestCheckout = Math.max(acc.highestCheckout, joueur.highestCheckout)
   acc.highestVisit = Math.max(acc.highestVisit, joueur.highestVisit)
+  // La carrière ADDITIONNE les cartes de chaque match ; elle ne relit jamais
+  // les fléchettes de la base. Une seule façon de compter, donc aucune chance
+  // que le résumé d'une partie et le cumul se contredisent.
+  acc.hits = DartboardHits.merge(acc.hits, joueur.hits)
 }
 
 /**
@@ -163,5 +172,6 @@ export const computeCareerStats = (matches: readonly X01Stats[]): readonly Caree
     bestLegDarts: acc.bestLegDarts,
     highestCheckout: acc.highestCheckout,
     highestVisit: acc.highestVisit,
+    hits: acc.hits,
   }))
 }

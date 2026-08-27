@@ -278,7 +278,9 @@ danger, tailles `md` et `lg`), `Avatar` (pastille couleur + initiales), `Cible` 
 fléchettes en SVG génératif), `Enseigne` + `LogoHero`, `Panneau` (ardoise dans un cadre bois,
 bandeau `titre` en `<h2>` **ou** `enTete` libre), `StatTile`, `EmptyState`, `Skeleton`,
 `Spinner` / `SpinnerLigne`, `MessageErreur`, `EcranErreur`, `ChoixSegmente` (le rail à
-curseur de laiton, tailles `md` et `sm`), `CarteImpacts` (la carte de chaleur du plateau).
+curseur de laiton, tailles `md` et `sm`), `CarteImpacts` (la carte de chaleur du plateau) et
+`PanneauImpacts` (les cartes côte à côte), `TableauJoueurs` (la feuille transposée :
+joueurs en colonnes, statistiques en lignes).
 La géométrie du plateau — ordre des secteurs, rayons des anneaux — vit dans
 `geometrieCible.ts`, partagée par `Cible` et `CarteImpacts` : deux copies de ces rayons
 finiraient par ne plus se superposer.
@@ -474,6 +476,10 @@ par le composition root.
   Tout) sur l'écran Statistiques. Nouveau service transverse `dartboardHits`, port
   `GetPlayerStats` qui prend une fenêtre de temps, `ChoixSegmente` remonté dans `commun/`.
   **275 tests verts**, relu à l'écran — trois défauts n'auraient pas été vus autrement.
+- [x] **Lot « le résumé devient une feuille »** — le résumé X01 passe des panneaux empilés à
+  **un tableau transposé** (joueurs en colonnes, statistiques en lignes) et reçoit la **carte
+  des impacts** de la partie. Les impacts descendent dans `X01PlayerStats` : la carrière les
+  additionne au lieu de les recompter. **309 tests verts**, relu à l'écran à 2 et 4 joueurs.
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 - [x] **Lot « les trois finitions »** — les trois idées écartées du lot précédent, reprises :
@@ -1019,9 +1025,12 @@ ce qui lui permet de vivre là sans qu'un mode ait à en importer un autre.
 mélanger un Tour du monde à la carte montrerait **l'itinéraire imposé** (20, puis 19, puis
 18…) et non la visée. Le service est transverse, son alimentation ne l'est pas encore ; le
 jour où l'écran gagnera un filtre de mode, il n'y aura rien à réécrire.
-- **La carte voyage dans `PlayerCareer`, pas derrière un port à part.** Elle se calcule sur
-**exactement** les mêmes projections que les moyennes ; l'exposer séparément obligerait à
-rejouer tous les journaux une deuxième fois.
+- ~~**La carte voyage dans `PlayerCareer`**~~ — **déplacée depuis** : elle vit dans
+`X01PlayerStats`, donc dans les stats **d'un match**, et la carrière additionne les cartes de
+chaque partie (`DartboardHits.merge`). C'est le résumé de partie qui l'a exigé (lot suivant),
+et c'est mieux ainsi : une seule façon de compter, donc aucune chance que le résumé d'une
+soirée et le cumul de carrière se contredisent. Le use case des statistiques y a perdu la
+collecte de fléchettes qu'il faisait à la main.
 - ⚠️ **L'attribution des fléchettes passe par la projection, jamais par le journal.**
 `VisitRecorded` ne porte pas de `playerId` (décision du lot 1) : c'est `state.history` qui
 dit à qui était la volée. Un test le vérifie explicitement, parce que c'est exactement le
@@ -1148,6 +1157,62 @@ au lancement ». L'écran annonçait donc un ordre et son contraire. Remplacés 
 - **l'aide de la bascule était tronquée** (« pas la discus… ») : `Bascule` pose un `truncate`
 sur sa ligne d'aide, et le texte était trop long. Raccourci plutôt que d'enlever le
 `truncate`, qui protège les autres bascules.
+
+### Décisions du lot « le résumé devient une feuille »
+
+Une dette notée depuis le lot 4 : « des stats en tableau comparatif classé plutôt qu'en cartes
+empilées — **vaut aussi pour l'écran de résumé**, où comparer quatre panneaux superposés est
+pénible ». Elle est payée.
+
+- ⚠️ **Le résumé N'A PAS repris la disposition de l'écran Statistiques, et c'est délibéré.**
+Les deux écrans ont des formes de données **opposées** :
+  - une **carrière**, c'est beaucoup de joueurs × peu de chiffres par thème → une ligne par
+    joueur, plusieurs tableaux thématiques, chacun classé sur sa première colonne ;
+  - un **match**, c'est 2 à 4 joueurs × dix chiffres → **transposé**, tout tient dans un seul
+    panneau sans défilement, même à quatre joueurs.
+
+  Copier littéralement l'écran Statistiques aurait donné trois tableaux de deux lignes sur un
+  match en tête-à-tête : on aurait déplacé le défilement, pas supprimé.
+- **Le prix assumé du transposé : il ne se classe pas.** On ne trie pas des colonnes. En
+échange, **chaque ligne dore son meneur**, et l'œil compare une ligne de trois nombres sans
+aide. `TableauJoueurs` coexiste donc avec le tableau comparatif de l'écran Statistiques sans
+en être un doublon — ce sont deux formes pour deux formes de données.
+- ⚠️ **À égalité, personne n'est mis en avant.** C'est le cas le plus fréquent d'un match entre
+potes : « 180 » vaut zéro pour tout le monde, et dorer le premier de la liste lui inventerait
+un exploit. La ligne « Fléchettes » n'a jamais de meneur non plus — en lancer davantage n'est
+pas une performance, c'est souvent le contraire.
+- **Le meneur d'une ligne n'est PAS le vainqueur du match**, et les deux se voient : la
+couronne marque le vainqueur en en-tête de colonne, le laiton marque le meneur de chaque
+ligne. « Julien a la meilleure moyenne mais Kevin a gagné » est exactement la conversation de
+comptoir qu'on veut rendre lisible.
+- **Le `TableauHonneur` reste.** L'écran Statistiques est un registre froid ; le résumé est le
+moment où quelqu'un a gagné. Remplacer le podium par un tableau aurait rendu l'écran juste.
+- **« Fléchettes » ferme la liste** au lieu d'être relégué en coin de panneau : c'est le
+**dénominateur de la moyenne**, et 60 de moyenne sur 12 fléchettes ne vaut pas la même chose
+que sur 90.
+
+**La carte des impacts descend dans les stats de match.**
+
+- ⚠️ **`X01PlayerStats.hits` remplace la collecte à la main** que faisait
+`GetPlayerStatsUseCase`. La carrière additionne les cartes de chaque partie
+(`DartboardHits.merge`) au lieu de relire toutes les fléchettes de la base. **Une seule façon
+de compter**, donc aucune chance que le résumé d'une soirée et le cumul de carrière se
+contredisent — le genre d'écart qu'on ne remarque qu'après avoir discuté une heure au
+comptoir.
+- **Elle a plus de sens par match que par carrière** : « t'as tapé où ce soir » est une vraie
+question, alors que six mois de parties finissent par se ressembler.
+- **`PanneauImpacts` sert les deux écrans**, avec une phrase d'aide différente — c'est la
+fenêtre qui change, pas le geste observé.
+
+**Les trois autres résumés n'ont pas bougé**, sur décision explicite : Tour du monde et Cricket
+ont déjà un classement d'une ligne par joueur (le problème des panneaux empilés ne les
+concerne pas), et l'entraînement est solo — il n'y a personne à comparer.
+
+⚠️ **Un piège découvert en semant des données de test** : la main tourne toute seule à la
+projection, donc écrire une volée de trop dans un journal **décale l'attribution de toutes les
+suivantes**. C'est la contrepartie de « `VisitRecorded` ne porte pas de `playerId` » (lot 1) —
+le journal ne peut pas être en désaccord avec les règles, mais un journal fabriqué à la main
+doit respecter le tour de table à la volée près.
 
 ## Décisions ouvertes
 

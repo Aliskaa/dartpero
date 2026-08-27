@@ -1,5 +1,4 @@
 import type { CareerStats } from '../../../domain/games/x01/career'
-import type { DartboardHits } from '../../../domain/services/dartboardHits'
 import type { PlayerColor } from '../../../domain/value-objects/PlayerColor'
 
 /**
@@ -23,14 +22,6 @@ export type StatsPeriod = (typeof STATS_PERIODS)[number]
 export type PlayerCareer = CareerStats & {
   readonly name: string | null
   readonly color: PlayerColor | null
-  /**
-   * Où ses fléchettes se sont plantées sur la période.
-   *
-   * Elle voyage avec le reste plutôt que derrière un port à part : elle se
-   * calcule sur **exactement** les mêmes projections, et l'exposer séparément
-   * obligerait à rejouer tous les journaux une deuxième fois.
-   */
-  readonly hits: DartboardHits
 }
 
 export interface GetPlayerStats {

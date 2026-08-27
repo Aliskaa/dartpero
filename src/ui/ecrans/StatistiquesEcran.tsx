@@ -6,11 +6,11 @@ import {
   type StatsPeriod,
 } from '@/core/application/ports/driving/GetPlayerStats'
 import { Avatar } from '@/ui/composants/commun/Avatar'
-import { CarteImpacts } from '@/ui/composants/commun/CarteImpacts'
 import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { EmptyState, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
+import { PanneauImpacts } from '@/ui/composants/commun/PanneauImpacts'
 import {
   LIBELLE_PERIODE,
   moyenne,
@@ -186,35 +186,6 @@ const TABLEAUX: readonly { readonly titre: string; readonly colonnes: readonly C
   },
 ]
 
-/**
- * LES CARTES D'IMPACTS — la seule chose de cet écran qui parle du bras.
- *
- * Une carte par joueur, côte à côte : c'est un écran de comparaison, et une
- * carte isolée derrière un sélecteur de joueur casserait ça. L'ordre est celui
- * des autres tableaux, donc la meilleure moyenne en premier.
- */
-const Impacts = ({ joueurs }: { readonly joueurs: readonly PlayerCareer[] }) => {
-  const seul = joueurs.length === 1
-
-  return (
-    <Panneau titre="Où tapent les fléchettes">
-      <div
-        className={`grid gap-x-4 gap-y-5 ${
-          seul ? 'mx-auto max-w-[15rem] grid-cols-1' : 'grid-cols-2'
-        }`}
-      >
-        {joueurs.map((joueur) => (
-          <CarteImpacts key={joueur.playerId} nom={nomJoueur(joueur.name)} hits={joueur.hits} />
-        ))}
-      </div>
-      <p className="mt-4 text-xs leading-snug text-craie/60">
-        Plus une case est dorée, plus elle a été touchée — l'échelle est propre à chaque joueur. Une
-        dérive se voit là bien avant de se sentir au bras.
-      </p>
-    </Panneau>
-  )
-}
-
 export const StatistiquesEcran = () => {
   const services = useServices()
 
@@ -283,7 +254,14 @@ export const StatistiquesEcran = () => {
                 joueurs={joueurs}
               />
             ))}
-            <Impacts joueurs={joueurs} />
+            <PanneauImpacts
+              joueurs={joueurs.map((joueur) => ({
+                id: joueur.playerId,
+                nom: nomJoueur(joueur.name),
+                hits: joueur.hits,
+              }))}
+              aide="Plus une case est dorée, plus elle a été touchée — l'échelle est propre à chaque joueur. Une dérive se voit là bien avant de se sentir au bras."
+            />
           </>
         )}
       </div>

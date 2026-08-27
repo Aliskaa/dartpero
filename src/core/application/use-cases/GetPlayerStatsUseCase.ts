@@ -1,10 +1,7 @@
 import { modeOf } from '../../domain/games'
 import { computeCareerStats } from '../../domain/games/x01/career'
 import { X01Rules } from '../../domain/games/x01/rules'
-import { computeX01Stats, type X01Stats } from '../../domain/games/x01/stats'
-import { DartboardHits } from '../../domain/services/dartboardHits'
-import type { Dart } from '../../domain/value-objects/Dart'
-import type { PlayerId } from '../../domain/value-objects/ids'
+import { computeX01Stats } from '../../domain/games/x01/stats'
 import type { Clock } from '../ports/driven/Clock'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
@@ -58,32 +55,16 @@ export class GetPlayerStatsUseCase implements GetPlayerStats {
 
     const depuis = debutDePeriode(period, this.clock.now())
 
-    const stats: X01Stats[] = []
-    /** Les fléchettes de chaque joueur, en vrac : la carte les compte ensuite. */
-    const impacts = new Map<PlayerId, Dart[]>()
-
-    for (const record of records) {
+    const stats = records
       // Moyenne 3 fléchettes, 180, pourcentage de doubles : ces mesures n'ont de
       // sens qu'au X01. Une partie de Tour du monde ne les fausserait pas, elle
       // n'y répondrait simplement pas — on l'écarte donc du cumul.
-      if (modeOf(record.events) !== 'X01') continue
-
+      .filter((record) => modeOf(record.events) === 'X01')
       // ⚠️ Une partie appartient à la soirée où elle a **commencé**, jamais à
       // celle où on l'a touchée en dernier : celle qu'on finit à 00h10 s'est
       // bien jouée ce soir, et la couper en deux ne rendrait service à personne.
-      if (depuis !== null && record.createdAt < depuis) continue
-
-      const state = X01Rules.project(record.events)
-      stats.push(computeX01Stats(state))
-
-      // `history` porte déjà le `playerId` de chaque volée : le journal, lui, ne
-      // le porte pas (voir `MatchEvent`), c'est la projection qui l'attribue.
-      for (const visit of state.history) {
-        const cumul = impacts.get(visit.playerId)
-        if (cumul) cumul.push(...visit.darts)
-        else impacts.set(visit.playerId, [...visit.darts])
-      }
-    }
+      .filter((record) => depuis === null || record.createdAt >= depuis)
+      .map((record) => computeX01Stats(X01Rules.project(record.events)))
 
     const carrieres = computeCareerStats(stats)
     const parId = new Map(profils.map((profil) => [profil.id, profil]))
@@ -95,7 +76,6 @@ export class GetPlayerStatsUseCase implements GetPlayerStats {
           ...carriere,
           name: profil?.name ?? null,
           color: profil?.color ?? null,
-          hits: DartboardHits.of(impacts.get(carriere.playerId) ?? []),
         }
       })
       .sort((a, b) => b.average3 - a.average3 || b.matchesPlayed - a.matchesPlayed)

@@ -1,4 +1,5 @@
 import { isOnACheckoutDouble } from '../../services/checkout'
+import { DartboardHits } from '../../services/dartboardHits'
 import { Dart } from '../../value-objects/Dart'
 import type { PlayerId } from '../../value-objects/ids'
 import type { X01State } from './rules'
@@ -32,6 +33,15 @@ export type X01PlayerStats = {
   readonly bestLegDarts: number | null
   readonly highestCheckout: number
   readonly highestVisit: number
+  /**
+   * Où ses fléchettes se sont plantées **sur ce match**.
+   *
+   * Elle vit ici plutôt que dans le use case des statistiques : c'est le résumé
+   * de partie qui en a besoin en premier, et la carrière n'a plus qu'à
+   * additionner les cartes de chaque match au lieu de recollecter toutes les
+   * fléchettes de la base.
+   */
+  readonly hits: DartboardHits
   /** Legs gagnés dans le **set en cours** — ce qu'affiche le tableau. */
   readonly legsWonInSet: number
   /** Legs gagnés sur **tout le match**, tous sets confondus. */
@@ -67,6 +77,7 @@ type Accumulator = {
   doublesHit: number
   highestCheckout: number
   highestVisit: number
+  darts: Dart[]
   /** Nombre de volées déjà comptées par leg, pour isoler les 9 premières fléchettes. */
   visitsParLeg: Map<number, number>
 }
@@ -85,6 +96,7 @@ const nouvelAccumulateur = (): Accumulator => ({
   doublesHit: 0,
   highestCheckout: 0,
   highestVisit: 0,
+  darts: [],
   visitsParLeg: new Map(),
 })
 
@@ -107,6 +119,9 @@ export const computeX01Stats = (state: X01State): X01Stats => {
 
     acc.visits += 1
     acc.dartsThrown += visit.darts.length
+    // ⚠️ Toutes les fléchettes, **celle qui fait bust comprise** : elle a bien
+    // touché le plateau. Même convention que la moyenne 3 fléchettes.
+    acc.darts.push(...visit.darts)
     acc.pointsScored += visit.scored
     acc.highestVisit = Math.max(acc.highestVisit, visit.scored)
 
@@ -175,6 +190,7 @@ export const computeX01Stats = (state: X01State): X01Stats => {
         bestLegDarts: meilleurLeg.get(player.playerId) ?? null,
         highestCheckout: acc.highestCheckout,
         highestVisit: acc.highestVisit,
+        hits: DartboardHits.of(acc.darts),
         legsWonInSet: player.legsWonInSet,
         legsWon: legsGagnes.get(player.playerId) ?? 0,
         legsPlayed: legsTermines,
