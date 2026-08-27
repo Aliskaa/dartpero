@@ -127,9 +127,12 @@ export const createServices = ({
   // Les quatre lancements sont gardés sous la main : « on remet ça » les
   // rappelle tels quels plutôt que de recopier un journal, pour qu'une relance
   // passe par exactement les mêmes contrôles qu'un premier départ.
-  const startMatch = new StartMatchUseCase(matches, players, clock, ids)
-  const playTourDuMonde = new PlayTourDuMondeUseCase(matches, players, clock, ids)
-  const playCricket = new PlayCricketUseCase(matches, players, clock, ids)
+  // ⚠️ Corollaire : une relance NE rebat PAS l'ordre de passage. Le journal ne
+  // dit pas s'il avait été tiré au sort ou choisi à la main — le redistribuer
+  // serait deviner, et l'ordre qui vient de jouer est un ordre accepté.
+  const startMatch = new StartMatchUseCase(matches, players, clock, ids, random)
+  const playTourDuMonde = new PlayTourDuMondeUseCase(matches, players, clock, ids, random)
+  const playCricket = new PlayCricketUseCase(matches, players, clock, ids, random)
   const playCheckoutPractice = new PlayCheckoutPracticeUseCase(matches, players, clock, ids, random)
 
   return {

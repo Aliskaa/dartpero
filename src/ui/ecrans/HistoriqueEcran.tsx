@@ -3,15 +3,32 @@ import { ChevronRight, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary'
+import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { ApercuPartie, libelleRegles } from '@/ui/composants/commun/ApercuPartie'
+import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { EmptyState, MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { useProfils } from '@/ui/hooks/useJoueurs'
-import { dateHeure, pluriel } from '@/ui/labels'
+import { dateHeure, LIBELLE_MODE, LIBELLE_MODE_COURT, pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const CLE_HISTORIQUE = ['historique'] as const
+
+/**
+ * `'TOUS'` n'est pas un mode : c'est l'absence de filtre.
+ *
+ * Il vit dans l'UI et ne descend jamais dans le port — `GetMatchHistory` prend
+ * un `GameModeId` ou rien, et « rien » est déjà la façon de tout demander.
+ */
+const TOUS = 'TOUS' as const
+
+type FiltreMode = typeof TOUS | GameModeId
+
+const FILTRES: readonly FiltreMode[] = [TOUS, ...GAME_MODE_IDS]
+
+const libelleFiltre = (filtre: FiltreMode): string =>
+  filtre === TOUS ? 'Tous' : LIBELLE_MODE_COURT[filtre]
 
 const CartePartie = ({
   partie,
@@ -91,10 +108,12 @@ export const HistoriqueEcran = () => {
   const services = useServices()
   const navigate = useNavigate()
   const [erreur, setErreur] = useState<string | null>(null)
+  const [filtre, setFiltre] = useState<FiltreMode>(TOUS)
 
   const historique = useQuery({
-    queryKey: CLE_HISTORIQUE,
-    queryFn: () => services.getMatchHistory.execute(50),
+    // Le filtre fait partie de la clé : chaque mode garde son cache.
+    queryKey: [...CLE_HISTORIQUE, filtre],
+    queryFn: () => services.getMatchHistory.execute(50, filtre === TOUS ? undefined : filtre),
   })
 
   const supprimer = async (id: MatchId) => {
@@ -113,19 +132,41 @@ export const HistoriqueEcran = () => {
     <main className="flex flex-1 flex-col gap-4 pb-4">
       <EnTeteEcran
         titre="Parties"
-        sousTitre={pluriel(parties.length, 'partie enregistrée', 'parties enregistrées')}
+        sousTitre={
+          filtre === TOUS
+            ? pluriel(parties.length, 'partie enregistrée', 'parties enregistrées')
+            : `${pluriel(parties.length, 'partie', 'parties')} · ${LIBELLE_MODE[filtre]}`
+        }
       />
 
       <div className="flex flex-col gap-3 px-4">
+        <ChoixSegmente
+          legende="Mode"
+          taille="sm"
+          valeurs={FILTRES}
+          valeur={filtre}
+          onChange={setFiltre}
+          libelle={libelleFiltre}
+        />
+
         {erreur && <MessageErreur>{erreur}</MessageErreur>}
 
         {historique.isPending ? (
           <SpinnerLigne label="Chargement de l’historique…" />
         ) : parties.length === 0 ? (
-          <EmptyState
-            titre="Rien au tableau"
-            description="Les parties jouées s’empilent ici, terminées ou non. On peut en reprendre une à tout moment."
-          />
+          // ⚠️ Deux vides à ne pas confondre, comme sur l'écran Statistiques :
+          // un filtre sans résultat ne veut pas dire une base vide.
+          filtre === TOUS ? (
+            <EmptyState
+              titre="Rien au tableau"
+              description="Les parties jouées s’empilent ici, terminées ou non. On peut en reprendre une à tout moment."
+            />
+          ) : (
+            <EmptyState
+              titre={`Aucune partie de ${LIBELLE_MODE[filtre]}`}
+              description="Les autres modes sont toujours là — repassez sur « Tous » pour les revoir."
+            />
+          )
         ) : (
           <ul className="flex flex-col gap-3">
             {parties.map((partie) => (

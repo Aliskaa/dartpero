@@ -36,6 +36,15 @@ export type X01PlayerStats = {
   readonly legsWonInSet: number
   /** Legs gagnés sur **tout le match**, tous sets confondus. */
   readonly legsWon: number
+  /**
+   * Legs **terminés** du match — le dénominateur de `legsWon`.
+   *
+   * ⚠️ Terminés, pas commencés : un leg en cours n'est ni gagné ni perdu, et
+   * l'inclure ferait plafonner tout le monde sous 100 % sans raison. Tous les
+   * joueurs d'un match ont joué les mêmes legs, la valeur est donc la même
+   * pour chacun — c'est ce qui la rend comparable d'un joueur à l'autre.
+   */
+  readonly legsPlayed: number
   readonly setsWon: number
 }
 
@@ -130,9 +139,11 @@ export const computeX01Stats = (state: X01State): X01Stats => {
 
   const meilleurLeg = new Map<PlayerId, number>()
   const legsGagnes = new Map<PlayerId, number>()
+  let legsTermines = 0
   for (const milestone of state.milestones) {
     if (milestone.type !== 'LegWon') continue
 
+    legsTermines += 1
     legsGagnes.set(milestone.playerId, (legsGagnes.get(milestone.playerId) ?? 0) + 1)
 
     const actuel = meilleurLeg.get(milestone.playerId)
@@ -166,6 +177,7 @@ export const computeX01Stats = (state: X01State): X01Stats => {
         highestVisit: acc.highestVisit,
         legsWonInSet: player.legsWonInSet,
         legsWon: legsGagnes.get(player.playerId) ?? 0,
+        legsPlayed: legsTermines,
         setsWon: player.setsWon,
       }
     }),

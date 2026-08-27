@@ -7,12 +7,14 @@ import type { Clock } from '../ports/driven/Clock'
 import type { IdGenerator } from '../ports/driven/IdGenerator'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
+import type { RandomSource } from '../ports/driven/RandomSource'
 import type {
   CricketVisitResult,
   PlayCricket,
   StartCricketCommand,
 } from '../ports/driving/PlayCricket'
 import { loadMatch } from './loadMatch'
+import { shufflePlayers } from './shufflePlayers'
 
 export class PlayCricketUseCase implements PlayCricket {
   constructor(
@@ -20,10 +22,13 @@ export class PlayCricketUseCase implements PlayCricket {
     private readonly players: PlayerRepository,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly random: RandomSource,
   ) {}
 
   async start(command: StartCricketCommand): Promise<MatchId> {
-    const { playerIds, config, startingPlayerIndex = 0 } = command
+    const { config, startingPlayerIndex = 0, shuffle = false } = command
+    // Le tirage a lieu ici, une fois, et son résultat part dans le journal.
+    const playerIds = shuffle ? shufflePlayers(command.playerIds, this.random) : command.playerIds
 
     const profils = await Promise.all(playerIds.map((id) => this.players.findById(id)))
     const inconnus = playerIds.filter((_, index) => !profils[index])

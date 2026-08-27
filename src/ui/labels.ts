@@ -1,5 +1,6 @@
 import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
+import type { GameModeId } from '@/core/domain/games'
 
 /** Le cœur reste en anglais ; tout le français de l'app vit ici. */
 export const LIBELLE_ISSUE: Record<VisitOutcome, string> = {
@@ -124,6 +125,28 @@ export const annonceCricket = ({
 export const LIBELLE_VARIANTE_CRICKET: Record<'STANDARD' | 'CUT_THROAT', string> = {
   STANDARD: 'Standard',
   CUT_THROAT: 'Cut-throat',
+}
+
+/** Le nom d'un mode, au fil du texte. */
+export const LIBELLE_MODE: Record<GameModeId, string> = {
+  X01: 'X01',
+  TOUR_DU_MONDE: 'Tour du monde',
+  CRICKET: 'Cricket',
+  CHECKOUT_PRACTICE: 'Entraînement',
+}
+
+/**
+ * Le même, pour un rail de filtre.
+ *
+ * ⚠️ Cinq cases sur 350 px, c'est **70 px chacune** : « Tour du monde » et
+ * « Entraînement » n'y entrent pas. La légende du rail (« Mode ») porte le
+ * contexte, les cases n'ont qu'à être distinctes.
+ */
+export const LIBELLE_MODE_COURT: Record<GameModeId, string> = {
+  X01: 'X01',
+  TOUR_DU_MONDE: 'Monde',
+  CRICKET: 'Cricket',
+  CHECKOUT_PRACTICE: 'Solo',
 }
 
 /**

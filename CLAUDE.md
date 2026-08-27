@@ -476,9 +476,10 @@ par le composition root.
   **275 tests verts**, relu à l'écran — trois défauts n'auraient pas été vus autrement.
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
-**Écarté de ce lot, en attente d'arbitrage** (proposé le même jour, non retenu pour l'instant) :
-le filtre de mode sur l'historique, l'ordre de passage aléatoire au lancement, et
-`legsPlayed` dans `CareerStats` (« 12 legs gagnés » ne dit rien sans son dénominateur).
+- [x] **Lot « les trois finitions »** — les trois idées écartées du lot précédent, reprises :
+  **filtre de mode sur l'historique**, **ordre de passage tiré au sort** au lancement, et
+  **`legsPlayed`** — le dénominateur qui manquait aux legs, avec son tableau à part et les
+  pourcentages de victoires. **301 tests verts**, relu à l'écran : deux défauts rattrapés là.
 
 ---
 
@@ -1080,6 +1081,73 @@ du fond**. C'est le traitement habituel d'une carte choroplèthe, et il ne coût
 écrire une deuxième variante pour le filtre. Et `fakeServices` accepte désormais des
 surcharges de dépendances — `SettableClock` était impossible à injecter sans ça, donc tout
 filtre daté était intestable.
+
+### Décisions du lot « les trois finitions »
+
+Les trois idées mises de côté au lot précédent, reprises telles quelles.
+
+**Le filtre de mode sur l'historique.**
+
+- ⚠️ **Le filtre s'applique AVANT la coupe à `limit`, jamais après.** Chercher « les Cricket »
+dans les vingt parties les plus récentes n'en rendrait aucune le soir où l'on vient
+d'enchaîner vingt X01 : ce n'est plus un filtre, c'est une coïncidence. Testé explicitement.
+- **Corollaire assumé** : filtrer coûte un `listAll()`, parce que le mode se lit sur le
+**premier événement du journal** et qu'aucun index ne peut le connaître. Sans filtre on garde
+donc le chemin court (`listRecent`), et le surcoût ne se paie que quand on filtre.
+- **`'TOUS'` n'est pas un mode** : c'est l'absence de filtre, et il vit dans l'UI. Le port
+prend un `GameModeId` ou rien — « rien » est déjà la façon de tout demander.
+- ⚠️ **Deux écrans vides, encore** : « Rien au tableau » (base vide) et « Aucune partie de
+Cricket » (filtre sans résultat). Même règle qu'aux statistiques, même raison.
+- **Les libellés du rail sont courts** (`Monde`, `Solo`) parce que cinq cases sur 350 px font
+70 px chacune — « Tour du monde » n'y entre pas. Le nom complet reste dans le sous-titre de
+l'écran, qui dit « 1 partie · Entraînement » : le rail n'a qu'à être distinct, pas explicite.
+
+**L'ordre de passage tiré au sort.**
+
+- ⚠️ **Le tirage a lieu dans le USE CASE et son résultat est écrit dans l'événement
+d'ouverture.** Mélanger côté UI aurait demandé un `Math.random()` dans l'écran, donc un
+lancement intestable ; mélanger à la projection redistribuerait les joueurs **à chaque
+annulation**. C'est exactement la règle des cibles d'entraînement du lot 5b : ce qui est tiré
+est écrit, jamais rejoué. Testé sur l'annulation ET sur le rejeu à froid.
+- **`shufflePlayers` fait un Fisher-Yates**, pas un tri sur clé aléatoire : la version qu'on
+écrit d'instinct ne donne pas des permutations équiprobables.
+- **Trois use cases sur quatre** reçoivent `RandomSource` : l'entraînement est solo, il n'y a
+rien à rebattre.
+- ⚠️ **« On remet ça » NE rebat PAS les cartes.** Le journal ne dit pas si l'ordre avait été
+tiré ou choisi à la main — le redistribuer serait deviner. Et l'ordre qui vient de jouer est
+un ordre que tout le monde a accepté.
+- **Le tirage ne s'applique qu'à partir de deux joueurs**, mais **le réglage reste coché** :
+le décocher tout seul parce qu'on vient de retirer un joueur ferait perdre une préférence
+sans le dire.
+- ⚠️ **Sous tirage, l'écran retire tout ce qui prétend connaître l'ordre** : les flèches de
+réordonnancement, la ligne « X commence », et **les badges `n°1 / n°2`**. Ce dernier point
+n'a été vu qu'à l'écran (voir plus bas) — c'était la même faute que les flèches, en beaucoup
+plus discrète.
+
+**`legsPlayed`, le dénominateur qui manquait.**
+
+- ⚠️ **Legs TERMINÉS, pas commencés.** Un leg en cours n'est ni gagné ni perdu ; l'inclure
+ferait plafonner tout le monde sous 100 % sans raison. La valeur est donc la même pour tous
+les joueurs d'un match — c'est ce qui la rend comparable d'une ligne à l'autre.
+- **Les legs ont leur propre tableau.** Les entasser dans « Palmarès » aurait fait cinq
+colonnes chiffrées sur 358 px, donc un tableau qui défile — or on ne le lit que pour comparer
+des lignes entre elles.
+- **`matchWinPercent` et `legWinPercent` se calculent depuis les totaux bruts**, comme les
+moyennes et pour la même raison : moyenner les pourcentages de chaque partie serait faux dès
+qu'elles n'ont pas la même longueur.
+- ⚠️ **Un tiret, jamais « 0 % », quand rien n'est terminé.** « 0 % » veut dire « il a tout
+perdu » ; « rien » veut dire « on ne sait pas encore ». Les confondre est le genre de détail
+qui fait douter de tout le tableau. Le premier jet du helper faisait exactement cette faute —
+il déduisait le dénominateur de la valeur elle-même, donc un vrai 0 % s'affichait « — ».
+
+**Ce que la relecture à l'écran a rattrapé** (mêmes conditions que le lot précédent) :
+
+- **les badges `n°1 / n°2 / n°3` survivaient au tirage**, juste sous la ligne « tiré au sort
+au lancement ». L'écran annonçait donc un ordre et son contraire. Remplacés par une coche —
+« retenu », sans rien promettre sur la place. Un test le verrouille désormais ;
+- **l'aide de la bascule était tronquée** (« pas la discus… ») : `Bascule` pose un `truncate`
+sur sa ligne d'aide, et le texte était trop long. Raccourci plutôt que d'enlever le
+`truncate`, qui protège les autres bascules.
 
 ## Décisions ouvertes
 

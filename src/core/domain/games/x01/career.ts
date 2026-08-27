@@ -12,7 +12,17 @@ export type CareerStats = {
   readonly playerId: PlayerId
   readonly matchesPlayed: number
   readonly matchesWon: number
+  /** En pourcentage (0-100). 0 si aucune partie. */
+  readonly matchWinPercent: number
   readonly legsWon: number
+  /**
+   * Legs terminés auxquels le joueur a participé — le dénominateur qui manquait.
+   * « 12 legs gagnés » ne dit rien sans lui : sur 14, c'est une razzia ; sur 40,
+   * c'est une saison difficile.
+   */
+  readonly legsPlayed: number
+  /** En pourcentage (0-100). 0 si aucun leg terminé. */
+  readonly legWinPercent: number
   readonly visits: number
   readonly dartsThrown: number
   readonly pointsScored: number
@@ -34,6 +44,7 @@ type Accumulator = {
   matchesPlayed: number
   matchesWon: number
   legsWon: number
+  legsPlayed: number
   visits: number
   dartsThrown: number
   pointsScored: number
@@ -54,6 +65,7 @@ const nouvelAccumulateur = (): Accumulator => ({
   matchesPlayed: 0,
   matchesWon: 0,
   legsWon: 0,
+  legsPlayed: 0,
   visits: 0,
   dartsThrown: 0,
   pointsScored: 0,
@@ -72,6 +84,16 @@ const nouvelAccumulateur = (): Accumulator => ({
 
 const moyenne = (points: number, darts: number): number => (darts === 0 ? 0 : (points / darts) * 3)
 
+/**
+ * Un ratio en pourcentage, brut — l'UI arrondit.
+ *
+ * ⚠️ Comme les moyennes, il se recalcule depuis les **totaux bruts** : moyenner
+ * les pourcentages de chaque partie serait faux dès qu'elles n'ont pas la même
+ * longueur, et elles n'en ont jamais.
+ */
+const pourcentage = (reussis: number, total: number): number =>
+  total === 0 ? 0 : (reussis / total) * 100
+
 const plusCourt = (actuel: number | null, candidat: number | null): number | null => {
   if (candidat === null) return actuel
   if (actuel === null) return candidat
@@ -82,6 +104,7 @@ const cumuler = (acc: Accumulator, joueur: X01PlayerStats, gagnant: boolean): vo
   acc.matchesPlayed += 1
   if (gagnant) acc.matchesWon += 1
   acc.legsWon += joueur.legsWon
+  acc.legsPlayed += joueur.legsPlayed
   acc.visits += joueur.visits
   acc.dartsThrown += joueur.dartsThrown
   acc.pointsScored += joueur.pointsScored
@@ -121,7 +144,10 @@ export const computeCareerStats = (matches: readonly X01Stats[]): readonly Caree
     playerId,
     matchesPlayed: acc.matchesPlayed,
     matchesWon: acc.matchesWon,
+    matchWinPercent: pourcentage(acc.matchesWon, acc.matchesPlayed),
     legsWon: acc.legsWon,
+    legsPlayed: acc.legsPlayed,
+    legWinPercent: pourcentage(acc.legsWon, acc.legsPlayed),
     visits: acc.visits,
     dartsThrown: acc.dartsThrown,
     pointsScored: acc.pointsScored,

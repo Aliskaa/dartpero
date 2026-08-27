@@ -20,6 +20,14 @@ import {
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
+/**
+ * ⚠️ Un tiret plutôt que « 0 % » quand rien n'a été joué : zéro pour cent, ça
+ * veut dire « il a tout perdu ». Rien du tout, ça veut dire « on ne sait pas
+ * encore » — et un leg en cours n'est ni gagné ni perdu.
+ */
+const pourcent = (valeur: number, joues: number): string =>
+  joues === 0 ? '—' : `${Math.round(valeur)} %`
+
 type Colonne = {
   readonly libelle: string
   /** La valeur affichée. */
@@ -124,7 +132,27 @@ const TABLEAUX: readonly { readonly titre: string; readonly colonnes: readonly C
     colonnes: [
       { libelle: 'Gagnées', valeur: (j) => j.matchesWon, tri: (j) => j.matchesWon },
       { libelle: 'Jouées', valeur: (j) => j.matchesPlayed, tri: (j) => j.matchesPlayed },
-      { libelle: 'Legs', valeur: (j) => j.legsWon, tri: (j) => j.legsWon },
+      {
+        libelle: '%',
+        valeur: (j) => pourcent(j.matchWinPercent, j.matchesPlayed),
+        tri: (j) => j.matchWinPercent,
+      },
+    ],
+  },
+  {
+    // ⚠️ Les legs ont leur propre tableau depuis qu'ils ont un dénominateur :
+    // « 12 gagnés » ne veut rien dire sans savoir sur combien. Les entasser
+    // dans « Palmarès » aurait fait cinq colonnes chiffrées sur 358 px, donc
+    // un tableau qui défile — or on ne le lit que pour comparer des lignes.
+    titre: 'Legs',
+    colonnes: [
+      { libelle: 'Gagnés', valeur: (j) => j.legsWon, tri: (j) => j.legsWon },
+      { libelle: 'Joués', valeur: (j) => j.legsPlayed, tri: (j) => j.legsPlayed },
+      {
+        libelle: '%',
+        valeur: (j) => pourcent(j.legWinPercent, j.legsPlayed),
+        tri: (j) => j.legWinPercent,
+      },
     ],
   },
   {

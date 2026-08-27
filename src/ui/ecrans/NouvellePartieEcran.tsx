@@ -52,6 +52,7 @@ const CLE_LEGS = 'partie:legs'
 const CLE_DOUBLE_OUT = 'partie:double-out'
 const CLE_DOUBLE_IN = 'partie:double-in'
 const CLE_SELECTION = 'partie:joueurs'
+const CLE_ORDRE_ALEATOIRE = 'partie:ordre-aleatoire'
 
 const SCORES = [301, 501, 701] as const
 
@@ -202,6 +203,7 @@ export const NouvellePartieEcran = () => {
   const [legs, setLegs] = usePreference<(typeof LEGS)[number]>(CLE_LEGS, 2)
   const [doubleOut, setDoubleOut] = usePreference(CLE_DOUBLE_OUT, false)
   const [doubleIn, setDoubleIn] = usePreference(CLE_DOUBLE_IN, false)
+  const [ordreAleatoire, setOrdreAleatoire] = usePreference(CLE_ORDRE_ALEATOIRE, false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [occupe, setOccupe] = useState(false)
 
@@ -260,9 +262,18 @@ export const NouvellePartieEcran = () => {
         ? `Le premier à ${legs} legs gagne — à ${selection.length} joueurs, la partie peut en durer davantage.`
         : `Le premier à ${legs} legs gagne la partie.`
 
+  /**
+   * ⚠️ Le tirage ne s'applique qu'à partir de deux joueurs.
+   * Le réglage, lui, reste coché : le décocher tout seul parce qu'on vient de
+   * décocher un joueur ferait perdre une préférence sans le dire.
+   */
+  const tirageActif = ordreAleatoire && selection.length > 1
+
   /** Qui commence — la seule information que les numéros ne disent pas tout haut. */
   const premier =
-    selection.length > 1 ? joueurs.data?.find((joueur) => joueur.id === selection[0]) : undefined
+    !tirageActif && selection.length > 1
+      ? joueurs.data?.find((joueur) => joueur.id === selection[0])
+      : undefined
 
   const ajouterJoueur = async () => {
     const nom = nouveauNom.trim()
@@ -289,11 +300,13 @@ export const NouvellePartieEcran = () => {
         return services.playTourDuMonde.start({
           playerIds: selection,
           config: TourDuMondeConfig.create(),
+          shuffle: tirageActif,
         })
       case 'CRICKET':
         return services.playCricket.start({
           playerIds: selection,
           config: CricketConfig.create({ variant: variante }),
+          shuffle: tirageActif,
         })
       default:
         return services.startMatch.execute({
@@ -304,6 +317,7 @@ export const NouvellePartieEcran = () => {
             doubleOut,
             doubleIn,
           }),
+          shuffle: tirageActif,
         })
     }
   }
@@ -381,8 +395,16 @@ export const NouvellePartieEcran = () => {
                       {joueur.name}
                     </span>
                     {choisi ? (
+                      /* ⚠️ Sous tirage, PAS de numéro : il annoncerait un rang
+                         qui ne sera pas celui joué — la même faute que les
+                         flèches d'ordre, en plus discrète. Une coche dit
+                         « retenu » sans rien promettre sur la place. */
                       <span className="chiffres flex size-7 shrink-0 items-center justify-center border border-laiton/60 bg-laiton/20 text-xs font-bold text-laiton-clair">
-                        n°{rang + 1}
+                        {tirageActif ? (
+                          <Check aria-hidden="true" className="size-4" />
+                        ) : (
+                          `n°${rang + 1}`
+                        )}
                       </span>
                     ) : (
                       <span
@@ -396,8 +418,11 @@ export const NouvellePartieEcran = () => {
 
                   {/* L'ordre de passage se change ici. Deux cibles de 48 px —
                       le plancher tactile du projet — visibles seulement quand
-                      le joueur est de la partie et qu'il y a de quoi trier. */}
-                  {choisi && selection.length > 1 && (
+                      le joueur est de la partie et qu'il y a de quoi trier.
+                      ⚠️ Et jamais sous tirage au sort : deux flèches qui
+                      réordonnent une liste qui sera rebattue au lancement, ce
+                      n'est pas un réglage, c'est un piège. */}
+                  {choisi && selection.length > 1 && !tirageActif && (
                     <span className="flex shrink-0 gap-1">
                       <button
                         type="button"
@@ -430,6 +455,24 @@ export const NouvellePartieEcran = () => {
           <p className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
             Ordre de passage · {premier.name} commence
           </p>
+        )}
+
+        {/* ⚠️ Sous tirage, on ne peut pas nommer celui qui commence : le sort
+            n'est pas encore tombé. Dire « X commence » puis lancer quelqu'un
+            d'autre serait pire que de ne rien dire. */}
+        {tirageActif && (
+          <p className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-laiton-clair">
+            Ordre de passage · tiré au sort au lancement
+          </p>
+        )}
+
+        {selection.length > 1 && (
+          <Bascule
+            libelle="Ordre aléatoire"
+            aide="Le sort décide qui commence"
+            actif={ordreAleatoire}
+            onChange={setOrdreAleatoire}
+          />
         )}
 
         <form

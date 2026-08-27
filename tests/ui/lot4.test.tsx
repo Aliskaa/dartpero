@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from '@/App'
 import type { Services } from '@/composition/container'
+import { CricketConfig } from '@/core/domain/games/cricket/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { fakeServices, SettableClock } from '../fakes'
@@ -120,6 +121,48 @@ describe('Écran Parties', () => {
   })
 })
 
+describe('Historique — filtre de mode', () => {
+  const deuxModes = async () => {
+    const { services } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+    await services.startMatch.execute({
+      playerIds: [kevin.id],
+      config: X01Config.create({ legsToWin: 1 }),
+    })
+    await services.playCricket.start({
+      playerIds: [kevin.id],
+      config: CricketConfig.create(),
+    })
+    return services
+  }
+
+  it('ne garde que le mode choisi', async () => {
+    const utilisateur = userEvent.setup()
+    const services = await deuxModes()
+    renderWithServices(<App />, { services, route: '/historique' })
+
+    // Sans filtre, les deux parties sont là.
+    expect(await screen.findByText(/2 parties enregistrées/i)).toBeInTheDocument()
+
+    await utilisateur.click(screen.getByRole('button', { name: 'Cricket' }))
+
+    expect(await screen.findByText(/1 partie · Cricket/i)).toBeInTheDocument()
+  })
+
+  it('distingue « aucune partie de ce mode » d’un historique vide', async () => {
+    const utilisateur = userEvent.setup()
+    const services = await deuxModes()
+    renderWithServices(<App />, { services, route: '/historique' })
+
+    await screen.findByText(/2 parties enregistrées/i)
+    await utilisateur.click(screen.getByRole('button', { name: 'Monde' }))
+
+    // ⚠️ Surtout pas « Rien au tableau » : les deux parties sont intactes.
+    expect(await screen.findByText(/aucune partie de tour du monde/i)).toBeInTheDocument()
+    expect(screen.queryByText(/rien au tableau/i)).not.toBeInTheDocument()
+  })
+})
+
 describe('Écran Statistiques', () => {
   it('classe les joueurs sur la moyenne, meilleur en tête', async () => {
     const { services } = fakeServices()
@@ -144,6 +187,57 @@ describe('Écran Statistiques', () => {
 
     expect(within(lignes[0] as HTMLElement).getByText('Kevin')).toBeInTheDocument()
     expect(within(lignes[1] as HTMLElement).getByText('Julien')).toBeInTheDocument()
+  })
+
+  it('donne aux legs leur dénominateur', async () => {
+    const { services } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+    const julien = await services.managePlayers.create('Julien')
+
+    // Un leg gagné par Kevin en 9 fléchettes ; Julien n'a rien pris.
+    const matchId = await services.startMatch.execute({
+      playerIds: [kevin.id, julien.id],
+      config: X01Config.create({ startingScore: 501, legsToWin: 2 }),
+    })
+    const RIEN = [Dart.miss(), Dart.miss(), Dart.miss()]
+    for (const darts of [T20, RIEN, T20, RIEN]) {
+      await services.recordVisit.execute({ matchId, darts })
+    }
+    await services.recordVisit.execute({
+      matchId,
+      darts: [Dart.triple(20), Dart.triple(19), Dart.double(12)],
+    })
+
+    renderWithServices(<App />, { services, route: '/statistiques' })
+
+    const legs = await screen.findByRole('table', { name: 'Legs' })
+    const lignes = within(legs).getAllByRole('row').slice(1)
+
+    // Kevin : 1 gagné sur 1 joué, donc 100 %.
+    const kevinLigne = lignes.find((ligne) => within(ligne).queryByText('Kevin')) as HTMLElement
+    expect(within(kevinLigne).getByText('100 %')).toBeInTheDocument()
+
+    // ⚠️ Julien : 0 sur 1, donc « 0 % » — pas un tiret. Il a bien perdu ce leg.
+    const julienLigne = lignes.find((ligne) => within(ligne).queryByText('Julien')) as HTMLElement
+    expect(within(julienLigne).getByText('0 %')).toBeInTheDocument()
+  })
+
+  it('écrit un tiret, jamais « 0 % », quand aucun leg n’est terminé', async () => {
+    const { services } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+    const matchId = await services.startMatch.execute({
+      playerIds: [kevin.id],
+      config: X01Config.create({ legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({ matchId, darts: T20 })
+
+    renderWithServices(<App />, { services, route: '/statistiques' })
+
+    // « 0 % » voudrait dire « il a tout perdu » ; rien du tout veut dire
+    // « on ne sait pas encore », et un leg en cours n'est ni gagné ni perdu.
+    const legs = await screen.findByRole('table', { name: 'Legs' })
+    expect(within(legs).getByText('—')).toBeInTheDocument()
+    expect(within(legs).queryByText('0 %')).not.toBeInTheDocument()
   })
 
   it('invite à jouer quand il n’y a rien à comparer', async () => {

@@ -86,6 +86,46 @@ describe('Statistiques de carrière', () => {
     ])
   })
 
+  /**
+   * ⚠️ Le dénominateur qui manquait : « 12 legs gagnés » ne dit rien sans
+   * savoir sur combien. Sur 14 c'est une razzia, sur 40 une saison difficile.
+   */
+  it('compte les legs joués, pas seulement les legs gagnés', () => {
+    // Une partie finie (1 leg gagné par Kevin) puis une en cours (0 leg clos).
+    const carrieres = computeCareerStats([legParfait(), legMediocre()])
+    const kevin = carrieres.find((joueur) => joueur.playerId === KEVIN)
+    const julien = carrieres.find((joueur) => joueur.playerId === JULIEN)
+
+    // Le leg de la partie mediocre n'est pas terminé : il ne compte pas.
+    expect(kevin?.legsPlayed).toBe(1)
+    expect(kevin?.legsWon).toBe(1)
+    expect(kevin?.legWinPercent).toBeCloseTo(100, 5)
+
+    // Le dénominateur est le même pour tout le monde : ils ont joué les mêmes legs.
+    expect(julien?.legsPlayed).toBe(1)
+    expect(julien?.legsWon).toBe(0)
+    expect(julien?.legWinPercent).toBe(0)
+  })
+
+  it('rend 0 % plutôt que de diviser par zéro quand rien n’est terminé', () => {
+    const carrieres = computeCareerStats([legMediocre()])
+    const kevin = carrieres.find((joueur) => joueur.playerId === KEVIN)
+
+    expect(kevin?.legsPlayed).toBe(0)
+    expect(kevin?.legWinPercent).toBe(0)
+    expect(kevin?.matchWinPercent).toBe(0)
+  })
+
+  it('calcule le pourcentage de victoires depuis les totaux bruts', () => {
+    // Une gagnée sur deux jouées : 50 %, et non la moyenne de 100 % et 0 %.
+    const carrieres = computeCareerStats([legParfait(), legMediocre()])
+    const kevin = carrieres.find((joueur) => joueur.playerId === KEVIN)
+
+    expect(kevin?.matchesPlayed).toBe(2)
+    expect(kevin?.matchesWon).toBe(1)
+    expect(kevin?.matchWinPercent).toBeCloseTo(50, 5)
+  })
+
   it('cumule les tentatives de double sur l’ensemble des parties', () => {
     const kevin = carriereDe(legParfait(), legParfait())
 
