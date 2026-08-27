@@ -8,6 +8,7 @@ import { JoueursEcran } from '@/ui/ecrans/JoueursEcran'
 import { NouvellePartieEcran } from '@/ui/ecrans/NouvellePartieEcran'
 import { ReglagesEcran } from '@/ui/ecrans/ReglagesEcran'
 import { StatistiquesEcran } from '@/ui/ecrans/StatistiquesEcran'
+import { useThemeSysteme } from '@/ui/hooks/useAppareil'
 
 /**
  * Deux familles d'écrans :
@@ -16,8 +17,13 @@ import { StatistiquesEcran } from '@/ui/ecrans/StatistiquesEcran'
  * - ceux de **partie** (configuration, match, résumé), en plein écran. Pendant
  *   une volée, chaque pixel sert à jouer et un onglet mal visé ferait perdre la
  *   saisie en cours.
+ *
+ * Le thème est posé ici, à la racine : `useThemeSysteme` rattrape le script
+ * d'amorçage et reste branché sur le réglage du téléphone.
  */
 export default function App() {
+  useThemeSysteme()
+
   return (
     <Routes>
       <Route element={<LayoutPrincipal />}>

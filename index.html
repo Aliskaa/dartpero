@@ -14,6 +14,32 @@
     <meta name="apple-mobile-web-app-title" content="Dartpéro" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Dartpéro</title>
+    <script>
+      /* Le thème AVANT le premier pixel. Appliqué par React, la page
+         s'afficherait en sombre le temps du montage puis basculerait : un
+         flash à chaque ouverture, sur l'écran qu'on ouvre en pleine soirée.
+
+         ⚠️ Cette logique est un DOUBLON assumé de `src/ui/theme.ts` — elle
+         doit tourner avant le bundle, donc elle ne peut pas l'importer. La
+         clé et les deux teintes de barre doivent rester d'accord avec lui.
+         La clé est celle du port `Preferences` : préfixe + valeur en JSON. */
+      ;(() => {
+        try {
+          const brut = localStorage.getItem('dartpero:theme')
+          const choix = brut ? JSON.parse(brut) : 'sombre'
+          const sombre =
+            choix === 'systeme'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+              : choix !== 'clair'
+          document.documentElement.dataset.theme = sombre ? 'sombre' : 'clair'
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', sombre ? '#0E1A13' : '#E3D9C1')
+        } catch {
+          document.documentElement.dataset.theme = 'sombre'
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

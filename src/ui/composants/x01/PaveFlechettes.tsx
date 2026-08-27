@@ -147,7 +147,7 @@ export const PaveFlechettes = ({
                 className={[
                   'relative z-10 min-h-12 font-score text-sm font-bold uppercase',
                   'tracking-widest transition-colors duration-150',
-                  actif ? 'text-[#1a1206]' : 'text-craie/75',
+                  actif ? 'text-sur-laiton' : 'text-craie/75',
                 ].join(' ')}
               >
                 {libelle}

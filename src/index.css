@@ -30,6 +30,12 @@
   --color-rouge-cible: #c1272d;
   --color-vert-cible: #2e7d4f;
 
+  /* Le texte posé SUR une surface de laiton pleine (le CTA, le curseur du
+     rail). Il doit suivre le thème : encre sombre sur laiton vif, papier
+     clair sur laiton foncé. Sans ce token, les deux thèmes se partageraient
+     un `#1a1206` illisible dans l'un des deux. */
+  --color-sur-laiton: #1a1206;
+
   /* Accent du mode en cours — surchargé par DispositionPartie via style=.
      Défaut = laiton (X01). Jamais derrière un chiffre de score. */
   --color-accent-mode: #c9a227;
@@ -63,6 +69,131 @@
   --animate-tourner-lent: tourner-lent 120s linear infinite;
   --animate-respirer: respirer 3.4s ease-in-out infinite;
   --animate-defiler: defiler 1.4s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------
+   LES DEUX THÈMES
+
+   L'app se lit surtout dans un garage mal éclairé — le sombre reste le
+   défaut, et c'est lui qui est écrit dans `@theme` ci-dessus. Le thème
+   clair est la MÊME feuille de match, mais celle du bar éclairé : encre
+   sur papier plutôt que craie sur feutre.
+
+   ⚠️ Il ne redéfinit QUE des valeurs de tokens. Pas une classe `bg-feutre`
+   ni un `text-craie` n'a bougé dans `src/ui` : la palette est employée en
+   paires de rôle constantes (feutre/ardoise = surfaces, craie = texte,
+   laiton = accent), donc retourner les valeurs retourne l'app entière.
+   Le prix assumé : sous thème clair, le token « feutre » vaut du papier et
+   le token « craie » vaut de l'encre. Les noms disent la MATIÈRE d'origine,
+   les tokens portent le RÔLE. C'est ce qui évite de réécrire 43 fichiers.
+   ------------------------------------------------------------------ */
+
+/* Ce qui ne peut pas être un token de couleur : une image de fond, une
+   ombre. Déclarés hors de `@theme`, qui ne fabrique que des utilitaires. */
+:root {
+  /* Les contrôles natifs (barres de défilement, sélecteur de fichier de
+     l'écran Réglages) suivent le thème, sinon on lit une barre blanche le
+     long d'une page en feutre. */
+  color-scheme: dark;
+
+  --tapis-image:
+    radial-gradient(120% 85% at 50% -10%, rgba(46, 125, 79, 0.12), transparent 60%),
+    radial-gradient(100% 70% at 50% 110%, rgba(0, 0, 0, 0.5), transparent 62%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  /* Le RELIEF des petits textes (`.grave`) : un filet de 1 px sous la ligne.
+     Noir sous de la craie, blanc sous de l'encre — une ombre noire sous de
+     l'encre ne se voit pas, elle salit. */
+  --teinte-relief: rgb(0 0 0 / 0.6);
+
+  /* L'ombre portée de l'ENSEIGNE et du nom du vainqueur : une plaque posée
+     sur le mur, pas un relief de texte. ⚠️ Elle ne peut PAS être blanche en
+     thème clair : à 3 px sous du laiton foncé, le blanc ne fait pas une
+     ombre, il fait un contour — le mot a l'air mal imprimé. Il lui faut du
+     brun de bois, doux. */
+  --ombre-plaque: rgb(0 0 0 / 0.65);
+
+  /* Le plateau qui tourne derrière l'enseigne : du décor, et rien d'autre. */
+  --voile-cible: 0.12;
+  /* Le souffle de craie sous les grands chiffres. L'encre ne rayonne pas :
+     il disparaît en clair. */
+  --voile-trace: rgb(242 232 213 / 0.22);
+  --eclat-balai: rgb(242 232 213 / 0.09);
+
+  /* L'accent de chaque mode. Il vit ici plutôt que dans `accents.ts` parce
+     qu'il part dans un `style=` inline : un hex y serait figé, un `var()` s'y
+     résout dans le thème du moment. Teintes alignées sur la palette joueurs
+     (lagon / cuivre / prune) pour ne pas inventer une deuxième charte. */
+  --accent-x01: #c9a227;
+  --accent-x01-clair: #f2dd93;
+  --accent-tour-du-monde: #2c6e9b;
+  --accent-tour-du-monde-clair: #5fa6d1;
+  --accent-cricket: #c1720f;
+  --accent-cricket-clair: #e7a248;
+  --accent-checkout-practice: #8a4fa8;
+  --accent-checkout-practice-clair: #b683ce;
+}
+
+html[data-theme="clair"] {
+  color-scheme: light;
+
+  /* Le papier : le sous-main est plus appuyé que la feuille posée dessus,
+     sinon la feuille ne se détache plus de rien. */
+  --color-feutre: #e3d9c1;
+  --color-feutre-nuit: #d1c3a4;
+  --color-ardoise: #f7f2e6;
+  --color-ardoise-claire: #fffdf6;
+
+  /* Le bois ne change pas de bois : un cadre brun sur du papier crème, c'est
+     exactement la fiche punaisée. */
+  --color-chene: #5a3e24;
+  --color-chene-clair: #8b6238;
+  --color-chene-sombre: #2f1e10;
+
+  /* ⚠️ LE POINT CRITIQUE. Le laiton vif (#c9a227) fait 1,84:1 sur du papier :
+     le filet de `.au-lancer`, qui dit QUI EST EN TRAIN DE LANCER, deviendrait
+     invisible — l'information la plus lue de l'app. Il passe donc en laiton
+     foncé (4,4:1), et « clair » y veut dire « plus lisible sur le fond »,
+     donc PLUS FONCÉ (6,6:1) : c'est le rôle qui est inversé, pas la teinte. */
+  --color-laiton: #8a6d12;
+  --color-laiton-clair: #6b5209;
+  --color-laiton-sombre: #4a3a06;
+
+  /* L'encre. Le plancher « aucun texte sous craie/60 » tient : à 60 %,
+     l'encre garde 5:1 sur le papier. */
+  --color-craie: #1f2d24;
+  --color-craie-vive: #0c1512;
+
+  /* Assombris pour tenir sur du papier : le rouge et le vert du plateau sont
+     calibrés pour être vus sur du feutre. */
+  --color-rouge-cible: #a81f25;
+  --color-vert-cible: #1f6b41;
+
+  --color-sur-laiton: #fbf7ec;
+  --color-accent-mode: #8a6d12;
+  --color-accent-mode-clair: #6b5209;
+
+  --tapis-image:
+    radial-gradient(120% 85% at 50% -10%, rgba(255, 253, 246, 0.6), transparent 60%),
+    radial-gradient(100% 70% at 50% 110%, rgba(90, 62, 36, 0.12), transparent 62%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  --teinte-relief: rgb(255 255 255 / 0.85);
+  --ombre-plaque: rgb(90 62 36 / 0.3);
+  /* Le rouge et le vert du plateau virent au pastel sur du papier et tirent
+     l'œil bien plus que sur du feutre : il s'efface davantage. */
+  --voile-cible: 0.07;
+  --voile-trace: transparent;
+  --eclat-balai: rgb(31 45 36 / 0.1);
+
+  /* Les quatre accents assombris : même logique que le laiton, « clair » vaut
+     « plus lisible sur le fond », donc plus foncé. */
+  --accent-x01: #8a6d12;
+  --accent-x01-clair: #6b5209;
+  --accent-tour-du-monde: #245a80;
+  --accent-tour-du-monde-clair: #1b4460;
+  --accent-cricket: #9a5a0b;
+  --accent-cricket-clair: #7a4708;
+  --accent-checkout-practice: #6e3c87;
+  --accent-checkout-practice-clair: #562e6b;
 }
 
 /* Le score qui change doit se voir depuis l'oche, pas seulement de près. */
@@ -209,10 +340,7 @@
   /* Le tapis : le sol de l'app, sur lequel la feuille est posée. */
   .feutre-tapis {
     background-color: var(--color-feutre);
-    background-image:
-      radial-gradient(120% 85% at 50% -10%, rgba(46, 125, 79, 0.12), transparent 60%),
-      radial-gradient(100% 70% at 50% 110%, rgba(0, 0, 0, 0.5), transparent 62%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-image: var(--tapis-image);
     background-attachment: fixed, fixed, scroll;
   }
 
@@ -299,7 +427,7 @@
      appartenaient au comptoir, pas à la fiche. */
   .laiton-poli {
     background-color: var(--color-laiton);
-    color: #1a1206;
+    color: var(--color-sur-laiton);
     box-shadow: 0 4px 0 var(--color-laiton-sombre);
   }
 
@@ -310,7 +438,7 @@
 
   .laiton-plat {
     background-color: var(--color-laiton);
-    color: #1a1206;
+    color: var(--color-sur-laiton);
   }
 
   /* Touche du pavé : un filet de craie et une tranche de 2 px. Elle a encore
@@ -354,11 +482,11 @@
   /* Un souffle de craie sous les grands chiffres : assez pour les décoller du
      feutre, jamais assez pour en flouter le bord. */
   .trace-craie {
-    text-shadow: 0 0 10px rgb(242 232 213 / 0.22);
+    text-shadow: 0 0 10px var(--voile-trace);
   }
 
   .grave {
-    text-shadow: 0 1px 0 rgb(0 0 0 / 0.6);
+    text-shadow: 0 1px 0 var(--teinte-relief);
   }
 
   /* ---------------------------------------------------------------
@@ -369,7 +497,7 @@
     background-image: linear-gradient(
       100deg,
       transparent 25%,
-      rgb(242 232 213 / 0.09) 45%,
+      var(--eclat-balai) 45%,
       transparent 65%
     );
     background-size: 200% 100%;

@@ -3,12 +3,14 @@ import { Download, TriangleAlert, Upload, Volume2, VolumeX, WifiOff } from 'luci
 import { useId, useRef, useState } from 'react'
 import type { ImportReport } from '@/core/application/ports/driving/ManageBackup'
 import { Button } from '@/ui/composants/commun/Button'
+import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { MessageErreur } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { CLE_VOIX, usePreference } from '@/ui/hooks/useAppareil'
-import { pluriel } from '@/ui/labels'
+import { LIBELLE_THEME, pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
+import { appliquerTheme, CLE_THEME, THEME_DEFAUT, THEMES, type Theme } from '@/ui/theme'
 
 /**
  * Le nom du fichier porte la date : on finit toujours par en avoir plusieurs
@@ -74,6 +76,7 @@ export const ReglagesEcran = () => {
   const champFichier = useRef<HTMLInputElement>(null)
   const idChamp = useId()
   const [voix, setVoix] = usePreference(CLE_VOIX, true)
+  const [theme, setTheme] = usePreference<Theme>(CLE_THEME, THEME_DEFAUT)
 
   const [rapport, setRapport] = useState<ImportReport | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -120,7 +123,7 @@ export const ReglagesEcran = () => {
 
   return (
     <main className="flex flex-1 flex-col gap-4 pb-4">
-      <EnTeteEcran titre="Réglages" sousTitre="Sauvegarde et informations" />
+      <EnTeteEcran titre="Réglages" sousTitre="Affichage, sauvegarde et informations" />
 
       <div className="flex flex-col gap-3 px-4">
         <Panneau titre="Sauvegarde" contenuClassName="flex flex-col gap-3 p-4">
@@ -169,6 +172,23 @@ export const ReglagesEcran = () => {
           {rapport && <Resume rapport={rapport} />}
         </Panneau>
 
+        <Panneau titre="Thème" contenuClassName="flex flex-col gap-3 p-4">
+          <ChoixSegmente
+            legende="Affichage"
+            valeurs={THEMES}
+            valeur={theme}
+            taille="sm"
+            libelle={(choix) => LIBELLE_THEME[choix]}
+            aide="« Système » suit le réglage du téléphone. Le sombre est fait pour un garage mal éclairé, le clair pour une pièce en plein jour."
+            onChange={(choix) => {
+              setTheme(choix)
+              // Posé tout de suite : la préférence seule ne repeint rien, et un
+              // thème qui n'arriverait qu'au rechargement passerait pour un bug.
+              appliquerTheme(choix)
+            }}
+          />
+        </Panneau>
+
         <Panneau titre="Annonce vocale" contenuClassName="flex flex-col gap-3 p-4">
           <button
             type="button"
@@ -206,7 +226,7 @@ export const ReglagesEcran = () => {
             <span
               aria-hidden="true"
               className={`relative h-7 w-12 shrink-0 border transition-colors duration-200 ${
-                voix ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-black/40'
+                voix ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-feutre-nuit/70'
               }`}
             >
               <span

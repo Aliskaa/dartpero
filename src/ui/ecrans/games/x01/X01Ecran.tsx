@@ -30,7 +30,7 @@ const EnTeteManche = ({
     <Link
       to="/"
       aria-label="Retour à l’accueil"
-      className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie/80 active:bg-black/25"
+      className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie/80 active:bg-craie/15"
     >
       <ArrowLeft aria-hidden="true" className="size-5" />
     </Link>

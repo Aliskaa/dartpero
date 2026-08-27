@@ -66,7 +66,7 @@ export const ChoixSegmente = <T extends string | number>({
             aria-pressed={option === valeur}
             onClick={() => onChange(option)}
             className={`relative z-10 min-h-12 px-1 transition-colors duration-150 ${TEXTE[taille]} ${
-              option === valeur ? 'text-[#1a1206]' : 'text-craie/75'
+              option === valeur ? 'text-sur-laiton' : 'text-craie/75'
             }`}
           >
             {libelle(option)}

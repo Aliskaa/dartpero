@@ -88,12 +88,12 @@ export const CarteImpacts = ({ nom, hits, className = '' }: Props) => {
         className="w-full"
       >
         {/* Le plateau réduit à sa structure. */}
-        <circle cx="50" cy="50" r={R.bordExterieur} fill="#081109" />
+        <circle cx="50" cy="50" r={R.bordExterieur} fill="var(--color-feutre-nuit)" />
         {QUARTIERS.map((quartier) => (
           <path
             key={quartier.numero}
             d={trace(R.anneau25, R.doubleExterieur, quartier.debut, quartier.fin)}
-            fill="#F2E8D5"
+            fill="var(--color-craie)"
             fillOpacity={quartier.sombre ? 0.05 : 0.09}
           />
         ))}
@@ -109,9 +109,9 @@ export const CarteImpacts = ({ nom, hits, className = '' }: Props) => {
             <path
               key={`${Dart.label(zone)}-${d}`}
               d={d}
-              fill="#C9A227"
+              fill="var(--color-laiton)"
               fillOpacity={opacite(zone.hits, hits.busiest)}
-              stroke="#081109"
+              stroke="var(--color-feutre-nuit)"
               strokeOpacity="0.65"
               strokeWidth="0.5"
             />
@@ -120,13 +120,13 @@ export const CarteImpacts = ({ nom, hits, className = '' }: Props) => {
 
         {/* Le centre a son propre fond : les quartiers s'arrêtent à l'anneau
             à 25, sinon vingt bandes traverseraient la bulle. */}
-        <circle cx="50" cy="50" r={R.anneau25} fill="#F2E8D5" fillOpacity="0.07" />
+        <circle cx="50" cy="50" r={R.anneau25} fill="var(--color-craie)" fillOpacity="0.07" />
         <circle
           cx="50"
           cy="50"
           r={(R.anneau25 + R.bullseye) / 2}
           fill="none"
-          stroke="#C9A227"
+          stroke="var(--color-laiton)"
           strokeWidth={R.anneau25 - R.bullseye}
           strokeOpacity={opacite(
             chaudes.find((zone) => zone.segment === 'BULL' && zone.multiplier === 'SIMPLE')?.hits ??
@@ -138,8 +138,8 @@ export const CarteImpacts = ({ nom, hits, className = '' }: Props) => {
           cx="50"
           cy="50"
           r={R.bullseye}
-          fill="#C9A227"
-          stroke="#081109"
+          fill="var(--color-laiton)"
+          stroke="var(--color-feutre-nuit)"
           strokeOpacity="0.65"
           strokeWidth="0.5"
           fillOpacity={opacite(
@@ -150,7 +150,7 @@ export const CarteImpacts = ({ nom, hits, className = '' }: Props) => {
         />
 
         {/* Les fils : ce sont eux qui font lire un plateau plutôt qu'un camembert. */}
-        <g stroke="#F2E8D5" strokeOpacity="0.22" strokeWidth="0.3" fill="none">
+        <g stroke="var(--color-craie)" strokeOpacity="0.22" strokeWidth="0.3" fill="none">
           {QUARTIERS.map((quartier) => {
             const [x1, y1] = point(R.anneau25, quartier.debut)
             const [x2, y2] = point(R.doubleExterieur, quartier.debut)
@@ -165,7 +165,7 @@ export const CarteImpacts = ({ nom, hits, className = '' }: Props) => {
 
         {/* Sans les numéros, une carte de chaleur ne dit pas OÙ. */}
         <g
-          fill="#F2E8D5"
+          fill="var(--color-craie)"
           fillOpacity="0.55"
           fontSize="5"
           fontFamily="Oswald, sans-serif"

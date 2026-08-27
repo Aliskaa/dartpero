@@ -177,7 +177,7 @@ const Bascule = ({
     <span
       aria-hidden="true"
       className={`relative h-7 w-12 shrink-0 border transition-colors duration-200 ${
-        actif ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-black/40'
+        actif ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-feutre-nuit/70'
       }`}
     >
       <span

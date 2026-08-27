@@ -9,7 +9,7 @@ export const Enseigne = ({ className = '' }: { readonly className?: string }) =>
     className={[
       'bg-gradient-to-b from-laiton-clair via-laiton to-laiton-sombre bg-clip-text',
       'font-display text-transparent',
-      'drop-shadow-[0_3px_0_rgba(0,0,0,0.65)]',
+      'drop-shadow-[0_3px_0_var(--ombre-plaque)]',
       className,
     ].join(' ')}
   >
@@ -23,7 +23,7 @@ export const Enseigne = ({ className = '' }: { readonly className?: string }) =>
  */
 export const LogoHero = () => (
   <div className="relative flex flex-col items-center">
-    <div className="pointer-events-none absolute -top-6 flex w-full justify-center opacity-[0.12]">
+    <div className="pointer-events-none absolute -top-6 flex w-full justify-center opacity-[var(--voile-cible)]">
       {/* Pas de `blur` ici : un filtre sur un SVG en rotation continue force un
           repaint à chaque image, et l'app doit rester fluide sur vieux mobile. */}
       <Cible className="size-56 animate-tourner-lent" avecNumeros />

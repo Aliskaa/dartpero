@@ -69,6 +69,11 @@ legs. À trois ou quatre, la même partie peut en durer six — le libellé ment
 a toujours stocké `legsToWin` (« premier à N ») : c'est désormais ce que l'UI affiche, via
 `libelleLegs` / `libelleLegsCourt` (`src/ui/labels.ts`). `X01Config.legsForBestOf` survit
 pour le défaut et ses tests, mais **plus aucun écran ne l'appelle**.
+- **Thème clair / sombre / système**, dans les Réglages. ⚠️ Le défaut reste **sombre**, pas
+« système » : le cadrage est un garage mal éclairé, le sombre *est* l'app et le clair est une
+option. Le thème clair est la **même feuille de match** — encre sur papier plutôt que craie sur
+feutre — obtenu en redéfinissant les **valeurs** des tokens sous `html[data-theme="clair"]`,
+sans toucher une seule classe de `src/ui`.
 - **TypeScript partout.**
 - **Stack frontend figée** : React 19 + TS + **Vite** (`vite-plugin-pwa`), **React Router**,
 **TanStack Query**, **Tailwind CSS v4** + design system maison dans
@@ -228,7 +233,9 @@ cadres. Les nombres lus à 3 mètres sont en craie quasi-blanche sur feutre somb
 `rounded-*` ont été retirées de tout `src/ui`. Remettre un rayon dans le `@theme` les
 rallumerait toutes d'un coup — c'est le point de contrôle unique.
 
-**Palette** (tokens `@theme` dans `src/index.css`)
+**Palette** (tokens `@theme` dans `src/index.css`) — les valeurs ci-dessous sont celles du
+**thème sombre**, le défaut. Le thème clair redéfinit les mêmes tokens (§ lot « thème clair »).
+
 
 
 | Rôle                                               | Token         | Hex       |
@@ -386,7 +393,8 @@ src/
 │  ├─ hooks/              useX01 · useTourDuMonde · useCricket ·
 │  │                      useCheckoutPractice · useJoueurs ·
 │  │                      useAppareil (wake lock, préférences, voix)
-│  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises)
+│  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
+│     theme.ts (clair / sombre / système) · accents.ts
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
 ```
@@ -480,6 +488,11 @@ par le composition root.
   **un tableau transposé** (joueurs en colonnes, statistiques en lignes) et reçoit la **carte
   des impacts** de la partie. Les impacts descendent dans `X01PlayerStats` : la carrière les
   additionne au lieu de les recompter. **309 tests verts**, relu à l'écran à 2 et 4 joueurs.
+- [x] **Lot « le thème clair papier »** — thème **clair / sombre / système** dans les Réglages,
+  obtenu **sans toucher une classe** des 43 fichiers qui peignent : la palette est employée en
+  paires de rôle, donc en retourner les valeurs retourne l'app. Le vrai coût était ailleurs —
+  une trentaine de couleurs écrites en dur, et un laiton à **1,84:1 sur du papier**.
+  **318 tests verts**, relu à l'écran sur neuf vues : deux défauts rattrapés là.
 - [ ] **Lot 6** — *(optionnel, si un jour)* sync / classement — un adapter, zéro refonte
 
 - [x] **Lot « les trois finitions »** — les trois idées écartées du lot précédent, reprises :
@@ -1213,6 +1226,70 @@ projection, donc écrire une volée de trop dans un journal **décale l'attribut
 suivantes**. C'est la contrepartie de « `VisitRecorded` ne porte pas de `playerId` » (lot 1) —
 le journal ne peut pas être en désaccord avec les règles, mais un journal fabriqué à la main
 doit respecter le tour de table à la volée près.
+
+### Décisions du lot « le thème clair papier »
+
+Un thème clair demandé après coup, sur une charte écrite pour le sombre. La question n'était
+pas « est-ce faisable » mais « qu'est-ce qui va casser ».
+
+- ⚠️ **Le thème clair ne modifie AUCUNE classe de `src/ui`.** Il redéfinit les **valeurs** des
+tokens sous `html[data-theme="clair"]`, et rien d'autre. Ça marche parce que la palette est
+employée en **paires de rôle constantes** — `feutre`/`ardoise` = surfaces, `craie` = texte,
+`laiton` = accent : `bg-craie text-feutre` (l'inversion des en-têtes) reste une inversion quand
+les deux valeurs se retournent. Vérifié dans le CSS compilé : Tailwind 4 émet bien
+`.bg-feutre{background-color:var(--color-feutre)}`.
+- **Le prix assumé** : sous thème clair, le token « feutre » vaut du papier et « craie » vaut de
+l'encre. **Les noms disent la matière d'origine, les tokens portent le rôle.** L'alternative —
+des tokens sémantiques `--color-fond` / `--color-texte` — voulait dire réécrire 43 fichiers
+pour exactement le même rendu.
+- ⚠️ **Le défaut est SOMBRE, pas « système ».** Le cadrage du projet est un garage mal éclairé,
+téléphone en luminosité basse. Ouvrir la mise à jour sur un fond blanc parce que le téléphone
+est en clair serait un changement que personne n'a demandé. Testé.
+- ⚠️ **LE point critique : le laiton vif fait 1,84:1 sur du papier.** Le filet de `.au-lancer`,
+qui dit *qui est en train de lancer*, serait devenu invisible — l'information la plus lue de
+l'app. Le thème clair passe donc au **laiton foncé** (`#8a6d12`, 4,4:1), et **« clair » y veut
+dire « plus lisible sur le fond », donc plus foncé** (`laiton-clair` = `#6b5209`, 6,6:1). C'est
+le rôle qui s'inverse, pas la teinte. Même logique pour les quatre accents de mode.
+- ⚠️ **Les accents de mode ont dû quitter `accents.ts` pour `index.css`.** Ils partent dans un
+`style=` inline, qu'aucune règle CSS ne peut retourner : `ACCENTS_MODE` ne contient plus que
+des `var(--accent-*)`, qui se résolvent au rendu, donc dans le bon thème.
+- **`Preferences` suffisait, aucun port nouveau.** Lire `matchMedia` vit dans la coquille UI, au
+même titre que le `<input type="file">` de l'écran Réglages (lot 4) : aucune règle de jeu.
+- ⚠️ **Un script d'amorçage dans `index.html`, doublon assumé de `theme.ts`.** Sans lui, la page
+s'afficherait en sombre le temps du montage de React puis basculerait — un flash à chaque
+ouverture. Il doit tourner avant le bundle, donc il ne peut pas l'importer : la clé et les deux
+teintes de barre doivent rester d'accord à la main.
+- ⚠️ **La préférence est RELUE à chaque bascule du système, jamais capturée en état.** Sinon
+l'écouteur posé par `App` alors que le réglage valait « Système » rappliquerait ce choix au
+premier coucher de soleil, écrasant le « Clair » choisi entre-temps. Même règle que `useVoix`
+depuis le lot 5b. Testé — c'est le test le plus utile du lot.
+- **`appliquerTheme` est le seul endroit qui écrit `data-theme`** : deux écrivains finiraient
+par se contredire au retour d'un écran.
+- **Deux ombres, pas une.** `--teinte-relief` (le filet de 1 px de `.grave`) s'inverse — noir
+sous de la craie, blanc sous de l'encre. `--ombre-plaque` (l'enseigne, le nom du vainqueur) ne
+le peut **pas** : à 3 px sous du laiton foncé, du blanc ne fait pas une ombre, il fait un
+contour, et le mot a l'air mal imprimé. Elle passe au brun de bois. Vu à l'écran seulement.
+- ⚠️ **Le `theme_color` du manifeste PWA reste figé.** La balise `<meta>` suit le thème au
+runtime, le manifeste non : une app **installée** garde sa barre système sombre. Limite du
+format, pas un oubli.
+- **Une garde d'architecture nouvelle** (`tests/architecture/themeBoundary.test.ts`) : aucune
+couleur en dur dans `src/ui`, et le thème clair doit redéfinir **tous** les tokens du sombre.
+C'est ce qui a coûté le lot — une trentaine de hex disséminés, invisibles au vert des tests.
+Trois exceptions, toutes documentées : `couleurs.ts` (teintes symboliques posées sur leur
+propre pastille), `Cible.tsx` (un vrai plateau : le rouge du double 20 ne s'éclaircit pas le
+jour) et `theme.ts` (les deux teintes de barre, une par thème par définition).
+- **`CarteImpacts` lit des `var()` dans ses attributs SVG** plutôt que des hex : les valeurs
+sombres sont identiques au pixel près, donc le thème sombre n'a pas bougé d'un cheveu.
+
+**Ce que la relecture à l'écran a rattrapé** (Chrome piloté par `playwright-core`, 390 × 844,
+neuf vues dans chaque thème — les tests étaient verts pendant ce temps) :
+
+- **l'enseigne « Dartpéro » portait un contour blanc** au lieu d'une ombre : l'ombre partagée
+avec `.grave` était devenue blanche pour le thème clair, ce qui marche sous du petit texte et
+pas du tout sous une plaque de laiton. D'où la séparation en deux tokens ;
+- **le plateau qui tourne derrière l'enseigne virait au pastel** : sur du feutre, ses rouges et
+verts à 12 % sont un fantôme ; sur du papier, ce sont des taches roses et vertes qui
+concurrencent le nom. Il descend à 7 % en clair (`--voile-cible`).
 
 ## Décisions ouvertes
 

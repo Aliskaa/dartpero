@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useServices } from '../providers/ServicesProvider'
+import { appliquerTheme, CLE_THEME, ecouterThemeSysteme, THEME_DEFAUT, type Theme } from '../theme'
 
 /**
  * Garde l'écran allumé tant que le composant est monté et `actif` vrai.
@@ -54,4 +55,28 @@ export const useVoix = (): ((texte: string) => void) => {
     },
     [devices],
   )
+}
+
+/**
+ * Applique le thème enregistré au montage, puis suit le réglage système tant
+ * que l'utilisateur a laissé « Système ».
+ *
+ * ⚠️ La préférence est **relue** à chaque bascule du système, jamais capturée
+ * en état : sinon, choisir « Clair » depuis les Réglages laisserait cet
+ * écouteur rappliquer l'ancien choix au prochain coucher de soleil. Même règle
+ * que `useVoix`, qui relit la préférence à chaque annonce.
+ *
+ * Le premier rendu, lui, est déjà peint : le script d'amorçage de `index.html`
+ * a posé l'attribut avant que le bundle ne se charge. Cet effet ne fait que
+ * rattraper les cas où il n'a pas pu (navigation privée, `localStorage`
+ * indisponible — le port retombe alors en mémoire).
+ */
+export const useThemeSysteme = (): void => {
+  const { devices } = useServices()
+
+  useEffect(() => {
+    const poser = () => appliquerTheme(devices.preferences.read<Theme>(CLE_THEME, THEME_DEFAUT))
+    poser()
+    return ecouterThemeSysteme(poser)
+  }, [devices])
 }

@@ -1,6 +1,7 @@
 import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import type { GameModeId } from '@/core/domain/games'
+import type { Theme } from '@/ui/theme'
 
 /** Le cœur reste en anglais ; tout le français de l'app vit ici. */
 export const LIBELLE_ISSUE: Record<VisitOutcome, string> = {
@@ -169,6 +170,17 @@ export const PERIODE_EN_TOUTES_LETTRES: Record<StatsPeriod, string> = {
   LAST_7_DAYS: 'ces 7 derniers jours',
   LAST_30_DAYS: 'ces 30 derniers jours',
   ALL_TIME: 'toutes parties confondues',
+}
+
+/**
+ * Les trois thèmes, côté français. « Système » se dit tel quel : c'est le mot
+ * qu'emploient iOS et Android dans leurs propres réglages, et l'utilisateur
+ * cherche le sien.
+ */
+export const LIBELLE_THEME: Record<Theme, string> = {
+  sombre: 'Sombre',
+  clair: 'Clair',
+  systeme: 'Système',
 }
 
 export const JOUEUR_SUPPRIME = 'Joueur supprimé'
