@@ -136,6 +136,10 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `Annulation { court, complet }` dans `labels.ts`.
 - Pas de `rounded-*`, pas de couleur en dur — seulement les tokens (`text-craie`,
   `bg-laiton`…), vérifié par `tests/architecture/themeBoundary.test.ts`.
+- Un ratio dont le dénominateur peut valoir zéro s'affiche via `pourcent(valeur, occasions)`
+  (`src/ui/labels.ts`) : sans occasion, un tiret **cadratin** `—` (U+2014), jamais « 0 % » — qui
+  se lit « il a tout raté ». Trois appelants : matchs, legs, doubles. ⚠️ Un pourcentage de
+  **progression** (`LigneCible.tsx`) garde son `0` : là, zéro est un vrai zéro, pas une absence.
 
 ## 10 · Hooks (`ui/hooks/use<Mode>.ts`)
 

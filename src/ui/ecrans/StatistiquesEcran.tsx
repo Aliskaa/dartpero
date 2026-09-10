@@ -17,16 +17,9 @@ import {
   nomJoueur,
   PERIODE_EN_TOUTES_LETTRES,
   pluriel,
+  pourcent,
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
-
-/**
- * ⚠️ Un tiret plutôt que « 0 % » quand rien n'a été joué : zéro pour cent, ça
- * veut dire « il a tout perdu ». Rien du tout, ça veut dire « on ne sait pas
- * encore » — et un leg en cours n'est ni gagné ni perdu.
- */
-const pourcent = (valeur: number, joues: number): string =>
-  joues === 0 ? '—' : `${Math.round(valeur)} %`
 
 type Colonne = {
   readonly libelle: string
@@ -168,7 +161,7 @@ const TABLEAUX: readonly { readonly titre: string; readonly colonnes: readonly C
     colonnes: [
       {
         libelle: '% doubles',
-        valeur: (j) => `${Math.round(j.checkoutPercent)} %`,
+        valeur: (j) => pourcent(j.checkoutPercent, j.doubleAttempts),
         tri: (j) => j.checkoutPercent,
       },
       {

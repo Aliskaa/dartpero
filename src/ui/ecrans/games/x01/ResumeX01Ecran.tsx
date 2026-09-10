@@ -10,7 +10,7 @@ import { PanneauImpacts } from '@/ui/composants/commun/PanneauImpacts'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
 import { type LigneStat, TableauJoueurs } from '@/ui/composants/commun/TableauJoueurs'
 import { useProfils } from '@/ui/hooks/useJoueurs'
-import { moyenne, nomJoueur, phraseVictoire } from '@/ui/labels'
+import { moyenne, nomJoueur, phraseVictoire, pourcent } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /**
@@ -43,7 +43,7 @@ const LIGNES: readonly LigneStat<X01PlayerStats>[] = [
   { libelle: '100+', valeur: (j) => j.count100plus, meilleur: (j) => j.count100plus },
   {
     libelle: '% doubles',
-    valeur: (j) => `${Math.round(j.checkoutPercent)} %`,
+    valeur: (j) => pourcent(j.checkoutPercent, j.doubleAttempts),
     meilleur: (j) => j.checkoutPercent,
   },
   {

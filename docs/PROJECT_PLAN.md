@@ -1327,3 +1327,34 @@ une couverture explicite de l'annulation + rejeu à froid juste après une clôt
 Aucune relecture à l'écran faite pour ce lot — le diff ne touche aucune classe Tailwind, aucun
 token, aucune structure de balisage, seul le *moment* des transitions change.
 
+### Décisions du lot « pourcentage-doubles-tiret » (post-audit 2026-09-10)
+
+Candidat 2 de `docs/audits/2026-09-10.md`, traité via `/orchestrate`
+(`docs/lots/pourcentage-doubles-tiret/`).
+
+- `pourcent(valeur, occasions)` **monte de `StatistiquesEcran.tsx` (privée) vers `src/ui/labels.ts`
+(exportée)** : la règle « pas d'occasion, pas de pourcentage » — déjà appliquée à
+`matchWinPercent`/`legWinPercent` depuis le lot « les trois finitions » — vivait dans un fichier
+d'écran, donc invisible du second écran qui en avait besoin. C'est l'obstacle structurel, pas
+seulement le symptôme, qui a été corrigé.
+- `checkoutPercent` y passe désormais sur les deux écrans qui l'affichent
+(`StatistiquesEcran.tsx`, `ResumeX01Ecran.tsx`). **`tri` et `meilleur` restent bruts** : le
+classement et le dorage sont inchangés, seul le texte de cellule change.
+- Cas plus grave que l'audit ne le disait : en `doubleOut: false`, `doubleAttempts` vaut 0 pour
+tout le monde (`isOnACheckoutDouble` renvoie toujours `false` dans ce cas) — la feuille de
+match affichait donc « 0 % » à un joueur qui **venait de sortir son leg sur un double**. Le
+défaut ne mentait pas qu'à celui qui n'avait rien tenté, il mentait aussi au vainqueur.
+- **330 → 334 tests verts** (+4 : 3 dans `tests/ui/resumeX01.test.tsx`, 1 dans
+`tests/ui/lot4.test.tsx`), dont le cas discriminant « tenté et tout raté → 0 %, jamais un
+tiret » — sans lequel rien ne prouve que le lot n'a pas simplement remplacé tous les zéros par
+des tirets. Trois mutations indépendantes en revue (dont deux non prévues par le plan de test
+initial) confirment la couverture sur les deux écrans et sur le helper lui-même.
+- Aucune relecture à l'écran faite pour ce lot — tranché en revue, mécanisme par mécanisme
+(glyphe déjà à l'écran ailleurs dans les mêmes cellules, largeur ne pouvant que se réduire,
+couleur/dorage décidés uniquement par des valeurs restées brutes) : zéro classe Tailwind, zéro
+token, zéro balise nouvelle dans le diff.
+- Même défaut identifié, non traité, sur `successPercent` (mode entraînement,
+`ApercuPartie.tsx`, `ResumeEntrainementEcran.tsx`) — hors périmètre assumé, à verser à un futur
+audit : cet écran n'a pas de tableau, et une phrase d'appréciation dérivée du même chiffre pose
+une question ergonomique propre.
+

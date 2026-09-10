@@ -191,6 +191,17 @@ export const nomJoueur = (nom: string | null): string => nom ?? JOUEUR_SUPPRIME
 export const moyenne = (valeur: number): string =>
   valeur.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
+/**
+ * ⚠️ Un tiret plutôt que « 0 % » quand rien n'a été joué ou tenté : zéro pour
+ * cent, ça veut dire « il a tout perdu ». Rien du tout, ça veut dire « on ne
+ * sait pas encore » — un leg en cours n'est ni gagné ni perdu, et un joueur
+ * qui n'a jamais eu de double à jouer n'a pas raté ses sorties, il n'en a
+ * simplement pas eu. Sert aux trois pourcentages de l'app : matchs, legs,
+ * doubles.
+ */
+export const pourcent = (valeur: number, occasions: number): string =>
+  occasions === 0 ? '—' : `${Math.round(valeur)} %`
+
 export const dateCourte = (horodatage: number): string =>
   new Date(horodatage).toLocaleDateString('fr-FR', {
     day: 'numeric',

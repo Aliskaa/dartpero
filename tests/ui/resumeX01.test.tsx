@@ -165,4 +165,101 @@ describe('Le résumé de partie, de bout en bout', () => {
     expect(screen.getByRole('img', { name: /^Julien : / })).toBeInTheDocument()
     expect(screen.getByText('Hors cible ×2')).toBeInTheDocument()
   })
+
+  /**
+   * ⚠️ Cas signalé par Archi comme plus grave que prévu : cette fixture
+   * joue en `doubleOut: false`, donc Kevin GAGNE son leg sur un D12 sans que
+   * les stats l'enregistrent jamais comme « sur un double » — `doubleAttempts`
+   * reste à 0 pour tout le monde. Un tiret est donc dû aux DEUX joueurs, y
+   * compris au vainqueur : surtout pas « 0 % », qui mentirait sur celui qui
+   * vient de sortir.
+   */
+  it('écrit un tiret pour « % doubles » quand double out est désactivé, même pour le vainqueur du leg', async () => {
+    const { services, matchId } = await partieJouee()
+    renderWithServices(<App />, { services, route: `/partie/${matchId}/resume` })
+
+    const feuille = await screen.findByRole('table', { name: 'Statistiques de la partie' })
+    const ligne = within(feuille).getByRole('row', { name: /% doubles/ })
+    const cellules = within(ligne).getAllByRole('cell')
+
+    expect(cellules[0]).toHaveTextContent('—')
+    expect(cellules[1]).toHaveTextContent('—')
+  })
+})
+
+describe('% doubles — pourcentage réel vs zéro réel vs absence de tentative', () => {
+  /**
+   * Kevin part déjà « sur un double » (reste 40, double out actif par
+   * défaut) : deux fléchettes ratées comptent comme tentatives, la
+   * troisième sort le leg — 1 réussite sur 3, donc 33 %. Il gagne dès son
+   * premier tour, Julien ne rejoue donc jamais : aucune tentative pour lui.
+   */
+  const partieAvecCheckoutReussi = async () => {
+    const { services } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+    const julien = await services.managePlayers.create('Julien')
+
+    const matchId = await services.startMatch.execute({
+      playerIds: [kevin.id, julien.id],
+      config: X01Config.create({ startingScore: 40, legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({
+      matchId,
+      darts: [Dart.miss(), Dart.miss(), Dart.double(20)],
+    })
+
+    return { services, matchId }
+  }
+
+  /**
+   * Même point de départ, mais Kevin rate ses trois fléchettes : le reste ne
+   * bouge pas (aucun bust), et chacune compte quand même comme une tentative
+   * de double ratée — 0 réussite sur 3, donc 0 %, pas un tiret.
+   */
+  const partieAvecDoubleRate = async () => {
+    const { services } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+    const julien = await services.managePlayers.create('Julien')
+
+    const matchId = await services.startMatch.execute({
+      playerIds: [kevin.id, julien.id],
+      config: X01Config.create({ startingScore: 40, legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({
+      matchId,
+      darts: [Dart.miss(), Dart.miss(), Dart.miss()],
+    })
+
+    return { services, matchId }
+  }
+
+  it('affiche un pourcentage arrondi pour un joueur qui a tenté, un tiret pour celui qui n’a rien tenté', async () => {
+    const { services, matchId } = await partieAvecCheckoutReussi()
+    renderWithServices(<App />, { services, route: `/partie/${matchId}/resume` })
+
+    const feuille = await screen.findByRole('table', { name: 'Statistiques de la partie' })
+    const ligne = within(feuille).getByRole('row', { name: /% doubles/ })
+    const cellules = within(ligne).getAllByRole('cell')
+
+    expect(cellules[0]).toHaveTextContent('33 %')
+    expect(cellules[1]).toHaveTextContent('—')
+  })
+
+  /**
+   * Le cas discriminant du lot : sans lui, rien ne prouve que `pourcent()`
+   * ne s'est pas contenté de remplacer TOUS les zéros par des tirets.
+   */
+  it('affiche « 0 % », jamais un tiret, pour un joueur qui a tenté un double et raté toutes ses tentatives', async () => {
+    const { services, matchId } = await partieAvecDoubleRate()
+    renderWithServices(<App />, { services, route: `/partie/${matchId}/resume` })
+
+    const feuille = await screen.findByRole('table', { name: 'Statistiques de la partie' })
+    const ligne = within(feuille).getByRole('row', { name: /% doubles/ })
+    const cellules = within(ligne).getAllByRole('cell')
+
+    expect(cellules[0]).toHaveTextContent('0 %')
+    expect(cellules[0]).not.toHaveTextContent('—')
+    // Julien n'a pas rejoué : aucune tentative, donc un tiret — pas « 0 % ».
+    expect(cellules[1]).toHaveTextContent('—')
+  })
 })

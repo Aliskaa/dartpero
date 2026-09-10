@@ -328,6 +328,58 @@ describe('Écran Statistiques', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Hors cible ×1')).toBeInTheDocument()
   })
+
+  it('distingue tiret / pourcentage / « 0 % » pour le % de doubles de la carrière', async () => {
+    const { services } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+    const julien = await services.managePlayers.create('Julien')
+    const david = await services.managePlayers.create('David')
+
+    // Kevin : déjà « sur un double » (40, double out par défaut), deux
+    // ratés puis la sortie — 1 réussite sur 3 tentatives, donc 33 %.
+    const matchKevin = await services.startMatch.execute({
+      playerIds: [kevin.id],
+      config: X01Config.create({ startingScore: 40, legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({
+      matchId: matchKevin,
+      darts: [Dart.miss(), Dart.miss(), Dart.double(20)],
+    })
+
+    // Julien : même point de départ, mais rate ses trois tentatives —
+    // 0 réussite sur 3, donc « 0 % », pas un tiret.
+    const matchJulien = await services.startMatch.execute({
+      playerIds: [julien.id],
+      config: X01Config.create({ startingScore: 40, legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({
+      matchId: matchJulien,
+      darts: [Dart.miss(), Dart.miss(), Dart.miss()],
+    })
+
+    // David : ne s'approche jamais d'un reste de double — aucune tentative,
+    // donc un tiret.
+    const matchDavid = await services.startMatch.execute({
+      playerIds: [david.id],
+      config: X01Config.create({ legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({
+      matchId: matchDavid,
+      darts: [Dart.single(5), Dart.single(5), Dart.miss()],
+    })
+
+    renderWithServices(<App />, { services, route: '/statistiques' })
+
+    const finitions = await screen.findByRole('table', { name: 'Finitions' })
+    const lignes = within(finitions).getAllByRole('row').slice(1)
+    const ligneDe = (nom: string) =>
+      lignes.find((ligne) => within(ligne).queryByText(nom)) as HTMLElement
+
+    // « % doubles » est la première colonne chiffrée, juste après le nom.
+    expect(within(ligneDe('Kevin')).getAllByRole('cell')[1]).toHaveTextContent('33 %')
+    expect(within(ligneDe('Julien')).getAllByRole('cell')[1]).toHaveTextContent('0 %')
+    expect(within(ligneDe('David')).getAllByRole('cell')[1]).toHaveTextContent('—')
+  })
 })
 
 describe('Écran Réglages', () => {
