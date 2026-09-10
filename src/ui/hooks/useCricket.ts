@@ -18,9 +18,9 @@ const message = (erreur: unknown): string =>
  * Même principe qu'ailleurs : TanStack Query sert de **cache**, la volée
  * enregistrée renvoie déjà le nouvel état, qu'on injecte directement.
  *
- * Comme au Tour du monde, la volée en cours n'a pas besoin d'être « prévue »
- * par un port : au Cricket il n'y a ni bust ni sortie, une volée fait toujours
- * trois fléchettes — sauf celle qui gagne, et c'est le domaine qui la tronque.
+ * Comme au X01 et au Tour du monde, la volée en cours est « prévue » par un
+ * port : au Cricket il n'y a ni bust ni sortie, mais une volée s'arrête sur la
+ * fléchette qui gagne la partie, et l'écran ne peut pas le deviner seul.
  * En revanche le multiplicateur compte ici (il vaut une, deux ou trois
  * marques), donc la bascule S/D/T du X01 revient — **momentanée**, elle aussi.
  */

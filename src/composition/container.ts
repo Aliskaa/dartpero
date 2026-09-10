@@ -21,6 +21,7 @@ import type { PlayCheckoutPractice } from '@/core/application/ports/driving/Play
 import type { PlayCricket } from '@/core/application/ports/driving/PlayCricket'
 import type { PlayTourDuMonde } from '@/core/application/ports/driving/PlayTourDuMonde'
 import type { PreviewCricketVisit } from '@/core/application/ports/driving/PreviewCricketVisit'
+import type { PreviewTourDuMondeVisit } from '@/core/application/ports/driving/PreviewTourDuMondeVisit'
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
 import type { RestartMatch } from '@/core/application/ports/driving/RestartMatch'
@@ -40,6 +41,7 @@ import { PlayCheckoutPracticeUseCase } from '@/core/application/use-cases/PlayCh
 import { PlayCricketUseCase } from '@/core/application/use-cases/PlayCricketUseCase'
 import { PlayTourDuMondeUseCase } from '@/core/application/use-cases/PlayTourDuMondeUseCase'
 import { PreviewCricketVisitUseCase } from '@/core/application/use-cases/PreviewCricketVisitUseCase'
+import { PreviewTourDuMondeVisitUseCase } from '@/core/application/use-cases/PreviewTourDuMondeVisitUseCase'
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
 import { RestartMatchUseCase } from '@/core/application/use-cases/RestartMatchUseCase'
@@ -112,6 +114,7 @@ export type Services = {
   /** L'entraînement solo au checkout (lot 5b). */
   readonly playCheckoutPractice: PlayCheckoutPractice
   readonly previewVisit: PreviewVisit
+  readonly previewTourDuMondeVisit: PreviewTourDuMondeVisit
   readonly previewCricketVisit: PreviewCricketVisit
   readonly devices: Devices
 }
@@ -160,6 +163,7 @@ export const createServices = ({
     playCricket,
     playCheckoutPractice,
     previewVisit: new PreviewVisitUseCase(),
+    previewTourDuMondeVisit: new PreviewTourDuMondeVisitUseCase(),
     previewCricketVisit: new PreviewCricketVisitUseCase(),
     devices,
   }

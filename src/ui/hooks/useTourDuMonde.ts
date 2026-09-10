@@ -18,10 +18,11 @@ const message = (erreur: unknown): string =>
  * Même principe qu'au X01 : TanStack Query sert de **cache**, la volée
  * enregistrée renvoie déjà le nouvel état, qu'on injecte directement.
  *
- * Différence notable : ici la volée en cours n'a pas besoin d'être « prévue »
- * par un port. Toucher une cible ou non est immédiat et sans conséquence
- * cachée — pas de bust, pas de double à surveiller. On accumule donc les
- * fléchettes localement et on enregistre quand la volée est complète.
+ * La volée en cours passe par le port `PreviewTourDuMondeVisit` : la progression
+ * affichée suit chaque fléchette sans que l'écran recopie la règle « toucher,
+ * c'est atteindre le secteur », et la volée se clôt dès la fléchette qui boucle
+ * le parcours — réclamer les suivantes fausserait le départage, qui se joue au
+ * nombre de fléchettes.
  */
 export const useTourDuMonde = (matchId: MatchId) => {
   const services = useServices()
@@ -48,6 +49,18 @@ export const useTourDuMonde = (matchId: MatchId) => {
 
   const joueurCourant = state?.players[state.currentPlayerIndex] ?? null
   const termine = state?.finished ?? false
+
+  /**
+   * Le tableau **tel qu'il doit s'afficher** : progression, cible courante et
+   * compteur de fléchettes suivent chaque fléchette, avant même que la volée ne
+   * soit enregistrée. Le calcul vient du port, jamais d'une règle recopiée ici.
+   */
+  const apercu = useMemo(() => {
+    if (!state || termine) return null
+    return services.previewTourDuMondeVisit.execute({ state, darts: dartsEnCours })
+  }, [services, state, termine, dartsEnCours])
+
+  const affiche = apercu?.state ?? state
 
   const enregistrer = useCallback(
     async (darts: readonly Dart[]) => {
@@ -93,9 +106,11 @@ export const useTourDuMonde = (matchId: MatchId) => {
       setDartsEnCours(suite)
       setDerniereVolee(null)
 
-      // Trois fléchettes : la volée est close. Le domaine tronquera lui-même si
-      // le tour a été bouclé avant la troisième.
-      if (suite.length >= 3) void enregistrer(suite)
+      // La volée est close à trois fléchettes — ou dès celle qui boucle le
+      // parcours : les suivantes n'auraient plus de cible.
+      if (services.previewTourDuMondeVisit.execute({ state, darts: suite }).complete) {
+        void enregistrer(suite)
+      }
     },
     [services, state, occupe, termine, dartsEnCours, enregistrer],
   )
@@ -128,23 +143,6 @@ export const useTourDuMonde = (matchId: MatchId) => {
     }
   }, [services, state, matchId, dartsEnCours.length, queryClient])
 
-  /**
-   * La progression **affichée** du joueur courant : elle suit chaque fléchette
-   * saisie, avant même que la volée ne soit enregistrée. C'est le seul calcul
-   * de règle recopié ici — toucher, c'est atteindre le secteur — et il reste
-   * volontairement local à l'aperçu : l'état qui fait foi vient du domaine.
-   */
-  const apercu = (() => {
-    if (!state || !joueurCourant) return { validees: 0, cible: null }
-
-    let index = joueurCourant.targetIndex
-    for (const dart of dartsEnCours) {
-      if (index >= state.config.targets.length) break
-      if (dart.segment === state.config.targets[index]) index += 1
-    }
-    return { validees: index, cible: state.config.targets[index] ?? null }
-  })()
-
   /** Ce que le bouton va défaire, écrit dessus — voir `libelleAnnulation`. */
   const annulation = useMemo(() => {
     const derniereFlechette = dartsEnCours.at(-1)
@@ -157,12 +155,13 @@ export const useTourDuMonde = (matchId: MatchId) => {
 
   return {
     state,
+    /** Le tableau à afficher : l'état réel augmenté de la volée en cours. */
+    affiche,
     chargement: requete.isPending,
     erreurChargement: requete.error,
     joueurCourant,
     termine,
     dartsEnCours,
-    apercu,
     derniereVolee,
     ajouterFlechette,
     annuler,

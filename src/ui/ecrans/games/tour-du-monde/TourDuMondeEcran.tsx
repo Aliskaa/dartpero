@@ -42,7 +42,7 @@ export const TourDuMondeEcran = () => {
   const profils = useProfils()
 
   const partie = useTourDuMonde(identifiant)
-  const { state, termine } = partie
+  const { state, affiche, termine } = partie
 
   useWakeLock(state !== null && !termine)
 
@@ -52,7 +52,7 @@ export const TourDuMondeEcran = () => {
 
   if (partie.chargement) return <Spinner label="Chargement de la partie…" />
 
-  if (partie.erreurChargement || !state || !partie.joueurCourant) {
+  if (partie.erreurChargement || !state || !affiche || !partie.joueurCourant) {
     return (
       <EcranErreur
         message="Cette partie est introuvable."
@@ -127,26 +127,22 @@ export const TourDuMondeEcran = () => {
         aria-label="Tableau des scores"
         className="flex min-h-0 flex-1 flex-col justify-center gap-2"
       >
-        {state.players.map((joueur, index) => {
+        {affiche.players.map((joueur, index) => {
+          // Le tableau affiché intègre la volée en cours ; la main, elle, se lit
+          // sur l'état réel — c'est encore au même joueur de jouer.
           const actif = index === state.currentPlayerIndex && !state.finished
           const profil = profils.get(joueur.playerId)
           const nom = nomJoueur(profil?.name ?? null)
-
-          // Le joueur qui tape voit sa progression suivre chaque fléchette.
-          const validees = actif ? partie.apercu.validees : joueur.targetIndex
-          const cible = actif
-            ? partie.apercu.cible
-            : (state.config.targets[joueur.targetIndex] ?? null)
 
           return (
             <LigneCible
               key={joueur.playerId}
               nom={nom}
               couleur={profil?.color ?? null}
-              cible={cible}
-              validees={validees}
+              cible={state.config.targets[joueur.targetIndex] ?? null}
+              validees={joueur.targetIndex}
               total={total}
-              flechettes={joueur.dartsThrown + (actif ? partie.dartsEnCours.length : 0)}
+              flechettes={joueur.dartsThrown}
               actif={actif}
               vainqueur={state.winnerId === joueur.playerId}
               compact={compact}

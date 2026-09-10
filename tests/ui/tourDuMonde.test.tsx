@@ -25,6 +25,16 @@ const partieCourte = async (services: Services, noms = ['Kevin', 'Julien']) => {
 
 const cibleDe = (nom: string) => screen.getByLabelText(`Cible de ${nom}`)
 
+/** La ligne entière d'un joueur, pour y lire son compteur de fléchettes. */
+const ligneDe = (nom: string): HTMLElement => {
+  const ligne = cibleDe(nom).closest('article')
+  if (!ligne) throw new Error(`Ligne introuvable pour ${nom}`)
+  return ligne
+}
+
+/** Une volée blanche : trois fléchettes consommées, aucune cible validée. */
+const RATE = [Dart.miss(), Dart.miss(), Dart.miss()]
+
 describe('Tour du monde — écran de jeu', () => {
   it('avance de cible en cible et suit la progression avant l’enregistrement', async () => {
     const utilisateur = userEvent.setup()
@@ -119,6 +129,188 @@ describe('Tour du monde — écran de jeu', () => {
 
     expect(await screen.findByRole('heading', { name: 'Ex æquo' })).toBeInTheDocument()
     expect(screen.queryByText('Vainqueur')).toBeNull()
+  })
+
+  /**
+   * LE cas du lot : la volée s’arrête sur la fléchette qui boucle le parcours,
+   * comme une volée de checkout au X01 — sans réclamer deux fléchettes fantômes.
+   *
+   * Le montage amène Kevin sur la bulle en un tour de table complet, pour que la
+   * main lui revienne : un seul clic doit alors suffire à clore sa volée. C’est
+   * ce cas, et lui seul, qui distingue `targetIndexAfter` d’un `state.finished`
+   * recopié du Cricket — ici la partie continue, mais la volée est finie.
+   */
+  it('clôt la volée dès la première fléchette quand c’est elle qui boucle', async () => {
+    const utilisateur = userEvent.setup()
+    const { services } = fakeServices()
+    const { matchId } = await partieCourte(services)
+
+    // Kevin touche 20 puis 19 ; le miss consomme sa 3ᵉ fléchette sans boucler.
+    await services.playTourDuMonde.recordVisit(matchId, [
+      Dart.single(20),
+      Dart.single(19),
+      Dart.miss(),
+    ])
+    await services.playTourDuMonde.recordVisit(matchId, RATE)
+
+    renderWithServices(<App />, { services, route: `/partie/${matchId}` })
+    await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
+
+    await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+
+    // Un seul clic, et la main est déjà passée.
+    await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
+    expect(ligneDe('Kevin')).not.toHaveAttribute('aria-current')
+
+    // « On finit le tour de table » : boucler n’arrête pas la partie.
+    expect(await screen.findByText('Dernier tour')).toBeInTheDocument()
+    expect(screen.queryByText('Vainqueur')).toBeNull()
+  })
+
+  it('clôt la volée sur la deuxième fléchette quand c’est elle qui boucle', async () => {
+    const utilisateur = userEvent.setup()
+    const { services } = fakeServices()
+    const { matchId } = await partieCourte(services)
+
+    await services.playTourDuMonde.recordVisit(matchId, [Dart.single(20), Dart.miss(), Dart.miss()])
+    await services.playTourDuMonde.recordVisit(matchId, RATE)
+
+    renderWithServices(<App />, { services, route: `/partie/${matchId}` })
+    await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('19'))
+
+    await utilisateur.click(screen.getByRole('button', { name: '19' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+
+    // Deux clics, pas trois.
+    await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
+  })
+
+  /**
+   * Le compteur départage le mode : il ne doit compter que les fléchettes
+   * réellement lancées. Trois fantômes de plus, et le classement ment.
+   */
+  it('compte les fléchettes réellement lancées après une clôture anticipée', async () => {
+    const utilisateur = userEvent.setup()
+    const { services } = fakeServices()
+    const { matchId } = await partieCourte(services)
+
+    await services.playTourDuMonde.recordVisit(matchId, [
+      Dart.single(20),
+      Dart.single(19),
+      Dart.miss(),
+    ])
+    await services.playTourDuMonde.recordVisit(matchId, RATE)
+
+    renderWithServices(<App />, { services, route: `/partie/${matchId}` })
+    await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
+
+    await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+
+    // 3 au premier tour + celle qui boucle. Jamais 6.
+    await waitFor(() =>
+      expect(within(ligneDe('Kevin')).getByText('4 fléchettes')).toBeInTheDocument(),
+    )
+
+    // Le chiffre n'est juste que parce que la volée est CLOSE : sans clôture
+    // anticipée, il compterait une volée encore en cours et serait un hasard.
+    expect(ligneDe('Kevin')).not.toHaveAttribute('aria-current')
+
+    // Et c'est bien ce qui est enregistré, pas seulement ce qui s'affiche.
+    const etat = await services.playTourDuMonde.getState(matchId)
+    expect(etat.players[0]?.dartsThrown).toBe(4)
+    expect(etat.players[0]?.finishedInDarts).toBe(4)
+  })
+
+  /** À trois joueurs, un décalage d’un tour se verrait tout de suite. */
+  it('rend la main au joueur suivant, et à lui seul, à trois joueurs', async () => {
+    const utilisateur = userEvent.setup()
+    const { services } = fakeServices()
+    const { matchId } = await partieCourte(services, ['Kevin', 'Julien', 'Marie'])
+
+    await services.playTourDuMonde.recordVisit(matchId, [
+      Dart.single(20),
+      Dart.single(19),
+      Dart.miss(),
+    ])
+    await services.playTourDuMonde.recordVisit(matchId, RATE)
+    await services.playTourDuMonde.recordVisit(matchId, RATE)
+
+    renderWithServices(<App />, { services, route: `/partie/${matchId}` })
+    await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
+
+    await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+
+    await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
+    expect(ligneDe('Marie')).not.toHaveAttribute('aria-current')
+    expect(ligneDe('Kevin')).not.toHaveAttribute('aria-current')
+    expect(screen.queryByText('Vainqueur')).toBeNull()
+  })
+
+  /**
+   * Le bouton d’annulation ne change pas de code, mais bien de comportement :
+   * après un bouclage anticipé, il n’y a plus de fléchette en cours à retirer.
+   */
+  it('bascule le bouton d’annulation sur la volée dès le bouclage', async () => {
+    const utilisateur = userEvent.setup()
+    const { services } = fakeServices()
+    const { matchId } = await partieCourte(services)
+
+    await services.playTourDuMonde.recordVisit(matchId, [
+      Dart.single(20),
+      Dart.single(19),
+      Dart.miss(),
+    ])
+    await services.playTourDuMonde.recordVisit(matchId, RATE)
+
+    renderWithServices(<App />, { services, route: `/partie/${matchId}` })
+    await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
+
+    await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+
+    expect(
+      await screen.findByRole('button', { name: 'Annuler la volée de Kevin' }),
+    ).toBeInTheDocument()
+  })
+
+  /**
+   * Le pendant à l’écran : ce que le bouton défait, c’est bien la volée d’une
+   * seule fléchette, et l’écran remonté depuis le journal dit la même chose.
+   */
+  it('annule la volée close sur la première fléchette, et le rejeu confirme', async () => {
+    const utilisateur = userEvent.setup()
+    const { services } = fakeServices()
+    const { matchId } = await partieCourte(services)
+
+    await services.playTourDuMonde.recordVisit(matchId, [
+      Dart.single(20),
+      Dart.single(19),
+      Dart.miss(),
+    ])
+    await services.playTourDuMonde.recordVisit(matchId, RATE)
+
+    const vue = renderWithServices(<App />, { services, route: `/partie/${matchId}` })
+    await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
+
+    await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
+
+    await utilisateur.click(
+      await screen.findByRole('button', { name: 'Annuler la volée de Kevin' }),
+    )
+
+    // Kevin retrouve sa bulle, ses 3 fléchettes, et la main.
+    await waitFor(() => expect(cibleDe('Kevin').closest('[aria-current]')).not.toBeNull())
+    expect(cibleDe('Kevin')).toHaveTextContent('Bulle')
+    expect(within(ligneDe('Kevin')).getByText('3 fléchettes')).toBeInTheDocument()
+    expect(screen.queryByText('Dernier tour')).toBeNull()
+
+    // Rejeu à froid : on remonte l’écran, tout revient du journal.
+    vue.unmount()
+    renderWithServices(<App />, { services, route: `/partie/${matchId}` })
+
+    await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
+    expect(within(ligneDe('Kevin')).getByText('3 fléchettes')).toBeInTheDocument()
+    expect(cibleDe('Kevin').closest('[aria-current]')).not.toBeNull()
   })
 })
 
