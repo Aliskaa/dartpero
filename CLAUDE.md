@@ -436,6 +436,12 @@ d'accueil »** (Chrome iOS ne peut pas installer de PWA).
 un **null-object** qui ne casse rien.
 - **Icônes** : `npm run icons` (sharp) génère `public/icons/*` + `apple-touch-icon.png` +
 `favicon.svg` depuis `scripts/icon.svg`. `sharp` est une **devDependency**, hors bundle client.
+- ⚠️ **Vite 8 tourne sur Rolldown : `manualChunks`/`advancedChunks` y sont dépréciés.** Pour
+grouper des chunks (le vendor React/React Router/TanStack Query/Dexie du lot « bundle-par-route »
+par exemple), l'option est `build.rollupOptions.output.codeSplitting.groups`. Un `import()`
+dynamique reste servi sous un service worker `autoUpdate` qui peut purger l'ancien précache
+sous un onglet resté ouvert après déploiement — d'où l'écouteur `vite:preloadError` dans
+`src/main.tsx` (rechargement unique, garde-fou `sessionStorage`).
 
 ---
 
@@ -498,6 +504,15 @@ que Pokegypte). Une seule commande : `npm run firebase:deploy` (= `build` + `fir
 - **iOS** : l'installation passe toujours par Safari → « Ajouter à l'écran d'accueil ». Le HTTPS
   de Firebase règle en revanche la question du contexte sécurisé — Wake Lock, vibration et
   service worker fonctionnent sur le domaine, sans le certificat auto-signé de `dev:mobile`.
+- **Le bundle est découpé par route** (lot « bundle-par-route », post-audit 2026-09-10) :
+  `React.lazy()` sur les écrans de `src/App.tsx` (sauf `AccueilEcran`, volontairement statique)
+  et sur les quatre modes de `src/ui/ecrans/games/PartieEcran.tsx`. Les chunks lazy restent des
+  noms **hachés par Vite** : ils tombent sous la même règle `immutable` que le reste de
+  `/assets/**`, aucun changement de `firebase.json`. ⚠️ **Un écran ne se réimporte jamais
+  statiquement dans `App.tsx` ou `PartieEcran.tsx`** — `tests/architecture/lazyRoutes.test.ts`
+  le vérifie. Le service worker (`globPatterns`) précache tous les chunks automatiquement,
+  y compris ceux jamais ouverts — c'est ce qui permet à un mode jamais visité de fonctionner
+  hors ligne dès la première visite (vérifié en conditions réelles à ce lot).
 
 ---
 

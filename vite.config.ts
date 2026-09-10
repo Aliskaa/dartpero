@@ -78,6 +78,16 @@ export default defineConfig(({ mode, command }) => {
       dedupe: ['react', 'react-dom', 'react-router', '@tanstack/react-query'],
       alias,
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // API Rolldown de Vite 8 : `manualChunks`/`advancedChunks` sont
+          // dépréciés. Isole ~350-400 kB de `node_modules` qui ne bougent
+          // qu'aux montées de version, hors du hash de chaque déploiement.
+          codeSplitting: { groups: [{ name: 'vendor', test: /node_modules/ }] },
+        },
+      },
+    },
     server: {
       host: mobile,
       port: 5173,

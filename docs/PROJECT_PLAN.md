@@ -1358,3 +1358,52 @@ token, zéro balise nouvelle dans le diff.
 audit : cet écran n'a pas de tableau, et une phrase d'appréciation dérivée du même chiffre pose
 une question ergonomique propre.
 
+### Décisions du lot « bundle-par-route » (post-audit 2026-09-10)
+
+Candidat 6 de `docs/audits/2026-09-10.md`, traité via `/orchestrate`
+(`docs/lots/bundle-par-route/`). Lot de performance/build pur : aucune règle de jeu, aucun
+comportement fonctionnel visible touché.
+
+- Le bundle unique (515 kB minifié / 154 kB gzip, au-delà du seuil d'avertissement natif de
+Vite) est **découpé par route** (`React.lazy()` sur 8 des 9 routes de `src/App.tsx`,
+`AccueilEcran` restant volontairement statique) **et par mode de jeu** (les 8 écrans de
+`src/ui/ecrans/games/PartieEcran.tsx` — jeu et résumé de chacun des quatre modes). Chunk
+d'entrée résultant : **61 kB minifié** (÷ 8,4), mesuré, pas estimé.
+- **Un groupe vendor** (`build.rollupOptions.output.codeSplitting.groups` — l'API Rolldown de
+Vite 8, `manualChunks`/`advancedChunks` y sont dépréciés) isole ~360 kB de `node_modules`
+(React, React Router, TanStack Query, Dexie) dans un chunk qui ne bouge qu'aux montées de
+version. C'était le vrai enjeu du lot, pas seulement le premier chargement : sans lui, un
+simple libellé changé dans `labels.ts` continuait de rehasher le chunk d'entrée et de faire
+retélécharger l'équivalent de tout le bundle à chaque déploiement, à cause du cache
+`max-age=31536000, immutable` posé sur `/assets/**` (`CLAUDE.md` § Déploiement).
+- **Fallbacks** : aucun composant nouveau — `Spinner` (plein écran) et `SpinnerLigne` (barre de
+navigation conservée) existaient déjà dans `src/ui/composants/commun/Etats.tsx` et sont
+exactement les états que les écrans affichaient déjà pendant leurs propres requêtes.
+- ⚠️ **Piège introduit par le lazy, sous un service worker `autoUpdate`** : un déploiement
+pendant qu'un onglet reste ouvert purge l'ancien précache workbox sous ses pieds ; le prochain
+`import()` vers un chunk qui n'existe plus échoue (écran mort). Un écouteur
+`vite:preloadError` dans `src/main.tsx` recharge la page une seule fois (garde-fou
+`sessionStorage`, avec repli en cas d'exception — navigation privée sur certains navigateurs).
+Non testé en conditions réelles de déploiement (il faudrait deux versions de build servies
+successivement sous le même SW) — vérifié par lecture de code seulement, assumé.
+- **Invariant décisif, vérifié en conditions réelles et pas seulement déduit** : avec le
+service worker actif et le réseau coupé (`context.setOffline(true)`), les quatre modes de jeu
+et les écrans de consultation restent accessibles **y compris ceux jamais ouverts avant la
+coupure** — la preuve directe que le précache workbox (`globPatterns`) couvre bien les 27
+chunks issus du découpage, sans configuration supplémentaire.
+- **334 → 339 tests verts** (+5, `tests/architecture/lazyRoutes.test.ts` — garde qui interdit
+le retour d'un import statique des 16 écrans concernés, mutation-testée). Deux tours de revue :
+un `try`/`catch` manquant autour de `sessionStorage` (le piège que le projet avait déjà payé
+pour apprendre dans `LocalStoragePreferences.ts`, pas repris du premier coup) et un plancher de
+garde-fou manquant sur une des deux regex du nouveau test — les deux corrigés, prouvés par
+mutation.
+- **Point assumé, non corrigé** : sur un lien profond vers `/partie/:id` (route hors
+`LayoutPrincipal`), la séquence de chargement passe par **trois** fallbacks (`Spinner` deux
+fois, puis `SpinnerLigne`), avec un vrai saut visuel entre le `Spinner` plein écran et le
+`SpinnerLigne` compact — cosmétique (chunk précaché en usage réel, ~100 ms), remède connu à une
+ligne si besoin un jour (donner à `Aiguillage` le même fallback `Spinner` que `App.tsx`).
+- **Points non résolus, hors périmètre de ce lot** : aucun `ErrorBoundary` dans tout le projet
+(si le rechargement unique échoue aussi, écran blanc sans filet) ; la fenêtre d'installation du
+service worker à la toute première visite ; les doublons de précache dans `dist/sw.js`
+(candidat 7 du même audit, non corrigés ici).
+

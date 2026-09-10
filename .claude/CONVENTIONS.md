@@ -228,3 +228,9 @@ d'ouverture, un module de règles avec son `mode` discriminant, trois lignes dan
 aiguillage de `games/index.ts`, un dossier `ui/composants/<mode>/`, un écran de jeu et un
 résumé. Rien d'autre ne bouge — vérifié trois fois de suite (Tour du monde, Cricket,
 entraînement).
+
+⚠️ **Depuis le lot « bundle-par-route »** : un mode ajoute aussi son écran de jeu et son écran
+de résumé à la liste des `lazy()` de `src/ui/ecrans/games/PartieEcran.tsx` (et son écran de
+lancement, s'il en a un, à `src/App.tsx`) — sinon il revient discrètement dans le chunk
+commun, sans qu'aucun test ne le signale (`tests/architecture/lazyRoutes.test.ts` ne connaît
+que les écrans déjà listés au moment où il a été écrit).

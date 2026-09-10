@@ -1,16 +1,41 @@
 import { useQuery } from '@tanstack/react-query'
+import { lazy, Suspense } from 'react'
 import { Link, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
+import { EcranErreur, Spinner, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { useServices } from '@/ui/providers/ServicesProvider'
-import { EntrainementEcran } from './checkout-practice/EntrainementEcran'
-import { ResumeEntrainementEcran } from './checkout-practice/ResumeEntrainementEcran'
-import { CricketEcran } from './cricket/CricketEcran'
-import { ResumeCricketEcran } from './cricket/ResumeCricketEcran'
-import { ResumeTourDuMondeEcran } from './tour-du-monde/ResumeTourDuMondeEcran'
-import { TourDuMondeEcran } from './tour-du-monde/TourDuMondeEcran'
-import { ResumeX01Ecran } from './x01/ResumeX01Ecran'
-import { X01Ecran } from './x01/X01Ecran'
+
+// Un chunk par mode : ouvrir un 501 ne charge plus le Cricket, et inversement.
+// Un mode ajouté à la couture `GameMode` doit gagner sa paire de `lazy()` ici
+// — sinon il revient discrètement dans le chunk commun (voir CONVENTIONS.md § 13).
+const X01Ecran = lazy(() => import('./x01/X01Ecran').then((m) => ({ default: m.X01Ecran })))
+const ResumeX01Ecran = lazy(() =>
+  import('./x01/ResumeX01Ecran').then((m) => ({ default: m.ResumeX01Ecran })),
+)
+const TourDuMondeEcran = lazy(() =>
+  import('./tour-du-monde/TourDuMondeEcran').then((m) => ({ default: m.TourDuMondeEcran })),
+)
+const ResumeTourDuMondeEcran = lazy(() =>
+  import('./tour-du-monde/ResumeTourDuMondeEcran').then((m) => ({
+    default: m.ResumeTourDuMondeEcran,
+  })),
+)
+const CricketEcran = lazy(() =>
+  import('./cricket/CricketEcran').then((m) => ({ default: m.CricketEcran })),
+)
+const ResumeCricketEcran = lazy(() =>
+  import('./cricket/ResumeCricketEcran').then((m) => ({ default: m.ResumeCricketEcran })),
+)
+const EntrainementEcran = lazy(() =>
+  import('./checkout-practice/EntrainementEcran').then((m) => ({
+    default: m.EntrainementEcran,
+  })),
+)
+const ResumeEntrainementEcran = lazy(() =>
+  import('./checkout-practice/ResumeEntrainementEcran').then((m) => ({
+    default: m.ResumeEntrainementEcran,
+  })),
+)
 
 /**
  * L'aiguillage de la couture `GameMode`, côté écran.
@@ -64,16 +89,20 @@ const Aiguillage = ({
     )
   }
 
-  switch (mode.data) {
-    case 'TOUR_DU_MONDE':
-      return <>{tourDuMonde}</>
-    case 'CRICKET':
-      return <>{cricket}</>
-    case 'CHECKOUT_PRACTICE':
-      return <>{entrainement}</>
-    default:
-      return <>{x01}</>
-  }
+  const ecran = (() => {
+    switch (mode.data) {
+      case 'TOUR_DU_MONDE':
+        return tourDuMonde
+      case 'CRICKET':
+        return cricket
+      case 'CHECKOUT_PRACTICE':
+        return entrainement
+      default:
+        return x01
+    }
+  })()
+
+  return <Suspense fallback={<SpinnerLigne />}>{ecran}</Suspense>
 }
 
 export const PartieEcran = () => {
