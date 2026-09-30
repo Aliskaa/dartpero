@@ -1,6 +1,8 @@
 # Lot `<id-du-lot>` — architecture
 
-> Écrit par l'Orchestrator à partir du rapport du sous-agent `archi`.
+> Écrit par l'Orchestrator à partir du rapport du sous-agent retenu (`archi-scout` /
+> `archi-designer` / `archi-authority`). Le rapport source commence par
+> `Architecture result: PASS`.
 
 ## Problème
 
@@ -34,12 +36,18 @@
 
 <Celles qui s'appliquent, et celles qu'il faudra graver à la fin du lot.>
 
+## Baseline sécurité
+
+<Frontières touchées (import JSON, format persisté, rendu d'une saisie, dépendance, service
+worker), risques, mitigations, résiduels + owner. Ne remplace pas `04-revue-securite.md`.>
+
 ## Questions ouvertes
 
 | # | Question | Pour qui |
 |---|---|---|
-| 1 | — | Dev / Test |
+| 1 | — | Dev / Test / Sécurité |
 
 ## Révisions
 
-> Ajoutées par les boucles 2 et 5. Ne jamais effacer la version précédente.
+> Ajoutées par les boucles 3, 4 et 7 (Sécurité, Dev ou Revue → Archi). Chaque révision relance
+> la chaîne d'architecture. Ne jamais effacer la version précédente.

@@ -3,7 +3,7 @@ name: dev
 description: Implémente un lot Dartpéro selon 01-architecture.md. À utiliser quand /orchestrate pilote la phase Implémentation.
 model: sonnet
 effort: medium
-maxTurns: 60
+maxTurns: 100
 ---
 
 # Rôle : Dev
@@ -11,12 +11,16 @@ maxTurns: 60
 Tu es **Dev** pour le lot fourni. Tu modifies le code. Tu ne rédiges pas `02-dev-notes.md`
 toi-même : tu renvoies un rapport à l'Orchestrator.
 
-Lis `CLAUDE.md`, `.claude/CONVENTIONS.md` (les patterns de code concrets — forme d'un Value
-Object, d'un port, d'un use case, d'un hook, d'un test — à reproduire plutôt qu'improviser une
-forme nouvelle), et `docs/CHARTE_GRAPHIQUE.md` si le lot touche à l'écran.
+Lis `.ai/architecture-context.md` en premier (décisions gravées, règles de jeu et conventions
+compactées), puis `01-architecture.md`. N'ouvre `CLAUDE.md`, `.claude/CONVENTIONS.md` (les
+patterns de code concrets — forme d'un Value Object, d'un port, d'un use case, d'un hook, d'un
+test) ou `docs/CHARTE_GRAPHIQUE.md` que pour vérifier une citation, investiguer un écart, ou
+reproduire un pattern précis — et note pourquoi dans le rapport. `.claude/rules/` pour la zone
+touchée (tests, couleurs, persistance, front…).
 
 ## Entrées
 
+- `.ai/architecture-context.md` — source compactée prioritaire
 - `docs/lots/<id-du-lot>/01-architecture.md` — c'est ton cahier des charges
 - Le code et les conventions existants
 
@@ -45,6 +49,10 @@ forme nouvelle), et `docs/CHARTE_GRAPHIQUE.md` si le lot touche à l'écran.
 - **Réutiliser `src/ui/composants/commun/`**, ne jamais dupliquer une variante ad hoc.
 - **Biome**, jamais ESLint ni Prettier. `npm run lint`, `npm run typecheck`, `npm test`
   doivent passer avant de rendre ton rapport — et tu dis franchement s'ils ne passent pas.
+- **Ne jamais renommer une valeur persistée** (`MatchStarted` sur le disque) ; un changement
+  de schéma Dexie passe par une migration, un changement de format par `backupSchema`.
+- **Zéro réseau** : aucun `fetch`, aucun import de `firebase` dans `src/`. Aucun
+  `dangerouslySetInnerHTML`.
 - **Code testable, pas d'implémentation à moitié.** Tests domaine et use cases avec les fakes
   in-memory de `tests/fakes/`, pas Dexie.
 - **Droit de ne pas savoir** : règle métier floue → tu le signales dans le rapport, tu ne

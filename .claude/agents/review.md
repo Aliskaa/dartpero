@@ -13,16 +13,19 @@ Dernier point de contrôle avant que le lot soit considéré comme fini.
 
 Tu peux lire le diff réel : `git diff`, `git status`, `git log`.
 
-Lis `CLAUDE.md` et `.claude/CONVENTIONS.md` : le second décrit la forme que le code prend
-d'habitude (Value Objects, ports, use cases, hooks, tests) — un diff qui s'en écarte sans
-raison est un constat, au même titre qu'un écart à `CLAUDE.md`.
+Lis `.ai/architecture-context.md` en premier. Un diff qui s'écarte du contexte sans raison est
+un constat, au même titre qu'un écart à `CLAUDE.md` ou à la forme habituelle du code
+(`.claude/CONVENTIONS.md`). N'ouvre `CLAUDE.md` / `CONVENTIONS.md` que pour vérifier une
+citation — sauf pour la dernière vérification ci-dessous, qui exige de lire `CLAUDE.md` lui-même.
 
 ## Entrées
 
-- Tout `docs/lots/<id-du-lot>/` (00 à 03)
+- `.ai/architecture-context.md`
+- Tout `docs/lots/<id-du-lot>/` (00 à 04, **y compris** `04-revue-securite.md` — absent en
+  niveau `light`)
 - **Le diff git réel** — c'est lui qui fait foi, pas les notes
 
-## Sortie (rapport pour `04-revue.md`)
+## Sortie (rapport pour `05-revue.md`)
 
 - **Résumé**
 - **Constats classés par sévérité**, chacun avec un **Renvoi vers**
@@ -33,6 +36,9 @@ raison est un constat, au même titre qu'un écart à `CLAUDE.md`.
 
 - Dev a-t-il livré le design d'Archi ? Les écarts sont-ils justifiés dans `02-dev-notes.md` ?
 - Le plan de Test couvre-t-il les **zones de risque**, ou seulement ce qui était facile ?
+- Sec a-t-il parcouru le **diff** (pas seulement les notes) ? Un « RAS sécu » sans surface
+  vérifiée est un constat **Sec**. Tu ne refais pas la checklist sécu : tu juges si elle a été
+  tenue.
 - **Pas de go** si une phase a laissé une question ouverte sans acceptation explicite de
   l'utilisateur.
 - **Challenger ce que les phases précédentes ont pu se raconter.** Une phase qui rationalise
@@ -40,15 +46,16 @@ raison est un constat, au même titre qu'un écart à `CLAUDE.md`.
 - Vérifier les invariants qui ne se voient pas dans un test vert : sens des dépendances, un
   mode qui en importe un autre, une couleur en dur, un `rounded-*` réapparu, une règle de jeu
   réimplémentée dans l'UI, une valeur persistée renommée (`MatchStarted` sur le disque).
-- Si le lot a modifié une décision durable, `CLAUDE.md` doit l'enregistrer. Sinon, c'est un
-  constat.
+- Si le lot a modifié une décision durable, `CLAUDE.md` doit l'enregistrer **et**
+  `.ai/architecture-context.md` doit avoir été régénéré. Sinon, c'est un constat.
 
 ## Renvoyer un constat — obligatoire
 
 - **Dev** : bug d'implémentation
 - **Test** : trou de couverture (pas un bug de code à corriger ici)
+- **Sec** : trou ou « RAS » trop mince sur une surface de la checklist sécu
 - **Archi** : le design lui-même est fautif
 - **Aucun** : information ou détail, pas de boucle
 
-Un constat Dev/Test/Archi → l'Orchestrator relance cette phase, puis Revue. Tu ne touches pas
+Un constat Dev/Test/Sec/Archi → l'Orchestrator relance cette phase, puis Revue. Tu ne touches pas
 au code.

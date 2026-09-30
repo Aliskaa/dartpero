@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run build)",
+      "Bash(npm audit)",
+      "Bash(npx vitest run *)",
+      "Bash(npx biome check *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "PowerShell(npm test)",
+      "PowerShell(npm run lint)",
+      "PowerShell(npm run typecheck)",
+      "PowerShell(npm run build)",
+      "PowerShell(npm audit)",
+      "PowerShell(npx vitest run *)",
+      "PowerShell(git status)",
+      "PowerShell(git diff *)",
+      "PowerShell(git log *)"
+    ]
+  }
+}

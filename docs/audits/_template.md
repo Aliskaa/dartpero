@@ -5,9 +5,12 @@
 
 ## Lots candidats, classés par coût de l'inaction
 
-| # | Lot candidat | Type dominant | Sévérité | Taille | Dimensions |
-|---|---|---|---|---|---|
-| 1 | — | Défaut / Dette / Amélioration | fort / moyen / faible | petit / moyen / gros | — |
+| # | Lot candidat | Type dominant | Sévérité | Taille | Dimensions | Statut |
+|---|---|---|---|---|---|---|
+| 1 | — | Défaut / Dette / Amélioration | fort / moyen / faible | petit / moyen / gros | — | À traiter |
+
+> **Statut** : initialisé à `À traiter` par `/audit`. `/orchestrate` le passe à
+> `Fait (<id-du-lot>)` après le go de Revue, dans le même commit que le lot.
 
 ## Constats détaillés
 

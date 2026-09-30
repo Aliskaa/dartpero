@@ -7,8 +7,9 @@ disable-model-invocation: true
 # Rôle : Orchestrator d'audit
 
 Tu pilotes un audit du projet. ⚠️ **Tu ne fais pas les audits toi-même** : tu délègues via
-l'outil `Agent` au sous-agent `audit` (`.claude/agents/audit.md`), **une instance par
-dimension**. Cette skill t'y autorise explicitement.
+l'outil `Agent` (Claude Code) ou `Task` (Cursor) au sous-agent `audit`
+(`.claude/agents/audit.md`), **une instance par dimension**. Cette skill t'y autorise
+explicitement. En Cursor, lance plusieurs `explore` en **un seul message**, en lecture seule.
 
 **Argument optionnel** : le nom d'une dimension (`archi`, `domaine`, `tests`, `ui`, `perf`,
 `dette`) ou un chemin. Sans argument, les six dimensions.
@@ -19,19 +20,23 @@ candidat, que l'utilisateur décidera de lancer ou non.
 
 ## 1 · Cadrer
 
-Lis `CLAUDE.md`, `.claude/CONVENTIONS.md` et `docs/PROJECT_PLAN.md`. Tu en as besoin pour trois
-choses : savoir ce que le projet **prétend** être, connaître la forme que son code prend
+Lis `CLAUDE.md`, `.claude/CONVENTIONS.md`, `.claude/rules/` et `docs/PROJECT_PLAN.md`.
+`.ai/architecture-context.md` oriente, mais un audit cherche les écarts : les sources gagnent, le
+compactage ne suffit pas. Tu en as besoin pour trois choses : savoir ce que le projet **prétend** être, connaître la forme que son code prend
 d'habitude, et connaître les **exceptions documentées**, pour ne pas relayer un faux positif
 qu'un auditeur t'aurait renvoyé.
 
 ## 2 · Lancer les six en parallèle
 
-**Un seul message, six appels `Agent`**, pour qu'ils tournent concurremment. Attends que tous
+**Un seul message, six appels `Agent`**, pour qu'ils tournent concurremment. Le sous-agent
+tourne en sonnet par défaut ; seules `archi` et `domaine` passent `model: "opus"` à l'appel —
+ce sont les deux où une lecture fausse produit un faux constat qu'on croirait. Les quatre
+autres sont de la recherche et de la relecture. Attends que tous
 aient rendu avant de consolider.
 
 | Dimension | Brief |
 |---|---|
-| `archi` | Sens des dépendances (`ui`/`infrastructure` → `application` → `domain`). Import externe dans `src/core/domain/`. `Date.now()` / `Math.random()` hors des ports `Clock` / `IdGenerator` / `RandomSource`. Port sans consommateur, ou consommateur qui contourne son port. Câblage hors `src/composition/container.ts`. Un mode de jeu qui en importe un autre. Les gardes de `tests/architecture/` couvrent-elles encore ce qu'elles prétendent ? |
+| `archi` | Sens des dépendances (`ui`/`infrastructure` → `application` → `domain`). Import externe dans `src/core/domain/`. `Date.now()` / `Math.random()` hors des ports `Clock` / `IdGenerator` / `RandomSource`. Port sans consommateur, ou consommateur qui contourne son port. Câblage hors `src/composition/container.ts`. Un mode de jeu qui en importe un autre. Les gardes de `tests/architecture/` couvrent-elles encore ce qu'elles prétendent ? Lance cette dimension avec `model: "opus"`. |
 | `domaine` | Écart entre les règles écrites dans `CLAUDE.md` (X01, Tour du monde, Cricket, entraînement) et `src/core/domain/games/`. Règle énoncée mais non couverte par un test. Bust, double in/out, bogey numbers, cut-throat, fin de tour de table, départage. Ce qui est tiré au sort est-il bien **écrit** dans le journal et jamais rejoué ? Lance cette dimension avec `model: "opus"`. |
 | `tests` | Test vert à vide (il passerait même si on cassait ce qu'il protège). Zone de risque non couverte. Fakes utilisés là où il faut, Dexie absent des tests unitaires. Le garde-fou du test d'architecture compte-t-il toujours des fichiers ? Écart entre le nombre de tests annoncé dans `CLAUDE.md` et le réel. |
 | `ui` | Couleur en dur dans `src/ui` hors des trois exceptions documentées. `rounded-*` réapparu. Cible tactile sous 48 px. Texte sous `craie/60`. Icône `lucide-react` sans `aria-hidden`. Composant dupliqué au lieu de réutiliser `commun/`. Règle de jeu réimplémentée dans un écran au lieu d'un port de prévisualisation. |
@@ -53,7 +58,10 @@ aient rendu avant de consolider.
 
 ## 4 · Écrire et rendre la main
 
-Écris `docs/audits/<AAAA-MM-JJ>.md` depuis `docs/audits/_template.md`.
+Écris `docs/audits/<AAAA-MM-JJ>.md` depuis `docs/audits/_template.md`. La table des lots
+candidats porte une colonne **Statut**, initialisée à `À traiter` pour chaque ligne — ce n'est pas
+à toi de la remplir autrement : c'est `/orchestrate` qui la passe à `Fait (<id-du-lot>)` après le
+go de Revue.
 
 Termine en présentant les **lots candidats** classés, chacun avec son périmètre et sa taille
 estimée. Puis **arrête-toi** : l'utilisateur choisit. Un lot retenu part ensuite dans

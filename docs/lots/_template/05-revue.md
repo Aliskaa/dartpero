@@ -10,7 +10,7 @@
 
 | # | Sévérité | Constat | Renvoi vers |
 |---|---|---|---|
-| 1 | bloquant / majeur / mineur / info | — | Dev / Test / Archi / Aucun |
+| 1 | bloquant / majeur / mineur / info | — | Dev / Test / Sec / Archi / Aucun |
 
 ## Invariants vérifiés
 
@@ -21,7 +21,9 @@
 | Aucune couleur en dur dans `src/ui`, aucun `rounded-*` | — |
 | Aucune règle de jeu réimplémentée dans l'UI | — |
 | Aucune valeur persistée renommée | — |
+| Sec a parcouru le diff (pas seulement les notes) | — |
 | `CLAUDE.md` à jour des décisions durables du lot | — |
+| `.ai/architecture-context.md` régénéré si une décision a été gravée | — |
 
 ## Go / no-go
 

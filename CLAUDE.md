@@ -9,6 +9,8 @@ Contexte permanent du projet pour Claude. **À lire en début de session.**
 | [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) | Le plan détaillé, lot par lot, avec ce qui reste. |
 | [`docs/CHARTE_GRAPHIQUE.md`](docs/CHARTE_GRAPHIQUE.md) | Le référentiel design : tokens, thèmes, composants, ce qu'il ne faut pas faire. |
 | [`.claude/CONVENTIONS.md`](.claude/CONVENTIONS.md) | Le **comment** : les patterns de code concrets (Value Objects, use cases, ports, hooks, tests…) extraits en relisant `src/` et `tests/` — complète les décisions d'ici, ne les redécide jamais. |
+| [`.claude/README.md`](.claude/README.md) | Le **workflow agentique** : `/intake`, `/orchestrate <id> [high\|light]`, `/audit`, `/refresh-architecture`, leurs agents et les **surfaces gravées** qui forcent le niveau `high`. Règles de travail courtes dans [`.claude/rules/`](.claude/rules/README.md). |
+| [`.ai/architecture-context.md`](.ai/architecture-context.md) | Compactage de ce fichier + conventions + charte, lu **en premier** par les agents de phase. **Pas une source de vérité** : à régénérer (`/refresh-architecture`) dès qu'une décision est gravée ici. |
 | `docs/captures/` | Les captures du README (390 × 844). Refaites à la main : `playwright-core` pilote Chrome sur `vite preview`, une base de démonstration est semée dans IndexedDB, puis `sharp` réduit les PNG. Les journaux semés sont **simulés à travers les vraies règles** — un journal écrit à la main décalerait l'attribution des volées. |
 
 > Claude maintient ce fichier : le mettre à jour dès qu'une décision durable est prise

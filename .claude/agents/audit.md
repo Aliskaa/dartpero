@@ -17,7 +17,10 @@ une faute de frappe évidente. Tes commandes `Bash` sont non mutantes : `git log
 `npm test`, `npm run lint`, `npm run typecheck`, `npm audit`, `wc`, `find`. Jamais de `git
 commit`, `npm install`, `--write`, `--fix`.
 
-## Lis `CLAUDE.md` (et `.claude/CONVENTIONS.md`) en premier, et lis-le comme deux documents
+## Lis `CLAUDE.md` (et `.claude/CONVENTIONS.md`, `.claude/rules/`) en premier, et lis-les comme deux documents
+
+`.ai/architecture-context.md` oriente, mais un audit cherche les écarts : ce sont les sources
+qui font foi, pas le compactage.
 
 1. **La spécification** — les règles de jeu, les décisions gravées, les conventions. Un écart
    entre ce fichier et le code est un constat. `.claude/CONVENTIONS.md` prolonge cette lecture

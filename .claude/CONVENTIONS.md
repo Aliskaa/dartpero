@@ -11,8 +11,8 @@ revienne ici), c'est ce fichier qu'il faut corriger, pas le code qu'il faut alig
 En cas de désaccord avec `CLAUDE.md` (une décision gravée), c'est `CLAUDE.md` qui gagne — voir
 son propre tableau en tête de fichier.
 
-Les cinq agents de `.claude/agents/` et les skills `/orchestrate` et `/audit` peuvent citer ce
-fichier plutôt que réénoncer ces patterns dans leur prompt.
+Les agents de `.claude/agents/`, les skills de `.claude/skills/` et les règles de
+`.claude/rules/` peuvent citer ce fichier plutôt que réénoncer ces patterns dans leur prompt.
 
 ---
 
