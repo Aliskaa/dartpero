@@ -52,9 +52,11 @@ gravée de `CLAUDE.md`.
 
 ## Ce que ce workflow ne fait pas
 
-- Pas de worktree ni de branche par lot.
-- Pas de commit par phase. Un commit par lot, après le go, et après
-  accord explicite (`rules/commit.md`).
+- Pas de worktree. En revanche, **une branche par lot** :
+  `lot/<id>`, créée depuis `main` par `/orchestrate` avant
+  l'Architecture, fusionnée en `--ff-only` après accord.
+- Pas de commit par phase. Un commit par lot, sur sa branche, après le
+  go, et après accord explicite (`rules/commit.md`).
 - Pas de pipeline à quatre agents pour régénérer le contexte :
   un passage suffit.
 - `.ai/architecture-context.md` n'est pas une source de vérité.

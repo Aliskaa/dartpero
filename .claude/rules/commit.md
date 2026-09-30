@@ -5,6 +5,10 @@
 - **Demander l'accord de l'utilisateur avant de committer.** Le lot se
   prépare et se vérifie seul ; l'appui sur le bouton, c'est lui.
 - **Un commit par lot** `/orchestrate`, jamais deux lots mélangés.
+- **Une branche par lot** : `lot/<id-du-lot>`, partie de `main`. On
+  committe **sur la branche du lot**, jamais directement sur `main` ;
+  la fusion (`git merge --ff-only`) est une seconde demande d'accord.
+  Vérifier `git branch --show-current` avant de committer.
 - Lire `git status` avant d'indexer et signaler tout fichier qui n'est
   pas le fruit du lot. Jamais de `git add -A` à l'aveugle
   (`docs/exemples/` est hors dépôt pour une raison).

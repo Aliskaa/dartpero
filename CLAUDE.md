@@ -522,7 +522,8 @@ que Pokegypte). Une seule commande : `npm run firebase:deploy` (= `build` + `fir
 
 - OS : Windows 11. Shell par défaut PowerShell (outil Bash dispo aussi).
 - Dossier : `c:\Users\kevin\Documents\Flechettes`. Repo **git initialisé** (branche `main`,
-  historique par lots, pas de remote — le déploiement passe par la CLI Firebase, pas par CI).
+  historique par lots, **une branche `lot/<id>` par lot** fusionnée en `--ff-only` après
+  accord — voir `.claude/skills/orchestrate/SKILL.md`, pas de remote — le déploiement passe par la CLI Firebase, pas par CI).
 - Échelle : usage perso + potes. Parc **mixte iPhone + Android**.
 - Dév & test principal sur un **appareil Android** (Chrome → DevTools / remote debug faciles).
   Tester sur un vrai iPhone avant de considérer le projet fini.

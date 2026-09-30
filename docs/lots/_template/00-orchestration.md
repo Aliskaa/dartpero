@@ -18,6 +18,11 @@ règle gravée de CLAUDE.md.>
 
 high
 
+## Branche
+
+`lot/<id-du-lot>` — créée depuis `main` avant l'Architecture, fusionnée en `--ff-only` après
+accord.
+
 ## Provenance
 
 <Intake validé (`request.md`, source, date de copie) ou « orchestration directe, pas d'intake ».>

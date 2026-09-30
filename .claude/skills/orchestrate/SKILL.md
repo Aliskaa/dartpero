@@ -130,8 +130,20 @@ servir dans `/orchestrate`.
    d'audit **et** le numéro de ligne de la table « Lots candidats »
    (ex. « § 1 »).
 
-Pas de branche ni de worktree dédiés : un seul working tree, un commit
-par lot **après** le go utilisateur (voir § Séquence, étape Commit).
+5. **Branche du lot** : **une branche par lot**, nommée `lot/<id-du-lot>`
+   (même identifiant que `docs/lots/<id>/`), créée depuis `main` **avant
+   la phase Architecture**.
+   - Si elle existe déjà (reprise) : `git switch lot/<id>`.
+   - Sinon : se placer sur `main`, lire `git status` — seul le
+     `docs/request/<id>.md` de l'intake peut traîner, il voyage avec la
+     branche — puis `git switch -c lot/<id>`.
+   - Un working tree sale d'un **autre** lot : **stop**, le signaler, ne
+     rien remiser ni écraser sans accord.
+   - Noter la branche dans `00-orchestration.md`.
+
+Pas de worktree : un seul working tree, une branche par lot, un commit
+par lot **après** le go utilisateur (voir § Séquence, étapes Commit et
+Fusion).
 
 ## Reprise
 
@@ -173,6 +185,13 @@ seulement après le gate.
    de la ligne dans `docs/audits/<AAAA-MM-JJ>.md` —
    `Fait (<id-du-lot>)` — et **inclure ce fichier dans le même commit**.
    Seulement après un verdict GO de Revue (ou après Test en `light`).
+10. **Fusion** — le commit est fait **sur `lot/<id>`**. Proposer ensuite
+    la fusion dans `main`, **et attendre l'accord** :
+    `git switch main` puis `git merge --ff-only lot/<id>` (historique
+    linéaire, un commit par lot comme avant). Si `main` a bougé et que
+    `--ff-only` refuse : **stop**, demander (rebase de la branche ou
+    merge commit) — jamais de choix silencieux. Garder la branche après
+    fusion, sauf demande de la supprimer.
 
 Gate check après **chaque** phase, sauf après Revue / Échanges où tu
 demandes le go.
@@ -323,5 +342,7 @@ Claude Code a déjà `/code-review` et `/security-review` : si tu veux une
 passe purement code sur le diff, appelle-les plutôt que de les réécrire
 dans le prompt de `review`.
 
-Pas de branche / worktree par lot. Pas de commit par phase. Un commit
-par lot, après le go, comme `.claude/rules/commit.md`.
+Une branche `lot/<id>` par lot, pas de worktree. Pas de commit par
+phase. Un commit par lot, sur sa branche, après le go, comme
+`.claude/rules/commit.md` ; la fusion dans `main` est une étape à part,
+elle aussi soumise à accord.

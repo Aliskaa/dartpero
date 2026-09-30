@@ -21,6 +21,7 @@ règle que `/orchestrate`. Pas d'identifiant → demande-le.
 4. Écris selon `docs/request/README.md`. Statut `Validé`, zéro
    question bloquante. Conserve l'historique si le fichier existait.
 5. Donne la commande `/orchestrate <id> <niveau>` **sans
-   l'exécuter**.
+   l'exécuter**. Ne crée **pas** de branche : c'est `/orchestrate` qui
+   ouvre `lot/<id>` et y emporte `docs/request/<id>.md`.
 
 `light` est interdit sur une surface gravée — force `high`.
