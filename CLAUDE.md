@@ -97,6 +97,11 @@ via `override` Biome sur `src/core/**` + `noRestrictedImports` (bannir `dexie`, 
 et les API navigateur).
 - **Wake Lock obligatoire dès le lot 3** : l'écran ne doit pas s'éteindre pendant une partie,
 sinon l'app est inutilisable en conditions réelles.
+- **Stockage persistant demandé au démarrage** (lot `stockage-persistant`) : port driven
+`PersistentStorage` (`Services.devices`, même exception que `screenLock`), seul l'adapter lit
+`navigator.storage`. L'état se lit dans Réglages → Sauvegarde, jamais ailleurs (zéro friction).
+⚠️ **« Protégé » n'est pas une sauvegarde** : désinstallation, effacement du site ou perte du
+téléphone vident la base quand même — le rappel d'exporter s'affiche dans **les trois** états.
 
 ---
 

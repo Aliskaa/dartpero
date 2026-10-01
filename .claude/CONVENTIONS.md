@@ -89,8 +89,12 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `readonly`) **et** l'interface, nommés d'après le use case qu'ils décrivent.
 - Un port **driven** = une interface étroite, une seule capacité (`Clock`, `IdGenerator`,
   `RandomSource`…). Certains exposent un **null-object** à côté de l'interface
-  (`NullHaptics`, `NullScreenLock`, `NullAnnouncer`) pour les plateformes qui n'ont pas la
+  (`NullHaptics`, `NullScreenLock`, `NullAnnouncer`, `NullPersistentStorage`) pour les plateformes qui n'ont pas la
   capacité — jamais un `if (haptics)` disséminé dans l'appelant.
+- Un port d'appareil **qui peut refuser** (`PersistentStorage`) renvoie un **état** plutôt que de
+  lever : `status()` / `request()` ne rejettent jamais, l'adapter enveloppe tout en `try/catch`
+  et reçoit son objet navigateur (`StorageManager`) par le constructeur pour se tester sans
+  global. Comme `screenLock`, il est consommé via `Services.devices` (exception assumée).
 - Les ports ISP à plusieurs opérations (`ManagePlayers`, `ManageBackup`) ne regroupent que ce
   qui est vraiment une seule responsabilité ; une modification est toujours **partielle**
   (`PlayerChanges` aux champs tous optionnels), jamais un remplacement complet.
@@ -241,8 +245,8 @@ que les écrans déjà listés au moment où il a été écrit).
 ## 14 · Arborescence
 
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
-invariants). Vérifié contre `src/` au lot « allegement-docs » : 20 ports driving, 9 driven,
-6 hooks, 4 modes, 4 services transverses.
+invariants). Vérifié contre `src/` au lot « stockage-persistant » : 20 ports driving, 10 driven,
+7 hooks, 4 modes, 4 services transverses.
 
 ```
 src/
@@ -271,7 +275,8 @@ src/
 │     │                   PlayCricket, PreviewCricketVisit, PreviewTourDuMondeVisit,
 │     │                   PlayCheckoutPractice
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
-│     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer
+│     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
+│     │                   PersistentStorage
 │     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
 ├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
@@ -286,7 +291,8 @@ src/
 │  │                        NouvellePartie, Historique, Statistiques, Réglages
 │  ├─ hooks/              useX01 · useTourDuMonde · useCricket ·
 │  │                      useCheckoutPractice · useJoueurs ·
-│  │                      useAppareil (wake lock, préférences, voix)
+│  │                      useAppareil (wake lock, préférences, voix) ·
+│  │                      useStockagePersistant (protection des données)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
 │     theme.ts (clair / sombre / système) · accents.ts
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·

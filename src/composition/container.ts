@@ -3,6 +3,7 @@ import type { Clock } from '@/core/application/ports/driven/Clock'
 import type { Haptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
 import type { MatchRepository } from '@/core/application/ports/driven/MatchRepository'
+import type { PersistentStorage } from '@/core/application/ports/driven/PersistentStorage'
 import type { PlayerRepository } from '@/core/application/ports/driven/PlayerRepository'
 import type { Preferences } from '@/core/application/ports/driven/Preferences'
 import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
@@ -48,6 +49,7 @@ import { RestartMatchUseCase } from '@/core/application/use-cases/RestartMatchUs
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
 import { UndoLastVisitUseCase } from '@/core/application/use-cases/UndoLastVisitUseCase'
 import { createLocalStoragePreferences } from '@/infrastructure/device/LocalStoragePreferences'
+import { NavigatorPersistentStorage } from '@/infrastructure/device/NavigatorPersistentStorage'
 import { SpeechAnnouncer } from '@/infrastructure/device/SpeechAnnouncer'
 import { VibrationHaptics } from '@/infrastructure/device/VibrationHaptics'
 import { WakeLockScreenLock } from '@/infrastructure/device/WakeLockScreenLock'
@@ -71,6 +73,8 @@ export type Devices = {
   readonly haptics: Haptics
   readonly preferences: Preferences
   readonly announcer: Announcer
+  /** Protection de la base contre l'effacement par le navigateur. */
+  readonly persistentStorage: PersistentStorage
 }
 
 export type Dependencies = {
@@ -86,7 +90,7 @@ export type Dependencies = {
  * Tout ce que l'UI a le droit d'appeler. Rien d'autre ne lui est exposé.
  *
  * `devices` est une exception assumée à la règle « UI → use cases uniquement » :
- * ce sont des ports **driven** (écran, vibreur, préférences locales) consommés
+ * ce sont des ports **driven** (écran, vibreur, préférences locales, protection du stockage) consommés
  * directement par la coquille UI. Ils ne portent aucune règle métier, donc les
  * emballer dans des use cases serait de la cérémonie pure. Ils restent des
  * ports : injectables, remplaçables, muets quand le matériel ne suit pas.
@@ -183,6 +187,7 @@ export const createBrowserDependencies = (): Dependencies => {
       haptics: new VibrationHaptics(),
       preferences: createLocalStoragePreferences(),
       announcer: new SpeechAnnouncer(),
+      persistentStorage: new NavigatorPersistentStorage(),
     },
   }
 }

@@ -76,6 +76,26 @@ d'accueil »** (Chrome iOS ne peut pas installer de PWA).
   de Firebase règle en revanche la question du contexte sécurisé — Wake Lock, vibration et
   service worker fonctionnent sur le domaine, sans le certificat auto-signé de `dev:mobile`.
 
+## Stockage persistant
+
+L'app demande `navigator.storage.persist()` au démarrage (port `PersistentStorage`) et affiche
+l'état dans Réglages → Sauvegarde. Le navigateur tranche seul, et **un refus est attendu, pas un
+défaut** :
+
+| Navigateur | Comportement attendu (à vérifier sur appareil) |
+| --- | --- |
+| Chrome / Android | Accorde ou refuse selon l'engagement (installée, ajoutée aux favoris, notifications…) ; un onglet simple peut être refusé. Vérifier avec la PWA installée. |
+| Safari iOS | Sans installation, la base peut être effacée après ~7 jours sans ouverture ; le support de `persist()` hors installation n'est pas garanti. |
+| Firefox | Peut afficher sa propre demande à l'utilisateur ; l'app ne l'anticipe pas. |
+| API absente | État « indisponible » : pas de bouton, simple rappel d'exporter. |
+
+« Redemander » (état non protégé) rappelle `persist()` ; si le navigateur refuse encore, l'écran
+le dit (« Le navigateur a refusé… installé sur l'écran d'accueil ») plutôt que de rester muet.
+Le refus du démarrage, lui, n'affiche rien.
+
+⚠️ Protégé ne veut pas dire sauvegardé : désinstaller l'app ou vider les données du site efface
+toujours la base. L'export JSON reste le filet.
+
 ## Icônes
 
 - **Icônes** : `npm run icons` (sharp) génère `public/icons/*` + `apple-touch-icon.png` +

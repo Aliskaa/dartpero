@@ -1,3 +1,4 @@
+import type { StorageProtection } from '@/core/application/ports/driven/PersistentStorage'
 import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import type { GameModeId } from '@/core/domain/games'
@@ -182,6 +183,31 @@ export const LIBELLE_THEME: Record<Theme, string> = {
   clair: 'Clair',
   systeme: 'Système',
 }
+
+/** Ce que dit la ligne d'état de la protection du stockage, dans les Réglages. */
+export const LIBELLE_PROTECTION_STOCKAGE: Record<StorageProtection, string> = {
+  persisted: 'Données protégées : le navigateur ne les effacera pas de lui-même.',
+  'not-persisted': 'Le navigateur peut effacer les données si l’espace manque.',
+  unavailable: 'Protection non prise en charge par ce navigateur.',
+}
+
+/**
+ * Le rappel d'exporter, présent dans chaque état : même protégée, la base
+ * disparaît avec la désinstallation de la PWA, l'effacement des données du
+ * site ou la perte du téléphone. Ce n'est jamais une sauvegarde.
+ */
+export const RAPPEL_EXPORT_STOCKAGE: Record<StorageProtection, string> = {
+  persisted: 'Ce n’est pas une sauvegarde : exportez pour garder une copie.',
+  'not-persisted': 'Exportez régulièrement.',
+  unavailable: 'Exportez régulièrement : le fichier JSON est votre seule copie.',
+}
+
+/** Retour d'une redemande faite par l'utilisateur et refusée (jamais au démarrage). */
+export const REFUS_REDEMANDE_STOCKAGE =
+  'Le navigateur a refusé. Il accepte en général une fois Dartpéro installé sur l’écran d’accueil.'
+
+export const ETIQUETTE_PROTECTION_STOCKAGE = 'Protection des données'
+export const LIBELLE_REDEMANDER_PROTECTION = 'Redemander'
 
 export const JOUEUR_SUPPRIME = 'Joueur supprimé'
 

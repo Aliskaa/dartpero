@@ -4,6 +4,7 @@ import { Spinner } from '@/ui/composants/commun/Etats'
 import { LayoutPrincipal } from '@/ui/composants/commun/LayoutPrincipal'
 import { AccueilEcran } from '@/ui/ecrans/AccueilEcran'
 import { useThemeSysteme } from '@/ui/hooks/useAppareil'
+import { useDemandeStockageAuDemarrage } from '@/ui/hooks/useStockagePersistant'
 
 // Seul `AccueilEcran` reste statique : `start_url` du manifeste, route par
 // défaut ET fourre-tout `*` — le rendre lazy ajouterait une cascade sur le
@@ -48,6 +49,7 @@ const ResumePartieEcran = lazy(() =>
  */
 export default function App() {
   useThemeSysteme()
+  useDemandeStockageAuDemarrage()
 
   return (
     <Suspense fallback={<Spinner />}>

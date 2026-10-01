@@ -3,6 +3,10 @@ import { NullAnnouncer } from '@/core/application/ports/driven/Announcer'
 import type { Clock } from '@/core/application/ports/driven/Clock'
 import { NullHaptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
+import type {
+  PersistentStorage,
+  StorageProtection,
+} from '@/core/application/ports/driven/PersistentStorage'
 import { createMemoryPreferences } from '@/core/application/ports/driven/Preferences'
 import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import { NullScreenLock } from '@/core/application/ports/driven/ScreenLock'
@@ -73,6 +77,36 @@ export class CyclingRandomSource implements RandomSource {
   }
 }
 
+/**
+ * Stockage persistant espion : état initial réglable, compteurs d'appels.
+ * `accorde` dit ce que répondra `request()` ; `requestBloquee` ne la résout
+ * jamais (prouve que le rendu n'attend pas la demande).
+ */
+export class FakePersistentStorage implements PersistentStorage {
+  statusCalls = 0
+  requestCalls = 0
+
+  constructor(
+    public etat: StorageProtection = 'not-persisted',
+    private readonly options: {
+      readonly accorde?: boolean
+      readonly requestBloquee?: boolean
+    } = {},
+  ) {}
+
+  async status(): Promise<StorageProtection> {
+    this.statusCalls += 1
+    return this.etat
+  }
+
+  async request(): Promise<StorageProtection> {
+    this.requestCalls += 1
+    if (this.options.requestBloquee) return new Promise<StorageProtection>(() => {})
+    if (this.etat !== 'unavailable' && (this.options.accorde ?? true)) this.etat = 'persisted'
+    return this.etat
+  }
+}
+
 export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Dependencies => ({
   matches: new InMemoryMatchRepository(),
   players: new InMemoryPlayerRepository(),
@@ -84,6 +118,7 @@ export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Depend
     haptics: NullHaptics,
     preferences: createMemoryPreferences(),
     announcer: NullAnnouncer,
+    persistentStorage: new FakePersistentStorage(),
   },
   ...surcharges,
 })

@@ -1,5 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Download, TriangleAlert, Upload, Volume2, VolumeX, WifiOff } from 'lucide-react'
+import {
+  Download,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldOff,
+  TriangleAlert,
+  Upload,
+  Volume2,
+  VolumeX,
+  WifiOff,
+} from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import type { ImportReport } from '@/core/application/ports/driving/ManageBackup'
 import { Button } from '@/ui/composants/commun/Button'
@@ -8,7 +18,16 @@ import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { MessageErreur } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { CLE_VOIX, usePreference } from '@/ui/hooks/useAppareil'
-import { LIBELLE_THEME, pluriel } from '@/ui/labels'
+import { useProtectionStockage } from '@/ui/hooks/useStockagePersistant'
+import {
+  ETIQUETTE_PROTECTION_STOCKAGE,
+  LIBELLE_PROTECTION_STOCKAGE,
+  LIBELLE_REDEMANDER_PROTECTION,
+  LIBELLE_THEME,
+  pluriel,
+  RAPPEL_EXPORT_STOCKAGE,
+  REFUS_REDEMANDE_STOCKAGE,
+} from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 import { appliquerTheme, CLE_THEME, THEME_DEFAUT, THEMES, type Theme } from '@/ui/theme'
 
@@ -65,6 +84,54 @@ const Resume = ({ rapport }: { readonly rapport: ImportReport }) => {
           {pluriel(ignores, 'entrée illisible', 'entrées illisibles')} — ignorée
           {ignores > 1 ? 's' : ''}.
         </p>
+      )}
+    </div>
+  )
+}
+
+const ICONE_PROTECTION = {
+  persisted: ShieldCheck,
+  'not-persisted': ShieldAlert,
+  unavailable: ShieldOff,
+} as const
+
+/**
+ * L'état de la protection du stockage. Rien n'est rendu tant que `status()`
+ * n'a pas répondu : la réponse est locale et quasi instantanée, un texte
+ * provisoire ne ferait que clignoter.
+ */
+const EtatProtection = () => {
+  const { etat, redemander, refusee } = useProtectionStockage()
+  if (etat === null) return null
+
+  const Icone = ICONE_PROTECTION[etat]
+
+  return (
+    <div className="flex flex-col gap-3">
+      <output
+        aria-label={ETIQUETTE_PROTECTION_STOCKAGE}
+        className={`flex items-start gap-2 border px-3 py-2 text-sm ${
+          etat === 'persisted'
+            ? 'border-vert-cible/60 bg-vert-cible/12 text-craie'
+            : 'border-craie/25 text-craie/75'
+        }`}
+      >
+        <Icone
+          aria-hidden="true"
+          className={`mt-0.5 size-4 shrink-0 ${etat === 'persisted' ? 'text-vert-cible' : ''}`}
+        />
+        <span>
+          {LIBELLE_PROTECTION_STOCKAGE[etat]}{' '}
+          <span className="block text-craie/75">{RAPPEL_EXPORT_STOCKAGE[etat]}</span>
+          {refusee && etat === 'not-persisted' && (
+            <span className="mt-1 block text-craie">{REFUS_REDEMANDE_STOCKAGE}</span>
+          )}
+        </span>
+      </output>
+      {etat === 'not-persisted' && (
+        <Button variante="secondaire" onClick={() => void redemander()}>
+          {LIBELLE_REDEMANDER_PROTECTION}
+        </Button>
       )}
     </div>
   )
@@ -132,6 +199,8 @@ export const ReglagesEcran = () => {
             <strong className="text-craie"> seule façon</strong> de changer d’appareil sans repartir
             de zéro.
           </p>
+
+          <EtatProtection />
 
           <Button onClick={() => void exporter()} disabled={occupe}>
             <Download aria-hidden="true" className="size-4" />

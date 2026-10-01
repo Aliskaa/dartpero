@@ -25,7 +25,7 @@ Statut : ⬜ à faire · 🟡 en cours · ✅ fait · ⏸ mis de côté
 
 | # | Lot | Statut | Contenu | Niveau | Pourquoi |
 |---|---|---|---|---|---|
-| 1 | `stockage-persistant` | ⬜ | `navigator.storage.persist()` derrière un port, état affiché dans les Réglages | `high` (persistance) | Sans lui, le navigateur peut effacer l'IndexedDB (Chrome si l'espace manque, Safari après ~7 jours sans ouverture si non installée). Aucun appel aujourd'hui dans `src/`. Utile **même sans store** |
+| 1 | `stockage-persistant` | ✅ fait (vérif. appareil restante) | `navigator.storage.persist()` derrière un port, état affiché dans les Réglages | `high` (persistance) | Sans lui, le navigateur peut effacer l'IndexedDB (Chrome si l'espace manque, Safari après ~7 jours sans ouverture si non installée). Aucun appel aujourd'hui dans `src/`. Utile **même sans store** |
 | 2 | `installation-guidee` | ⬜ | Bouton « Installer Dartpéro » (capte `beforeinstallprompt`), guide iPhone (Partager → Sur l'écran d'accueil), manifeste enrichi : `id`, `categories`, `screenshots` (étroit + large), `shortcuts` (« Nouvelle partie ») | `high` (manifeste / service worker) | Aujourd'hui un pote qui ouvre le lien reste dans un onglet sans le savoir. Utile **même sans store** |
 | 3 | `confidentialite-assetlinks` | ⬜ | Page de politique de confidentialité + mentions légales ; `/.well-known/assetlinks.json` sur Firebase Hosting | `high` (`firebase.json`) | ⚠️ `firebase.json` ignore `**/.*` : il exclurait `/.well-known/`. Exception explicite + vérification `curl` après déploiement |
 | 4 | `play-store-twa` | ⬜ | Emballage TWA par **Bubblewrap** (AAB signé, clé à sauvegarder), fiche du store (icône 512, bannière 1024×500, captures depuis `docs/captures/`, descriptions), numérotation des versions (`package.json` 0.1.0 ↔ `versionCode`), comportement du bouton retour Android en partie | `high` (renverse une décision gravée) | Renverse « PWA, pas de passage par les stores » — en connaissance de cause. La TWA reste la même PWA : chaque `npm run firebase:deploy` met l'app du store à jour |
@@ -63,5 +63,5 @@ cite que 2 des 3 exceptions de couleur, sets non exposés à la création de par
 
 ## Prochaine étape
 
-`/intake stockage-persistant`, de préférence dans une **nouvelle session** pour que les briefs
-d'agents réécrits par `allegement-docs` soient chargés.
+`/intake installation-guidee`. Il prolongera le message affiché quand « Redemander » est refusé
+(lot `stockage-persistant`) par un vrai bouton d'installation.

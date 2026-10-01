@@ -16,7 +16,8 @@ visuelle « feuille de match », retraits décidés par l'usage, statistiques d'
 résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit 2026-09-10**
 (détaillés en fin de § 6) : `tour-du-monde-cloture-volee`, `pourcentage-doubles-tiret`,
 `bundle-par-route`. App déployée sur https://dartpero.web.app.
-**339 tests verts**, `lint`, `typecheck` et `build` verts.
+**366 tests verts** (dont 27 du lot `stockage-persistant`), `lint`, `typecheck` et `build` verts.
+Premier lot de la feuille de route Play Store livré : `stockage-persistant` (voir § 6) — vérification sur appareil (Android installé, iPhone) restante.
 
 Ce qu'il reste, par ordre de ce qui coûterait le plus cher à découvrir tard :
 
@@ -183,6 +184,7 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | `Preferences` | localStorage | in-memory | **lot 3** ✅ |
 | `RandomSource` | `crypto.getRandomValues` | tirage prévisible | **lot 5b** ✅ |
 | `Announcer` | Web Speech API | null-object | **lot 5b** ✅ |
+| `PersistentStorage` | `navigator.storage.persist()` | `FakePersistentStorage` (espion) | **lot `stockage-persistant`** ✅ |
 
 ---
 
@@ -1479,3 +1481,40 @@ sources **sur disque**. La péremption de `.ai` se juge par `git log -1 --format
 (commande `/orchestrate` § Prérequis).
 - La table de correspondance ligne à ligne (origine → destination → preuve) vit dans
 `docs/lots/allegement-docs/02-dev-notes.md`.
+
+### Décisions du lot « stockage-persistant » (feuille de route Play Store, lot 1)
+
+Traité via `/orchestrate` (`docs/lots/stockage-persistant/`), niveau `high` (persistance).
+Aucune surface gravée touchée : ni domaine, ni `GameMode`, ni `MatchEvent`, ni schéma Dexie, ni
+`backupSchema`, ni service worker.
+
+- **Le problème** : sans `navigator.storage.persist()`, le navigateur peut effacer l'IndexedDB sans
+prévenir (Chrome si le disque manque, Safari après ~7 jours sans ouverture si l'app n'est pas
+installée). La protection est demandée au démarrage, son état se lit dans Réglages → Sauvegarde.
+- **Port `PersistentStorage`** (`status()` / `request()`, ne rejettent jamais, trois états
+`persisted` / `not-persisted` / `unavailable`) + `NullPersistentStorage`. Adapter
+`NavigatorPersistentStorage` (seul lecteur de `navigator.storage`, `StorageManager` injectable
+pour les tests). Câblé dans `Devices` : même exception assumée que `screenLock`, deux lignes sans
+règle métier ne méritent pas un use case.
+- **Hooks plutôt que `main.tsx`** : les services naissent dans `ServicesProvider`, `main.tsx` n'y a
+pas accès. `useDemandeStockageAuDemarrage` (monté dans `App.tsx`, promesse non attendue, un
+`useRef` garantit un seul appel) et `useProtectionStockage` (Réglages ; `redemander` applique la
+valeur de retour de `request()`, ni rechargement ni TanStack Query).
+- **Rien n'est rendu tant que `status()` n'a pas répondu** : la réponse est locale et quasi
+instantanée, un texte provisoire ne ferait que clignoter. Le bouton « Redemander » n'existe que
+pour « non protégé » ; « protégé » ne promet rien contre une désinstallation et ne remplace pas
+l'export JSON (rappel d'exporter dans les trois états, « protégé » compris : « Ce n’est pas une
+sauvegarde : exportez pour garder une copie. »).
+- ⚠️ **Piège de test** : un `<StrictMode>` posé *sous* les providers de `renderWithServices` ne
+rejoue pas les effets (vérifié : le garde `useRef` pouvait être supprimé sans qu'un test casse).
+Le test StrictMode monte donc le `StrictMode` tout en haut, à la main ; supprimer le garde le
+fait échouer (mutation vérifiée).
+- **Angle mort assumé** : le comportement réel de Safari iOS hors installation et de Chrome sur un
+onglet simple n'est pas vérifiable en test ; la relecture à l'écran (portrait, paysage, sombre,
+clair) et la vérification sur appareil restent à faire.
+- **« Redemander » refusé = un retour visible** (boucle 5, tour 3) : un refus silencieux (cas normal
+  de Chrome en onglet non installé) ne produisait rien à l'écran. `useProtectionStockage` expose
+  `refusee`, vrai seulement après une redemande **faite par l'utilisateur** et refusée (jamais au
+  montage ni pour le refus du démarrage) ; la phrase s'affiche dans le même `<output>`
+  (`role="status"`, donc annoncée), sans promettre une acceptation. +3 tests.
+- **339 → 366 tests verts** (+27 : adapter sur faux `StorageManager`, démarrage, Réglages, retour après refus).
