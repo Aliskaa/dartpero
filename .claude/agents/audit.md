@@ -20,7 +20,7 @@ commit`, `npm install`, `--write`, `--fix`.
 ## Lis `CLAUDE.md` (et `.claude/CONVENTIONS.md`, `.claude/rules/`) en premier, et lis-les comme deux documents
 
 `.ai/architecture-context.md` oriente, mais un audit cherche les écarts : ce sont les sources
-qui font foi, pas le compactage.
+qui font foi, pas l'index.
 
 1. **La spécification** — les règles de jeu, les décisions gravées, les conventions. Un écart
    entre ce fichier et le code est un constat. `.claude/CONVENTIONS.md` prolonge cette lecture

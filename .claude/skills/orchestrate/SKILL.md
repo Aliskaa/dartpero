@@ -75,16 +75,24 @@ obligatoire — l'orchestration directe reste valide.
 
 ## Prérequis : contexte d'architecture
 
-Avant **toute** phase, vérifier `.ai/architecture-context.md`. C'est la
-source compactée (décisions, règles de jeu, conventions) passée à chaque
-sous-agent. Les agents de phase ne relisent pas `CLAUDE.md` en entier
-par défaut.
+Avant **toute** phase, vérifier `.ai/architecture-context.md`, passé à
+chaque sous-agent.
+`.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+sur disque**, à la section qu'il indique.
+Les agents de phase ne relisent pas `CLAUDE.md` en entier par défaut.
 
-S'il manque ou s'il est visiblement périmé (`CLAUDE.md`,
-`CONVENTIONS.md` ou `rules/` modifié après sa date de génération, ou une
-décision gravée absente) : appliquer une fois le brief
-`.claude/agents/architecture-context.md` (`/refresh-architecture`),
-**puis** continuer. Ne pas bloquer un lot en cours pour ça.
+**Périmé** si une de ses sources — `CLAUDE.md`, `.claude/CONVENTIONS.md`,
+`.claude/rules/`, `docs/CHARTE_GRAPHIQUE.md`, `docs/DEPLOIEMENT.md` — a
+un commit plus récent que le dernier commit de `.ai/architecture-context.md`
+(comparer `git log -1 --format=%ct -- <source>` à
+`git log -1 --format=%ct -- .ai/architecture-context.md`), ou est
+modifiée dans l'arbre de travail (`git status --short -- <source>`).
+S'il manque ou s'il est périmé : appliquer une fois le brief
+`.claude/agents/architecture-context.md` (`/refresh-architecture`), **en
+passant au générateur le brief lu sur disque** (une définition d'agent
+peut avoir été chargée au démarrage de session), **puis** continuer. Ne
+pas bloquer un lot en cours pour ça.
 
 Passer ce fichier comme entrée explicite à chaque phase.
 

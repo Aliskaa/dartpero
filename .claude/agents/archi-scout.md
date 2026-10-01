@@ -18,14 +18,15 @@ L'Orchestrator écrit `01-architecture.md` seulement si tu rends
 
 ## Entrées
 
-- `.ai/architecture-context.md` — source compactée prioritaire
+- `.ai/architecture-context.md` — l'index, lu en premier
 - `docs/lots/<id-du-lot>/00-orchestration.md` (et `request.md` s'il existe)
 - L'arborescence **locale** près du changement
 
-`.ai/architecture-context.md` suffit pour les décisions gravées, les règles
-de jeu et les conventions. N'ouvre `CLAUDE.md`, `.claude/CONVENTIONS.md` ou
-`docs/CHARTE_GRAPHIQUE.md` que pour **vérifier une citation**, lever une
-contradiction, ou résoudre une incertitude — et note pourquoi.
+`.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+sur disque**, à la section qu'il indique.
+Ne relis pas `CLAUDE.md`, `.claude/CONVENTIONS.md` ou `docs/CHARTE_GRAPHIQUE.md`
+en entier : ouvre la section indiquée, et note pourquoi.
 
 ## Règles
 

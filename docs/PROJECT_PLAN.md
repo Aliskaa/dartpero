@@ -13,8 +13,10 @@ validé.
 
 **Lots 0 à 5c livrés**, plus **sept lots de finition** (détaillés en fin de § 4) : UX, refonte
 visuelle « feuille de match », retraits décidés par l'usage, statistiques d'après-partie,
-résumé transposé, trois finitions, thème clair. App déployée sur https://dartpero.web.app.
-**318 tests verts**, `lint`, `typecheck` et `build` verts.
+résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit 2026-09-10**
+(détaillés en fin de § 6) : `tour-du-monde-cloture-volee`, `pourcentage-doubles-tiret`,
+`bundle-par-route`. App déployée sur https://dartpero.web.app.
+**339 tests verts**, `lint`, `typecheck` et `build` verts.
 
 Ce qu'il reste, par ordre de ce qui coûterait le plus cher à découvrir tard :
 
@@ -217,6 +219,13 @@ sur l'écran de configuration.
 
 ## 4. Les lots
 
+### Débrief et Lot D
+
+✅ **Débrief** : nom, ambiance, modes, saisie, persistance, usage — tout tranché.
+✅ **Lot D** — `CLAUDE.md` + [docs/PROJECT_PLAN.md](PROJECT_PLAN.md).
+
+---
+
 ### Lot 0 — Scaffold
 
 **Contenu** : Vite + React 19 + TS · Tailwind v4 (`@theme` avec les tokens de la charte) ·
@@ -227,6 +236,20 @@ Testing Library + jsdom · `vite-plugin-pwa` (manifest « Dartpéro ») ·
 
 **Fini quand** : `npm run dev`, `npm test`, `npm run lint` et `npm run typecheck` passent,
 et une page « Dartpéro » s'affiche aux couleurs de la charte.
+
+✅ **Fait.** Scaffold : Vite 8 + React 19 + TS 7 + Tailwind 4 + Biome 2.5 + Vitest 4 +
+`vite-plugin-pwa`. Tokens de la charte dans `src/index.css` (`@theme`), 3 polices
+`@fontsource` (sous-ensemble latin), icônes PWA générées, frontière hexagonale **vérifiée**
+par Biome. `dev` / `test` / `lint` / `typecheck` / `build` verts.
+
+**Versions installées au lot 0 (août 2026)** : vite **8.2** · vitest **4.1** · TypeScript
+**7.0** · Biome **2.5.6** · Tailwind **4.3** · React **19.2** · react-router **8.3**
+(passé de 7.18 à 8.x au commit `61b60ac`) · Dexie **4.4** · vite-plugin-pwa **1.3**. Une **seule copie de vite** (deduped partout) — l'ancien conflit
+vitest v2 / vite@5 n'existe plus, aucune précaution à prendre de ce côté.
+
+**Frontière hexagonale vérifiée** : l'`override` Biome sur `src/core/**` rejette bien les
+imports de `react`, `react-dom`, `react-router`, `@tanstack/react-query`, `lucide-react`,
+`dexie` et `sharp`, avec un message d'erreur explicite. Testé au lot 0 puis retiré.
 
 ---
 
@@ -274,6 +297,8 @@ seuls les adapters changent. S'y ajoutent : un test d'architecture qui lit les i
 de `src/` (le cœur ne peut rien importer d'autre que lui-même, l'UI ne touche pas un adapter,
 un adapter ne remonte pas vers l'UI), et un test des adapters Dexie sur une vraie IndexedDB
 via `fake-indexeddb`.
+Livré : ports driving/driven, 9 use cases, adapters **Dexie** + **in-memory**, composition
+root (`src/composition/container.ts`) et `ServicesProvider` injectable.
 
 ---
 
@@ -284,7 +309,8 @@ Le lot qui rend l'app réellement utilisable.
 **Contenu** :
 - Accueil + configuration de partie.
 - **Écran match** : zone lecture (chiffres géants, joueur actif en halo laiton, moyenne en
-  direct) + zone saisie (grille S/D/T) — voir la maquette dans `CLAUDE.md`.
+  direct) + zone saisie (grille S/D/T) — voir la maquette dans
+  [CHARTE_GRAPHIQUE.md](CHARTE_GRAPHIQUE.md) § Écran de match — disposition imposée.
 - ~~**Mode rapide** basculable (pavé 0-180 + raccourcis 26/41/45/60/100/140/180).~~ Livré au
   lot 3, puis **retiré** : plusieurs soirées sans jamais s'en servir.
 - **Suggestion de checkout** dès reste ≤ 170, écran de sortie dédié sous 100.
@@ -302,6 +328,17 @@ Deux ports driving ont été ajoutés pour que l'UI ne réimplémente jamais les
 de volée en fléchettes pour le mode rapide — **retiré depuis, avec son mode**).
 ⚠️ **Reste à valider sur un vrai téléphone** — c'est le seul critère que les tests ne couvrent
 pas : lisibilité à 3 m, confort des cibles au pouce, tenue du wake lock en conditions réelles.
+Routage React Router, `QueryClient` + `ServicesProvider` câblés.
+
+---
+
+### Lot 3 bis — Refonte visuelle
+
+✅ **Fait** — Refonte visuelle : la charte « pub anglais » réellement exécutée
+(matières, relief, cible SVG, avatars, animations ciblées + `prefers-reduced-motion`),
+socle de composants communs, en-tête de match avec bouton retour, valeur réelle des touches
+hors simple, mode rapide qui projette le reste. **100 tests toujours verts, aucun modifié.**
+Le détail : § 6, « Décisions de la refonte visuelle (lot 3 bis) ».
 
 ---
 
@@ -477,7 +514,8 @@ La dette notée au lot 4 : « des stats en tableau comparatif classé plutôt qu
 — **vaut aussi pour l'écran de résumé** ». Elle est payée.
 
 ✅ **Fait — 309 tests verts.** Le résumé X01 passe à un tableau **transposé** (joueurs en
-colonnes, statistiques en lignes) et reçoit la carte des impacts de la partie.
+colonnes, statistiques en lignes) et reçoit la carte des impacts de la partie. Relu à l'écran
+à 2 et 4 joueurs.
 
 ⚠️ **Le résumé n'a pas repris la disposition de l'écran Statistiques, et c'est délibéré** : une
 carrière, c'est beaucoup de joueurs × peu de chiffres → une ligne par joueur ; un match, c'est
@@ -1407,3 +1445,37 @@ ligne si besoin un jour (donner à `Aiguillage` le même fallback `Spinner` que 
 service worker à la toute première visite ; les doublons de précache dans `dist/sw.js`
 (candidat 7 du même audit, non corrigés ici).
 
+### Décisions du lot « allegement-docs »
+
+Lot de documentation pur (`docs/lots/allegement-docs/`) : aucun fichier sous `src/`, `tests/`
+ou `scripts/` touché, aucune règle de jeu ni décision structurante retouchée.
+
+- **Le principe** : `CLAUDE.md` ne garde que le résumé opérationnel, les décisions gravées et
+les pièges vitaux ; l'état d'avancement vit en § 0 / § 4 de ce plan, le journal ici en § 6, le
+manuel dans `.claude/CONVENTIONS.md` (§ 11, § 12, § 14 « Arborescence ») et `docs/`
+(`docs/DEPLOIEMENT.md`, nouveau ; charte § Typographie). Les 15 titres `##` de `CLAUDE.md`
+sont gardés comme ancres : aucune référence « `CLAUDE.md` § X » ne pend.
+- **`.ai/architecture-context.md` devient un index plafonné** (≤ 160 lignes, ≤ 13 312 octets —
+relevé en cours de lot depuis 150 lignes / 12 288 octets : le générateur a tenu à 42 octets du
+plafond, et les trois corrections de la boucle 1 ont ramené la marge à 9 octets) :
+il dit où lire, il ne recopie ni ne résume plus aucune règle de jeu. Une règle résumée incite à
+se passer de la source ; une règle absente de l'index force à la lire.
+- **Pas de test automatique de taille** : il lierait la taille de la doc au vert du code et
+pousserait à supprimer du contenu pour passer au vert. Garde-fous à la place : le plafond
+auto-mesuré du brief `architecture-context`, la puce de `review.md` sur la croissance de
+`CLAUDE.md`, et la note d'en-tête de `CLAUDE.md`.
+- ⚠️ **`.claude/rules/` est chargé d'office** dans le contexte de chaque agent, comme
+`CLAUDE.md` : y déplacer du contenu n'allège rien. Rien de nouveau n'y est entré.
+- **Pourquoi pas ≈ 200 lignes** : les blocs intacts (décisions structurantes, règle
+d'architecture, trois blocs de règles de jeu, charte, journal, décisions ouvertes,
+environnement) en font déjà ≈ 246. `CLAUDE.md` passe de **530 lignes / 34 092 octets** à
+**338 lignes / 20 315 octets** (cible ≈ 335, plafond 340, tranché par l'utilisateur),
+séparateurs `---` conservés.
+- **Corrigé d'après le code** : `npm run firebase:deploy` exécute aussi `npm run smoke`
+(`package.json` l. 19) — `CLAUDE.md` § Déploiement ne le disait pas.
+- ⚠️ **Une copie injectée d'un fichier peut être périmée** (celle de l'architecte ignorait la
+règle de branche de `a00e9a8`) : Test, Sécurité, Revue et le générateur de `.ai` relisent les
+sources **sur disque**. La péremption de `.ai` se juge par `git log -1 --format=%ct`
+(commande `/orchestrate` § Prérequis).
+- La table de correspondance ligne à ligne (origine → destination → preuve) vit dans
+`docs/lots/allegement-docs/02-dev-notes.md`.

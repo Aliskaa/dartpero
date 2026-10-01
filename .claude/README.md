@@ -28,16 +28,17 @@ projet sans serveur, sans compte et sans ADR.
 | `review` | Go / no-go (niveau `high`) | opus / max |
 | `audit` | Une dimension d'audit | sonnet / high (opus pour `archi` et `domaine`) |
 | `intake` | Brief du cadrage | sonnet / high |
-| `architecture-context` | Compactage des décisions | sonnet / high |
+| `architecture-context` | Index des sources (`.ai/`) | sonnet / high |
 
 ## Où vit quoi
 
 | Chemin | Rôle |
 | --- | --- |
 | `CLAUDE.md` | Décisions gravées, règles du jeu. Gagne toujours. |
-| `.claude/CONVENTIONS.md` | Forme concrète du code. |
+| `.claude/CONVENTIONS.md` | Forme concrète du code, arborescence (§ 14). |
+| `docs/DEPLOIEMENT.md` | Manuel du déploiement (Firebase Hosting, cache, service worker). |
 | `.claude/rules/` | Règles de travail courtes, par zone. |
-| `.ai/architecture-context.md` | Compactage lu en premier par les agents. **Pas une source de vérité.** |
+| `.ai/architecture-context.md` | Index lu en premier par les agents : il dit où lire, la règle se lit à sa source. **Pas une source de vérité.** |
 | `docs/request/` | Demandes validées par `/intake`. |
 | `docs/lots/<id>/` | Une session `/orchestrate` : `00` à `06`. |
 | `docs/audits/` | Rapports `/audit`, lots candidats avec statut. |

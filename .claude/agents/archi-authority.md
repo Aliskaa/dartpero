@@ -16,11 +16,14 @@ dernier.
 **Lecture seule.** L'Orchestrator écrit `01-architecture.md` seulement si
 tu rends `Architecture result: PASS`.
 
-Lis `.ai/architecture-context.md` en premier. Les décisions structurantes
-et les **règles de jeu** (X01, Tour du monde, Cricket, entraînement) sont
-la **spécification**, pas des suggestions : une règle ne s'improvise
-jamais. N'ouvre `CLAUDE.md`, `.claude/CONVENTIONS.md` ou
-`docs/CHARTE_GRAPHIQUE.md` que pour vérifier une citation — et note
+Lis `.ai/architecture-context.md` en premier.
+`.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+sur disque**, à la section qu'il indique.
+Les décisions structurantes et les **règles de jeu** (X01, Tour du monde,
+Cricket, entraînement) sont la **spécification**, pas des suggestions : une
+règle ne s'improvise jamais. Ne relis pas `CLAUDE.md`, `.claude/CONVENTIONS.md`
+ou `docs/CHARTE_GRAPHIQUE.md` en entier : ouvre la section indiquée, et note
 pourquoi.
 
 ## Entrées

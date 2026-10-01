@@ -3,8 +3,8 @@
 **Quand :** sources sous `src/` et `tests/`.
 
 - TypeScript **7** : pas de `baseUrl` ; l'alias `@/*` est relatif
-  (`"./src/*"`), doublé dans `vite.config.ts` (`CLAUDE.md` § Notes
-  techniques).
+  (`"./src/*"`), doublé dans `vite.config.ts` (voir `tsconfig.json`
+  et `vite.config.ts`).
 - Imports **relatifs** dans `src/core/**`, `@/` partout ailleurs
   (`CONVENTIONS` § 8).
 - Value Object = un `type` et un `const` du même nom, une factory

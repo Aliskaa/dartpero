@@ -147,6 +147,7 @@ bon thème.
 
 Polices embarquées via `@fontsource`, **sous-ensemble `latin` uniquement** (le cyrillique et le
 vietnamien pesaient 136 Kio de précache pour rien — l'app est en français).
+Import par `@fontsource/<police>/latin-<poids>.css` : précache workbox de **542 Kio → 406 Kio**.
 
 | Token | Police | Poids | Rôle |
 | ----- | ------ | ----- | ---- |

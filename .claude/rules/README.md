@@ -2,7 +2,7 @@
 
 **Elles ne redécident pas `CLAUDE.md`.** En cas de désaccord : code récent,
 puis `CLAUDE.md`, puis `.claude/CONVENTIONS.md`, puis ce dossier.
-`.ai/architecture-context.md` est un compactage, pas une voix de plus —
+`.ai/architecture-context.md` est un index, pas une voix de plus —
 s'il diverge, on le régénère (`/refresh-architecture`), on ne le suit pas.
 
 Ces fichiers sont **courts** et renvoient à `CONVENTIONS.md` pour le

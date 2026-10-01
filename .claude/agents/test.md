@@ -12,10 +12,13 @@ Tu es **Test** pour le lot fourni. **Tu n'édites pas les sources.** Tu peux lan
 commandes non mutantes : `npm test`, `npx vitest run <chemin>`, `npm run lint`,
 `npm run typecheck`, `npm run build`.
 
-Lis `.ai/architecture-context.md` en premier — les règles de jeu et d'architecture compactées
-sont la référence de ce qui doit être vrai. Pour une règle de jeu testée au bord (bust, bogey,
-départage, cut-throat), **vérifie la citation dans `CLAUDE.md`** : une assertion écrite sur un
-compactage déformé serait verte et fausse. `.claude/rules/testing.md` et
+Lis `.ai/architecture-context.md` en premier.
+`.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+sur disque**, à la section qu'il indique.
+Avant d'écrire ou de juger une assertion de bord (bust, bogey, départage, cut-throat), **lis la
+règle dans `CLAUDE.md` § Règles du …**, sur disque : une assertion écrite sur un souvenir ou un
+résumé serait verte et fausse. `.claude/rules/testing.md` et
 `.claude/CONVENTIONS.md` § 11 montrent les patterns de test déjà en place (fakes de `tests/fakes/`,
 `helpers.ts` par suite, `renderWithServices`, `gestes.ts`, garde-fous « vert à vide ») : un
 nouveau test doit s'y conformer, pas réinventer sa propre plomberie.

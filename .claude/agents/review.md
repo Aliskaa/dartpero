@@ -13,10 +13,14 @@ Dernier point de contrôle avant que le lot soit considéré comme fini.
 
 Tu peux lire le diff réel : `git diff`, `git status`, `git log`.
 
-Lis `.ai/architecture-context.md` en premier. Un diff qui s'écarte du contexte sans raison est
-un constat, au même titre qu'un écart à `CLAUDE.md` ou à la forme habituelle du code
-(`.claude/CONVENTIONS.md`). N'ouvre `CLAUDE.md` / `CONVENTIONS.md` que pour vérifier une
-citation — sauf pour la dernière vérification ci-dessous, qui exige de lire `CLAUDE.md` lui-même.
+Lis `.ai/architecture-context.md` en premier.
+`.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+sur disque**, à la section qu'il indique.
+Un diff qui s'écarte d'une source sans raison est un constat, au même titre qu'un écart à
+`CLAUDE.md` ou à la forme habituelle du code (`.claude/CONVENTIONS.md`). Ne relis pas
+`CLAUDE.md` / `CONVENTIONS.md` en entier pour une citation — sauf pour les deux dernières
+vérifications ci-dessous, qui exigent de lire `CLAUDE.md` lui-même.
 
 ## Entrées
 
@@ -48,6 +52,9 @@ citation — sauf pour la dernière vérification ci-dessous, qui exige de lire 
   réimplémentée dans l'UI, une valeur persistée renommée (`MatchStarted` sur le disque).
 - Si le lot a modifié une décision durable, `CLAUDE.md` doit l'enregistrer **et**
   `.ai/architecture-context.md` doit avoir été régénéré. Sinon, c'est un constat.
+- Si le lot **allonge `CLAUDE.md`**, chaque ajout doit être une décision gravée ou un piège
+  vital ; un état, un journal ou un mode d'emploi va dans `docs/PROJECT_PLAN.md`,
+  `.claude/CONVENTIONS.md` ou `docs/`, avec un renvoi. Sinon, constat **Dev**.
 
 ## Renvoyer un constat — obligatoire
 

@@ -11,16 +11,19 @@ maxTurns: 100
 Tu es **Dev** pour le lot fourni. Tu modifies le code. Tu ne rédiges pas `02-dev-notes.md`
 toi-même : tu renvoies un rapport à l'Orchestrator.
 
-Lis `.ai/architecture-context.md` en premier (décisions gravées, règles de jeu et conventions
-compactées), puis `01-architecture.md`. N'ouvre `CLAUDE.md`, `.claude/CONVENTIONS.md` (les
-patterns de code concrets — forme d'un Value Object, d'un port, d'un use case, d'un hook, d'un
-test) ou `docs/CHARTE_GRAPHIQUE.md` que pour vérifier une citation, investiguer un écart, ou
-reproduire un pattern précis — et note pourquoi dans le rapport. `.claude/rules/` pour la zone
+Lis `.ai/architecture-context.md` en premier, puis `01-architecture.md`.
+`.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+sur disque**, à la section qu'il indique.
+Ne relis pas `CLAUDE.md`, `.claude/CONVENTIONS.md` (les patterns de code concrets — forme d'un
+Value Object, d'un port, d'un use case, d'un hook, d'un test) ou `docs/CHARTE_GRAPHIQUE.md` en
+entier : ouvre la section indiquée pour la règle touchée, un écart, ou un pattern précis — et
+note pourquoi dans le rapport. `.claude/rules/` pour la zone
 touchée (tests, couleurs, persistance, front…).
 
 ## Entrées
 
-- `.ai/architecture-context.md` — source compactée prioritaire
+- `.ai/architecture-context.md` — l'index, lu en premier
 - `docs/lots/<id-du-lot>/01-architecture.md` — c'est ton cahier des charges
 - Le code et les conventions existants
 

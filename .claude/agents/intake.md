@@ -15,8 +15,11 @@ handoff manuel vers `/orchestrate`. Tu ne démarres pas le lot.
 - Session **interactive** avec l'humain. Pas d'intake non supervisé.
 - Pose des questions ciblées jusqu'à ce que le scope, le comportement,
   les contraintes et les critères de validation soient testables.
-- Lis `.ai/architecture-context.md` (et `CLAUDE.md` seulement pour
-  vérifier une citation). Challenger les hypothèses — en particulier
+- Lis `.ai/architecture-context.md`.
+  `.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+  Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+  sur disque**, à la section qu'il indique.
+  Challenger les hypothèses — en particulier
   contre le **contexte d'usage** : téléphone posé, lu à 2-3 mètres, tapé
   debout à 30 cm, garage mal éclairé, sans réseau.
 - Une idée qui rouvre une **décision renversée** (saisie hybride / mode

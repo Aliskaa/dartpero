@@ -179,6 +179,8 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   paquets bannis, et vérifient un **plancher** de fichiers/imports trouvés pour qu'une regex
   cassée ne rende pas tout vert silencieusement. Reproduire ce réflexe « se garder d'un test vert
   à vide » pour tout test dont le rôle est de vérifier une **absence**.
+- `tests/setup.ts` charge `@testing-library/jest-dom/vitest` et `fake-indexeddb/auto`, et fait
+  un `cleanup()` après chaque test.
 
 ## 12 · Outillage
 
@@ -192,6 +194,7 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
 - `npm run lint`, `npm run typecheck`, `npm test` verts est le plancher avant de considérer
   quoi que ce soit fini — ce que `dev.md` et `test.md` exigent déjà, répété ici parce que
   c'est aussi un pattern de code, pas seulement un gate de process.
+- `vite.config.ts` importe `defineConfig` depuis **`vitest/config`** (pour le bloc `test`).
 
 ## 13 · Ajouter un mode de jeu (la couture `GameMode`)
 
@@ -234,3 +237,58 @@ de résumé à la liste des `lazy()` de `src/ui/ecrans/games/PartieEcran.tsx` (e
 lancement, s'il en a un, à `src/App.tsx`) — sinon il revient discrètement dans le chunk
 commun, sans qu'aucun test ne le signale (`tests/architecture/lazyRoutes.test.ts` ne connaît
 que les écrans déjà listés au moment où il a été écrit).
+
+## 14 · Arborescence
+
+L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
+invariants). Vérifié contre `src/` au lot « allegement-docs » : 20 ports driving, 9 driven,
+6 hooks, 4 modes, 4 services transverses.
+
+```
+src/
+├─ core/
+│  ├─ domain/
+│  │  ├─ games/           ← UN DOSSIER PAR MODE DE JEU
+│  │  │  ├─ index.ts      la couture : GameModeId, AnyMatchState, GameModes
+│  │  │  ├─ x01/          config · rules · stats · career
+│  │  │  ├─ tour-du-monde/     config · rules
+│  │  │  ├─ cricket/           config · rules
+│  │  │  └─ checkout-practice/ config · rules      (solo)
+│  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, PlayerColor, ids
+│  │  ├─ entities/        Visit, Player          (transverses aux modes)
+│  │  ├─ events/          MatchEvent : X01Started | TourDuMondeStarted |
+│  │  │                   CricketStarted | CheckoutPracticeStarted |
+│  │  │                   RoundStarted | VisitRecorded
+│  │  └─ services/        dartSearch · checkout · visitOutcome · dartboardHits
+│  │                      ⚠️ TRANSVERSES : un mode n'importe jamais un autre mode
+│  └─ application/
+│     ├─ ports/driving/   StartMatch, RestartMatch, RecordVisit, UndoLastVisit,
+│     │                   PreviewVisit,
+│     │                   GetMatchState, GetCheckoutSuggestion,
+│     │                   GetMatchStats, GetMatchHistory, GetMatchMode,
+│     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
+│     │                   ManagePlayers, ManageBackup, PlayTourDuMonde,
+│     │                   PlayCricket, PreviewCricketVisit, PreviewTourDuMondeVisit,
+│     │                   PlayCheckoutPractice
+│     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
+│     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer
+│     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
+├─ infrastructure/        dexie/ · device/ · memory/ · system/
+├─ composition/           container.ts   ← seul point de câblage
+├─ ui/
+│  ├─ composants/         commun/ (dont ApercuPartie, qui ouvre l'union des modes,
+│  │                      et DispositionPartie, l'ossature portrait/paysage)
+│  │                      x01/ · tour-du-monde/ · cricket/ · checkout-practice/
+│  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
+│  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
+│  │                        cricket/ · checkout-practice/
+│  │                      + les écrans transverses : Accueil, Joueurs,
+│  │                        NouvellePartie, Historique, Statistiques, Réglages
+│  ├─ hooks/              useX01 · useTourDuMonde · useCricket ·
+│  │                      useCheckoutPractice · useJoueurs ·
+│  │                      useAppareil (wake lock, préférences, voix)
+│  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
+│     theme.ts (clair / sombre / système) · accents.ts
+tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
+                          fakes/ · ui/ (+ gestes.ts)
+```

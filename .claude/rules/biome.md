@@ -10,7 +10,7 @@
 - `npm run lint` = `biome check .` ; `npm run lint:fix` écrit.
 - Biome 2.5 : `linter.rules.preset` (pas `recommended`), motifs
   d'exclusion sans `/**` final, `css.parser.tailwindDirectives: true`
-  obligatoire pour `src/index.css` (`CLAUDE.md` § Notes techniques).
+  obligatoire pour `src/index.css` (voir `biome.json`).
 - **Frontière hexagonale** : l'override `noRestrictedImports` sur
   `src/core/**` bannit `react`, `react-dom`, `react-router`,
   `@tanstack/react-query`, `lucide-react`, `dexie`, `sharp`, chacun avec

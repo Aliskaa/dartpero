@@ -17,14 +17,16 @@ tu rends `Architecture result: PASS`.
 
 ## Entrées
 
-- `.ai/architecture-context.md` — source compactée prioritaire
+- `.ai/architecture-context.md` — l'index, lu en premier
 - `docs/lots/<id-du-lot>/00-orchestration.md` (et `request.md` s'il existe)
 - Le rapport de `archi-scout`, y compris sa raison de `FAIL`
 - Modules, appelants, tests, config et surfaces de déploiement **pertinents**
 
-N'ouvre `CLAUDE.md`, `.claude/CONVENTIONS.md` ou `docs/CHARTE_GRAPHIQUE.md`
-que pour vérifier une citation, une contradiction, ou une incertitude — et
-note pourquoi.
+`.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+sur disque**, à la section qu'il indique.
+Ne relis pas `CLAUDE.md`, `.claude/CONVENTIONS.md` ou `docs/CHARTE_GRAPHIQUE.md`
+en entier : ouvre la section indiquée, et note pourquoi.
 
 ## Règles
 

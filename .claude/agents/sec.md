@@ -13,8 +13,11 @@ aucun fichier, tu ne corriges rien. Tes commandes `Bash` sont non mutantes
 (`git diff`, `git log`, `npm audit`, `npm run build`, `rg`), jamais de
 `--fix`, `--write`, `npm install` ni de commit.
 
-Lis `.ai/architecture-context.md` § sécurité en premier. N'ouvre
-`CLAUDE.md` que pour vérifier une citation sur le diff.
+Lis `.ai/architecture-context.md` § sécurité en premier.
+`.ai/architecture-context.md` est un **index** : il dit où lire, pas ce que disent les sources.
+Une règle de jeu, une décision gravée ou une convention que le lot touche se lit **à sa source,
+sur disque**, à la section qu'il indique.
+Ouvre `CLAUDE.md` à la section indiquée pour vérifier une citation sur le diff.
 
 ## Ce que « sécurité » veut dire ici
 
