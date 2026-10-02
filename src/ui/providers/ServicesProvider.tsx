@@ -1,18 +1,23 @@
-import { createContext, type ReactNode, useContext, useMemo } from 'react'
-import { createBrowserServices, type Services } from '@/composition/container'
+import { createContext, type ReactNode, useContext } from 'react'
+import type { Services } from '@/composition/container'
 
 const ServicesContext = createContext<Services | null>(null)
 
 type Props = {
   readonly children: ReactNode
-  /** Injecté par les tests. En production, le composition root fait foi. */
-  readonly services?: Services
+  /**
+   * Toujours injecté : par `src/main.tsx` en production (créés une seule fois,
+   * avant le premier rendu), par `renderWithServices` dans les tests. Le
+   * provider ne crée plus rien — sous `StrictMode`, un `useMemo` rejoué aurait
+   * créé deux jeux d'adapters, dont un fantôme qui garderait l'invite
+   * d'installation.
+   */
+  readonly services: Services
 }
 
-export const ServicesProvider = ({ children, services }: Props) => {
-  const valeur = useMemo(() => services ?? createBrowserServices(), [services])
-  return <ServicesContext.Provider value={valeur}>{children}</ServicesContext.Provider>
-}
+export const ServicesProvider = ({ children, services }: Props) => (
+  <ServicesContext.Provider value={services}>{children}</ServicesContext.Provider>
+)
 
 /**
  * Le seul accès de l'UI au métier. Un composant n'appelle jamais Dexie ni le

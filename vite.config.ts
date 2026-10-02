@@ -43,9 +43,15 @@ export default defineConfig(({ mode, command }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
         manifest: {
+          // ⚠️ NE JAMAIS CHANGER. C'est l'identité des installations existantes :
+          // sans `id`, le navigateur la calculait depuis `start_url` résolu
+          // (`https://dartpero.web.app/`), et `'/'` la reproduit à l'identique.
+          // Toute autre valeur ferait apparaître une seconde icône.
+          id: '/',
           name: 'Dartpéro',
           short_name: 'Dartpéro',
-          description: 'Compteur de parties de fléchettes — X01, checkouts et stats.',
+          description:
+            'Compteur de fléchettes entre potes — X01, Tour du monde, Cricket et entraînement au checkout. Hors ligne, sans compte.',
           lang: 'fr',
           start_url: '/',
           scope: '/',
@@ -68,9 +74,49 @@ export default defineConfig(({ mode, command }) => {
               purpose: 'maskable',
             },
           ],
+          categories: ['games', 'sports', 'entertainment'],
+          // Appui long sur l'icône (Android). L'icône 192 est réutilisée :
+          // ≥ 96 px, et déjà précachée.
+          shortcuts: [
+            {
+              name: 'Nouvelle partie',
+              url: '/nouvelle-partie',
+              icons: [{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+            },
+          ],
+          // Copies à l'identique de `docs/captures/` : à recopier si elles sont
+          // refaites (`sizes` = dimensions réelles, contrôlées par `npm run smoke`).
+          screenshots: [
+            {
+              src: 'screenshots/accueil.png',
+              sizes: '780x1688',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'L’accueil : la partie en cours se reprend d’un doigt',
+            },
+            {
+              src: 'screenshots/partie-x01.png',
+              sizes: '780x1688',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Une partie de X01 : le tableau lu de loin, la saisie fléchette par fléchette',
+            },
+            {
+              src: 'screenshots/paysage.png',
+              sizes: '1000x462',
+              type: 'image/png',
+              form_factor: 'wide',
+              label: 'En paysage, le tableau et la saisie côte à côte',
+            },
+          ],
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+          // Les captures ne servent qu'à la fenêtre d'installation, en ligne :
+          // hors précache (≈ 425 ko de moins hors ligne). `**/*.png` les
+          // prendrait sinon — vite-plugin-pwa ne pose aucun `globIgnores` par
+          // défaut, d'où le premier motif, repris de workbox-build.
+          globIgnores: ['**/node_modules/**/*', 'screenshots/**'],
         },
       }),
     ],

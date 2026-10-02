@@ -10,7 +10,7 @@ Patterns : `CONVENTIONS` § 9 et § 10.
 - `composants/commun/` : le design system — réutiliser, ne jamais
   dupliquer une variante ad hoc.
 - `composants/<mode>/` : ce qui est propre à un mode.
-- `hooks/` : un hook par mode (`useX01`…), `useJoueurs`, `useAppareil`, `useStockagePersistant`.
+- `hooks/` : un hook par mode (`useX01`…), `useJoueurs`, `useAppareil`, `useStockagePersistant`, `useInstallation`.
 - `labels.ts` : **tout** le français affiché, annonces vocales comprises.
 
 ## Travail

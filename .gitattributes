@@ -1,0 +1,6 @@
+# Fins de ligne LF partout : core.autocrlf=true réécrivait les sources en CRLF
+# au switch / merge et cassait biome check.
+* text=auto eol=lf
+
+# Binaires suivis (git ls-files) : jamais de conversion.
+*.png binary

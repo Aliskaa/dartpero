@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
+import { createBrowserServices } from '@/composition/container'
 import { ServicesProvider } from '@/ui/providers/ServicesProvider'
 
 // Polices embarquées (offline-first) — voir la charte dans CLAUDE.md.
@@ -44,10 +45,17 @@ const queryClient = new QueryClient({
   },
 })
 
+// Les services naissent ICI, une seule fois, avant `createRoot` : le module
+// d'entrée s'exécute avant tout rendu, et l'adapter d'installation pose ses
+// écouteurs dans son constructeur — l'invite de Chromium peut partir avant le
+// montage de React. Créés dans le provider, ils arriveraient trop tard (et en
+// double sous `StrictMode`).
+const services = createBrowserServices()
+
 createRoot(racine).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ServicesProvider>
+      <ServicesProvider services={services}>
         <BrowserRouter>
           <App />
         </BrowserRouter>

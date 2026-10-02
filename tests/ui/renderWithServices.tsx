@@ -7,7 +7,7 @@ import { ServicesProvider } from '@/ui/providers/ServicesProvider'
 
 /**
  * Rend un écran avec des services injectés (adapters en mémoire).
- * `ServicesProvider` accepte une injection précisément pour ça : aucun test
+ * `ServicesProvider` reçoit toujours ses services de l'extérieur : aucun test
  * d'UI ne touche IndexedDB.
  */
 export const renderWithServices = (

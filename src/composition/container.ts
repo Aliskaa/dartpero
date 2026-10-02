@@ -1,4 +1,5 @@
 import type { Announcer } from '@/core/application/ports/driven/Announcer'
+import type { AppInstallation } from '@/core/application/ports/driven/AppInstallation'
 import type { Clock } from '@/core/application/ports/driven/Clock'
 import type { Haptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
@@ -48,6 +49,7 @@ import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseC
 import { RestartMatchUseCase } from '@/core/application/use-cases/RestartMatchUseCase'
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
 import { UndoLastVisitUseCase } from '@/core/application/use-cases/UndoLastVisitUseCase'
+import { BrowserAppInstallation } from '@/infrastructure/device/BrowserAppInstallation'
 import { createLocalStoragePreferences } from '@/infrastructure/device/LocalStoragePreferences'
 import { NavigatorPersistentStorage } from '@/infrastructure/device/NavigatorPersistentStorage'
 import { SpeechAnnouncer } from '@/infrastructure/device/SpeechAnnouncer'
@@ -75,6 +77,12 @@ export type Devices = {
   readonly announcer: Announcer
   /** Protection de la base contre l'effacement par le navigateur. */
   readonly persistentStorage: PersistentStorage
+  /**
+   * L'installation sur l'écran d'accueil : état synchrone, abonnement, invite.
+   * ⚠️ L'adapter navigateur écoute dès sa construction : les services naissent
+   * donc une seule fois, dans `src/main.tsx`, avant `createRoot`.
+   */
+  readonly appInstallation: AppInstallation
 }
 
 export type Dependencies = {
@@ -90,8 +98,8 @@ export type Dependencies = {
  * Tout ce que l'UI a le droit d'appeler. Rien d'autre ne lui est exposé.
  *
  * `devices` est une exception assumée à la règle « UI → use cases uniquement » :
- * ce sont des ports **driven** (écran, vibreur, préférences locales, protection du stockage) consommés
- * directement par la coquille UI. Ils ne portent aucune règle métier, donc les
+ * ce sont des ports **driven** (écran, vibreur, préférences locales, protection du stockage,
+ * installation) consommés directement par la coquille UI. Ils ne portent aucune règle métier, donc les
  * emballer dans des use cases serait de la cérémonie pure. Ils restent des
  * ports : injectables, remplaçables, muets quand le matériel ne suit pas.
  */
@@ -188,8 +196,13 @@ export const createBrowserDependencies = (): Dependencies => {
       preferences: createLocalStoragePreferences(),
       announcer: new SpeechAnnouncer(),
       persistentStorage: new NavigatorPersistentStorage(),
+      appInstallation: new BrowserAppInstallation(),
     },
   }
 }
 
+/**
+ * Appelé **une seule fois**, par `src/main.tsx`, avant le premier rendu : un
+ * jeu de services par page, et des écouteurs d'appareil posés au plus tôt.
+ */
 export const createBrowserServices = (): Services => createServices(createBrowserDependencies())

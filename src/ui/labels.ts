@@ -1,3 +1,4 @@
+import type { InstallState } from '@/core/application/ports/driven/AppInstallation'
 import type { StorageProtection } from '@/core/application/ports/driven/PersistentStorage'
 import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
@@ -208,6 +209,43 @@ export const REFUS_REDEMANDE_STOCKAGE =
 
 export const ETIQUETTE_PROTECTION_STOCKAGE = 'Protection des données'
 export const LIBELLE_REDEMANDER_PROTECTION = 'Redemander'
+
+/** La ligne discrète de l'Accueil. Jamais sur un écran de partie. */
+export const TITRE_INVITATION_INSTALLATION = 'Installer Dartpéro'
+export const TEXTE_INVITATION_INSTALLATION =
+  'Plein écran, une icône sur l’écran d’accueil, et des données mieux protégées.'
+export const LIBELLE_INSTALLER = 'Installer'
+export const LIBELLE_PLUS_TARD = 'Plus tard'
+
+/** Réglages → À propos. */
+export const LIBELLE_INSTALLER_DARTPERO = 'Installer Dartpéro'
+export const ETIQUETTE_INSTALLATION = 'Installation'
+export const PRESENTATION_DARTPERO =
+  'Dartpéro — compteur de fléchettes : X01, Tour du monde, Cricket et entraînement au checkout.'
+
+/** La phrase d'état de l'installation, une par état. */
+export const ETAT_INSTALLATION: Record<InstallState, string> = {
+  installed: 'Dartpéro est installé sur cet appareil.',
+  installable: 'Installez Dartpéro pour l’ouvrir en plein écran, comme une application.',
+  'ios-manual': 'Sur iPhone ou iPad, l’installation se fait depuis Safari, en trois gestes :',
+  'ios-other-browser': 'Ouvrez ce lien dans Safari pour installer Dartpéro.',
+  unavailable:
+    'Installez Dartpéro depuis le menu de votre navigateur (« Ajouter à l’écran d’accueil ») pour l’ouvrir comme une application.',
+}
+
+/**
+ * Les trois gestes sur Safari iOS et iPadOS. Partager est en bas sur iPhone,
+ * en haut sur iPad : le libellé ne dit pas où. Selon la version, il peut se
+ * cacher sous le bouton « … » de la barre d'adresse.
+ */
+export const ETAPES_INSTALLATION_IOS = [
+  'Touchez Partager (ou ouvrez « … » d’abord).',
+  'Choisissez « Sur l’écran d’accueil ».',
+  'Touchez « Ajouter ».',
+] as const
+
+/** Après un refus de « Redemander » : le chemin vers l'installation sur iOS. */
+export const LIEN_GUIDE_INSTALLATION = 'Voir comment installer'
 
 export const JOUEUR_SUPPRIME = 'Joueur supprimé'
 

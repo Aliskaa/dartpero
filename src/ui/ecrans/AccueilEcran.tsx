@@ -1,14 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
-import { Play, Target, Users } from 'lucide-react'
+import { Download, Play, Target, Users } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import type { Player } from '@/core/domain/entities/Player'
 import { ApercuPartie, libelleRegles } from '@/ui/composants/commun/ApercuPartie'
-import { Button } from '@/ui/composants/commun/Button'
+import { Button, classesBouton } from '@/ui/composants/commun/Button'
 import { Skeleton } from '@/ui/composants/commun/Etats'
 import { LogoHero } from '@/ui/composants/commun/Logo'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { couleurJoueur } from '@/ui/couleurs'
+import { usePreference } from '@/ui/hooks/useAppareil'
+import {
+  CLE_INSTALLATION_ECARTEE,
+  installationPossible,
+  useInstallation,
+} from '@/ui/hooks/useInstallation'
 import { useProfils } from '@/ui/hooks/useJoueurs'
+import {
+  LIBELLE_INSTALLER,
+  LIBELLE_PLUS_TARD,
+  TEXTE_INVITATION_INSTALLATION,
+  TITRE_INVITATION_INSTALLATION,
+} from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /** Signal vivant entre l'enseigne et le CTA — plus de trou au milieu. */
@@ -79,6 +91,56 @@ const SignalAccueil = ({ joueurs }: { readonly joueurs: readonly Player[] }) => 
   )
 }
 
+/**
+ * L'invitation à installer : une ligne discrète, jamais au-dessus de
+ * « Nouvelle partie » en poids visuel. Un bouton qui ouvre l'invite native là
+ * où le navigateur la fournit, un lien vers le guide des Réglages sur iOS.
+ * « Plus tard » la masque pour de bon sur cet appareil — ici seulement : les
+ * Réglages gardent toujours leur entrée.
+ */
+const InvitationInstallation = () => {
+  const { etat, installer } = useInstallation()
+  const [ecartee, setEcartee] = usePreference(CLE_INSTALLATION_ECARTEE, false)
+  if (ecartee || !installationPossible(etat)) return null
+
+  return (
+    <section
+      aria-label={TITRE_INVITATION_INSTALLATION}
+      className="animate-monter flex flex-col gap-2 border-y border-craie/25 py-3 paysage:flex-row paysage:items-center paysage:gap-4 paysage:py-2"
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-3 paysage:items-center">
+        <Download aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-laiton" />
+        <div className="min-w-0">
+          <p className="font-score text-sm font-bold uppercase tracking-wide text-craie">
+            {TITRE_INVITATION_INSTALLATION}
+          </p>
+          <p className="mt-0.5 text-sm text-craie/70 paysage:hidden">
+            {TEXTE_INVITATION_INSTALLATION}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 gap-2">
+        {etat === 'installable' ? (
+          // Appelée directement dans le clic : l'invite exige un geste.
+          <Button variante="secondaire" className="flex-1 paysage:flex-none" onClick={installer}>
+            {LIBELLE_INSTALLER}
+          </Button>
+        ) : (
+          <Link
+            to={{ pathname: '/reglages', hash: '#installer' }}
+            className={`${classesBouton('secondaire')} flex-1 paysage:flex-none`}
+          >
+            {LIBELLE_INSTALLER}
+          </Link>
+        )}
+        <Button variante="discret" onClick={() => setEcartee(true)}>
+          {LIBELLE_PLUS_TARD}
+        </Button>
+      </div>
+    </section>
+  )
+}
+
 export const AccueilEcran = () => {
   const services = useServices()
   const navigate = useNavigate()
@@ -119,6 +181,8 @@ export const AccueilEcran = () => {
       ) : (
         <SignalAccueil joueurs={joueurs} />
       )}
+
+      <InvitationInstallation />
 
       <div className="mt-auto flex flex-col gap-2">
         <Link

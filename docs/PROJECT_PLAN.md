@@ -16,8 +16,17 @@ visuelle « feuille de match », retraits décidés par l'usage, statistiques d'
 résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit 2026-09-10**
 (détaillés en fin de § 6) : `tour-du-monde-cloture-volee`, `pourcentage-doubles-tiret`,
 `bundle-par-route`. App déployée sur https://dartpero.web.app.
-**366 tests verts** (dont 27 du lot `stockage-persistant`), `lint`, `typecheck` et `build` verts.
-Premier lot de la feuille de route Play Store livré : `stockage-persistant` (voir § 6) — vérification sur appareil (Android installé, iPhone) restante.
+**437 tests verts** (dont 71 du lot `installation-guidee`), `lint`, `typecheck`, `build` et `smoke` verts.
+Deux lots de la feuille de route Play Store livrés : `stockage-persistant` et `installation-guidee`
+(voir § 6) — vérifications sur appareil restantes :
+- `stockage-persistant` : Android installé, iPhone ;
+- `installation-guidee`, après déploiement (non bloquant) : **R1** vraie fenêtre d'installation de
+  Chrome avec captures, et **aucune seconde icône** sur l'Android déjà installé (DevTools →
+  Manifest → « Computed App ID » identique avant / après) ; **R2** détection iOS sur un vrai
+  iPhone (iPad si possible : Safari, Chrome iOS, navigateur intégré) ; **R5** raccourci
+  « Nouvelle partie » à l'appui long, qui n'arrive qu'à la mise à jour de la WebAPK (⚠️ ne jamais
+  désinstaller pour tester sans exporter d'abord) ; **R6** sur iOS ≥ 16.4, un navigateur tiers
+  propose-t-il lui-même « Sur l'écran d'accueil » ? Si oui, seul un libellé change.
 
 Ce qu'il reste, par ordre de ce qui coûterait le plus cher à découvrir tard :
 
@@ -185,6 +194,7 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | `RandomSource` | `crypto.getRandomValues` | tirage prévisible | **lot 5b** ✅ |
 | `Announcer` | Web Speech API | null-object | **lot 5b** ✅ |
 | `PersistentStorage` | `navigator.storage.persist()` | `FakePersistentStorage` (espion) | **lot `stockage-persistant`** ✅ |
+| `AppInstallation` | `beforeinstallprompt`, `appinstalled`, `display-mode`, `navigator.standalone` | `NullAppInstallation` ; `FakeAppInstallation` (état réglable, espion) | **lot `installation-guidee`** ✅ |
 
 ---
 
@@ -192,7 +202,7 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 
 | Route | Écran | Lot |
 | --- | --- | --- |
-| `/` | Accueil — *Reprendre la partie* (si une partie est en cours), *Nouvelle partie*, accès rapide | 3 ✅ |
+| `/` | Accueil — *Reprendre la partie* (si une partie est en cours), *Nouvelle partie*, accès rapide ; invitation à installer, écartable (*Plus tard*) | 3 ✅ |
 | `/nouvelle-partie` | Configuration : mode de jeu, joueurs, legs à gagner, double in/out | 3 ✅ |
 | `/partie/:id` | **Écran de partie** — le cœur de l'app | 3 ✅ |
 | `/partie/:id/resume` | Résumé de fin : vainqueur, stats du match, rejouer | 3 ✅ |
@@ -200,7 +210,7 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | `/historique` | Liste des parties jouées, tous modes, avec statut et suppression | 4 ✅ |
 | `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) | 4 ✅ |
 | `/statistiques` | Carrière : tableaux comparatifs classés | 4 ✅ |
-| `/reglages` | Préférences (voix, haptique), **thème clair / sombre / système**, export / import JSON, à propos | 4 ✅ |
+| `/reglages` | Préférences (voix, haptique), **thème clair / sombre / système**, export / import JSON, à propos (entrée d'installation, ancre `#installer`) | 4 ✅ |
 | `/historique/:id` | Détail d'une partie | **jamais fait** |
 | `/joueurs/:id` | Stats cumulées d'un joueur | **jamais fait** |
 
@@ -567,6 +577,17 @@ un `style=` inline qu'aucune règle CSS ne peut retourner, donc un hex y serait 
 thème. Un test d'architecture (`themeBoundary`) verrouille la frontière.
 ⚠️ Un script d'amorçage dans `index.html` pose `data-theme` **avant** le bundle, sinon la page
 flashe. C'est un **doublon assumé** de `theme.ts` : il ne peut pas l'importer.
+
+---
+
+### Lot « installation-guidee » (feuille de route Play Store, lot 2)
+
+✅ **Fait — 437 tests verts** (+71). Invitation à installer : ligne discrète sur l'Accueil
+(« Installer » / « Plus tard », mémorisé), entrée complète dans Réglages → À propos (bouton,
+guide iOS en trois gestes, « Ouvrez dans Safari », « installé »), et le refus de « Redemander »
+prolongé vers l'installation. Manifeste enrichi (`id: '/'`, `categories`, raccourci
+« Nouvelle partie », trois captures hors précache), contrôlé par `npm run smoke`. Détail § 6 ;
+vérifications sur appareil en § 0.
 
 ---
 
@@ -1518,3 +1539,52 @@ clair) et la vérification sur appareil restent à faire.
   montage ni pour le refus du démarrage) ; la phrase s'affiche dans le même `<output>`
   (`role="status"`, donc annoncée), sans promettre une acceptation. +3 tests.
 - **339 → 366 tests verts** (+27 : adapter sur faux `StorageManager`, démarrage, Réglages, retour après refus).
+
+### Décisions du lot « installation-guidee » (feuille de route Play Store, lot 2)
+
+Traité via `/orchestrate` (`docs/lots/installation-guidee/`), niveau `high` : surface gravée n° 4
+(service worker / manifeste). Ni domaine, ni journal, ni Dexie, ni `backupSchema`.
+
+- **Port `AppInstallation` synchrone avec abonnement** (`state()` / `subscribe()` / `prompt()`) +
+`NullAppInstallation`, lu par `useSyncExternalStore` dans `useInstallation`. Une promesse lue une
+fois (comme `PersistentStorage`) raterait l'invite arrivée tard ou l'`appinstalled` pendant que la
+page est ouverte. Cinq états : `installed` > `installable` > `ios-manual` > `ios-other-browser` >
+`unavailable`.
+- **Adapter `BrowserAppInstallation`**, seul lecteur de `beforeinstallprompt`, `appinstalled`,
+`(display-mode: standalone)` et `navigator.standalone` (garde `installationBoundary`, commentaires
+compris). Écouteurs posés **dans le constructeur**, tout sous `try/catch` ; `preventDefault()` sur
+l'invite, la dernière gardée ; `prompt()` retire l'invite et publie **avant toute attente**, puis
+appelle `invite.prompt()` sans `await` préalable (activation utilisateur) ; un second appel rend
+`unavailable` sans rouvrir. `installed` ne vient que d'`appinstalled` ou du mode autonome, jamais
+d'un `accepted` ; le drapeau reste en mémoire (persisté, une désinstallation le rendrait faux).
+`detectIosBrowser` : fonction pure, testée sur des UA réels (iPad en « Mac tactile » compris).
+- ⚠️ **La création des services quitte le provider** : `createBrowserServices()` est appelé une
+fois au niveau du module de `src/main.tsx`, **avant** `createRoot`, et `ServicesProvider` reçoit
+`services` en prop obligatoire. Raison : l'invite de Chromium peut partir avant le montage de
+React, et un `useMemo` rejoué par `StrictMode` aurait créé un second adapter fantôme qui garde
+l'invite. Ça **invalide** la phrase « `main.tsx` n'a pas accès aux services » du lot
+`stockage-persistant` ; `useDemandeStockageAuDemarrage` reste un hook (il n'a pas besoin d'être
+plus tôt).
+- **« Plus tard »** : préférence d'appareil `installation:ecartee` (port `Preferences` inchangé),
+lue sur l'Accueil seulement — les Réglages ne la consultent jamais. Clé à ne jamais renommer.
+- **Place de la ligne d'Accueil** (Q3) : entre l'aperçu (partie en cours ou « Qui joue ce soir ? »)
+et le groupe d'actions poussé en bas — filet haut et bas, bouton `secondaire` et `discret`, jamais
+plus lourde que « Nouvelle partie ». En paysage, une seule rangée de 66 px (sous-texte masqué).
+L'ancre `#installer` des Réglages défile par `scrollIntoView` relancé à chaque navigation
+(`location.key`), avec une marge haute `max(1rem, safe-area-inset-top)` pour l'encoche.
+- **Manifeste** : `id: '/'` (= identité calculée aujourd'hui, à ne jamais changer), `categories`,
+raccourci vers `/nouvelle-partie` (icône 192 réutilisée), trois captures copiées de
+`docs/captures/` dans `public/screenshots/` et exclues du précache (`globIgnores`). `description`
+réécrite : elle ne parlait que du X01 et s'affiche désormais dans la fenêtre de Chrome.
+`firebase.json` inchangé.
+- **Contrôles statiques en tête de `scripts/smoke-build.mjs`** plutôt qu'un test Vitest sur
+`dist/` (qui dépendrait d'un build préalable : faux vert ou faux rouge). Mutation vérifiée :
+sans `globIgnores`, le précache passe de 47 à 50 entrées et le smoke échoue.
+- **Fins de ligne** : sept fichiers du lot précédent étaient en CRLF dans la copie de travail
+(`autocrlf=true`, pas de `.gitattributes`), ce qui faisait échouer `biome check` ; ramenés en LF,
+sans diff pour git. Puis `.gitattributes` (`* text=auto eol=lf`, `*.png binary`) a réglé la cause :
+un `switch` / `merge` ne réécrit plus les sources en CRLF ; l'index était déjà tout en LF.
+- **Libellés iOS valables sur iPad** : `ios-manual` couvre l'iPad (détecté en « Mac tactile ») ; les
+textes ne disent plus « Sur iPhone » ni « en bas de l'écran » (Partager est en haut sur iPad).
+- **Angles morts** : vraie fenêtre de Chrome, vrai `appinstalled`, vraie interface iOS — voir § 0.
+- **366 → 437 tests verts** (+71 : adapter et `detectIosBrowser` 40, UI 28, garde 3).

@@ -1,29 +1,41 @@
 import { useQueryClient } from '@tanstack/react-query'
 import {
+  CircleCheck,
   Download,
+  Share,
   ShieldAlert,
   ShieldCheck,
   ShieldOff,
+  Smartphone,
+  SquarePlus,
   TriangleAlert,
   Upload,
   Volume2,
   VolumeX,
   WifiOff,
 } from 'lucide-react'
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router'
 import type { ImportReport } from '@/core/application/ports/driving/ManageBackup'
-import { Button } from '@/ui/composants/commun/Button'
+import { Button, classesBouton } from '@/ui/composants/commun/Button'
 import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { MessageErreur } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { CLE_VOIX, usePreference } from '@/ui/hooks/useAppareil'
+import { installationPossible, useInstallation } from '@/ui/hooks/useInstallation'
 import { useProtectionStockage } from '@/ui/hooks/useStockagePersistant'
 import {
+  ETAPES_INSTALLATION_IOS,
+  ETAT_INSTALLATION,
+  ETIQUETTE_INSTALLATION,
   ETIQUETTE_PROTECTION_STOCKAGE,
+  LIBELLE_INSTALLER_DARTPERO,
   LIBELLE_PROTECTION_STOCKAGE,
   LIBELLE_REDEMANDER_PROTECTION,
   LIBELLE_THEME,
+  LIEN_GUIDE_INSTALLATION,
+  PRESENTATION_DARTPERO,
   pluriel,
   RAPPEL_EXPORT_STOCKAGE,
   REFUS_REDEMANDE_STOCKAGE,
@@ -102,7 +114,12 @@ const ICONE_PROTECTION = {
  */
 const EtatProtection = () => {
   const { etat, redemander, refusee } = useProtectionStockage()
+  const { etat: installation, installer } = useInstallation()
   if (etat === null) return null
+
+  // Le refus prolongé vers l'installation, quand elle est possible. Hors de
+  // l'`<output>` : aucun contrôle dans une région live.
+  const versInstallation = refusee && etat === 'not-persisted' && installationPossible(installation)
 
   const Icone = ICONE_PROTECTION[etat]
 
@@ -128,10 +145,98 @@ const EtatProtection = () => {
           )}
         </span>
       </output>
+      {versInstallation &&
+        (installation === 'installable' ? (
+          <Button variante="secondaire" onClick={installer}>
+            <Download aria-hidden="true" className="size-4" />
+            {LIBELLE_INSTALLER_DARTPERO}
+          </Button>
+        ) : (
+          <Link to={{ hash: '#installer' }} className={classesBouton('secondaire')}>
+            {LIEN_GUIDE_INSTALLATION}
+          </Link>
+        ))}
       {etat === 'not-persisted' && (
         <Button variante="secondaire" onClick={() => void redemander()}>
           {LIBELLE_REDEMANDER_PROTECTION}
         </Button>
+      )}
+    </div>
+  )
+}
+
+/** Les icônes des gestes iOS, dans l'ordre des étapes ; la dernière n'en a pas. */
+const ICONES_ETAPES_IOS = [Share, SquarePlus, null] as const
+
+/**
+ * Réglages → À propos : l'installation selon l'état, rendue dès le premier
+ * rendu (l'état est synchrone). « Plus tard » n'est jamais consulté ici.
+ *
+ * Ancre `#installer` : l'Accueil (iOS) et le refus de « Redemander » y mènent.
+ * Le défilement est relancé à chaque navigation (`key`), même vers la même ancre.
+ */
+const EntreeInstallation = () => {
+  const { etat, installer } = useInstallation()
+  const { hash, key } = useLocation()
+  const ancre = useRef<HTMLDivElement>(null)
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` change à chaque navigation vers l'ancre, même répétée.
+  useEffect(() => {
+    // Appel optionnel : jsdom n'implémente pas `scrollIntoView`.
+    if (hash === '#installer') ancre.current?.scrollIntoView?.({ block: 'start' })
+  }, [hash, key])
+
+  const installee = etat === 'installed'
+  const Icone = installee ? CircleCheck : Smartphone
+
+  return (
+    <div
+      id="installer"
+      ref={ancre}
+      className="flex scroll-mt-[max(1rem,env(safe-area-inset-top))] flex-col gap-3"
+    >
+      <output
+        aria-label={ETIQUETTE_INSTALLATION}
+        className={`flex items-start gap-2 border px-3 py-2 text-sm ${
+          installee
+            ? 'border-vert-cible/60 bg-vert-cible/12 text-craie'
+            : 'border-craie/25 text-craie/75'
+        }`}
+      >
+        <Icone
+          aria-hidden="true"
+          className={`mt-0.5 size-4 shrink-0 ${installee ? 'text-vert-cible' : ''}`}
+        />
+        <span>{ETAT_INSTALLATION[etat]}</span>
+      </output>
+
+      {etat === 'installable' && (
+        <Button variante="secondaire" onClick={installer}>
+          <Download aria-hidden="true" className="size-4" />
+          {LIBELLE_INSTALLER_DARTPERO}
+        </Button>
+      )}
+
+      {etat === 'ios-manual' && (
+        <ol className="flex flex-col">
+          {ETAPES_INSTALLATION_IOS.map((etape, rang) => {
+            const IconeEtape = ICONES_ETAPES_IOS[rang]
+            return (
+              <li
+                key={etape}
+                className="ligne-tableau flex min-h-12 items-center gap-3 px-1 py-2 text-sm text-craie last:border-b-0"
+              >
+                <span className="chiffres w-4 shrink-0 text-xs font-bold text-craie/60">
+                  {rang + 1}
+                </span>
+                <span className="min-w-0 flex-1">{etape}</span>
+                {IconeEtape && (
+                  <IconeEtape aria-hidden="true" className="size-5 shrink-0 text-laiton" />
+                )}
+              </li>
+            )
+          })}
+        </ol>
       )}
     </div>
   )
@@ -318,15 +423,13 @@ export const ReglagesEcran = () => {
           </Button>
         </Panneau>
 
-        <Panneau titre="À propos" contenuClassName="flex flex-col gap-2 p-4">
+        <Panneau titre="À propos" contenuClassName="flex flex-col gap-3 p-4">
           <p className="flex items-center gap-2 text-sm text-craie/75">
             <WifiOff aria-hidden="true" className="size-4 shrink-0" />
             100 % local, hors ligne, sans compte.
           </p>
-          <p className="text-xs text-craie/60">
-            Dartpéro — compteur de fléchettes X01. Installez-le depuis le menu de votre navigateur
-            (« Ajouter à l’écran d’accueil ») pour l’ouvrir comme une application.
-          </p>
+          <p className="text-xs text-craie/60">{PRESENTATION_DARTPERO}</p>
+          <EntreeInstallation />
         </Panneau>
       </div>
     </main>

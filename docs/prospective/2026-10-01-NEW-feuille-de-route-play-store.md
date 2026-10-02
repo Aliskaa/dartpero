@@ -26,7 +26,7 @@ Statut : ⬜ à faire · 🟡 en cours · ✅ fait · ⏸ mis de côté
 | # | Lot | Statut | Contenu | Niveau | Pourquoi |
 |---|---|---|---|---|---|
 | 1 | `stockage-persistant` | ✅ fait (vérif. appareil restante) | `navigator.storage.persist()` derrière un port, état affiché dans les Réglages | `high` (persistance) | Sans lui, le navigateur peut effacer l'IndexedDB (Chrome si l'espace manque, Safari après ~7 jours sans ouverture si non installée). Aucun appel aujourd'hui dans `src/`. Utile **même sans store** |
-| 2 | `installation-guidee` | ⬜ | Bouton « Installer Dartpéro » (capte `beforeinstallprompt`), guide iPhone (Partager → Sur l'écran d'accueil), manifeste enrichi : `id`, `categories`, `screenshots` (étroit + large), `shortcuts` (« Nouvelle partie ») | `high` (manifeste / service worker) | Aujourd'hui un pote qui ouvre le lien reste dans un onglet sans le savoir. Utile **même sans store** |
+| 2 | `installation-guidee` | ✅ fait (vérif. appareil restante) | Bouton « Installer Dartpéro » (capte `beforeinstallprompt`), guide iPhone (Partager → Sur l'écran d'accueil), manifeste enrichi : `id`, `categories`, `screenshots` (étroit + large), `shortcuts` (« Nouvelle partie ») | `high` (manifeste / service worker) | Aujourd'hui un pote qui ouvre le lien reste dans un onglet sans le savoir. Utile **même sans store** |
 | 3 | `confidentialite-assetlinks` | ⬜ | Page de politique de confidentialité + mentions légales ; `/.well-known/assetlinks.json` sur Firebase Hosting | `high` (`firebase.json`) | ⚠️ `firebase.json` ignore `**/.*` : il exclurait `/.well-known/`. Exception explicite + vérification `curl` après déploiement |
 | 4 | `play-store-twa` | ⬜ | Emballage TWA par **Bubblewrap** (AAB signé, clé à sauvegarder), fiche du store (icône 512, bannière 1024×500, captures depuis `docs/captures/`, descriptions), numérotation des versions (`package.json` 0.1.0 ↔ `versionCode`), comportement du bouton retour Android en partie | `high` (renverse une décision gravée) | Renverse « PWA, pas de passage par les stores » — en connaissance de cause. La TWA reste la même PWA : chaque `npm run firebase:deploy` met l'app du store à jour |
 | 5 | `aide-regles` | ⬜ | Écran d'aide / règles par mode, premier lancement guidé (deux joueurs → une partie en < 30 s) | selon périmètre | Les potes connaissent le Tour du monde et le cut-throat, un inconnu du store non |
@@ -47,7 +47,7 @@ Compter **≈ 3 à 4 semaines** entre la fin du lot 4 et une app trouvable dans 
 
 | Lot | Statut | Contenu | Niveau |
 |---|---|---|---|
-| `nettoyage-claude-md` | ⬜ | Incohérences anciennes de `CLAUDE.md` : « Best-of N legs (défaut 3) » (l. 213) contre « premier à N » (l. 74-81) ; `useMatch.ts` cité (l. 93) → `useX01.ts` ; « bannir … les API navigateur » (l. 95-97) alors que Biome ne bannit que 7 paquets ; ligne « Lot 6 » restée dans § État d'avancement ; formulation de `review.md` l. 55-57. Éventuellement : README qui annonce 318 tests (réel : 339), doublon iOS de `docs/DEPLOIEMENT.md` l. 73-77, exemples Biome / TS à remettre dans `CONVENTIONS` § 12 | `high` (surface gravée) |
+| `nettoyage-claude-md` | ⬜ | Incohérences anciennes de `CLAUDE.md` : « Best-of N legs (défaut 3) » (l. 224) contre « premier à N » (l. 74-81) ; `useMatch.ts` cité (l. 93) → `useX01.ts` ; « bannir … les API navigateur » (l. 95-97) alors que Biome ne bannit que 7 paquets ; ligne « Lot 6 » restée dans § État d'avancement ; formulation de `review.md` l. 55-57. Éventuellement : README qui annonce 318 tests (réel : 339), exemples Biome / TS à remettre dans `CONVENTIONS` § 12 | `high` (surface gravée) |
 
 Autres constats de l'index (`.ai/architecture-context.md` § Constats) à trancher un jour :
 entraînement non gravé dans `CLAUDE.md` (plage 41-170), First 9 (9 fléchettes ou 3 volées),
@@ -63,5 +63,5 @@ cite que 2 des 3 exceptions de couleur, sets non exposés à la création de par
 
 ## Prochaine étape
 
-`/intake installation-guidee`. Il prolongera le message affiché quand « Redemander » est refusé
-(lot `stockage-persistant`) par un vrai bouton d'installation.
+Vérifier `installation-guidee` sur appareil après déploiement (R1, R2, R5, R6 : `PROJECT_PLAN` § 0),
+puis `/intake confidentialite-assetlinks` (lot 3).

@@ -8,7 +8,7 @@ Contexte permanent du projet pour Claude. **À lire en début de session.**
 | [`README.md`](README.md) | La vitrine : ce que fait l'app, ses captures, comment la lancer. |
 | [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) | Le plan détaillé, lot par lot, avec ce qui reste. |
 | [`docs/CHARTE_GRAPHIQUE.md`](docs/CHARTE_GRAPHIQUE.md) | Le référentiel design : tokens, thèmes, composants, ce qu'il ne faut pas faire. |
-| [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md) | Le manuel du déploiement : Firebase Hosting, en-têtes de cache, service worker, contexte sécurisé en dev, icônes. |
+| [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md) | Le manuel du déploiement : Firebase Hosting, en-têtes de cache, service worker, contexte sécurisé en dev, icônes, installation (§ Installation et manifeste). |
 | [`.claude/CONVENTIONS.md`](.claude/CONVENTIONS.md) | Le **comment** : les patterns de code concrets (Value Objects, use cases, ports, hooks, tests…) extraits en relisant `src/` et `tests/` — complète les décisions d'ici, ne les redécide jamais. |
 | [`.claude/README.md`](.claude/README.md) | Le **workflow agentique** : `/intake`, `/orchestrate <id> [high\|light]`, `/audit`, `/refresh-architecture`, leurs agents et les **surfaces gravées** qui forcent le niveau `high`. Règles de travail courtes dans [`.claude/rules/`](.claude/rules/README.md). |
 | [`.ai/architecture-context.md`](.ai/architecture-context.md) | **Index** généré, lu **en premier** par les agents de phase : il dit où lire, pas ce que disent les sources. **Pas une source de vérité** : à régénérer (`/refresh-architecture`) dès qu'une décision est gravée ici. |
@@ -102,6 +102,12 @@ sinon l'app est inutilisable en conditions réelles.
 `navigator.storage`. L'état se lit dans Réglages → Sauvegarde, jamais ailleurs (zéro friction).
 ⚠️ **« Protégé » n'est pas une sauvegarde** : désinstallation, effacement du site ou perte du
 téléphone vident la base quand même — le rappel d'exporter s'affiche dans **les trois** états.
+- **Invitation à installer** (lot `installation-guidee`) : port driven `AppInstallation`
+(`Services.devices`, même exception que `screenLock`) ; seul l'adapter lit `beforeinstallprompt`,
+`appinstalled`, `display-mode` et `navigator.standalone`. ⚠️ Les services naissent dans
+`src/main.tsx`, **avant** `createRoot`. Ligne discrète sur l'Accueil (« Plus tard » mémorisé,
+Accueil seulement), entrée complète dans Réglages → À propos. Jamais sur un écran de partie,
+jamais ouverte d'elle-même.
 
 ---
 
@@ -327,7 +333,10 @@ commande : `npm run firebase:deploy` (= `build` + `smoke` + `firebase deploy --o
 - **La dernière règle `headers` qui matche l'emporte** (vérifié en vrai avec `curl -I` après
   déploiement, pas déduit de la doc) : c'est pourquoi le fourre-tout `**` est écrit **en
   premier** et les règles précises après. Inverser l'ordre casserait le cache long des assets.
-- → détail : réécriture SPA, en-têtes, service worker, iOS : [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
+- ⚠️ **`id: '/'` ne se change jamais** — c'est l'identité déjà calculée des installations
+  existantes. Captures du manifeste exclues du précache (`globIgnores`). `npm run smoke` vérifie
+  les deux sur `dist/`.
+- → détail : réécriture SPA, en-têtes, service worker, iOS, manifeste : [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
 
 ---
 
@@ -337,6 +346,8 @@ commande : `npm run firebase:deploy` (= `build` + `smoke` + `firebase deploy --o
 - Dossier : `c:\Users\kevin\Documents\Flechettes`. Repo **git initialisé** (branche `main`,
   historique par lots, **une branche `lot/<id>` par lot** fusionnée en `--ff-only` après
   accord — voir `.claude/skills/orchestrate/SKILL.md`, pas de remote — le déploiement passe par la CLI Firebase, pas par CI).
+- Fins de ligne **LF** imposées par `.gitattributes` (`autocrlf=true` réécrivait les sources en
+  CRLF au `switch` / `merge` et cassait `biome check`).
 - Échelle : usage perso + potes. Parc **mixte iPhone + Android**.
 - Dév & test principal sur un **appareil Android** (Chrome → DevTools / remote debug faciles).
   Tester sur un vrai iPhone avant de considérer le projet fini.

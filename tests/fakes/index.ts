@@ -1,5 +1,11 @@
 import { createServices, type Dependencies, type Services } from '@/composition/container'
 import { NullAnnouncer } from '@/core/application/ports/driven/Announcer'
+import {
+  type AppInstallation,
+  type InstallOutcome,
+  type InstallState,
+  NullAppInstallation,
+} from '@/core/application/ports/driven/AppInstallation'
 import type { Clock } from '@/core/application/ports/driven/Clock'
 import { NullHaptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
@@ -107,6 +113,52 @@ export class FakePersistentStorage implements PersistentStorage {
   }
 }
 
+/**
+ * Installation réglable : `regler()` change l'état et prévient les abonnés,
+ * comme l'adapter à l'arrivée d'une invite ou après `appinstalled`.
+ * `promptCalls` compte **chaque** appel à `prompt()`, utile ou non : un double
+ * appel se voit. `issue` dit ce qu'ouvrira l'invite. Comme l'adapter, hors
+ * `installable` l'appel répond `unavailable`, et une invite consommée laisse
+ * `unavailable`.
+ */
+export class FakeAppInstallation implements AppInstallation {
+  promptCalls = 0
+  private readonly abonnes = new Set<() => void>()
+
+  constructor(
+    private etat: InstallState = 'unavailable',
+    public issue: InstallOutcome = 'dismissed',
+  ) {}
+
+  state(): InstallState {
+    return this.etat
+  }
+
+  subscribe(onChange: () => void): () => void {
+    this.abonnes.add(onChange)
+    return () => {
+      this.abonnes.delete(onChange)
+    }
+  }
+
+  async prompt(): Promise<InstallOutcome> {
+    this.promptCalls += 1
+    if (this.etat !== 'installable') return 'unavailable'
+    this.regler('unavailable')
+    return this.issue
+  }
+
+  regler(etat: InstallState): void {
+    this.etat = etat
+    for (const abonne of [...this.abonnes]) abonne()
+  }
+
+  /** Le nombre d'abonnés en cours : un désabonnement oublié se voit ici. */
+  get abonnements(): number {
+    return this.abonnes.size
+  }
+}
+
 export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Dependencies => ({
   matches: new InMemoryMatchRepository(),
   players: new InMemoryPlayerRepository(),
@@ -119,6 +171,7 @@ export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Depend
     preferences: createMemoryPreferences(),
     announcer: NullAnnouncer,
     persistentStorage: new FakePersistentStorage(),
+    appInstallation: NullAppInstallation,
   },
   ...surcharges,
 })

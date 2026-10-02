@@ -70,11 +70,10 @@ vibration et PWA y marchent déjà, sans avertissement de certificat) ;
 `npm run dev:mobile` → `vite --mode mobile`, active `@vitejs/plugin-basic-ssl` +
 `server.host` → `https://<IP-PC>:5173` pour tester depuis le téléphone sur le même WiFi
 (accepter l'avertissement de certificat auto-signé).
-- Sur **iOS**, l'installation PWA passe **uniquement par Safari « Ajouter à l'écran
-d'accueil »** (Chrome iOS ne peut pas installer de PWA).
-- **iOS** : l'installation passe toujours par Safari → « Ajouter à l'écran d'accueil ». Le HTTPS
-  de Firebase règle en revanche la question du contexte sécurisé — Wake Lock, vibration et
-  service worker fonctionnent sur le domaine, sans le certificat auto-signé de `dev:mobile`.
+- **iOS** : l'installation passe par Safari → « Sur l'écran d'accueil » (voir § Installation et
+  manifeste). Le HTTPS de Firebase règle en revanche la question du contexte sécurisé — Wake
+  Lock, vibration et service worker fonctionnent sur le domaine, sans le certificat auto-signé
+  de `dev:mobile`.
 
 ## Stockage persistant
 
@@ -92,9 +91,61 @@ défaut** :
 « Redemander » (état non protégé) rappelle `persist()` ; si le navigateur refuse encore, l'écran
 le dit (« Le navigateur a refusé… installé sur l'écran d'accueil ») plutôt que de rester muet.
 Le refus du démarrage, lui, n'affiche rien.
+Depuis le lot `installation-guidee`, ce refus propose aussi d'installer quand c'est possible
+(bouton « Installer Dartpéro », ou lien vers le guide iOS).
 
 ⚠️ Protégé ne veut pas dire sauvegardé : désinstaller l'app ou vider les données du site efface
 toujours la base. L'export JSON reste le filet.
+
+## Installation et manifeste
+
+L'app invite à s'installer (lot `installation-guidee`) : port `AppInstallation`, seul l'adapter
+`BrowserAppInstallation` lit `beforeinstallprompt`, `appinstalled`, `(display-mode: standalone)`
+et `navigator.standalone`. Il écoute **dès sa construction** : les services naissent donc dans
+`src/main.tsx`, avant `createRoot` — l'invite de Chromium peut partir avant le montage de React.
+
+| Navigateur | Ce que voit l'utilisateur |
+| --- | --- |
+| Chrome / Edge Android, Chromium de bureau | `beforeinstallprompt` capté : ligne « Installer Dartpéro » sur l'Accueil, bouton dans Réglages → À propos ; « Installer » ouvre la fenêtre native (avec les captures). Ne part que si Chrome juge l'app installable, et parfois tard (heuristique d'engagement). |
+| Safari iOS / iPadOS | Pas d'API : guide en trois gestes dans Réglages → À propos (Partager, « Sur l'écran d'accueil », « Ajouter ») ; la ligne d'Accueil y mène (`/reglages#installer`). |
+| Chrome, Firefox, Edge… sur iOS, navigateurs intégrés aux apps | « Ouvrez ce lien dans Safari pour installer Dartpéro. » |
+| Firefox Android, Safari macOS, autres | État « indisponible » : rien sur l'Accueil, phrase générique (menu du navigateur) dans les Réglages. |
+| App installée (`standalone`) | Rien sur l'Accueil ; « Dartpéro est installé sur cet appareil. » |
+
+- **« Plus tard »** masque la ligne de l'Accueil pour de bon sur cet appareil (préférence
+  `installation:ecartee`, à ne jamais renommer) ; les Réglages gardent toujours leur entrée.
+  Jamais d'invitation sur un écran de partie, jamais d'invite ouverte sans un geste.
+- Détection iOS par user agent (`detectIosBrowser`) : un iPad en « site pour ordinateur » se
+  présente comme un Mac, reconnu à ses points de contact. Brave iOS passe pour Safari.
+- **Installée mais ouverte dans un onglet** : après rechargement, aucune API ne le dit — état
+  « indisponible », Accueil muet, phrase générique. Accepté.
+
+**Manifeste** (`vite.config.ts`) :
+
+- ⚠️ **`id: '/'` ne se change jamais.** Sans `id`, l'identité était calculée depuis `start_url`
+  résolu (`https://dartpero.web.app/`) ; `'/'` la reproduit. Une autre valeur ferait une seconde
+  icône chez tous ceux qui ont déjà installé l'app. Vérification : DevTools → Application →
+  Manifest → « Computed App ID », identique avant et après.
+- `categories` : `games`, `sports`, `entertainment`.
+- `shortcuts` : « Nouvelle partie » → `/nouvelle-partie` (appui long sur l'icône Android),
+  icône `icons/icon-192.png` réutilisée. Sur une installation existante, le raccourci n'arrive
+  qu'à la mise à jour de la WebAPK par Chrome — délai non garanti. ⚠️ Ne jamais désinstaller
+  pour « tester plus vite » sans exporter d'abord : la base partirait avec.
+- `screenshots` : copies **à l'identique** de `docs/captures/{accueil,partie-x01,paysage}.png`
+  dans `public/screenshots/`, `sizes` = dimensions réelles (780×1688, 780×1688, 1000×462). Si les
+  captures sont refaites, **les recopier** et corriger `sizes` — le smoke le vérifie.
+- `globIgnores: ['**/node_modules/**/*', 'screenshots/**']` : les captures (≈ 425 ko) ne servent
+  qu'à la fenêtre d'installation, en ligne ; hors précache. Hors ligne, cette fenêtre s'affiche
+  donc sans captures (accepté). `firebase.json` n'a pas bougé : `/screenshots/*.png` tombe sous
+  le fourre-tout `no-cache`.
+
+**Contrôles de `npm run smoke`** (en tête de `scripts/smoke-build.mjs`, avant Chromium, donc
+aussi dans `firebase:deploy`) : `id`, `start_url`, `scope` = `/` ; `categories` contient
+`games` ; un raccourci vers `/nouvelle-partie` dont l'icône existe dans `dist/` (≥ 96 px) ;
+exactement 3 captures (2 `narrow`, 1 `wide`), présentes, aux dimensions annoncées (en-tête PNG) ;
+précache de `dist/sw.js` avec au moins 10 URL dont `index.html`, `manifest.webmanifest`,
+`icons/icon-192.png`, et **aucune** sous `screenshots/`. Vérifié par mutation : sans
+`globIgnores`, le smoke échoue.
 
 ## Icônes
 

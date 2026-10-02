@@ -89,12 +89,20 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `readonly`) **et** l'interface, nommés d'après le use case qu'ils décrivent.
 - Un port **driven** = une interface étroite, une seule capacité (`Clock`, `IdGenerator`,
   `RandomSource`…). Certains exposent un **null-object** à côté de l'interface
-  (`NullHaptics`, `NullScreenLock`, `NullAnnouncer`, `NullPersistentStorage`) pour les plateformes qui n'ont pas la
+  (`NullHaptics`, `NullScreenLock`, `NullAnnouncer`, `NullPersistentStorage`,
+  `NullAppInstallation`) pour les plateformes qui n'ont pas la
   capacité — jamais un `if (haptics)` disséminé dans l'appelant.
 - Un port d'appareil **qui peut refuser** (`PersistentStorage`) renvoie un **état** plutôt que de
   lever : `status()` / `request()` ne rejettent jamais, l'adapter enveloppe tout en `try/catch`
   et reçoit son objet navigateur (`StorageManager`) par le constructeur pour se tester sans
   global. Comme `screenLock`, il est consommé via `Services.devices` (exception assumée).
+- Un port d'appareil **dont l'état change en cours de session** (`AppInstallation`) est
+  **synchrone avec abonnement** : `state()` (ne lève jamais, même valeur tant que rien ne
+  change), `subscribe(onChange)` qui rend le désabonnement, et l'action (`prompt()`, qui ne
+  rejette jamais). L'UI le lit par `useSyncExternalStore` (`useInstallation`), jamais par
+  `useState` + `useEffect` qui raterait un changement entre rendu et abonnement. L'adapter pose
+  ses écouteurs dans son constructeur, enveloppé de `try/catch`, et reçoit son `window` par le
+  constructeur ; la garde `installationBoundary` interdit ses API ailleurs.
 - Les ports ISP à plusieurs opérations (`ManagePlayers`, `ManageBackup`) ne regroupent que ce
   qui est vraiment une seule responsabilité ; une modification est toujours **partielle**
   (`PlayerChanges` aux champs tous optionnels), jamais un remplacement complet.
@@ -117,6 +125,11 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   les tests, jamais une réimplémentation du câblage.
 - `createBrowserDependencies()` / `createBrowserServices()` sont les **seules** fonctions du
   projet qui touchent une vraie API navigateur.
+- `createBrowserServices()` est appelé **une seule fois**, au niveau du module de
+  `src/main.tsx`, **avant** `createRoot` : un jeu de services par page, et des adapters qui
+  écoutent avant le premier rendu (lot `installation-guidee`). `ServicesProvider` reçoit
+  `services` en prop **obligatoire** et ne crée plus rien — un `useMemo` rejoué par
+  `StrictMode` aurait créé deux jeux d'adapters.
 
 ## 8 · Imports
 
@@ -245,8 +258,8 @@ que les écrans déjà listés au moment où il a été écrit).
 ## 14 · Arborescence
 
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
-invariants). Vérifié contre `src/` au lot « stockage-persistant » : 20 ports driving, 10 driven,
-7 hooks, 4 modes, 4 services transverses.
+invariants). Vérifié contre `src/` (`ls`) au lot « installation-guidee » : 20 ports driving
+(hors `MatchSummary.ts`, un type), 11 driven, 8 hooks, 4 modes, 4 services transverses.
 
 ```
 src/
@@ -276,7 +289,7 @@ src/
 │     │                   PlayCheckoutPractice
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
-│     │                   PersistentStorage
+│     │                   PersistentStorage, AppInstallation
 │     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
 ├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
@@ -292,7 +305,8 @@ src/
 │  ├─ hooks/              useX01 · useTourDuMonde · useCricket ·
 │  │                      useCheckoutPractice · useJoueurs ·
 │  │                      useAppareil (wake lock, préférences, voix) ·
-│  │                      useStockagePersistant (protection des données)
+│  │                      useStockagePersistant (protection des données) ·
+│  │                      useInstallation (invitation à installer)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
 │     theme.ts (clair / sombre / système) · accents.ts
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
