@@ -258,7 +258,7 @@ que les écrans déjà listés au moment où il a été écrit).
 ## 14 · Arborescence
 
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
-invariants). Vérifié contre `src/` (`ls`) au lot « installation-guidee » : 20 ports driving
+invariants). Vérifié contre `src/` (`ls`) au lot « confidentialite-assetlinks » : 20 ports driving
 (hors `MatchSummary.ts`, un type), 11 driven, 8 hooks, 4 modes, 4 services transverses.
 
 ```
@@ -301,7 +301,8 @@ src/
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
 │  │                        cricket/ · checkout-practice/
 │  │                      + les écrans transverses : Accueil, Joueurs,
-│  │                        NouvellePartie, Historique, Statistiques, Réglages
+│  │                        NouvellePartie, Historique, Statistiques, Réglages,
+│  │                        Confidentialité
 │  ├─ hooks/              useX01 · useTourDuMonde · useCricket ·
 │  │                      useCheckoutPractice · useJoueurs ·
 │  │                      useAppareil (wake lock, préférences, voix) ·

@@ -16,9 +16,13 @@ visuelle « feuille de match », retraits décidés par l'usage, statistiques d'
 résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit 2026-09-10**
 (détaillés en fin de § 6) : `tour-du-monde-cloture-volee`, `pourcentage-doubles-tiret`,
 `bundle-par-route`. App déployée sur https://dartpero.web.app.
-**437 tests verts** (dont 71 du lot `installation-guidee`), `lint`, `typecheck`, `build` et `smoke` verts.
-Deux lots de la feuille de route Play Store livrés : `stockage-persistant` et `installation-guidee`
-(voir § 6) — vérifications sur appareil restantes :
+**456 tests verts** (dont 19 du lot `confidentialite-assetlinks`), `lint`, `typecheck`, `build` et `smoke` verts.
+Trois lots de la feuille de route Play Store livrés : `stockage-persistant`, `installation-guidee`
+et `confidentialite-assetlinks` (voir § 6) — vérifications restantes :
+- `confidentialite-assetlinks`, après déploiement : `curl.exe -I` et `curl.exe -s` sur
+  `/.well-known/assetlinks.json` (200, `application/json`, `no-cache`, corps `[]`), puis
+  `/confidentialite` en navigation privée (DEPLOIEMENT § Confidentialité) ; rendu sur appareil
+  réel ;
 - `stockage-persistant` : Android installé, iPhone ;
 - `installation-guidee`, après déploiement (non bloquant) : **R1** vraie fenêtre d'installation de
   Chrome avec captures, et **aucune seconde icône** sur l'Android déjà installé (DevTools →
@@ -210,7 +214,8 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | `/historique` | Liste des parties jouées, tous modes, avec statut et suppression | 4 ✅ |
 | `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) | 4 ✅ |
 | `/statistiques` | Carrière : tableaux comparatifs classés | 4 ✅ |
-| `/reglages` | Préférences (voix, haptique), **thème clair / sombre / système**, export / import JSON, à propos (entrée d'installation, ancre `#installer`) | 4 ✅ |
+| `/reglages` | Préférences (voix, haptique), **thème clair / sombre / système**, export / import JSON, à propos (entrée d'installation, ancre `#installer`, lien Confidentialité) | 4 ✅ |
+| `/confidentialite` | Politique de confidentialité et mentions légales — URL donnée à la Play Console | `confidentialite-assetlinks` ✅ |
 | `/historique/:id` | Détail d'une partie | **jamais fait** |
 | `/joueurs/:id` | Stats cumulées d'un joueur | **jamais fait** |
 
@@ -589,6 +594,14 @@ prolongé vers l'installation. Manifeste enrichi (`id: '/'`, `categories`, racco
 « Nouvelle partie », trois captures hors précache), contrôlé par `npm run smoke`. Détail § 6 ;
 vérifications sur appareil en § 0.
 
+### Lot « confidentialite-assetlinks » (feuille de route Play Store, lot 3)
+
+✅ **Fait — 456 tests verts** (+19). Écran `/confidentialite` (politique + mentions légales, lien
+depuis Réglages → À propos), `/.well-known/assetlinks.json` (`[]`, rempli au lot 4) servi par
+Firebase Hosting hors repli et hors précache du service worker, `ignore` réécrit (fuite des
+dossiers cachés fermée), smoke étendu (assetlinks, entrées cachées, `denylist`, aucune requête
+externe, garde `REMPLIR`). Détail § 6 ; vérification après déploiement en § 0.
+
 ---
 
 ### Lot 6 — *(optionnel, si un jour)* Sync & classement
@@ -609,6 +622,7 @@ c'est précisément ce que l'architecture hexagonale achète ici.
 | Sur-ingénierie des modes de jeu | Couture `GameMode` **légère**, écrite au lot 5a seulement, quand un 2ᵉ mode réel est arrivé. Les 3ᵉ et 4ᵉ modes (lots 5b et 5c) ont confirmé le prix annoncé : un dossier, un événement d'ouverture, trois lignes d'aiguillage |
 | Un mode ajouté après coup oublié par le code transverse | Ce qui aiguille sur le mode doit **tout** aiguiller. Le lot 5c a trouvé deux endroits qui parlaient encore X01 en cachette (`backupSchema`, `GetOngoingMatch`) — d'où un test de sauvegarde qui exporte puis réimporte **une partie de chaque mode**, et non plus un X01 seul |
 | Règles X01 mal implémentées (bust, doubles) | La section 1 de ce plan **est** la suite de tests du lot 1 |
+| La politique `/confidentialite` devient fausse (réseau, permission, cookie, donnée stockée nouvelle) | Le lot qui l'ajoute met `SECTIONS_CONFIDENTIALITE` et sa date à jour (`CLAUDE.md` § DS) ; seul le réseau a un fil-piège (`reseauBoundary`) |
 
 ---
 
@@ -1588,3 +1602,42 @@ un `switch` / `merge` ne réécrit plus les sources en CRLF ; l'index était dé
 textes ne disent plus « Sur iPhone » ni « en bas de l'écran » (Partager est en haut sur iPad).
 - **Angles morts** : vraie fenêtre de Chrome, vrai `appinstalled`, vraie interface iOS — voir § 0.
 - **366 → 437 tests verts** (+71 : adapter et `detectIosBrowser` 40, UI 28, garde 3).
+
+### Décisions du lot « confidentialite-assetlinks » (feuille de route Play Store, lot 3)
+
+Session complète : `docs/lots/confidentialite-assetlinks/` (architecture `archi-authority`,
+deux tours de boucle Sécurité → Dev, revue GO).
+
+- **Prémisse corrigée** : la feuille de route croyait que `**/.*` exclurait `/.well-known/`.
+Faux sous firebase-tools 15 (glob 10) : le motif écarte les entrées à point, pas les fichiers
+rangés **dans** un dossier à point. Vérifié en appelant la vraie `listFiles` (V4) : l'ancien
+motif publiait `.cache/x.txt`, `sub/.git/config`… Le lot a fermé une fuite existante.
+- **`ignore`** : extglobs `**/.!(well-known)` + `**/.!(well-known)/**`, **jamais** de `!` (no-op en
+glob 10, filtre inversé en glob 7) ; garde `firebaseHosting.test.ts`. Règle `headers` dédiée
+(`application/json`, `no-cache`) **après** le fourre-tout. `navigateFallbackDenylist` pour
+`/.well-known/`, jamais précaché.
+- **Écran dans `LayoutPrincipal`**, barre de navigation visible : un visiteur venu du store peut
+entrer dans l'app. Ligne-lien Barlow + chevron `min-h-12` dans À propos (un bouton Oswald en
+capitales tenait sur deux lignes).
+- **Garde `REMPLIR` dans le smoke**, pas en Vitest (la suite serait restée rouge), après
+Chromium, sans aucun contournement ; cherche `REMPLIR` en ASCII pour ne pas rater un « À »
+échappé. Mentions fournies par l'utilisateur le 2026-10-10 ; le smoke est revenu au vert.
+- **Le texte, vérifié contre le code** : `localStorage` ne contient pas que le thème (derniers
+joueurs choisis), `sessionStorage` cité, voix possiblement synthétisée en ligne (pseudo compris)
+avec la manière de la couper. La Sécurité a fait corriger trois phrases : l'import **remplace**
+les éléments de même identifiant (S1, et le texte de Réglages → Sauvegarde qui disait « rien
+n'est effacé ») ; « n'envoie rien » était un absolu démenti deux lignes plus bas (S2) ; le
+fichier d'export peut être synchronisé par le système (S3).
+- **`reseauBoundary.test.ts`** : `fetch`, XHR, WebSocket, EventSource, `sendBeacon`, import
+`firebase`, et toute URL `https?://` en dur dans `src/` (scripts et CSS) et `index.html`, sauf
+deux URI d'espace de noms exactes. Fil-piège, pas preuve.
+- **Smoke Chromium dans un contexte vierge par page** : un vrai accès direct à
+`/confidentialite`, sans service worker hérité de `/`.
+- **Risques acceptés par l'utilisateur** (R-a à R-g, `04-revue-securite.md`) : `firebase deploy`
+à la main saute le smoke (pas de `predeploy`), CLI globale non épinglée (refaire V4), garde réseau
+partielle, voix en ligne (lot `localService` éventuel), `persist()` sous Firefox, assetlinks
+manquant servi en HTML, robot sans JS.
+- **Hors lot, relevés** : l'import écrase sans confirmation ; commentaire « Fusion, jamais
+remplacement » de `ManageBackupUseCase` ; titres de `Panneau` laiton ≈ 3,94:1 en clair ;
+guillemets ouvrants orphelins (aucune espace insécable dans `labels.ts`).
+- **437 → 456 tests verts** (+19 : UI 9, `firebaseHosting` 6, `reseauBoundary` 4).

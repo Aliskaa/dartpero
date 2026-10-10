@@ -247,6 +247,94 @@ export const ETAPES_INSTALLATION_IOS = [
 /** Après un refus de « Redemander » : le chemin vers l'installation sur iOS. */
 export const LIEN_GUIDE_INSTALLATION = 'Voir comment installer'
 
+/*
+ * Politique de confidentialité et mentions légales (`/confidentialite`).
+ *
+ * ⚠️ Chaque phrase est un ENGAGEMENT PUBLIC, donné à la Play Console : elle
+ * doit rester vraie au regard du code. Une capacité réseau, une nouvelle clé
+ * de stockage ou une nouvelle fonction du téléphone se livre AVEC la mise à
+ * jour de ce texte et de sa date. Seul le réseau a un garde automatique
+ * (`tests/architecture/reseauBoundary`) ; le stockage et les fonctions du
+ * téléphone ne reposent que sur la relecture.
+ * Projet sincère, pas un avis juridique.
+ *
+ * ⚠️ La garde de publication de `npm run smoke` reste en place : le moindre
+ * marqueur REMPLIR revenu dans `dist/` rebloquerait tout déploiement. Ce
+ * commentaire le cite sans risque : la minification le retire du bundle.
+ */
+
+/** La ligne-lien de Réglages → À propos. */
+export const LIEN_CONFIDENTIALITE = 'Confidentialité et mentions légales'
+
+export const TITRE_CONFIDENTIALITE = 'Confidentialité'
+export const SOUS_TITRE_CONFIDENTIALITE = 'Politique et mentions légales'
+
+/** Chaîne française littérale : jamais recalculée depuis une date ISO. */
+export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 10 octobre 2026'
+
+export const RETOUR_REGLAGES = 'Retour aux réglages'
+
+/** Une section de la politique : un titre `<h2>`, puis ses paragraphes. */
+export type SectionPolitique = {
+  readonly titre: string
+  readonly paragraphes: readonly string[]
+}
+
+export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
+  {
+    titre: 'Politique de confidentialité',
+    paragraphes: [
+      'Dartpéro est un compteur de fléchettes qui fonctionne entièrement sur votre téléphone. Il n’y a pas de compte à créer : les joueurs sont de simples profils locaux.',
+      'L’éditeur ne collecte aucune donnée : Dartpéro n’a ni serveur ni compte, et ne lui transmet rien. Aucune mesure d’audience, aucune publicité, aucun cookie.',
+      'Deux cas techniques, qui ne dépendent pas de l’éditeur, font sortir quelque chose du téléphone ; ils sont décrits plus bas : l’hébergeur, qui reçoit les requêtes quand il sert les fichiers de l’application, et la voix de l’annonce vocale qui, selon votre navigateur, peut être synthétisée en ligne. Le fichier d’export, lui, n’est envoyé nulle part par Dartpéro.',
+    ],
+  },
+  {
+    titre: 'Sur votre appareil',
+    paragraphes: [
+      'Vos profils (pseudo, couleur, date de création) et vos parties (chaque fléchette saisie, avec ses dates) sont enregistrés dans la base de données du navigateur (IndexedDB), sur ce téléphone seulement.',
+      'Les préférences de l’appareil vont dans le stockage local du navigateur (localStorage) : le thème, l’annonce vocale, les réglages de la dernière partie, les derniers joueurs choisis (leurs identifiants internes) et le « Plus tard » de l’invitation à installer. Au démarrage, une valeur de test y est écrite puis effacée aussitôt.',
+      'Si une mise à jour de l’application ne parvient pas à se charger, un marqueur technique est posé dans le stockage de session (sessionStorage), pour ne recharger la page qu’une seule fois.',
+      'Une copie des fichiers de l’application est gardée en cache par le navigateur, pour qu’elle fonctionne hors ligne.',
+      'Au démarrage, Dartpéro demande au navigateur de protéger ce stockage, pour qu’il ne l’efface pas de lui-même quand la place vient à manquer. Cette protection n’est pas une sauvegarde.',
+    ],
+  },
+  {
+    titre: 'Garder la main',
+    paragraphes: [
+      'Exporter : Réglages → Sauvegarde crée un fichier JSON qui contient vos profils (pseudos, couleurs) et vos parties. Ce que vous faites ensuite de ce fichier ne passe pas par Dartpéro.',
+      'Importer : le fichier choisi est lu sur le téléphone et vérifié, puis ses profils et ses parties s’ajoutent à la base. Ceux qui y figurent déjà (même identifiant) sont remplacés par la version du fichier ; le reste de la base n’est pas touché.',
+      'Effacer : vous pouvez supprimer un profil (ses parties passées restent dans l’historique, sous « Joueur supprimé ») ou supprimer une partie. Pour tout effacer, effacez les données de ce site dans les réglages de votre navigateur.',
+    ],
+  },
+  {
+    titre: 'Fonctions du téléphone',
+    paragraphes: [
+      'Pendant une partie, Dartpéro garde l’écran allumé et peut faire vibrer le téléphone (pas sur iPhone). Il n’utilise jamais la caméra, le micro, la localisation, les contacts ni les notifications.',
+      'L’annonce vocale lit les scores et le pseudo du joueur suivant avec une voix fournie par le navigateur. Selon le navigateur, cette voix peut être synthétisée en ligne par son fournisseur, qui reçoit alors le texte annoncé, pseudos compris. Pour l’éviter, coupez « Annoncer les volées » dans Réglages → Annonce vocale.',
+    ],
+  },
+  {
+    titre: 'Hébergement',
+    paragraphes: [
+      'Les fichiers de l’application sont servis par Firebase Hosting (Google). Comme tout hébergeur, il reçoit l’adresse IP et les informations techniques de chaque requête, et peut les journaliser selon ses propres règles. L’éditeur ne les exploite pas.',
+      'Une fois l’application en cache, elle fonctionne sans réseau.',
+    ],
+  },
+]
+
+export const TITRE_MENTIONS_LEGALES = 'Mentions légales'
+
+export const TERME_EDITEUR = 'Éditeur'
+export const TERME_CONTACT = 'Contact'
+export const TERME_HEBERGEUR = 'Hébergeur'
+
+export const MENTION_EDITEUR = 'Dartpéro, particulier non professionnel'
+export const MENTION_CONTACT = 'roulandzanellakevin@gmail.com'
+export const MENTION_HEBERGEUR_SERVICE = 'Firebase Hosting (Google)'
+export const MENTION_HEBERGEUR_ENTITE = 'Google Ireland Limited'
+export const MENTION_HEBERGEUR_ADRESSE = 'Gordon House, Barrow Street, Dublin 4, Irlande'
+
 export const JOUEUR_SUPPRIME = 'Joueur supprimé'
 
 export const nomJoueur = (nom: string | null): string => nom ?? JOUEUR_SUPPRIME

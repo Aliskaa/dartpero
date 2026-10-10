@@ -5,9 +5,10 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * Garde du lot `bundle-par-route` (voir docs/lots/bundle-par-route/01-architecture.md,
- * Q7) : les 16 écrans passés en `lazy()` ne doivent jamais redevenir des imports
- * statiques dans les deux fichiers qui les aiguillent, sous peine de revenir
- * discrètement dans le chunk commun.
+ * Q7) : les 17 écrans passés en `lazy()` (9 dans `App.tsx`, 8 dans
+ * `PartieEcran.tsx`) ne doivent jamais redevenir des imports statiques dans
+ * les deux fichiers qui les aiguillent, sous peine de revenir discrètement
+ * dans le chunk commun.
  *
  * Même réflexe que `hexagonalBoundary.test.ts` : les imports sont lus par regex
  * sur le contenu réel des fichiers, avec un plancher pour qu'une regex cassée ne
@@ -39,13 +40,14 @@ const nomsImportesStatiquement = (source: string): string[] =>
 
 const nombreDeLazy = (source: string): number => [...source.matchAll(LAZY_IMPORT)].length
 
-// Les 8 routes de src/App.tsx passées en lazy() — AccueilEcran reste statique
+// Les 9 routes de src/App.tsx passées en lazy() — AccueilEcran reste statique
 // volontairement (start_url, route par défaut, fourre-tout `*`), il n'y figure pas.
 const ECRANS_ROUTES = [
   'JoueursEcran',
   'StatistiquesEcran',
   'HistoriqueEcran',
   'ReglagesEcran',
+  'ConfidentialiteEcran',
   'NouvellePartieEcran',
   'LancerEntrainementEcran',
   'PartieEcran',
@@ -83,7 +85,7 @@ describe('Découpage par route (bundle-par-route)', () => {
     expect(nomsImportesStatiquement(appSource)).toContain('AccueilEcran')
   })
 
-  it('src/App.tsx n’importe jamais statiquement un des 8 écrans de route', () => {
+  it('src/App.tsx n’importe jamais statiquement un des 9 écrans de route', () => {
     const source = readFileSync(APP, 'utf8')
     const noms = nomsImportesStatiquement(source)
     const fautes = ECRANS_ROUTES.filter((ecran) => noms.includes(ecran))
@@ -91,10 +93,10 @@ describe('Découpage par route (bundle-par-route)', () => {
     expect(fautes).toEqual([])
   })
 
-  it('src/App.tsx déclare au moins 8 lazy(() => import(', () => {
+  it('src/App.tsx déclare au moins 9 lazy(() => import(', () => {
     const source = readFileSync(APP, 'utf8')
 
-    expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(8)
+    expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(9)
   })
 
   it('PartieEcran.tsx n’importe jamais statiquement un des 8 écrans de mode', () => {

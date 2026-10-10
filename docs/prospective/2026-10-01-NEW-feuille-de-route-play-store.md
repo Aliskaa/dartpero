@@ -27,8 +27,8 @@ Statut : ⬜ à faire · 🟡 en cours · ✅ fait · ⏸ mis de côté
 |---|---|---|---|---|---|
 | 1 | `stockage-persistant` | ✅ fait (vérif. appareil restante) | `navigator.storage.persist()` derrière un port, état affiché dans les Réglages | `high` (persistance) | Sans lui, le navigateur peut effacer l'IndexedDB (Chrome si l'espace manque, Safari après ~7 jours sans ouverture si non installée). Aucun appel aujourd'hui dans `src/`. Utile **même sans store** |
 | 2 | `installation-guidee` | ✅ fait (vérif. appareil restante) | Bouton « Installer Dartpéro » (capte `beforeinstallprompt`), guide iPhone (Partager → Sur l'écran d'accueil), manifeste enrichi : `id`, `categories`, `screenshots` (étroit + large), `shortcuts` (« Nouvelle partie ») | `high` (manifeste / service worker) | Aujourd'hui un pote qui ouvre le lien reste dans un onglet sans le savoir. Utile **même sans store** |
-| 3 | `confidentialite-assetlinks` | ⬜ | Page de politique de confidentialité + mentions légales ; `/.well-known/assetlinks.json` sur Firebase Hosting | `high` (`firebase.json`) | ⚠️ `firebase.json` ignore `**/.*` : il exclurait `/.well-known/`. Exception explicite + vérification `curl` après déploiement |
-| 4 | `play-store-twa` | ⬜ | Emballage TWA par **Bubblewrap** (AAB signé, clé à sauvegarder), fiche du store (icône 512, bannière 1024×500, captures depuis `docs/captures/`, descriptions), numérotation des versions (`package.json` 0.1.0 ↔ `versionCode`), comportement du bouton retour Android en partie | `high` (renverse une décision gravée) | Renverse « PWA, pas de passage par les stores » — en connaissance de cause. La TWA reste la même PWA : chaque `npm run firebase:deploy` met l'app du store à jour |
+| 3 | `confidentialite-assetlinks` | ✅ fait (curl après déploiement restant) | Écran `/confidentialite` (politique + mentions légales) ; `/.well-known/assetlinks.json` (`[]`) sur Firebase Hosting | `high` (`firebase.json`) | Prémisse corrigée : sous firebase-tools 15, `**/.*` n'excluait **pas** `/.well-known/` (ni le contenu des autres dossiers cachés) — fuite fermée par des extglobs, jamais de `!` (DEPLOIEMENT § Confidentialité) |
+| 4 | `play-store-twa` | ⬜ | Emballage TWA par **Bubblewrap** (AAB signé, clé à sauvegarder), fiche du store (icône 512, bannière 1024×500, captures depuis `docs/captures/`, descriptions), numérotation des versions (`package.json` 0.1.0 ↔ `versionCode`), comportement du bouton retour Android en partie ; **remplir `assetlinks.json`** (`package_name`, `sha256_cert_fingerprints` — clé de Google avec Play App Signing), URL de la politique `https://dartpero.web.app/confidentialite` dans la Play Console, relecture de la politique en contexte TWA | `high` (renverse une décision gravée) | Renverse « PWA, pas de passage par les stores » — en connaissance de cause. La TWA reste la même PWA : chaque `npm run firebase:deploy` met l'app du store à jour |
 | 5 | `aide-regles` | ⬜ | Écran d'aide / règles par mode, premier lancement guidé (deux joueurs → une partie en < 30 s) | selon périmètre | Les potes connaissent le Tour du monde et le cut-throat, un inconnu du store non |
 | 5 bis | `i18n-anglais` | ⬜ (optionnel) | Traduction anglaise | `high` (tranche la décision ouverte n° 5) | Le marché des fléchettes est surtout anglophone |
 
@@ -37,6 +37,8 @@ Statut : ⬜ à faire · 🟡 en cours · ✅ fait · ⏸ mis de côté
 | Étape | Statut | Durée |
 |---|---|---|
 | Compte développeur Google Play (25 $, une fois) + vérification d'identité | ⬜ | quelques jours |
+| Mentions légales de `/confidentialite` (éditeur, contact, hébergeur) | ✅ fournies le 2026-10-10 | — |
+| Après déploiement du lot 3 : `curl.exe -I` / `-s` sur `/.well-known/assetlinks.json`, `/confidentialite` en navigation privée | ⬜ | 5 min |
 | **Test fermé : ≥ 12 testeurs pendant 14 jours d'affilée** (obligatoire pour un compte personnel récent) — à démarrer dès que la TWA existe | ⬜ | **2 semaines minimum** |
 | Demande d'accès à la production + revue Google | ⬜ | quelques jours à une semaine |
 | Vérifier le nom « Dartpéro » (INPI, Play Store) | ⬜ | — |
@@ -59,9 +61,10 @@ cite que 2 des 3 exceptions de couleur, sets non exposés à la création de par
 | Lot | Statut | Contenu |
 |---|---|---|
 | `app-store-capacitor` | ⏸ | Emballage **Capacitor** pour l'App Store d'Apple : un Mac (ou une compilation cloud), compte Apple Developer 99 $/an, risque de refus au titre de la règle 4.2. En attendant, les iPhone installent la PWA depuis Safari (lot 2) |
-| `deblocage-pro` | ⏸ monétisation | Freemium à déblocage unique via **Google Play Billing** (port `Entitlements`). Touche « pas de réseau » (vérification d'achat). Recommandé plutôt que la pub (AdMob : bannière illisible à 2-3 m, Capacitor, RGPD) |
+| `deblocage-pro` | ⏸ monétisation | Freemium à déblocage unique via **Google Play Billing** (port `Entitlements`). Touche « pas de réseau » (vérification d'achat) et **rend la politique `/confidentialite` fausse** : la mettre à jour dans le même lot. Recommandé plutôt que la pub (AdMob : bannière illisible à 2-3 m, Capacitor, RGPD) |
 
 ## Prochaine étape
 
-Vérifier `installation-guidee` sur appareil après déploiement (R1, R2, R5, R6 : `PROJECT_PLAN` § 0),
-puis `/intake confidentialite-assetlinks` (lot 3).
+Déployer (`npm run firebase:deploy`) puis vérifier le lot 3 (`curl.exe`, DEPLOIEMENT
+§ Confidentialité) ; vérifier `installation-guidee` sur appareil (R1, R2, R5, R6 : `PROJECT_PLAN`
+§ 0) ; puis `/intake play-store-twa` (lot 4).

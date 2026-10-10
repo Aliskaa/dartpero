@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import {
+  ChevronRight,
   CircleCheck,
   Download,
   Share,
@@ -34,6 +35,7 @@ import {
   LIBELLE_PROTECTION_STOCKAGE,
   LIBELLE_REDEMANDER_PROTECTION,
   LIBELLE_THEME,
+  LIEN_CONFIDENTIALITE,
   LIEN_GUIDE_INSTALLATION,
   PRESENTATION_DARTPERO,
   pluriel,
@@ -338,8 +340,8 @@ export const ReglagesEcran = () => {
 
           <p className="text-xs text-craie/60">
             La restauration <strong className="text-craie/80">complète</strong> la base : les
-            parties déjà présentes sont conservées, celles du fichier sont ajoutées ou mises à jour.
-            Rien n’est effacé.
+            profils et parties du fichier s’ajoutent, et ceux déjà présents (même identifiant) sont
+            remplacés par la version du fichier. Le reste n’est pas touché.
           </p>
 
           {erreur && <MessageErreur>{erreur}</MessageErreur>}
@@ -430,6 +432,14 @@ export const ReglagesEcran = () => {
           </p>
           <p className="text-xs text-craie/60">{PRESENTATION_DARTPERO}</p>
           <EntreeInstallation />
+          {/* Hors de toute liste : l'entrée d'installation en rend une sur iOS. */}
+          <Link
+            to="/confidentialite"
+            className="flex min-h-12 w-full items-center justify-between gap-3 border-t border-craie/25 pt-3 text-sm text-craie active:text-craie-vive"
+          >
+            {LIEN_CONFIDENTIALITE}
+            <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-laiton" />
+          </Link>
         </Panneau>
       </div>
     </main>

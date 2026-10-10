@@ -117,6 +117,12 @@ export default defineConfig(({ mode, command }) => {
           // prendrait sinon — vite-plugin-pwa ne pose aucun `globIgnores` par
           // défaut, d'où le premier motif, repris de workbox-build.
           globIgnores: ['**/node_modules/**/*', 'screenshots/**'],
+          // ⚠️ `/.well-known/` (Digital Asset Links) doit toujours venir du
+          // réseau : sans cette exclusion, le repli de navigation servirait
+          // `index.html` à sa place. Le fichier n'est jamais précaché non plus
+          // (`json` hors `globPatterns`, glob sans `dot`) — `npm run smoke`
+          // vérifie les deux sur `dist/sw.js`.
+          navigateFallbackDenylist: [/^\/\.well-known\//],
         },
       }),
     ],

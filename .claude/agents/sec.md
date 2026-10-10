@@ -53,6 +53,10 @@ surface qui n'existe pas :
   `sendBeacon`, `EventSource`, ni import de `firebase` dans `src/` —
   décision gravée. Aucune ressource runtime chargée depuis un CDN
   (polices et icônes sont embarquées). Aucune télémétrie.
+  La politique publique `/confidentialite` (`SECTIONS_CONFIDENTIALITE`,
+  `src/ui/labels.ts`) l'affirme : toute capacité réseau, permission,
+  cookie ou donnée stockée nouvelle la met à jour, **avec sa date**, dans
+  le même lot. Relire chaque phrase touchée contre le code.
 - **Import JSON = la seule entrée non fiable.** Le fichier peut venir d'un
   autre téléphone, d'une vieille version, ou avoir été édité à la main.
   `backupSchema` le valide **entièrement avant** d'écrire quoi que ce
@@ -73,7 +77,9 @@ surface qui n'existe pas :
   `firebase.json`) : ordre des règles `headers` (la dernière qui matche
   gagne), `no-cache` sur `index.html` / `sw.js` / `manifest`, le
   garde-fou `vite:preloadError` qui ne peut pas boucler. Un service worker
-  cassé fige l'appli chez tout le monde.
+  cassé fige l'appli chez tout le monde. `ignore` de `firebase.json` :
+  jamais de motif `!` ; `/.well-known/` hors repli de navigation et hors
+  précache ; la garde `REMPLIR` du smoke n'a aucun contournement.
 - **Permissions navigateur** : Wake Lock et vibration seulement. Une
   nouvelle permission (caméra, micro, géolocalisation, notifications) est
   une décision produit, pas un détail de lot.

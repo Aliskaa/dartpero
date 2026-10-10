@@ -8,7 +8,7 @@ Contexte permanent du projet pour Claude. **À lire en début de session.**
 | [`README.md`](README.md) | La vitrine : ce que fait l'app, ses captures, comment la lancer. |
 | [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) | Le plan détaillé, lot par lot, avec ce qui reste. |
 | [`docs/CHARTE_GRAPHIQUE.md`](docs/CHARTE_GRAPHIQUE.md) | Le référentiel design : tokens, thèmes, composants, ce qu'il ne faut pas faire. |
-| [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md) | Le manuel du déploiement : Firebase Hosting, en-têtes de cache, service worker, contexte sécurisé en dev, icônes, installation (§ Installation et manifeste). |
+| [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md) | Le manuel du déploiement : Firebase Hosting, en-têtes de cache, service worker, contexte sécurisé en dev, icônes, installation (§ Installation et manifeste), politique et `assetlinks.json` (§ Confidentialité et Digital Asset Links). |
 | [`.claude/CONVENTIONS.md`](.claude/CONVENTIONS.md) | Le **comment** : les patterns de code concrets (Value Objects, use cases, ports, hooks, tests…) extraits en relisant `src/` et `tests/` — complète les décisions d'ici, ne les redécide jamais. |
 | [`.claude/README.md`](.claude/README.md) | Le **workflow agentique** : `/intake`, `/orchestrate <id> [high\|light]`, `/audit`, `/refresh-architecture`, leurs agents et les **surfaces gravées** qui forcent le niveau `high`. Règles de travail courtes dans [`.claude/rules/`](.claude/rules/README.md). |
 | [`.ai/architecture-context.md`](.ai/architecture-context.md) | **Index** généré, lu **en premier** par les agents de phase : il dit où lire, pas ce que disent les sources. **Pas une source de vérité** : à régénérer (`/refresh-architecture`) dès qu'une décision est gravée ici. |
@@ -51,6 +51,10 @@ dépendance du cœur.
 ⚠️ **Firebase *Hosting* est une exception qui n'en est pas une** (voir § Déploiement) : c'est
 un serveur de fichiers statiques, il ne met pas un octet de SDK dans le bundle. Aucun
 `import` de `firebase` dans `src/`, jamais — ni Auth, ni Firestore, ni Functions.
+⚠️ **La politique publique `/confidentialite` affirme ce « pas de réseau »** (URL donnée à la Play Console, texte
+dans `SECTIONS_CONFIDENTIALITE`, `src/ui/labels.ts`). Toute capacité réseau, permission, cookie
+ou donnée stockée nouvelle se livre **avec** la mise à jour de ce texte et de sa date. Seul le
+réseau a un fil-piège (`tests/architecture/reseauBoundary.test.ts`) ; le reste, c'est la relecture.
 - **Les joueurs sont des profils LOCAUX**, pas des comptes : pseudo + couleur, créés en 2
 secondes, portant leurs stats **sur cet appareil**. Filet de sécurité obligatoire :
 **export / import JSON** de toute la base (lot 4).
@@ -336,7 +340,15 @@ commande : `npm run firebase:deploy` (= `build` + `smoke` + `firebase deploy --o
 - ⚠️ **`id: '/'` ne se change jamais** — c'est l'identité déjà calculée des installations
   existantes. Captures du manifeste exclues du précache (`globIgnores`). `npm run smoke` vérifie
   les deux sur `dist/`.
-- → détail : réécriture SPA, en-têtes, service worker, iOS, manifeste : [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
+- ⚠️ **`ignore` de `firebase.json` : jamais de motif `!`** (no-op silencieux sous glob 10 /
+  firebase-tools 15, filtre inversé sous glob 7). `/.well-known/` passe par les extglobs
+  `**/.!(well-known)` + `**/.!(well-known)/**`, a sa règle `headers` **après** le fourre-tout, et
+  reste hors repli de navigation et hors précache du service worker. Garde : `firebaseHosting.test.ts`.
+- ⚠️ **`npm run smoke` refuse tout `dist/` qui contient `REMPLIR`** (mention légale inconnue),
+  donc tout déploiement, même un correctif. **Aucun contournement, à dessein** — n'en ajoutez
+  pas. Un `firebase deploy` lancé à la main saute le smoke : ne passer que par `firebase:deploy`.
+- → détail : réécriture SPA, en-têtes, service worker, iOS, manifeste, confidentialité et
+  `assetlinks.json` : [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
 
 ---
 

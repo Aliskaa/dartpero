@@ -21,6 +21,9 @@ const HistoriqueEcran = lazy(() =>
 const ReglagesEcran = lazy(() =>
   import('@/ui/ecrans/ReglagesEcran').then((m) => ({ default: m.ReglagesEcran })),
 )
+const ConfidentialiteEcran = lazy(() =>
+  import('@/ui/ecrans/ConfidentialiteEcran').then((m) => ({ default: m.ConfidentialiteEcran })),
+)
 const NouvellePartieEcran = lazy(() =>
   import('@/ui/ecrans/NouvellePartieEcran').then((m) => ({ default: m.NouvellePartieEcran })),
 )
@@ -60,6 +63,8 @@ export default function App() {
           <Route path="/statistiques" element={<StatistiquesEcran />} />
           <Route path="/historique" element={<HistoriqueEcran />} />
           <Route path="/reglages" element={<ReglagesEcran />} />
+          {/* URL publique de la politique (Play Console) : sous la barre de navigation. */}
+          <Route path="/confidentialite" element={<ConfidentialiteEcran />} />
           <Route path="*" element={<AccueilEcran />} />
         </Route>
 
