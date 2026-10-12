@@ -44,6 +44,71 @@ flowchart TD
   RV3 -.->|⏸ relecture A à F, puis commit et fusion sur accord| U
 ```
 
+### Agents, skills et commandes utilisés
+
+> Relevé vérifié dans le transcript de la session (appels `Skill`, commandes slash, appels
+> `Agent` et leur `subagent_type`).
+
+**Skills** (`.claude/skills/`)
+
+| Skill | Déclenchée par | Usage |
+|---|---|---|
+| `intake` | Utilisateur (`/intake nouvelle-partie-en-etapes`) | Cadrage, 4 questions, écriture de `docs/request/…` |
+| `orchestrate` | Utilisateur (`/orchestrate nouvelle-partie-en-etapes high`) | Pilotage du lot : chaîne d'agents, gates, boucles, ce dossier |
+
+`refresh-architecture` n'a **pas** été invoquée comme skill : l'Orchestrator a lancé directement
+l'agent `architecture-context` (3 fois), comme le prévoit la skill `orchestrate`.
+
+**Règles** (`.claude/rules/`)
+
+Une règle ne s'invoque pas : Claude Code charge les onze fichiers dans le contexte de chaque
+session, et les sous-agents y sont renvoyés par leur brief et par `.ai/architecture-context.md`.
+Le tableau dit donc lesquelles ont **pesé** sur ce lot, pas lesquelles ont été « lancées ».
+
+| Règle | Rôle dans le lot |
+|---|---|
+| `frontend-react.md` | Tout le parcours : use cases via `useServices()`, routes lazy, 48 px, `labels.ts` ; **modifiée** (une route par étape, « manche ») |
+| `glossary.md` | Vocabulaire « manche » / « set » à l'écran ; **modifiée** (lignes manche / set et manche d'entraînement) |
+| `theme-colors.md` | Aucune couleur en dur dans les nouveaux écrans ; contraste à relire en clair |
+| `testing.md` | Fakes, `renderWithServices`, gestes ; « un test d'absence doit pouvoir échouer » → contre-épreuves de mutation |
+| `typescript.md` | Imports `@/`, unions exhaustives (`ReglagesJeu`, `demarrer`) |
+| `biome.md` | `npm run lint` à chaque tour |
+| `persistence.md` | Vérifiée **non touchée** : aucun événement, schéma ni `backupSchema` ; préférences seules en `localStorage`, `partie:legs` jamais renommée |
+| `response-policy.md` | Aucune règle de jeu improvisée : la sortie libre reportée à un lot de règles plutôt que tranchée ici |
+| `documentation-language.md` | Toute la doc du lot en français |
+| `prospective.md` | L'étude DartsOn dans `docs/prospective/`, sans toucher au code |
+| `commit.md` | Accord avant commit, branche du lot, `git status` relu, puis fusion `--ff-only` sur second accord |
+
+**Autre commande slash**
+
+| Commande | Lancée par | Usage |
+|---|---|---|
+| `/ultrareview` | Utilisateur | Sans objet : aucun changement à relire à ce moment |
+
+**Sous-agents** (`.claude/agents/`)
+
+| Agent | Modèle / effort | Lancements | Pour quoi |
+|---|---|---|---|
+| `archi-scout`, `archi-designer` | — | 0 | Sautés : surface gravée |
+| `archi-authority` | opus / max | 1 | Architecture, PASS |
+| `dev` | opus / medium | 4 | Implémentation, puis tours de correction 1, 2, 3 |
+| `test` | opus / high | 3 | Plan de test, rejeux après les tours 1 et 2 |
+| `sec` | opus / high | 2 | Revue sécurité, rejeu après le tour 2 |
+| `review` | opus / max | 3 | Revues v1 (NO-GO), v2 (GO conditionnel), v3 (GO) |
+| `architecture-context` | sonnet / high | 3 | Index d'architecture |
+
+**Commandes shell** (lancées par l'Orchestrator, `test`, `sec` et `review` n'ayant pas de shell
+dans cet environnement)
+
+| Commande | Usage |
+|---|---|
+| `npm run lint`, `npm run typecheck`, `npm test` | Après chaque tour de Dev et avant le commit |
+| `npm run build`, `npm run smoke` | Quand `src/` changeait |
+| `npm audit --omit=dev`, `git diff` des manifestes npm | Phase Sécurité (0 vulnérabilité, aucune dépendance ajoutée) |
+| Contre-épreuves de mutation (source cassée, tests relancés, source restaurée) | Prouver que les tests du glisser et de « leg » peuvent échouer |
+| `git status`, `git log`, `git switch`, `git commit`, `git merge --ff-only` | Branche, commit `0893aa2`, fusion dans `main` |
+| `npm run preview` | Relecture A à F, par l'utilisateur |
+
 ### Rapports
 
 - [00-orchestration.md](./00-orchestration.md) — journal, tours de boucle (3 / 5 au total)
