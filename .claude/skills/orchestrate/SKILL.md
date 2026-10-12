@@ -214,7 +214,26 @@ partiel, ligne **Bloquée**).
    ordre, confirmations, gates, boucles, bloqueurs, statut final.
 3. N'invente ni phase, ni constat, ni passage absent de l'historique.
 4. Légende (traits pleins vs pointillés) + liens vers les rapports.
-5. Ligne `Échanges` dans la table Statut : **Faite** seulement après
+5. Section **Agents, skills, règles et commandes utilisés**, quatre
+   tableaux (modèle : `docs/lots/_template/06-echanges.md`) :
+   - **Skills** (`.claude/skills/`) réellement invoquées, et par qui.
+     Une skill dont tu as appliqué le brief **sans l'invoquer** (ex.
+     `refresh-architecture` → agent `architecture-context` lancé
+     directement) se dit comme telle, pas comme une skill utilisée.
+   - **Sous-agents** : modèle et effort **réellement lancés**, nombre
+     de lancements, pour quoi ; les agents de la chaîne sautés à 0, avec
+     la raison.
+   - **Règles** (`.claude/rules/`) : elles ne s'invoquent pas, elles
+     sont chargées d'office. Dire celles qui ont **pesé** sur le lot,
+     et comment : *modifiée* par le lot, *appliquée*, ou *vérifiée sans
+     objet* (ex. `persistence.md` quand aucun format persisté ne bouge).
+   - **Commandes shell** lancées (lint, typecheck, tests, build, smoke,
+     audit, contre-épreuves, git…), par qui et pour quoi.
+   Sources : tes propres appels de la session (`Skill`, `Agent` et son
+   `subagent_type`, shell) et le journal de `00-orchestration.md` pour
+   les sessions précédentes d'un lot repris. Un compte que tu ne peux
+   pas vérifier se dit « d'après le journal », jamais deviné.
+6. Ligne `Échanges` dans la table Statut : **Faite** seulement après
    écriture vérifiée.
 
 Le fichier est de la documentation, en français. Il ne change pas le

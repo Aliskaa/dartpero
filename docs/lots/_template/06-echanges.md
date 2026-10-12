@@ -20,6 +20,41 @@ flowchart TD
 <!-- Remplacer par le déroulé réel : agents tentés, FAIL/PASS, confirmations, gates, boucles,
      bloqueurs, statut final. -->
 
+## Agents, skills, règles et commandes utilisés
+
+> Relevé vérifié dans la session (appels `Skill`, `Agent` et `subagent_type`, shell) ; pour un
+> lot repris, « d'après le journal » de `00-orchestration.md`.
+
+**Skills** (`.claude/skills/`)
+
+| Skill | Déclenchée par | Usage |
+|---|---|---|
+| `orchestrate` | Utilisateur (`/orchestrate <id-du-lot> <niveau>`) | Pilotage du lot |
+
+<!-- Un brief appliqué sans invoquer la skill (ex. refresh-architecture → agent
+     architecture-context) se dit comme tel sous le tableau. -->
+
+**Sous-agents** (`.claude/agents/`)
+
+| Agent | Modèle / effort | Lancements | Pour quoi |
+|---|---|---|---|
+| `archi-scout` | sonnet / low | 1 | Architecture |
+
+**Règles** (`.claude/rules/`)
+
+Une règle ne s'invoque pas : elles sont chargées dans chaque session. Le tableau dit celles qui
+ont **pesé** sur le lot.
+
+| Règle | Rôle dans le lot (*modifiée*, *appliquée* ou *vérifiée sans objet*) |
+|---|---|
+| `commit.md` | Appliquée : accord avant commit, branche du lot |
+
+**Commandes shell**
+
+| Commande | Lancée par | Usage |
+|---|---|---|
+| `npm run lint`, `npm run typecheck`, `npm test` | Dev | Vérifications du lot |
+
 ## Rapports
 
 - [00-orchestration.md](./00-orchestration.md)
