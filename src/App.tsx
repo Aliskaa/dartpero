@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
+import { cheminNouvellePartie } from '@/ui/chemins'
 import { Spinner } from '@/ui/composants/commun/Etats'
 import { LayoutPrincipal } from '@/ui/composants/commun/LayoutPrincipal'
 import { AccueilEcran } from '@/ui/ecrans/AccueilEcran'
@@ -24,12 +25,11 @@ const ReglagesEcran = lazy(() =>
 const ConfidentialiteEcran = lazy(() =>
   import('@/ui/ecrans/ConfidentialiteEcran').then((m) => ({ default: m.ConfidentialiteEcran })),
 )
+// Les trois étapes de « Nouvelle partie » vivent derrière ce seul `lazy()` :
+// ce sont des routes descendantes de `/nouvelle-partie/*`.
 const NouvellePartieEcran = lazy(() =>
-  import('@/ui/ecrans/NouvellePartieEcran').then((m) => ({ default: m.NouvellePartieEcran })),
-)
-const LancerEntrainementEcran = lazy(() =>
-  import('@/ui/ecrans/games/checkout-practice/LancerEntrainementEcran').then((m) => ({
-    default: m.LancerEntrainementEcran,
+  import('@/ui/ecrans/nouvelle-partie/NouvellePartieEcran').then((m) => ({
+    default: m.NouvellePartieEcran,
   })),
 )
 const PartieEcran = lazy(() =>
@@ -68,8 +68,13 @@ export default function App() {
           <Route path="*" element={<AccueilEcran />} />
         </Route>
 
-        <Route path="/nouvelle-partie" element={<NouvellePartieEcran />} />
-        <Route path="/entrainement" element={<LancerEntrainementEcran />} />
+        <Route path="/nouvelle-partie/*" element={<NouvellePartieEcran />} />
+        {/* L'ancien écran de lancement de l'entraînement : un lien profond vers
+            lui mène désormais à la carte Entraînement du parcours. */}
+        <Route
+          path="/entrainement"
+          element={<Navigate to={cheminNouvellePartie('CHECKOUT_PRACTICE')} replace />}
+        />
         {/* Une seule URL par partie : c'est son mode qui décide de l'écran. */}
         <Route path="/partie/:matchId" element={<PartieEcran />} />
         <Route path="/partie/:matchId/resume" element={<ResumePartieEcran />} />

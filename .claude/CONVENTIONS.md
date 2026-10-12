@@ -155,7 +155,7 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `bg-laiton`…), vérifié par `tests/architecture/themeBoundary.test.ts`.
 - Un ratio dont le dénominateur peut valoir zéro s'affiche via `pourcent(valeur, occasions)`
   (`src/ui/labels.ts`) : sans occasion, un tiret **cadratin** `—` (U+2014), jamais « 0 % » — qui
-  se lit « il a tout raté ». Trois appelants : matchs, legs, doubles. ⚠️ Un pourcentage de
+  se lit « il a tout raté ». Trois appelants : matchs, manches, doubles. ⚠️ Un pourcentage de
   **progression** (`LigneCible.tsx`) garde son `0` : là, zéro est un vrai zéro, pas une absence.
 
 ## 10 · Hooks (`ui/hooks/use<Mode>.ts`)
@@ -197,7 +197,13 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   cassée ne rende pas tout vert silencieusement. Reproduire ce réflexe « se garder d'un test vert
   à vide » pour tout test dont le rôle est de vérifier une **absence**.
 - `tests/setup.ts` charge `@testing-library/jest-dom/vitest` et `fake-indexeddb/auto`, et fait
-  un `cleanup()` après chaque test.
+  un `cleanup()` après chaque test. Il pose aussi, **seulement s'ils manquent**, deux faux pour
+  ce que jsdom 29 n'implémente pas : `HTMLDialogElement.prototype.showModal` / `close` (pose et
+  retire `open`, émet `close`) et la capture de pointeur (`setPointerCapture` et consorts, sans
+  effet). Ils rendent `<dialog>` et le glisser utilisables en test, ils ne les valident pas.
+- **Le retour du téléphone** se simule par `retourTelephone()` (`tests/ui/gestes.ts`) : un
+  `navigate(-1)` (POP d'historique) capturé par `SondeHistorique`, que `renderWithServices`
+  monte à côté de l'écran — jamais en cliquant un bouton de l'écran.
 
 ## 12 · Outillage
 
@@ -250,16 +256,29 @@ résumé. Rien d'autre ne bouge — vérifié trois fois de suite (Tour du monde
 entraînement).
 
 ⚠️ **Depuis le lot « bundle-par-route »** : un mode ajoute aussi son écran de jeu et son écran
-de résumé à la liste des `lazy()` de `src/ui/ecrans/games/PartieEcran.tsx` (et son écran de
-lancement, s'il en a un, à `src/App.tsx`) — sinon il revient discrètement dans le chunk
-commun, sans qu'aucun test ne le signale (`tests/architecture/lazyRoutes.test.ts` ne connaît
-que les écrans déjà listés au moment où il a été écrit).
+de résumé à la liste des `lazy()` de `src/ui/ecrans/games/PartieEcran.tsx` — sinon il revient
+discrètement dans le chunk commun, sans qu'aucun test ne le signale
+(`tests/architecture/lazyRoutes.test.ts` ne connaît que les écrans déjà listés au moment où il
+a été écrit).
+
+⚠️ **Depuis le lot « nouvelle-partie-en-etapes »**, un mode n'a **plus d'écran de lancement** :
+il se lance depuis le parcours Nouvelle partie. Il y ajoute sa carte (`EtapeJeu`), ses réglages
+(`ReglagesJeu`, `switch` exhaustif) et sa branche de `demarrer` (`useNouvellePartie`, idem),
+plus son slug dans `SLUG_MODE` (`src/ui/chemins.ts`). TypeScript signale presque tout :
+`SLUG_MODE`, les icônes et `LIBELLE_MODE` sont des `Record<GameModeId, …>`, les règles des
+cartes et le récapitulatif des `switch` exhaustifs. Lui échappent la liste `JEUX` de l'étape 1
+(la carte elle-même) et **tout ce qui distingue le solo du groupe** : `CHECKOUT_PRACTICE` est
+testé en dur dans le hook (`max`, `selection`, mais aussi `ajouter` / `retirer`, qui écrivent
+`entrainement:joueur` au lieu de `partie:joueurs`), dans `GardeOrdre`
+(`NouvellePartieEcran`) et dans `versOrdre` (`EtapeJoueurs`). Un nouveau mode y est traité en jeu
+de groupe — juste pour Killer ou Shanghai, faux pour un deuxième exercice solo.
 
 ## 14 · Arborescence
 
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
-invariants). Vérifié contre `src/` (`ls`) au lot « confidentialite-assetlinks » : 20 ports driving
-(hors `MatchSummary.ts`, un type), 11 driven, 8 hooks, 4 modes, 4 services transverses.
+invariants). Vérifié contre `src/` (`ls`) au lot « nouvelle-partie-en-etapes » : 20 ports driving
+(hors `MatchSummary.ts`, un type), 11 driven, 9 hooks (plus `tourDeTable.ts`, un utilitaire),
+4 modes, 4 services transverses.
 
 ```
 src/
@@ -300,16 +319,20 @@ src/
 │  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
 │  │                        cricket/ · checkout-practice/
+│  │                      nouvelle-partie/ ← le parcours en étapes (une route par
+│  │                        étape : EtapeJeu, EtapeJoueurs, EtapeOrdre,
+│  │                        ChoixJoueursExistants… et ordre.ts, pur)
 │  │                      + les écrans transverses : Accueil, Joueurs,
-│  │                        NouvellePartie, Historique, Statistiques, Réglages,
-│  │                        Confidentialité
+│  │                        Historique, Statistiques, Réglages, Confidentialité
 │  ├─ hooks/              useX01 · useTourDuMonde · useCricket ·
 │  │                      useCheckoutPractice · useJoueurs ·
+│  │                      useNouvellePartie (réglages mémorisés, démarrage) ·
 │  │                      useAppareil (wake lock, préférences, voix) ·
 │  │                      useStockagePersistant (protection des données) ·
 │  │                      useInstallation (invitation à installer)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
-│     theme.ts (clair / sombre / système) · accents.ts
+│     theme.ts (clair / sombre / système) · accents.ts ·
+│     chemins.ts (slugs et URL du parcours Nouvelle partie)
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
 ```

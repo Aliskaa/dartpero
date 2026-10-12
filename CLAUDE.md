@@ -75,14 +75,32 @@ et `findExactScore`. Récupérable dans l'historique à `d531a7e` si l'envie rev
 **Cricket** (lot 5c). Killer et Shanghai restent **hors périmètre v1** — la couture
 `GameMode` (`src/core/domain/games/index.ts`) les accueillera sans refonte, elle l'a
 maintenant prouvé deux fois.
-- **Réglages X01 par défaut** : **501**, **2 legs à gagner**, **double out** activé,
-**double in** désactivé. Tous modifiables à la création de partie.
+- **Réglages X01 proposés à la création** (étape 2 de Nouvelle partie, mémorisés par
+`usePreference`) : **501**, **2 manches à gagner**, **1 set** (pas de sets), **double out
+désactivé**, **double in** désactivé.
+⚠️ **Double out : décoché à l'écran, activé dans le domaine, à dessein.** L'utilisateur a
+choisi la sortie libre par défaut (`577dc5f`, entériné au lot `nouvelle-partie-en-etapes`) ;
+l'écran passe **toujours** `doubleOut` à `X01Config.create`. Le défaut du domaine reste
+`doubleOut: true` : c'est la règle standard, les tests de règles s'y adossent, et
+`backupSchema` en complète une sauvegarde qui n'aurait pas le champ. Ne pas « aligner » l'un
+sur l'autre.
 ⚠️ **On ne dit plus « best of N ».** C'est une convention à **deux** joueurs : elle compte
 les legs *joués*, et ne tient que parce qu'à deux, « premier à 2 » ne peut pas dépasser 3
 legs. À trois ou quatre, la même partie peut en durer six — le libellé mentait. Le domaine
-a toujours stocké `legsToWin` (« premier à N ») : c'est désormais ce que l'UI affiche, via
-`libelleLegs` / `libelleLegsCourt` (`src/ui/labels.ts`). `X01Config.legsForBestOf` survit
-pour le défaut et ses tests, mais **plus aucun écran ne l'appelle**.
+a toujours stocké `legsToWin` (« premier à N ») : c'est ce que l'UI affiche (« premier à N
+manches »), via `libelleLegs` / `libelleLegsCourt` (`src/ui/labels.ts`).
+`X01Config.legsForBestOf` survit pour le défaut et ses tests, mais **plus aucun écran ne
+l'appelle**.
+- **À l'écran, on dit « manche », jamais « leg »** (lot `nouvelle-partie-en-etapes`) ; « leg »
+reviendra avec une éventuelle version anglaise. Le code garde `Leg`, `legsToWin`, `LegWon`,
+`libelleLegs`… et les clés persistées ne se renomment pas (`partie:legs`). « Set » reste
+« set ». Ce vocabulaire vit dans `src/ui/labels.ts`, annonces vocales comprises.
+- **Nouvelle partie en étapes** : le jeu, puis les joueurs et réglages, puis l'ordre de jeu
+(dès 2 joueurs). ⚠️ **Chaque étape est une route** (`/nouvelle-partie`,
+`/nouvelle-partie/:jeu`, `…/ordre`, `…/joueurs`), jamais un état interne : c'est ce qui fait
+que le retour du téléphone ramène à l'étape précédente. L'entraînement est une carte de
+l'étape 1 (`/entrainement` ne fait plus que rediriger) ; l'onglet Joueurs a quitté la barre
+du bas (Réglages, puis Joueurs).
 - **Thème clair / sombre / système**, dans les Réglages. ⚠️ Le défaut reste **sombre**, pas
 « système » : le cadrage est un garage mal éclairé, le sombre *est* l'app et le clair est une
 option. Le thème clair est la **même feuille de match** — encre sur papier plutôt que craie sur
@@ -205,12 +223,14 @@ pour la sortie.
 **Bust — la volée entière est annulée, le score revient à sa valeur d'avant la visite :**
 
 - reste `< 0`, **ou**
-- reste `== 1` (impossible à finir sur un double), **ou**
+- reste `== 1` (impossible à finir sur un double, quand `double out` est actif), **ou**
 - reste `== 0` sans que la **dernière** fléchette soit un double (quand `double out` est actif).
 
 **Options**
 
-- `double out` : activé par défaut, obligatoire pour finir un leg.
+- `double out` : quand il est actif, finir un leg exige un double. **Défaut du domaine :
+activé** ; **proposé désactivé à la création** (voir § Décisions structurantes). Sans double
+out, toute fléchette qui amène à 0 pile gagne le leg.
 - `double in` : désactivé par défaut. Si activé, le score ne décompte qu'à partir de la
 première fléchette qui touche un double.
 
@@ -223,9 +243,11 @@ et **jamais** une suggestion bidon : **169, 168, 166, 165, 163, 162, 159**.
 
 **Legs & sets**
 
-- Un leg est gagné par le joueur qui atteint **exactement 0** avec un double.
+- Un leg (« manche » à l'écran) est gagné par le joueur qui atteint **exactement 0**, sur un
+double si `double out` est actif.
 - Le joueur qui commence **alterne à chaque leg**.
-- Best-of N legs (défaut 3), éventuellement groupés en sets.
+- Premier à N legs (`legsToWin`, défaut 2), éventuellement groupés en sets : premier à S sets
+(`setsToWin`, défaut 1, soit pas de sets) ; un set se gagne au premier à N legs.
 
 **Statistiques**
 
@@ -234,7 +256,8 @@ et **jamais** une suggestion bidon : **169, 168, 166, 165, 163, 162, 159**.
 - **First 9** = moyenne sur les 9 premières fléchettes d'un leg.
 - **% doubles (checkout %)** = doubles gagnants réussis ÷ tentatives de double.
 - Compteurs : nombre de **180**, **140+**, **100+**, **60+**.
-- **Meilleur leg** = plus petit nombre de fléchettes pour finir un leg.
+- **Meilleur leg** (« meilleure manche » à l'écran) = plus petit nombre de fléchettes pour
+finir un leg.
 - **Plus haut checkout** du match / du joueur.
 
 ---

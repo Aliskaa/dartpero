@@ -24,15 +24,40 @@ const basePeuplee = async (services: Services) => {
 }
 
 describe('Navigation principale', () => {
-  it('mène de l’accueil aux quatre écrans, et pas pendant une partie', async () => {
+  /**
+   * Critère 12 : quatre onglets, plus de « Joueurs ». On ajoute ses potes en
+   * créant une partie ; la gestion des profils vit dans les Réglages.
+   */
+  it('n’a que quatre onglets, sans « Joueurs »', async () => {
+    const { services } = fakeServices()
+    renderWithServices(<App />, { services, route: '/' })
+
+    const navigation = await screen.findByRole('navigation', { name: 'Navigation principale' })
+    const onglets = within(navigation).getAllByRole('link')
+    expect(onglets.map((onglet) => onglet.textContent)).toEqual([
+      'Début',
+      'Stats',
+      'Parties',
+      'Réglages',
+    ])
+    expect(within(navigation).queryByRole('link', { name: 'Joueurs' })).toBeNull()
+  })
+
+  it('mène des Réglages à l’écran de gestion des joueurs', async () => {
+    const utilisateur = userEvent.setup()
+    const { services } = fakeServices()
+    renderWithServices(<App />, { services, route: '/reglages' })
+
+    await utilisateur.click(await screen.findByRole('link', { name: /gérer les joueurs/i }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Joueurs' })).toBeInTheDocument()
+  })
+
+  it('mène de l’accueil aux trois autres écrans, et pas pendant une partie', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/' })
 
     const navigation = await screen.findByRole('navigation', { name: 'Navigation principale' })
-
-    await utilisateur.click(within(navigation).getByRole('link', { name: 'Joueurs' }))
-    expect(await screen.findByRole('heading', { name: 'Joueurs' })).toBeInTheDocument()
 
     await utilisateur.click(within(navigation).getByRole('link', { name: 'Stats' }))
     expect(await screen.findByRole('heading', { name: 'Statistiques' })).toBeInTheDocument()
@@ -189,12 +214,12 @@ describe('Écran Statistiques', () => {
     expect(within(lignes[1] as HTMLElement).getByText('Julien')).toBeInTheDocument()
   })
 
-  it('donne aux legs leur dénominateur', async () => {
+  it('donne aux manches leur dénominateur', async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
     const julien = await services.managePlayers.create('Julien')
 
-    // Un leg gagné par Kevin en 9 fléchettes ; Julien n'a rien pris.
+    // Une manche gagnée par Kevin en 9 fléchettes ; Julien n'a rien pris.
     const matchId = await services.startMatch.execute({
       playerIds: [kevin.id, julien.id],
       config: X01Config.create({ startingScore: 501, legsToWin: 2 }),
@@ -210,19 +235,19 @@ describe('Écran Statistiques', () => {
 
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    const legs = await screen.findByRole('table', { name: 'Legs' })
+    const legs = await screen.findByRole('table', { name: 'Manches' })
     const lignes = within(legs).getAllByRole('row').slice(1)
 
     // Kevin : 1 gagné sur 1 joué, donc 100 %.
     const kevinLigne = lignes.find((ligne) => within(ligne).queryByText('Kevin')) as HTMLElement
     expect(within(kevinLigne).getByText('100 %')).toBeInTheDocument()
 
-    // ⚠️ Julien : 0 sur 1, donc « 0 % » — pas un tiret. Il a bien perdu ce leg.
+    // ⚠️ Julien : 0 sur 1, donc « 0 % » — pas un tiret. Il a bien perdu cette manche.
     const julienLigne = lignes.find((ligne) => within(ligne).queryByText('Julien')) as HTMLElement
     expect(within(julienLigne).getByText('0 %')).toBeInTheDocument()
   })
 
-  it('écrit un tiret, jamais « 0 % », quand aucun leg n’est terminé', async () => {
+  it('écrit un tiret, jamais « 0 % », quand aucune manche n’est terminée', async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
     const matchId = await services.startMatch.execute({
@@ -234,8 +259,8 @@ describe('Écran Statistiques', () => {
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     // « 0 % » voudrait dire « il a tout perdu » ; rien du tout veut dire
-    // « on ne sait pas encore », et un leg en cours n'est ni gagné ni perdu.
-    const legs = await screen.findByRole('table', { name: 'Legs' })
+    // « on ne sait pas encore », et une manche en cours n'est ni gagnée ni perdue.
+    const legs = await screen.findByRole('table', { name: 'Manches' })
     expect(within(legs).getByText('—')).toBeInTheDocument()
     expect(within(legs).queryByText('0 %')).not.toBeInTheDocument()
   })

@@ -1,10 +1,10 @@
 import type { RecordVisitResult } from '@/core/application/ports/driving/RecordVisit'
 import type { MomentCelebratifData } from '@/ui/composants/commun/MomentCelebratif'
-import { pluriel } from '@/ui/labels'
+import { pluriel, TITRE_MOMENT_MANCHE } from '@/ui/labels'
 
 /**
  * Déduit le bandeau de récompense d'une volée X01.
- * Priorité : partie > set > leg (un checkout est déjà un leg).
+ * Priorité : partie > set > manche (un checkout est déjà une manche).
  */
 export const momentDepuisVoleeX01 = (
   resultat: RecordVisitResult | null,
@@ -35,7 +35,7 @@ export const momentDepuisVoleeX01 = (
   if (leg && leg.type === 'LegWon') {
     return {
       cle: `leg-${leg.legNumber}-${resultat.state.history.length}`,
-      titre: 'Leg !',
+      titre: TITRE_MOMENT_MANCHE,
       detail: nomVainqueur
         ? `${nomVainqueur} · ${pluriel(leg.dartsUsed, 'fléchette', 'fléchettes')}`
         : pluriel(leg.dartsUsed, 'fléchette', 'fléchettes'),

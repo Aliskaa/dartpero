@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { Download, Play, Target, Users } from 'lucide-react'
+import { Download, Play, Users } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import type { Player } from '@/core/domain/entities/Player'
+import { cheminNouvellePartie, ETAT_PARCOURS } from '@/ui/chemins'
 import { ApercuPartie, libelleRegles } from '@/ui/composants/commun/ApercuPartie'
 import { Button, classesBouton } from '@/ui/composants/commun/Button'
 import { Skeleton } from '@/ui/composants/commun/Etats'
@@ -20,6 +21,7 @@ import {
   LIBELLE_PLUS_TARD,
   TEXTE_INVITATION_INSTALLATION,
   TITRE_INVITATION_INSTALLATION,
+  TITRE_NOUVELLE_PARTIE,
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
@@ -185,28 +187,17 @@ export const AccueilEcran = () => {
       <InvitationInstallation />
 
       <div className="mt-auto flex flex-col gap-2">
+        {/* L'entraînement est une carte de l'étape 1 : un seul point d'entrée.
+            L'état de parcours laisse le retour de l'étape 1 revenir ici. */}
         <Link
-          to="/nouvelle-partie"
+          to={cheminNouvellePartie()}
+          state={ETAT_PARCOURS}
           className={[
             'laiton-poli inline-flex min-h-16 items-center justify-center gap-3 px-6',
             'font-score text-xl font-bold uppercase tracking-[0.15em]',
           ].join(' ')}
         >
-          Nouvelle partie
-        </Link>
-
-        {/* L'entraînement se joue seul : il n'a pas sa place au même rang qu'une
-            partie entre potes, mais il doit rester à un doigt. */}
-        <Link
-          to="/entrainement"
-          className={[
-            'inline-flex min-h-14 items-center justify-center gap-2 border-2 border-craie/55 px-6',
-            'font-score text-base font-bold uppercase tracking-[0.15em] text-craie',
-            'active:bg-craie active:text-feutre',
-          ].join(' ')}
-        >
-          <Target aria-hidden="true" className="size-4" />
-          S’entraîner au checkout
+          {TITRE_NOUVELLE_PARTIE}
         </Link>
       </div>
     </main>

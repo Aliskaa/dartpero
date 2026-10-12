@@ -153,13 +153,14 @@ describe('Cricket — création et historique', () => {
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/nouvelle-partie' })
 
-    await utilisateur.type(await screen.findByLabelText('Nouveau joueur'), 'Kevin')
-    await utilisateur.click(screen.getByRole('button', { name: 'Ajouter' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: /kevin/i })).toBeInTheDocument())
+    await utilisateur.click(await screen.findByRole('link', { name: /^Cricket/ }))
+    await utilisateur.click(await screen.findByRole('button', { name: 'Ajouter un joueur' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Nouveau joueur' }))
+    await utilisateur.type(screen.getByLabelText('Pseudo'), 'Kevin')
+    await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
+    await waitFor(() => expect(screen.getByText('1/4')).toBeInTheDocument())
 
-    await utilisateur.click(screen.getByRole('button', { name: /Cricket/i }))
-
-    const regles = screen.getByRole('region', { name: 'Règles' })
+    const regles = screen.getByRole('region', { name: 'Réglages' })
     expect(within(regles).getByRole('button', { name: 'Cut-throat' })).toBeInTheDocument()
     // Les réglages X01 n'ont rien à faire ici.
     expect(within(regles).queryByRole('button', { name: '501' })).toBeNull()

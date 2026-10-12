@@ -6,12 +6,17 @@ Patterns : `CONVENTIONS` § 9 et § 10.
 ## Structure
 
 - `ecrans/` : un écran par route ; `ecrans/games/` suit le découpage du
-  domaine (un dossier par mode, `PartieEcran` aiguille).
+  domaine (un dossier par mode, `PartieEcran` aiguille) ;
+  `ecrans/nouvelle-partie/` : le parcours en étapes, **une route par
+  étape** (URL dans `chemins.ts`) — jamais un état interne, sinon le
+  retour du téléphone quitte le parcours.
 - `composants/commun/` : le design system — réutiliser, ne jamais
   dupliquer une variante ad hoc.
 - `composants/<mode>/` : ce qui est propre à un mode.
-- `hooks/` : un hook par mode (`useX01`…), `useJoueurs`, `useAppareil`, `useStockagePersistant`, `useInstallation`.
+- `hooks/` : un hook par mode (`useX01`…), `useJoueurs`, `useAppareil`, `useStockagePersistant`, `useInstallation`, `useNouvellePartie`.
 - `labels.ts` : **tout** le français affiché, annonces vocales comprises.
+  À l'écran on dit **« manche »**, jamais « leg » (les identifiants du
+  code gardent `leg`).
 
 ## Travail
 

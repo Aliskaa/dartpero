@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Target } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
+import { cheminNouvellePartie } from '@/ui/chemins'
 import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
@@ -93,7 +94,7 @@ export const ResumeEntrainementEcran = () => {
 
       <ActionsFinDePartie
         matchId={identifiant}
-        versReglages="/entrainement"
+        versReglages={cheminNouvellePartie('CHECKOUT_PRACTICE')}
         libelleReglages="Changer l’exercice"
       />
     </main>

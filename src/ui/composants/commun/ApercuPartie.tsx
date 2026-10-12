@@ -4,7 +4,14 @@ import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary
 import type { Player } from '@/core/domain/entities/Player'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { Avatar } from '@/ui/composants/commun/Avatar'
-import { LIBELLE_VARIANTE_CRICKET, libelleLegs, nomJoueur, pluriel } from '@/ui/labels'
+import {
+  LIBELLE_VARIANTE_CRICKET,
+  libelleFormat,
+  libelleManchesDuSet,
+  libelleSetsGagnes,
+  nomJoueur,
+  pluriel,
+} from '@/ui/labels'
 
 /** Le libellé des règles, en français — le cœur n'en fabrique jamais. */
 export const libelleRegles = (partie: MatchSummary): string => {
@@ -29,7 +36,7 @@ export const libelleRegles = (partie: MatchSummary): string => {
 
   return [
     `X01 · ${partie.config.startingScore}`,
-    libelleLegs(partie.config.legsToWin),
+    libelleFormat(partie.config.legsToWin, partie.config.setsToWin),
     ...options,
   ].join(' · ')
 }
@@ -164,7 +171,8 @@ export const ApercuPartie = ({ partie, profils, classe = false }: Props) => {
           gagnant={joueur.playerId === partie.winnerId}
         >
           <span className="chiffres text-xs text-craie/60">
-            {pluriel(joueur.legsWonInSet, 'leg')}
+            {partie.config.setsToWin > 1 && `${libelleSetsGagnes(joueur.setsWon)} · `}
+            {libelleManchesDuSet(joueur.legsWonInSet)}
           </span>
           <span className="chiffres w-10 text-right text-base font-bold text-craie-vive">
             {joueur.remaining}

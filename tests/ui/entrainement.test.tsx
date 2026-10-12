@@ -93,14 +93,19 @@ describe('Entraînement au checkout — écran', () => {
     expect(screen.getByRole('button', { name: 'Triple' })).toBeInTheDocument()
   })
 
-  it('se lance depuis l’accueil', async () => {
+  it('se lance depuis l’accueil, par la carte Entraînement de « Nouvelle partie »', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
     await services.managePlayers.create('Kevin')
 
     renderWithServices(<App />, { services, route: '/' })
 
-    await utilisateur.click(await screen.findByRole('link', { name: /entraîner/i }))
+    await utilisateur.click(await screen.findByRole('link', { name: 'Nouvelle partie' }))
+    await utilisateur.click(await screen.findByRole('link', { name: /^Entraînement/ }))
+    await utilisateur.click(await screen.findByRole('button', { name: 'Ajouter un joueur' }))
+    await utilisateur.click(screen.getByRole('link', { name: 'Sélectionner un joueur existant' }))
+    await utilisateur.click(await screen.findByRole('button', { name: /^Kevin/ }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
     await utilisateur.click(await screen.findByRole('button', { name: 'Commencer' }))
 
     expect(await screen.findByLabelText('Reste à sortir')).toBeInTheDocument()

@@ -38,16 +38,16 @@ describe('Meneur d’une ligne', () => {
   })
 
   /**
-   * Le meilleur leg est le seul classement du projet où **petit** vaut mieux
-   * que grand : l'appelant rend l'opposé, le composant n'a pas à le savoir.
+   * La meilleure manche est le seul classement du projet où **petit** vaut
+   * mieux que grand : l'appelant rend l'opposé, le composant n'a pas à le savoir.
    */
   it('suit la clé qu’on lui donne, pas la valeur affichée', () => {
-    const meilleurLeg: LigneStat<Ligne> = {
-      libelle: 'Meilleur leg',
+    const meilleureManche: LigneStat<Ligne> = {
+      libelle: 'Meilleure manche',
       valeur: (j) => j.valeur,
       meilleur: (j) => -j.valeur,
     }
-    expect(rangDuMeneur([ligne(21), ligne(15), ligne(30)], meilleurLeg)).toBe(1)
+    expect(rangDuMeneur([ligne(21), ligne(15), ligne(30)], meilleureManche)).toBe(1)
   })
 })
 
@@ -143,11 +143,11 @@ describe('Le résumé de partie, de bout en bout', () => {
     expect(within(feuille).getByRole('columnheader', { name: 'Kevin' })).toBeInTheDocument()
     expect(within(feuille).getByRole('columnheader', { name: 'Julien' })).toBeInTheDocument()
 
-    // 501 en 9 fléchettes : le leg le plus court possible.
-    const meilleurLeg = within(feuille).getByRole('row', { name: /Meilleur leg/ })
-    expect(within(meilleurLeg).getAllByRole('cell')[0]).toHaveTextContent('9')
-    // Julien n'a gagné aucun leg : il n'a pas « 0 fléchette », il n'a rien.
-    expect(within(meilleurLeg).getAllByRole('cell')[1]).toHaveTextContent('—')
+    // 501 en 9 fléchettes : la manche la plus courte possible.
+    const meilleure = within(feuille).getByRole('row', { name: /Meilleure manche/ })
+    expect(within(meilleure).getAllByRole('cell')[0]).toHaveTextContent('9')
+    // Julien n'a gagné aucune manche : il n'a pas « 0 fléchette », il n'a rien.
+    expect(within(meilleure).getAllByRole('cell')[1]).toHaveTextContent('—')
   })
 
   /**

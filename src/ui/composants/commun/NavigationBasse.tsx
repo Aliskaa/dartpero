@@ -1,4 +1,4 @@
-import { CalendarDays, ChartColumn, House, Settings, Users } from 'lucide-react'
+import { CalendarDays, ChartColumn, House, Settings } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { NavLink } from 'react-router'
 
@@ -10,14 +10,15 @@ type Onglet = {
 
 const ONGLETS: readonly Onglet[] = [
   { to: '/', libelle: 'Début', Icone: House },
-  { to: '/joueurs', libelle: 'Joueurs', Icone: Users },
   { to: '/statistiques', libelle: 'Stats', Icone: ChartColumn },
   { to: '/historique', libelle: 'Parties', Icone: CalendarDays },
   { to: '/reglages', libelle: 'Réglages', Icone: Settings },
 ]
 
 /**
- * La barre de comptoir : cinq destinations, toujours au même endroit, en bas.
+ * La barre de comptoir : quatre destinations, toujours au même endroit, en bas.
+ * Les joueurs se gèrent depuis les Réglages ; on les ajoute à la volée en
+ * créant une partie.
  *
  * Elle n'apparaît **pas** pendant une partie ni sur l'écran de configuration :
  * là, chaque pixel sert à jouer, et un onglet mal visé en pleine volée ferait

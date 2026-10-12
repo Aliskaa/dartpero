@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import type { X01PlayerStats } from '@/core/domain/games/x01/stats'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { variablesAccent } from '@/ui/accents'
+import { cheminNouvellePartie } from '@/ui/chemins'
 import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
@@ -10,7 +11,14 @@ import { PanneauImpacts } from '@/ui/composants/commun/PanneauImpacts'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
 import { type LigneStat, TableauJoueurs } from '@/ui/composants/commun/TableauJoueurs'
 import { useProfils } from '@/ui/hooks/useJoueurs'
-import { moyenne, nomJoueur, phraseVictoire, pourcent } from '@/ui/labels'
+import {
+  LIBELLE_MANCHES,
+  LIBELLE_MEILLEURE_MANCHE,
+  moyenne,
+  nomJoueur,
+  phraseVictoire,
+  pourcent,
+} from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /**
@@ -48,7 +56,7 @@ const LIGNES: readonly LigneStat<X01PlayerStats>[] = [
   },
   {
     // Le seul classement du projet où **petit** vaut mieux que grand.
-    libelle: 'Meilleur leg',
+    libelle: LIBELLE_MEILLEURE_MANCHE,
     valeur: (j) => j.bestLegDarts ?? '—',
     meilleur: (j) => (j.bestLegDarts === null ? Number.NEGATIVE_INFINITY : -j.bestLegDarts),
   },
@@ -122,7 +130,7 @@ export const ResumeX01Ecran = () => {
         {joueurs.length > 1 && (
           <div className="mt-4 flex flex-col items-center gap-1">
             <p className="font-score text-[0.6rem] uppercase tracking-[0.28em] text-craie/55">
-              Legs
+              {LIBELLE_MANCHES}
             </p>
             <p className="chiffres flex items-center gap-3 text-2xl font-bold text-craie/80">
               {joueurs.map((joueur, index) => (
@@ -173,7 +181,7 @@ export const ResumeX01Ecran = () => {
         aide="Les fléchettes de cette partie seulement. L'échelle est propre à chaque joueur : on compare des formes, pas des volumes."
       />
 
-      <ActionsFinDePartie matchId={identifiant} />
+      <ActionsFinDePartie matchId={identifiant} versReglages={cheminNouvellePartie('X01')} />
     </main>
   )
 }

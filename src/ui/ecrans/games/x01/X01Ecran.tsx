@@ -13,7 +13,7 @@ import { Tableau } from '@/ui/composants/x01/Tableau'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useX01 } from '@/ui/hooks/useX01'
-import { libelleLegsCourt, nomJoueur } from '@/ui/labels'
+import { libelleLegsCourt, libelleMancheEnCours, nomJoueur } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /** Le bandeau de chêne : où on en est, et par quelles règles on joue. */
@@ -35,14 +35,18 @@ const EnTeteManche = ({
       <ArrowLeft aria-hidden="true" className="size-5" />
     </Link>
 
-    <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
-      <span className="font-bold text-accent-mode-clair">Leg {legNumber + 1}</span>
-      {config.setsToWin > 1 && <span>· Set {setNumber + 1}</span>}
-      <span aria-hidden="true" className="text-craie/25">
+    {/* « Manche » est plus long que « Leg » : le bandeau passe à la ligne
+        entre ses morceaux plutôt qu'au milieu de l'un d'eux. */}
+    <p className="grave flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
+      <span className="whitespace-nowrap font-bold text-accent-mode-clair">
+        {libelleMancheEnCours(legNumber + 1)}
+      </span>
+      {config.setsToWin > 1 && <span className="whitespace-nowrap">· Set {setNumber + 1}</span>}
+      <span aria-hidden="true" className="whitespace-nowrap text-craie/25">
         |
       </span>
-      <span className="chiffres">{config.startingScore}</span>
-      <span>· {libelleLegsCourt(config.legsToWin)}</span>
+      <span className="chiffres whitespace-nowrap">{config.startingScore}</span>
+      <span className="whitespace-nowrap">· {libelleLegsCourt(config.legsToWin)}</span>
     </p>
 
     <span className="flex shrink-0 gap-1">

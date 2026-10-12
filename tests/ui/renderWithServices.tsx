@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import type { Services } from '@/composition/container'
 import { ServicesProvider } from '@/ui/providers/ServicesProvider'
+import { SondeHistorique } from './gestes'
 
 /**
  * Rend un écran avec des services injectés (adapters en mémoire).
@@ -21,7 +22,10 @@ export const renderWithServices = (
   return render(
     <QueryClientProvider client={queryClient}>
       <ServicesProvider services={services}>
-        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+        <MemoryRouter initialEntries={[route]}>
+          {ui}
+          <SondeHistorique />
+        </MemoryRouter>
       </ServicesProvider>
     </QueryClientProvider>,
   )

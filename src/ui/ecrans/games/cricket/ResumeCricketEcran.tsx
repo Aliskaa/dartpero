@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import { MARKS_TO_CLOSE } from '@/core/domain/games/cricket/config'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { variablesAccent } from '@/ui/accents'
+import { cheminNouvellePartie } from '@/ui/chemins'
 import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
@@ -109,7 +110,7 @@ export const ResumeCricketEcran = () => {
         </ol>
       </Panneau>
 
-      <ActionsFinDePartie matchId={identifiant} />
+      <ActionsFinDePartie matchId={identifiant} versReglages={cheminNouvellePartie('CRICKET')} />
     </main>
   )
 }

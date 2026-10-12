@@ -84,7 +84,7 @@ Tokens `@theme` dans `src/index.css`. Utiliser les classes Tailwind (`bg-feutre`
 | **Chiffres du tableau** | `craie-vive` | `#FFFFFF` | `#0C1512` | Scores géants |
 | Texte sur laiton | `sur-laiton` | `#1A1206` | `#FBF7EC` | Étiquette d'un bouton primaire |
 | Alerte / bust | `rouge-cible` | `#C1272D` | `#A81F25` | Bust, danger |
-| Succès / sortie | `vert-cible` | `#2E7D4F` | `#1F6B41` | Ligne de sortie, leg gagné |
+| Succès / sortie | `vert-cible` | `#2E7D4F` | `#1F6B41` | Ligne de sortie, manche gagnée |
 
 Nuances (`feutre-nuit`, `ardoise-claire`, `chene-clair`, `chene-sombre`, `laiton-clair`,
 `laiton-sombre`) : elles servent aux tranches et aux fonds d'appui, plus à modeler des reliefs.
@@ -206,7 +206,7 @@ repaint par image sur un vieux téléphone. Le joueur au lancer se signale par `
 
 Hors saisie uniquement — jamais pendant qu'on tape une volée :
 
-- **`MomentCelebratif`** : bandeau vert éphémère (leg / set / sortie / tour bouclé / cible
+- **`MomentCelebratif`** : bandeau vert éphémère (manche / set / sortie / tour bouclé / cible
   fermée), `pointer-events-none`, ~2,2 s.
 - **`TableauHonneur`** : le podium des résumés (avatar, couronne, phrase d'ambiance), à l'accent
   du mode. Phrase tirée de `phraseVictoire(matchId)` — **déterministe**, pas de `Math.random`.
@@ -226,7 +226,7 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `Panneau` | Ardoise dans un cadre · `titre` (`<h2>`) **ou** `enTete` libre |
 | `EnTeteEcran` | Titre d'écran + sous-titre |
 | `StatTile` | Tuile de statistique — **deux lignes réservées au libellé** |
-| `Batons` | Les legs comptés en bâtons, quatre traits barrés par un cinquième |
+| `Batons` | Les manches comptées en bâtons, quatre traits barrés par un cinquième |
 | `ChoixSegmente` | Le rail à curseur de laiton · tailles `md` et `sm` |
 | `TableauJoueurs` | La feuille **transposée** : joueurs en colonnes, statistiques en lignes |
 | `CarteImpacts` / `PanneauImpacts` | La carte de chaleur du plateau, et les cartes côte à côte |
@@ -236,7 +236,7 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `DispositionPartie` | Ossature portrait / paysage des écrans de jeu, et l'accent du mode |
 | `LayoutPrincipal` / `NavigationBasse` | Coquille des écrans hors partie |
 | `Etats` | `EmptyState` · `Skeleton` · `Spinner` / `SpinnerLigne` · `MessageErreur` · `EcranErreur` |
-| `CarteJoueur` (`composants/match/`) | Score géant, jetons de legs, volée en cours |
+| `CarteJoueur` (`composants/match/`) | Score géant, jetons de manches, volée en cours |
 
 La géométrie du plateau — ordre des secteurs, rayons des anneaux — vit dans `geometrieCible.ts`,
 partagée par `Cible` et `CarteImpacts` : **deux copies de ces rayons finiraient par ne plus se
@@ -292,7 +292,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 
 ```
 ┌──────────────────────────────────┐
-│ ← LEG 2 | 501 · PREMIER À 2 [DO] │  bandeau de match
+│ ← MANCHE 2 | 501 · PREMIER À 2 DO│  bandeau de match
 ├──────────────────────────────────┤
 │ JOUEUR          │ VOLÉE │  RESTE │  en-têtes EN INVERSION (craie pleine)
 │▌■ KEVIN         │  140  │    361 │  ZONE LECTURE — une ligne par joueur
@@ -319,7 +319,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   `LigneJoueur` et consommée par la ligne d'en-têtes — **une seule définition de colonnes**,
   donc aucun désalignement possible. C'est en alignant les chiffres d'une ligne à l'autre qu'on
   les compare, et il faut pour ça que les colonnes existent vraiment.
-- **Les legs se comptent en bâtons** (`Batons`) : à trois mètres l'œil reconnaît un paquet de
+- **Les manches se comptent en bâtons** (`Batons`) : à trois mètres l'œil reconnaît un paquet de
   cinq sans compter, là où il devait dénombrer des losanges.
 - **Les fléchettes sont écrites sur une ligne** (`.ligne-saisie`), comme au stylo — et non dans
   des pastilles. Les trois emplacements restent **toujours présents** : c'est ce qui garde
@@ -334,7 +334,8 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   disposition normale.
 - Les pavés se **compactent** en paysage (`paysage:` sur les hauteurs et les tailles), mais les
   cibles restent **≥ 48 px** : c'est un plancher, pas une variable d'ajustement.
-- Barre de navigation basse : **absente** pendant une partie et sur l'écran de configuration.
+- Barre de navigation basse : **absente** pendant une partie et sur toutes les étapes de Nouvelle
+  partie (jeu, joueurs et réglages, ordre de jeu, sélection de joueurs).
 
 ### Saisie
 

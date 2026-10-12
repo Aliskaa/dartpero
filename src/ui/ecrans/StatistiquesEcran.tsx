@@ -12,6 +12,10 @@ import { EmptyState, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { PanneauImpacts } from '@/ui/composants/commun/PanneauImpacts'
 import {
+  LIBELLE_MANCHES,
+  LIBELLE_MANCHES_GAGNEES,
+  LIBELLE_MANCHES_JOUEES,
+  LIBELLE_MEILLEURE_MANCHE,
   LIBELLE_PERIODE,
   moyenne,
   nomJoueur,
@@ -133,14 +137,14 @@ const TABLEAUX: readonly { readonly titre: string; readonly colonnes: readonly C
     ],
   },
   {
-    // ⚠️ Les legs ont leur propre tableau depuis qu'ils ont un dénominateur :
-    // « 12 gagnés » ne veut rien dire sans savoir sur combien. Les entasser
-    // dans « Palmarès » aurait fait cinq colonnes chiffrées sur 358 px, donc
-    // un tableau qui défile — or on ne le lit que pour comparer des lignes.
-    titre: 'Legs',
+    // ⚠️ Les manches ont leur propre tableau depuis qu'elles ont un
+    // dénominateur : « 12 gagnées » ne veut rien dire sans savoir sur combien.
+    // Les entasser dans « Palmarès » aurait fait cinq colonnes chiffrées sur
+    // 358 px, donc un tableau qui défile — or on ne le lit que pour comparer.
+    titre: LIBELLE_MANCHES,
     colonnes: [
-      { libelle: 'Gagnés', valeur: (j) => j.legsWon, tri: (j) => j.legsWon },
-      { libelle: 'Joués', valeur: (j) => j.legsPlayed, tri: (j) => j.legsPlayed },
+      { libelle: LIBELLE_MANCHES_GAGNEES, valeur: (j) => j.legsWon, tri: (j) => j.legsWon },
+      { libelle: LIBELLE_MANCHES_JOUEES, valeur: (j) => j.legsPlayed, tri: (j) => j.legsPlayed },
       {
         libelle: '%',
         valeur: (j) => pourcent(j.legWinPercent, j.legsPlayed),
@@ -170,8 +174,8 @@ const TABLEAUX: readonly { readonly titre: string; readonly colonnes: readonly C
         tri: (j) => j.highestCheckout,
       },
       {
-        // Le meilleur leg est le seul classement où **petit** vaut mieux que grand.
-        libelle: 'Meilleur leg',
+        // La meilleure manche est le seul classement où **petit** vaut mieux que grand.
+        libelle: LIBELLE_MEILLEURE_MANCHE,
         valeur: (j) => j.bestLegDarts ?? '—',
         tri: (j) => (j.bestLegDarts === null ? Number.NEGATIVE_INFINITY : -j.bestLegDarts),
       },

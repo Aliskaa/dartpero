@@ -5,43 +5,49 @@
 > `docs/PROJECT_PLAN.md`.
 
 ## Objet et périmètre
-- **Généré le** 2026-10-10 (lot `confidentialite-assetlinks` **non committé**), scope `all`.
-- **Lus sur disque** : `CLAUDE.md`, `CONVENTIONS`, `rules/`, charte, `DEPLOIEMENT`, PLAN (§ 0, 2-6
-  ciblés), `orchestrate` § Niveaux, `agents/sec.md`, l'ancien index (constats seulement).
-  **Code vérifié** (ponctuel) : `biome.json`, garde hexagonal, `hooks/`, `stats.ts`, `App.tsx`,
-  `container.ts`, `MatchEvent.ts`, `x01/config.ts`, `NouvellePartieEcran`, `ManageBackupUseCase`.
+- **Généré le** 2026-10-11 (3e passe ; lot `nouvelle-partie-en-etapes` **non committé**, arbre de
+  travail, branche `lot/nouvelle-partie-en-etapes`), scope `all`.
+- **Lus sur disque** : `CLAUDE.md`, `CONVENTIONS` (§ 13, 14), `rules/`, `orchestrate` § Niveaux,
+  `sec.md`, PLAN (§ 0, 2, 4, 6 ciblés), charte (l. 75, 374), `README.md`, l'ancien index (constats
+  seulement). **Code vérifié** : `biome.json`, `App.tsx`, `container.ts`, `checkout.ts`,
+  `x01/config.ts`, `x01/stats.ts`, `useNouvellePartie`, `ManageBackupUseCase`.
 
 ## Inventaire
 | Décision | Statut | Source |
 | --- | --- | --- |
-| PWA ; hexagonal (Ports & Adapters) + SOLID | en vigueur | CLAUDE § DS, § Règle d'architecture |
-| Pas de Firebase **dans l'app**, ni auth, ni réseau ; Dexie derrière les ports ; Hosting seul (zéro SDK) | en vigueur | CLAUDE § DS, § Déploiement |
-| Politique `/confidentialite` : réseau, permission, cookie ou donnée stockée nouvelle = texte **et date** à jour ; seul le réseau a un fil-piège (`reseauBoundary`) | en vigueur | CLAUDE § DS ; DEPLOIEMENT § Confidentialité |
-| `firebase.json` : `ignore` sans `!` (extglobs), `headers` assetlinks après le fourre-tout, `/.well-known/` hors repli et précache ; `smoke` refuse `REMPLIR` ; seule commande `firebase:deploy` | en vigueur | CLAUDE § Déploiement ; DEPLOIEMENT § Mettre en ligne, § Confidentialité |
+| PWA ; hexagonal + SOLID | en vigueur | CLAUDE § DS, § Règle d'architecture |
+| Pas de Firebase **dans l'app**, ni auth, ni réseau ; Dexie derrière les ports ; Hosting seul | en vigueur | CLAUDE § DS, § Déploiement |
+| Politique `/confidentialite` : capacité, permission, cookie ou donnée nouvelle = texte **et date** | en vigueur | CLAUDE § DS |
+| `firebase.json` (`ignore`, `headers`, `/.well-known/`) ; `smoke` refuse `REMPLIR` ; seule `firebase:deploy` | en vigueur | CLAUDE § Déploiement |
 | Profils locaux + export / import JSON ; match = `MatchEvent[]`, état = projection ; saisie fléchette par fléchette **seule** | en vigueur | CLAUDE § DS |
-| « Saisie hybride » / mode rapide | **renversée** : retirée après usage réel, remplacée par la saisie fléchette par fléchette seule (`d531a7e`) | CLAUDE § DS, § Notes techniques |
-| « Best of N » legs | **renversée** : remplacée par « premier à N legs » (`legsToWin`) | CLAUDE § DS ; rules/glossary |
-| Modes X01, Tour du monde, entraînement, Cricket (Killer, Shanghai hors v1) ; défauts X01 | en vigueur | CLAUDE § DS |
-| Stack figée ; Query n'orchestre **pas** le match en cours ; Biome seul ; Wake Lock | en vigueur | CLAUDE § DS ; CONVENTIONS § 5, 10 |
-| `PersistentStorage` (« protégé » ≠ sauvegarde) ; `AppInstallation`, services créés dans `main.tsx` **avant** `createRoot` ; manifeste `id: '/'` jamais changé | en vigueur | CLAUDE § DS, § Déploiement ; DEPLOIEMENT § Stockage, § Installation |
-| Thème clair / sombre / système, défaut **sombre** ; charte : angle vif, zones lecture / saisie | en vigueur | CLAUDE § DS, § Charte ; CHARTE § Les deux thèmes, § Les trois planchers |
-| Alfa Slab One ; paysage `DispositionPartie` ; Cricket | tranchées (lots 3 bis, 5c) | CLAUDE § Décisions ouvertes n° 1-3 |
+| « Saisie hybride » / mode rapide | **renversée** : retirée après usage réel (`d531a7e`) | CLAUDE § DS, § Notes techniques |
+| « Best of N » legs | **renversée** : « premier à N » (`legsToWin`) | CLAUDE § DS ; rules/glossary |
+| Réglages X01 proposés à l'écran ≠ défauts du domaine (double out) ; sets exposés | en vigueur | CLAUDE § DS |
+| « Manche » à l'écran, `Leg` dans le code ; clés persistées non renommées | en vigueur | CLAUDE § DS ; rules/glossary |
+| Nouvelle partie en étapes : **une route par étape**, jamais un état interne | en vigueur | CLAUDE § DS ; PLAN § 6 |
+| Modes X01, Tour du monde, entraînement, Cricket (Killer, Shanghai hors v1) | en vigueur | CLAUDE § DS |
+| Stack figée ; Query n'orchestre **pas** le match en cours ; Biome seul ; Wake Lock | en vigueur | CLAUDE § DS |
+| `PersistentStorage`, `AppInstallation` (services créés dans `main.tsx` **avant** `createRoot`) ; manifeste `id: '/'` jamais changé | en vigueur | CLAUDE § DS, § Déploiement |
+| Thème clair / sombre / système, défaut **sombre** ; angle vif ; zones lecture / saisie | en vigueur | CLAUDE § DS, § Charte |
+| Alfa Slab One ; paysage `DispositionPartie` ; Cricket | tranchées | CLAUDE § Décisions ouvertes 1-3 |
 
 ## Guidage opérationnel
 ### Produit et usage
-- PWA de fléchettes, 100 % local, hors ligne, sans compte ; téléphone **posé**, lu à 2-3 m :
-  lisibilité et zéro friction priment. CLAUDE § Le projet.
+- PWA 100 % locale, sans compte ; téléphone **posé**, lu à 2-3 m : lisibilité, zéro friction.
+  CLAUDE § Le projet.
 ### Architecture
-- Dépendances vers l'intérieur ; `domain` sans import externe ni `Date` / `Math.random` (ports) ;
-  câblage **uniquement** dans `container.ts` ; capacité externe nouvelle = **adapter derrière un
-  port**. CLAUDE § Règle d'architecture ; CONVENTIONS § 7.
+- Dépendances vers l'intérieur ; `domain` sans import externe ni `Date` / `Math.random` ; câblage
+  **uniquement** dans `container.ts` ; capacité externe nouvelle = **adapter derrière un port**.
+  CLAUDE § Règle d'architecture ; CONVENTIONS § 7.
 - **UI → use cases uniquement** (`useServices()`) ; jamais de règle de jeu dans l'UI. CLAUDE §
   Conventions de code ; rules/frontend-react ; CONVENTIONS § 4.
 - Couture `GameMode` ; un mode n'importe jamais un autre ; le mode se lit sur le **premier
-  événement** du journal. CONVENTIONS § 13 ; arbre : § 14 ; VO, ports, adapters : § 1, 2, 5, 6.
+  événement**. Un mode n'a **plus d'écran de lancement**. Ce que TypeScript signale ou non à
+  l'ajout d'un mode (**tout ce qui distingue le solo du groupe** lui échappe : `CHECKOUT_PRACTICE`
+  en dur, `GardeOrdre`, `versOrdre`) : CONVENTIONS § 13 ; arbre : § 14.
 ### Règles de jeu : pointées, jamais énoncées
-- **X01** : `CLAUDE.md` § Règles du jeu X01. Délicats : bust, double in / out, checkout, bogey
-  numbers, legs et sets, statistiques (moyenne, First 9, % doubles).
+- **X01** : `CLAUDE.md` § Règles du jeu X01. Délicats : bust (selon double out), double in / out,
+  checkout, bogey numbers, legs et sets, statistiques (moyenne, First 9, % doubles).
 - **Tour du monde** : § Règles du Tour du monde. Délicats : fin du tour de table, départage, nul.
 - **Cricket** : § Règles du Cricket. Délicats : surplus, cibles ignorées, victoire, cut-throat
   (sens de comparaison inversé), pas de fin de tour de table.
@@ -52,29 +58,31 @@
   migration + test, `backupSchema` dans le même lot, `localStorage` = préférences d'appareil
   seulement. rules/persistence.
 ### Sécurité
-- Pas de document dédié. Sans réseau, compte ni secret : aucun import de `firebase` dans `src/`.
-  CLAUDE § DS (politique `/confidentialite` comprise, à tenir vraie).
+- Sans réseau, compte ni secret : aucun import de `firebase` dans `src/` ; politique
+  `/confidentialite` à tenir vraie. CLAUDE § DS.
 - Seule entrée non fiable : l'import JSON (`backupSchema`). rules/persistence.
-- Hosting, cache, `ignore`, service worker, manifeste, `/.well-known/`, garde `REMPLIR`, `sharp` :
-  docs/DEPLOIEMENT (§ Confidentialité et Digital Asset Links).
-- Checklist du lot : `.claude/agents/sec.md` § Checklist Dartpéro.
+- Hosting, cache, SW, manifeste, `/.well-known/`, `REMPLIR` : docs/DEPLOIEMENT.
+- Checklist : `.claude/agents/sec.md` § Checklist Dartpéro.
 ### Conventions, front, déploiement, pièges
-- Fakes, jamais de mocks (rules/testing) ; rules/biome ; rules/commit ; couleurs : tokens en paires
-  de rôle (rules/theme-colors) ; routes lazy sauf `AccueilEcran` (rules/frontend-react).
-- Pièges : `61b60ac` (CLAUDE § Notes techniques) ; `max-age`, `headers` (dernière règle gagnante),
-  `id: '/'`, `ignore` sans `!`, `REMPLIR` (CLAUDE § Déploiement) ; Vite 8 / Rolldown (DEPLOIEMENT) ;
-  `<StrictMode>` sous `renderWithServices` (PLAN § 6 `stockage-persistant`).
+- Fakes, jamais de mocks (rules/testing) ; rules/biome, commit ; tokens de couleur en paires
+  (rules/theme-colors) ; routes lazy sauf `AccueilEcran` ; tout le français dans `labels.ts`.
+- Pièges : `61b60ac` (CLAUDE § Notes techniques) ; `max-age`, `headers`, `id: '/'`, `ignore`,
+  `REMPLIR` (CLAUDE § Déploiement) ; Rolldown (DEPLOIEMENT) ; `<StrictMode>` sous
+  `renderWithServices` (PLAN § 6 lot `stockage-persistant`) ; `partie:mode` jamais réutilisée,
+  `rangVise` du glisser (PLAN § 6 lot `nouvelle-partie-en-etapes`) ; faux `<dialog>`
+  (`tests/setup.ts`).
 ### Où lire quoi
 | Le lot touche… | Lire |
 | --- | --- |
 | Règle de jeu, stat | CLAUDE § Règles du jeu (X01, Tour du monde, Cricket) |
 | Événement, Dexie, sauvegarde | rules/persistence ; CONVENTIONS § 13 ; PLAN § 1.3 |
 | Port d'appareil ; nouveau mode | CLAUDE § DS ; CONVENTIONS § 5, 7 ; § 13, 14 |
-| Écran, composant, route | rules/frontend-react ; CHARTE ; CONVENTIONS § 9, § 10 ; PLAN § 3 |
+| Écran, composant, route | rules/frontend-react ; CHARTE ; CONVENTIONS § 9, 10 ; PLAN § 3 |
+| Nouvelle partie (étapes) | CLAUDE § DS ; `src/ui/chemins.ts` ; CONVENTIONS § 13 ; CHARTE (barre basse) |
 | Couleur, thème ; test | rules/theme-colors, CHARTE § Palette ; rules/testing, CONVENTIONS § 11 |
-| Build, déploiement, SW, manifeste, `firebase.json` | docs/DEPLOIEMENT ; CLAUDE § Déploiement |
-| Politique ; réseau, permission, cookie, stockage neufs | `labels.ts` `SECTIONS_CONFIDENTIALITE` + date ; DEPLOIEMENT § Confidentialité (R5) |
-| État, nombre de tests, pourquoi d'une décision | PLAN § 0, § 4 ; PLAN § 6 |
+| Libellé ; politique (réseau, permission, stockage neufs) | rules/glossary ; `labels.ts` (`SECTIONS_CONFIDENTIALITE` + date) |
+| Build, déploiement, SW, manifeste | docs/DEPLOIEMENT ; CLAUDE § Déploiement |
+| État, tests, pourquoi d'une décision | PLAN § 0, § 4, § 6 |
 
 ## Surfaces gravées
 Un lot qui en touche une : **pas de `light`**, `high`, départ à `archi-authority` (`orchestrate`
@@ -82,10 +90,11 @@ Un lot qui en touche une : **pas de `light`**, `high`, départ à `archi-authori
 1. `src/core/domain/` : règles de jeu, événements, Value Objects.
 2. La couture `GameMode` : `src/core/domain/games/index.ts`.
 3. Un format **persisté** : `MatchEvent`, schéma Dexie et migrations, `backupSchema`.
-4. Le service worker (`vite-plugin-pwa`) ou `firebase.json` ; le manifeste (`vite.config.ts`) y
-   est rangé par PLAN § 6 `installation-guidee` (`orchestrate` ne le nomme pas).
-5. Une décision de `CLAUDE.md` § DS (stockage, installation, politique compris), § Règles du jeu,
-   ou § Charte « ce qui ne s'y discute pas ». (Entraînement : voir Constats.)
+4. Le service worker (`vite-plugin-pwa`) ou `firebase.json` ; le manifeste y est rangé par PLAN §
+   6 `installation-guidee` (`orchestrate` ne le nomme pas).
+5. Une décision de `CLAUDE.md` § DS (stockage, installation, politique, **parcours Nouvelle partie,
+   double out écran / domaine** compris), § Règles du jeu, ou § Charte « ce qui ne s'y discute
+   pas ». (Entraînement : voir Constats.)
 
 ## Préséance et exceptions
 **Préséance** : code récent, puis `CLAUDE.md`, `CONVENTIONS`, `rules/` ; sauf décision **gravée** :
@@ -94,54 +103,58 @@ un écart du code est alors un défaut. rules/README ; rules/response-policy.
 **Exceptions délibérées, à ne pas « corriger »** :
 | Exception | Règle contournée | Source |
 | --- | --- | --- |
-| `couleurs.ts`, `Cible.tsx`, `theme.ts` | pas de couleur en dur (`themeBoundary`) | rules/theme-colors § Exceptions |
-| `Services.devices` : `screenLock`, `haptics`, `preferences`, `announcer`, **`persistentStorage`**, **`appInstallation`** | UI → use cases | `container.ts:67-85` ; CONVENTIONS § 5 |
-| `'MatchStarted'` persisté sous `X01Started` ; clé `installation:ecartee` | valeur persistée jamais renommée | `MatchEvent.ts:29` ; rules/persistence ; DEPLOIEMENT § Installation |
+| `couleurs.ts`, `Cible.tsx`, `theme.ts` | pas de couleur en dur | rules/theme-colors § Exceptions |
+| `Services.devices` : `screenLock`, `haptics`, `preferences`, `announcer`, **`persistentStorage`**, **`appInstallation`** | UI → use cases | `container.ts:73-86` ; CONVENTIONS § 5 |
+| `'MatchStarted'` sous `X01Started` ; `installation:ecartee` ; clés `partie:*` (`partie:legs`) | valeur persistée jamais renommée | `MatchEvent.ts:28-37` ; rules/persistence |
+| **Double out : décoché à l'écran, `true` dans le domaine** (`X01Config.create` reçoit toujours `doubleOut`) | ne pas aligner l'un sur l'autre | CLAUDE § DS ; `x01/config.ts:68` ; `useNouvellePartie.ts:91,198` |
 | Firebase **Hosting** seul | « pas de Firebase » | CLAUDE § DS |
-| **`.well-known` : seule entrée cachée publiée** (`assetlinks.json` = `[]` jusqu'au lot 4) | `ignore` des entrées à point | CLAUDE § Déploiement ; DEPLOIEMENT § Confidentialité |
-| **Garde `REMPLIR` sans contournement**, aucun `predeploy` : bloque même un correctif ; ne pas ajouter d'option | — | CLAUDE § Déploiement ; DEPLOIEMENT § Mettre en ligne (R-a) |
-| `AccueilEcran` importé statiquement | routes lazy | `App.tsx:5` ; rules/frontend-react |
-| Fichier, `Blob`, `matchMedia` dans l'UI ; amorçage `index.html`, `theme_color` figé | ports ; un seul écrivain de `data-theme` | PLAN § 2, § 6 lot thème clair ; CHARTE § Les deux thèmes |
+| **`.well-known`** seule entrée cachée publiée (`assetlinks.json` = `[]` jusqu'au lot 4) | `ignore` des entrées à point | CLAUDE § Déploiement ; DEPLOIEMENT |
+| **Garde `REMPLIR` sans contournement**, aucun `predeploy` | — | CLAUDE § Déploiement |
+| `AccueilEcran` statique ; `nouvelle-partie/*` derrière un seul `lazy()` | routes lazy | `App.tsx:6,28-34` |
+| Fichier, `Blob`, `matchMedia` dans l'UI ; `theme_color` figé | ports ; un seul écrivain de `data-theme` | PLAN § 2, § 6 |
 | `legsForBestOf` survit ; variables françaises locales dans `core` ; progression garde son `0` | best of N ; cœur anglais ; `pourcent()` | CLAUDE § DS ; CONVENTIONS § 1, 9 |
 
-Nouvelle exception de couleur : dans le garde **et** `rules/theme-colors.md`.
-**Hors périmètre** : sync, compte, réseau ; Killer, Shanghai, Around the Clock ; i18n ; carrière hors X01.
+**Hors périmètre** : sync, compte, réseau ; Killer, Shanghai, Around the Clock ; i18n.
 
 ## Décisions ouvertes
 1. Sync cloud / classement (lot 6, un adapter) ; export JSON = palliatif. CLAUDE § Décisions ouvertes n° 4.
 2. i18n : FR seul (n° 5). Jeux restants : Around the Clock, Killer, Shanghai (n° 3).
-3. Lot 5b : un seul exercice, pas de suivi de progression, à finir ou réduire. PLAN § 0 n° 2.
+3. Lot 5b : un seul exercice, pas de suivi de progression. PLAN § 0 n° 2.
 4. `/historique/:id`, `/joueurs/:id` jamais faits (PLAN § 0 n° 3) ; vrai iPhone, `persist()`,
-   installation sur appareil réel (R1, R2, R5, R6) : PLAN § 0, DEPLOIEMENT.
-5. Voix : `SpeechAnnouncer` ignore `localService` (pseudo possiblement synthétisé en ligne) ; lot
-   `localService` éventuel, non planifié (R-d accepté). PLAN § 6 `confidentialite-assetlinks`.
-6. Lot 4 `play-store-twa` : remplit `assetlinks.json`, relit la politique ; V4 à refaire à chaque
-   version majeure de firebase-tools. DEPLOIEMENT § Confidentialité.
+   installation sur appareil réel (R1, R2, R5, R6) : PLAN § 0.
+5. Voix : `SpeechAnnouncer` ignore `localService` ; lot non planifié. PLAN § 6.
+6. Lot 4 `play-store-twa` : remplit `assetlinks.json`, relit la politique. DEPLOIEMENT.
+7. Lot `nouvelle-partie-en-etapes` : relecture à l'écran, glisser / retour matériel Android,
+   `<dialog>` iPhone, captures du README. PLAN § 0.
+8. Lot « sortie libre » : **reporté** par l'utilisateur, sans renvoi dans `CLAUDE.md` ; règles à
+   écrire avec lui. PLAN § 0 n° 4 (constat 12).
 
 ## Constats de cohérence
 | # | Sév. | Constat | Preuve | Impact |
 | - | --- | --- | --- | --- |
-| 1 | Moyenne | X01 : « Best-of N legs (défaut 3) » ; renversé : « premier à N », défaut 2 | `CLAUDE.md:228` vs `:78-85` | Réintroduit « best of N » |
-| 2 | Moyenne | `noRestrictedImports` « bannit les API navigateur » : 7 paquets seulement ; le garde ne lit que les imports | `CLAUDE.md:99-101` ; `biome.json:50-62` ; `hexagonalBoundary.test.ts:40-57` | `Date`, API navigateur : relecture |
-| 3 | Moyenne | Règles de l'entraînement absentes de `CLAUDE.md` ; plage « 41 à 170 » non confirmée | `PROJECT_PLAN.md:398-424` | Hors surface gravée 5 à la lettre |
-| 9 | Moyenne | « double out activé » par défaut (gravé, domaine) ; l'écran de création le préselectionne **désactivé** (inversé en `577dc5f`, non documenté) | `CLAUDE.md:78-79` ; `x01/config.ts:60` vs `NouvellePartieEcran.tsx:204` | Défaut gravé non tenu |
-| 11 | Moyenne | Import : persistence « validé entièrement avant la moindre écriture », sec « pas d'écrasement silencieux » ; le code valide chaque entrée **dans la boucle d'écriture**, écrase un même identifiant sans confirmation (« entièrement » = enveloppe ?) | `ManageBackupUseCase.ts:43-73` ; `agents/sec.md:64-65` | À trancher (politique : « remplacés », `labels.ts:306`) |
-| 4 | Basse | `CLAUDE.md` cite `useMatch.ts` (devenu `useX01.ts`) ; PLAN § 2 oublie `PreviewTourDuMondeVisit` ; PLAN § 6 lot 1 « QUE `MatchStarted` et `VisitRecorded` » périmé | `CLAUDE.md:97` ; `PROJECT_PLAN.md:184-205,639` | Doc périmée |
-| 5 | Basse | First 9 : « 9 premières fléchettes » vs code « 3 premières volées » | `CLAUDE.md:234` ; `stats.ts:14,133-138` | Équivalent sauf volée courte |
-| 6 | Basse | README : 318 tests, PLAN § 0 : 456 | `README.md:142,270` ; `PROJECT_PLAN.md:19` | Chiffre périmé |
-| 7 | Basse | Charte : « hex hors `index.css` / `couleurs.ts` » ; 3 exceptions | `CHARTE:75,373` vs rules/theme-colors | Charte incomplète |
+| 12 | Moyenne | **Report décidé par l'utilisateur** (PLAN § 0 n° 4). Sans double out (**défaut de l'écran**), le code suggère un checkout jusqu'à 180 ; `CLAUDE.md` § Checkouts et glossaire ne décrivent que le double out ; bogeys sans double out non établis | `services/checkout.ts:84` vs `CLAUDE.md:237-242` ; `glossary.md:17-18` ; PLAN `:52-57,1699-1701` | Règle gravée muette sur le chemin par défaut |
+| 2 | Moyenne | `noRestrictedImports` « bannit les API navigateur » : 7 paquets ; le garde ne lit que les imports | `CLAUDE.md:117-119` ; `biome.json:50-61` ; `hexagonalBoundary.test.ts:40-57` | `Date`, API navigateur : relecture |
+| 3 | Moyenne | Règles de l'entraînement absentes de `CLAUDE.md` ; « 41 à 170 » non confirmée | `PROJECT_PLAN.md:413-425` | Hors surface gravée 5 à la lettre |
+| 11 | Moyenne | Import : persistence « validé entièrement avant la moindre écriture », sec « pas d'écrasement silencieux » ; le code valide **dans la boucle d'écriture**, écrase un même identifiant sans confirmation | `ManageBackupUseCase.ts:50-73` ; `sec.md:64-65` ; PLAN `:1663` | À trancher (politique : « remplacés », `labels.ts:306`) |
+| 4 | Basse | `CLAUDE.md` cite `useMatch.ts` (devenu `useX01.ts`) ; PLAN § 2 oublie `PreviewTourDuMondeVisit` ; PLAN § 6 lot 1 « QUE `MatchStarted` et `VisitRecorded` » périmé | `CLAUDE.md:115` ; `PROJECT_PLAN.md:175-181,662` | Doc périmée |
+| 5 | Basse | First 9 : « 9 premières fléchettes » vs code « 3 premières volées » | `CLAUDE.md:256` ; `x01/stats.ts:14,133-137` | Équivalent sauf volée courte |
+| 7 | Basse | Charte : « hex hors `index.css` / `couleurs.ts` » ; 3 exceptions | `CHARTE:75,374` | Charte incomplète |
 | 10 | Basse | Audit `dette` : « absence de `.gitattributes` » ; il existe | `skills/audit/SKILL.md:44` | Défaut disparu cherché |
-| 8 | Info | Sets : domaine et affichage présents, aucun sélecteur de création | `Tableau.tsx:154` ; `grep setsToWin src/ui` | Exposition non tranchée |
 
 ## Questions et limites
-- Plafond mesuré en LF ; rien de gravé sacrifié. `rules/persistence.md` ne cite pas la politique.
-- Entraînement, sets, double out (#9), import (#11) : intention non tranchée, ne pas la déduire.
-- Non relus : PLAN § 6 hors lots 1, 5b et Play Store ; `docs/lots/*` ; `ConfidentialiteEcran`,
-  tests de garde ; texte de la politique non recontrôlé.
-- Connus (revérifiés) : `successPercent` sans garde « — » (`ApercuPartie.tsx:101`), aucun
-  `ErrorBoundary`. Non revérifiés : `Cible` (`fontSize`), avis `nanoid` (transitif).
-- Garde réseau partiel (R-c) : ni URL sans schéma ni assemblée ; le reste : relecture.
+- Plafond mesuré en LF ; rien de gravé sacrifié.
+- Entraînement, sortie libre (#12), import (#11) : intention non tranchée.
+- Non relus : PLAN § 6 hors lots 1, 5b, Play Store, `nouvelle-partie-en-etapes` ; `docs/lots/*` ;
+  DEPLOIEMENT, texte de la politique, charte hors l. 75, 374.
+- Relevés par PLAN `:1699-1701`, **non revérifiés** : « Manche N » numérotée sur la partie, pas
+  dans le set ; résumé X01 sans sets ; boutons retour de 44 px (plancher 48).
+- Connus (revérifiés) : `successPercent` sans garde « — » (`ApercuPartie.tsx:108`,
+  `ResumeEntrainementEcran.tsx:48`), aucun `ErrorBoundary`. Non revérifié : `Cible`.
 
 ## Traçabilité
-- **Reportés** (revérifiés, lignes mises à jour) : 1-10. **Ajouté** : #11. Aucun retiré.
+- **Reportés** (revérifiés, lignes mises à jour) : 2-5, 7, 10, 11, 12.
+- **Retirés** (faux à la source) : #6 « README 318 tests » (`README.md:142,270` dit 517, comme
+  PLAN `:19`) ; #13 « 8 hooks » ; avant : #1, #8, #9.
+- **Corrigé** : piège `<StrictMode>` = PLAN § 6 lot `stockage-persistant` (`:1566-1569`), pas
+  `nouvelle-partie-en-etapes`.
 - Régénérer : `/refresh-architecture`.

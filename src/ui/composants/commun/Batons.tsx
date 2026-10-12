@@ -1,7 +1,7 @@
 type Props = {
   readonly gagnes: number
   readonly requis: number
-  /** Sert au titre : « Legs : 2 sur 3 ». */
+  /** Sert au titre : « Manches : 2 sur 3 ». */
   readonly libelle: string
 }
 

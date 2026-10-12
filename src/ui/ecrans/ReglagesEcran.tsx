@@ -36,11 +36,15 @@ import {
   LIBELLE_REDEMANDER_PROTECTION,
   LIBELLE_THEME,
   LIEN_CONFIDENTIALITE,
+  LIEN_GERER_JOUEURS,
   LIEN_GUIDE_INSTALLATION,
   PRESENTATION_DARTPERO,
   pluriel,
   RAPPEL_EXPORT_STOCKAGE,
   REFUS_REDEMANDE_STOCKAGE,
+  SOUS_TITRE_REGLAGES,
+  TEXTE_PANNEAU_JOUEURS,
+  TITRE_PANNEAU_JOUEURS,
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 import { appliquerTheme, CLE_THEME, THEME_DEFAUT, THEMES, type Theme } from '@/ui/theme'
@@ -297,9 +301,22 @@ export const ReglagesEcran = () => {
 
   return (
     <main className="flex flex-1 flex-col gap-4 pb-4">
-      <EnTeteEcran titre="Réglages" sousTitre="Affichage, sauvegarde et informations" />
+      <EnTeteEcran titre="Réglages" sousTitre={SOUS_TITRE_REGLAGES} />
 
       <div className="flex flex-col gap-3 px-4">
+        {/* L'onglet Joueurs a quitté la barre du bas : on y ajoute ses potes
+            en créant une partie, on ne gère les profils qu'occasionnellement. */}
+        <Panneau titre={TITRE_PANNEAU_JOUEURS} contenuClassName="flex flex-col gap-3 p-4">
+          <p className="text-sm text-craie/75">{TEXTE_PANNEAU_JOUEURS}</p>
+          <Link
+            to="/joueurs"
+            className="flex min-h-12 w-full items-center justify-between gap-3 border-t border-craie/25 pt-3 text-sm text-craie active:text-craie-vive"
+          >
+            {LIEN_GERER_JOUEURS}
+            <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-laiton" />
+          </Link>
+        </Panneau>
+
         <Panneau titre="Sauvegarde" contenuClassName="flex flex-col gap-3 p-4">
           <p className="text-sm text-craie/75">
             Tout vit sur ce téléphone : pas de compte, pas de serveur. Le fichier JSON est donc la

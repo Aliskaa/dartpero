@@ -381,19 +381,14 @@ describe('Couture GameMode — côté écrans', () => {
 })
 
 describe('Création de partie', () => {
-  it('propose les deux jeux et masque les règles X01 hors X01', async () => {
-    const utilisateur = userEvent.setup()
+  it('n’a rien à régler : ni score de départ ni double out', async () => {
     const { services } = fakeServices()
     await services.managePlayers.create('Kevin')
 
-    renderWithServices(<App />, { services, route: '/nouvelle-partie' })
+    renderWithServices(<App />, { services, route: '/nouvelle-partie/tour-du-monde' })
 
-    const regles = await screen.findByRole('region', { name: 'Règles' })
-    expect(within(regles).getByRole('button', { name: '501' })).toBeInTheDocument()
-
-    await utilisateur.click(screen.getByRole('button', { name: /Tour du monde/i }))
-
-    // Score de départ et double out n'ont aucun sens ici : ils disparaissent.
+    // Score de départ et double out n'ont aucun sens ici : ils n'y sont pas.
+    const regles = await screen.findByRole('region', { name: 'Réglages' })
     expect(within(regles).queryByRole('button', { name: '501' })).toBeNull()
     expect(within(regles).queryByRole('button', { name: /double out/i })).toBeNull()
     expect(within(regles).getByText(/on part du/i)).toBeInTheDocument()
@@ -404,11 +399,13 @@ describe('Création de partie', () => {
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/nouvelle-partie' })
 
-    await utilisateur.type(await screen.findByLabelText('Nouveau joueur'), 'Kevin')
-    await utilisateur.click(screen.getByRole('button', { name: 'Ajouter' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: /kevin/i })).toBeInTheDocument())
+    await utilisateur.click(await screen.findByRole('link', { name: /^Tour du monde/ }))
+    await utilisateur.click(await screen.findByRole('button', { name: 'Ajouter un joueur' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Nouveau joueur' }))
+    await utilisateur.type(screen.getByLabelText('Pseudo'), 'Kevin')
+    await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
+    await waitFor(() => expect(screen.getByText('1/4')).toBeInTheDocument())
 
-    await utilisateur.click(screen.getByRole('button', { name: /Tour du monde/i }))
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 
     expect(await screen.findByLabelText('Cible de Kevin')).toBeInTheDocument()

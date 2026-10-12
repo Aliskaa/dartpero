@@ -4,7 +4,7 @@ import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { Batons } from '@/ui/composants/commun/Batons'
 import { couleurJoueur } from '@/ui/couleurs'
-import { moyenne as formatMoyenne } from '@/ui/labels'
+import { etiquetteManchesGagnees, moyenne as formatMoyenne, LIBELLE_MANCHES } from '@/ui/labels'
 
 /**
  * La volée montrée sur la ligne : celle **en cours** pour le joueur actif,
@@ -34,20 +34,23 @@ const HAUTEUR: Record<Echelle, string> = {
 }
 
 /**
- * Les quatre colonnes de la feuille — joueur, volée, legs, reste — à largeur
- * FIXE pour les trois dernières : c'est en alignant les chiffres d'une ligne à
- * l'autre qu'on les compare, donc les colonnes doivent exister vraiment.
+ * Les quatre colonnes de la feuille — joueur, volée, manches, reste — à
+ * largeur FIXE pour les trois dernières : c'est en alignant les chiffres d'une
+ * ligne à l'autre qu'on les compare, donc les colonnes doivent exister vraiment.
  *
  * ⚠️ **La largeur est la contrainte la plus serrée de l'écran, et une colonne
  * de plus ne rentre pas.** En portrait 390 px il ne reste que 360 px une fois
  * retirés le `p-3` de la disposition et le filet de 3 px de la feuille ; les
  * trois colonnes fixes en prennent 212, donc JOUEUR vit sur ~148 px — juste ce
  * qu'il faut pour trois cases de fléchettes à `text-sm`, « BULL » compris.
+ * Quand « Legs » est devenu « Manches », les 12 px qu'il fallait à l'en-tête
+ * ont été pris sur VOLÉE (72 → 60 px, MANCHES 32 → 44 px) : la somme reste
+ * 212 px et JOUEUR ne perd rien.
  * Une cinquième colonne a été essayée puis retirée : elle ramenait JOUEUR à
  * 108 px en portrait et à **81 px en paysage**, où les pseudos se tronquaient
  * en « MAÏ… ». Ce qu'on gagne en colonnes se paie sur ces trois cases-là.
  */
-export const GRILLE_LIGNE = 'grid grid-cols-[minmax(0,1fr)_4.5rem_2rem_6.75rem]'
+export const GRILLE_LIGNE = 'grid grid-cols-[minmax(0,1fr)_3.75rem_2.75rem_6.75rem]'
 
 type Props = {
   readonly nom: string
@@ -205,13 +208,13 @@ export const LigneJoueur = ({
         </span>
       </div>
 
-      {/* COLONNE 3 — les legs, en bâtons. Une colonne, donc un en-tête : le
+      {/* COLONNE 3 — les manches, en bâtons. Une colonne, donc un en-tête : le
           paquet de traits cesse d'être un hiéroglyphe sous le score. */}
       <output
-        aria-label={`Legs gagnés par ${nom} : ${legsGagnes} sur ${legsRequis}`}
+        aria-label={etiquetteManchesGagnees(nom, legsGagnes, legsRequis)}
         className="filet-colonne flex flex-col items-center justify-center gap-1 px-1"
       >
-        <Batons gagnes={legsGagnes} requis={legsRequis} libelle="Legs" />
+        <Batons gagnes={legsGagnes} requis={legsRequis} libelle={LIBELLE_MANCHES} />
         {setsRequis > 1 && <Batons gagnes={setsGagnes} requis={setsRequis} libelle="Sets" />}
       </output>
 

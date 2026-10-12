@@ -9,8 +9,12 @@ import { MessageErreur } from './Etats'
 
 type Props = {
   readonly matchId: MatchId
-  /** Où mène le second bouton : la configuration, ou l'écran de lancement solo. */
-  readonly versReglages?: string
+  /**
+   * Où mène le second bouton : l'étape 2 de « Nouvelle partie » **du mode qu'on
+   * vient de jouer** (`cheminNouvellePartie(mode)`). Obligatoire : un défaut
+   * commun ramènerait au choix du jeu, une étape trop tôt.
+   */
+  readonly versReglages: string
   readonly libelleReglages?: string
 }
 
@@ -29,7 +33,7 @@ type Props = {
  */
 export const ActionsFinDePartie = ({
   matchId,
-  versReglages = '/nouvelle-partie',
+  versReglages,
   libelleReglages = 'Changer les règles',
 }: Props) => {
   const services = useServices()

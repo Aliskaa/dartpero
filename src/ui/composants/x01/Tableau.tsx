@@ -4,7 +4,7 @@ import type { Visit } from '@/core/domain/entities/Visit'
 import type { X01State } from '@/core/domain/games/x01/rules'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
-import { nomJoueur } from '@/ui/labels'
+import { LIBELLE_MANCHES, nomJoueur } from '@/ui/labels'
 import { type Echelle, GRILLE_LIGNE, LigneJoueur, type VoleeAffichee } from './LigneJoueur'
 
 type Props = {
@@ -108,10 +108,10 @@ export const Tableau = ({
       <div className={`bandeau-feuille ${GRILLE_LIGNE} py-1`} aria-hidden="true">
         <span className="entete-colonne px-3 text-feutre/70">Joueur</span>
         <span className="entete-colonne px-1 text-center text-feutre/70">Volée</span>
-        {/* « Legs » à 0.18em déborderait de ses 32 px : la colonne la plus
-            étroite relâche son interlettrage. */}
-        <span className="entete-colonne px-1 text-center tracking-[0.08em] text-feutre/70">
-          Legs
+        {/* « Manches » tient dans ses 44 px à condition de rapetisser et de
+            relâcher tout son interlettrage : la colonne la plus étroite. */}
+        <span className="entete-colonne px-0.5 text-center text-[0.55rem] tracking-normal text-feutre/70">
+          {LIBELLE_MANCHES}
         </span>
         <span className="entete-colonne px-1 text-center text-feutre/70">Reste</span>
       </div>

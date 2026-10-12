@@ -16,7 +16,13 @@ visuelle « feuille de match », retraits décidés par l'usage, statistiques d'
 résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit 2026-09-10**
 (détaillés en fin de § 6) : `tour-du-monde-cloture-volee`, `pourcentage-doubles-tiret`,
 `bundle-par-route`. App déployée sur https://dartpero.web.app.
-**456 tests verts** (dont 19 du lot `confidentialite-assetlinks`), `lint`, `typecheck`, `build` et `smoke` verts.
+**517 tests verts** (dont 61 du lot `nouvelle-partie-en-etapes`), `lint`, `typecheck`, `build` et `smoke` verts.
+Lot `nouvelle-partie-en-etapes` livré (Nouvelle partie en trois étapes, « manche » à l'écran,
+voir § 6) — vérifications restantes : la **relecture à l'écran** de `03-plan-de-test.md`
+(`docs/lots/nouvelle-partie-en-etapes/`), le **glisser au doigt** et le **retour matériel** sur
+un vrai Android, `<dialog>` et glisser sur iPhone ; les captures du README et
+`public/screenshots/partie-x01.png` montrent encore « LEG » et l'ancien écran — à refaire à la
+main.
 Trois lots de la feuille de route Play Store livrés : `stockage-persistant`, `installation-guidee`
 et `confidentialite-assetlinks` (voir § 6) — vérifications restantes :
 - `confidentialite-assetlinks`, après déploiement : `curl.exe -I` et `curl.exe -s` sur
@@ -43,7 +49,13 @@ Ce qu'il reste, par ordre de ce qui coûterait le plus cher à découvrir tard :
    de progression (voir le lot 5b).
 3. **Deux écrans du plan jamais faits** — `/historique/:id` et `/joueurs/:id` — à implémenter
    ou à retirer de ce document (voir § 3).
-4. **Les décisions ouvertes** listées dans `CLAUDE.md` : les jeux fun restants (Killer,
+4. **Un lot de règles « sortie libre »** (décidé au lot `nouvelle-partie-en-etapes` : report,
+   pas de renvoi dans `CLAUDE.md`). L'écran propose désormais le double out **désactivé** par
+   défaut, mais `CLAUDE.md` § Checkouts (170, bogeys), le glossaire et le README (suggestion
+   « sous 170 », les 7 bogeys) ne décrivent que le cas double out. Sans double out, `checkout.ts` suggère jusqu'à 180 et « % doubles » s'affiche
+   « — » pour toute partie aux réglages par défaut. Règles à écrire avec l'utilisateur, jamais
+   à improviser.
+5. **Les décisions ouvertes** listées dans `CLAUDE.md` : les jeux fun restants (Killer,
    Shanghai, Around the Clock), sync cloud (lot 6), i18n. Aucune n'est bloquante — le mode
    paysage, le Cricket et le thème clair sont tranchés et livrés.
 
@@ -207,12 +219,15 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | Route | Écran | Lot |
 | --- | --- | --- |
 | `/` | Accueil — *Reprendre la partie* (si une partie est en cours), *Nouvelle partie*, accès rapide ; invitation à installer, écartable (*Plus tard*) | 3 ✅ |
-| `/nouvelle-partie` | Configuration : mode de jeu, joueurs, legs à gagner, double in/out | 3 ✅ |
+| `/nouvelle-partie` | Étape 1 : le jeu (X01, Cricket, Tour du monde, Entraînement) | `nouvelle-partie-en-etapes` ✅ |
+| `/nouvelle-partie/:jeu` | Étape 2 : joueurs (rangée, menu « + ») et réglages du jeu (manches, sets, double in/out…) | `nouvelle-partie-en-etapes` ✅ |
+| `/nouvelle-partie/:jeu/ordre` | Étape 3 : ordre de jeu (glisser-déposer, ordre aléatoire), dès 2 joueurs | `nouvelle-partie-en-etapes` ✅ |
+| `/nouvelle-partie/:jeu/joueurs` | Sélectionner un joueur existant | `nouvelle-partie-en-etapes` ✅ |
 | `/partie/:id` | **Écran de partie** — le cœur de l'app | 3 ✅ |
 | `/partie/:id/resume` | Résumé de fin : vainqueur, stats du match, rejouer | 3 ✅ |
-| `/entrainement` | Lancement d'une session d'entraînement solo | 5b ✅ |
+| `/entrainement` | Redirige vers `/nouvelle-partie/entrainement` (l'écran de lancement a disparu) | `nouvelle-partie-en-etapes` ✅ |
 | `/historique` | Liste des parties jouées, tous modes, avec statut et suppression | 4 ✅ |
-| `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) | 4 ✅ |
+| `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) — atteint depuis Réglages → Joueurs (plus d'onglet) | 4 ✅ |
 | `/statistiques` | Carrière : tableaux comparatifs classés | 4 ✅ |
 | `/reglages` | Préférences (voix, haptique), **thème clair / sombre / système**, export / import JSON, à propos (entrée d'installation, ancre `#installer`, lien Confidentialité) | 4 ✅ |
 | `/confidentialite` | Politique de confidentialité et mentions légales — URL donnée à la Play Console | `confidentialite-assetlinks` ✅ |
@@ -601,6 +616,14 @@ depuis Réglages → À propos), `/.well-known/assetlinks.json` (`[]`, rempli au
 Firebase Hosting hors repli et hors précache du service worker, `ignore` réécrit (fuite des
 dossiers cachés fermée), smoke étendu (assetlinks, entrées cachées, `denylist`, aucune requête
 externe, garde `REMPLIR`). Détail § 6 ; vérification après déploiement en § 0.
+
+### Lot « nouvelle-partie-en-etapes »
+
+✅ **Fait — 517 tests verts** (+61). Nouvelle partie en trois étapes, une route chacune (le jeu ;
+joueurs et réglages ; ordre de jeu dès 2 joueurs), sur le modèle de DartsOn mais dans la charte.
+Rangée d'avatars avec ×, menu « + » (nouveau joueur en `<dialog>`, joueurs existants), ordre par
+glisser-déposer natif et clavier, sets exposés, entraînement en carte de l'étape 1, « manche » à
+l'écran, onglet Joueurs déplacé dans Réglages. Détail § 6 ; relecture sur appareil en § 0.
 
 ---
 
@@ -1641,3 +1664,39 @@ manquant servi en HTML, robot sans JS.
 remplacement » de `ManageBackupUseCase` ; titres de `Panneau` laiton ≈ 3,94:1 en clair ;
 guillemets ouvrants orphelins (aucune espace insécable dans `labels.ts`).
 - **437 → 456 tests verts** (+19 : UI 9, `firebaseHosting` 6, `reseauBoundary` 4).
+
+### Décisions du lot « nouvelle-partie-en-etapes »
+
+Session complète : `docs/lots/nouvelle-partie-en-etapes/` (intake validé, architecture
+`archi-authority`, trois tours de boucle : Test → Dev, puis deux fois Revue → Dev). Étude source :
+`docs/prospective/2026-10-11-NEW-nouvelle-partie-en-etapes.md`.
+
+- **Chaque étape est une route** sous `/nouvelle-partie/*` (routes descendantes, un seul
+`lazy()`), jamais un état interne : le retour du téléphone ramène à l'étape précédente. Le hook
+`useNouvellePartie` vit dans le parent (deux `usePreference` sur la même clé divergeraient).
+Retour de l'écran : `navigate(-1)` si l'on vient du parcours (`ETAT_PARCOURS`), sinon `replace`
+vers l'étape précédente (liens profonds).
+- **Double out** : décoché à l'écran (choix de l'utilisateur, `577dc5f`), `true` dans le domaine
+— la règle standard, les tests de règles et la relecture d'une vieille sauvegarde en dépendent.
+Gravé dans `CLAUDE.md`.
+- **« Manche » à l'écran**, « leg » dans le code ; « set » inchangé. Gravé dans `CLAUDE.md` et le
+glossaire. La colonne « Manches » du tableau prend sa largeur sur VOLÉE, pas sur JOUEUR.
+- **Glisser-déposer** en Pointer Events natifs, sans dépendance ; la ligne suit en `transform`,
+réordonnancement au relâcher ; même `deplacer` pour le clavier (↑ / ↓). ⚠️ `rangVise` vise la
+place **la plus proche** (seuil à mi-chemin de deux milieux) : la première version exigeait de
+franchir le milieu de la ligne voisine, alors que la borne du geste arrête le centre pile sur
+le milieu extrême — premier et dernier rang inatteignables au doigt, rien à deux joueurs.
+Rattrapé par la Revue, pas par les tests ; testé depuis jusqu'au geste (mise en page simulée).
+- **Boîte de dialogue**
+en `<dialog>` natif ; faux de test dans `tests/setup.ts` (jsdom 29 ne les implémente pas).
+- **Préférences** : nouvelles clés `partie:sets`, `entrainement:joueur`, `entrainement:sorties` ;
+`partie:mode` abandonnée (jamais réutiliser la clé). Toutes dans ce que la politique déclare
+déjà : ni texte ni date à changer.
+- **Entraînement** : écran de lancement supprimé, `/entrainement` redirige ; « Changer les
+règles » des résumés mène à l'étape 2 du même jeu.
+- **Erreur de démarrage** effacée à chaque changement d'étape (effet sur `pathname` dans
+`useNouvellePartie`), testée sans mock.
+- **Hors lot, relevés** : § Checkouts de `CLAUDE.md` décrit le cas double out (sans double out,
+`checkout.ts` suggère jusqu'à 180) ; « Manche N » du bandeau numérotée sur la partie, pas dans
+le set ; le résumé X01 n'affiche pas les sets ; boutons retour de 44 px ailleurs.
+- **456 → 517 tests verts** (+61).

@@ -6,8 +6,12 @@ import { Score } from '../../value-objects/Score'
  *
  * `legsToWin` / `setsToWin` sont stockés en « premier à N » plutôt qu'en
  * « best-of N » : c'est la forme dont les règles ont besoin, et elle ne se
- * prête pas aux erreurs d'arrondi. `X01Config.legsForBestOf` fait la
- * conversion pour l'UI.
+ * prête pas aux erreurs d'arrondi. `X01Config.legsForBestOf` ne sert plus
+ * qu'au défaut ci-dessous et à ses tests : aucun écran ne l'appelle.
+ *
+ * Défauts du domaine = la règle standard (501, premier à 2, 1 set, double
+ * out). L'écran de création propose double out désactivé et passe toujours la
+ * valeur. Ne pas aligner l'un sur l'autre.
  */
 export type X01Config = {
   readonly startingScore: Score
@@ -36,7 +40,11 @@ const legsForBestOf = (bestOf: number): number => {
 export const X01Config = {
   legsForBestOf,
 
-  /** Défauts décidés avec l'utilisateur : 501, best-of 3 legs, double out. */
+  /**
+   * Défauts du domaine = la règle standard (501, premier à 2, 1 set, double
+   * out). L'écran de création propose double out désactivé et passe toujours
+   * la valeur. Ne pas aligner l'un sur l'autre.
+   */
   create(input: X01ConfigInput = {}): X01Config {
     const startingScore = input.startingScore ?? 501
     const legsToWin = input.legsToWin ?? legsForBestOf(3)

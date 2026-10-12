@@ -35,7 +35,7 @@ activé.
 
 | | Mode | Ce que c'est |
 | --- | ---- | ------------ |
-| 🎯 | **X01** | 301 / 501 / 701, double in et double out, premier à N legs. Le mode principal. |
+| 🎯 | **X01** | 301 / 501 / 701, double in et double out, premier à N manches, sets en option. Le mode principal. |
 | 🌍 | **Tour du monde** | Du 20 à la bulle, 21 cibles. On finit le tour de table, et le moins de fléchettes gagne. |
 | ✖️ | **Cricket** | Sept cibles à fermer, variantes **standard** et **cut-throat** (où le plus petit score gagne). |
 | 🎓 | **Entraînement** | Un reste tiré au sort entre 41 et 170, trois fléchettes pour le sortir. En solo. |
@@ -48,7 +48,7 @@ activé.
 - **Suggestion de sortie** dès que le reste passe sous 170 — et « pas de finish » sur les
   *bogey numbers*, jamais une route bidon.
 - **Annulation illimitée et fiable** : le bouton retire la fléchette qu'on vient de taper, ou
-  la dernière volée enregistrée — même si elle avait gagné un leg.
+  la dernière volée enregistrée — même si elle avait gagné une manche.
 - **L'écran ne s'éteint pas** (Wake Lock), le téléphone **vibre** à la validation, et une
   **voix française** annonce le score puis appelle le joueur suivant.
 - **Mode paysage** automatique quand on couche le téléphone : lecture à gauche, pavé à droite.
@@ -56,8 +56,8 @@ activé.
 ### Après la partie
 
 - **La feuille de match** : joueurs en colonnes, statistiques en lignes, et le meneur de chaque
-  ligne en laiton. Moyenne 3 fléchettes, first 9, % de doubles, 180 / 140+ / 100+, meilleur
-  leg, plus haut checkout.
+  ligne en laiton. Moyenne 3 fléchettes, first 9, % de doubles, 180 / 140+ / 100+, meilleure
+  manche, plus haut checkout.
 - **La carte des impacts** — où les fléchettes se sont réellement plantées, dessinée sur un
   plateau. L'échelle est propre à chaque joueur : on compare des **formes**, pas des volumes.
 - **Statistiques de carrière** filtrables par période, historique filtrable par mode.
@@ -139,7 +139,7 @@ npm run dev:mobile   # https://<IP-du-PC>:5173 — accepter le certificat auto-s
 
 | Commande | Ce qu'elle fait |
 | -------- | --------------- |
-| `npm test` | La suite Vitest — **318 tests** |
+| `npm test` | La suite Vitest — **517 tests** |
 | `npm run test:watch` | La même, en continu |
 | `npm run lint` | Biome (lint + format). **Jamais ESLint ni Prettier.** |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -231,9 +231,10 @@ tests/                 domain/ · use-cases/ · infrastructure/ · architecture/
 C'est là que la plupart des compteurs amateurs se trompent, donc chaque règle ci-dessous est
 couverte par des tests.
 
-- **Bust** — la volée entière est annulée et le score revient à sa valeur d'avant, dans trois
-  cas : reste `< 0`, reste `== 1` (impossible à finir sur un double), ou reste `== 0` sans que
-  la **dernière** fléchette soit un double.
+- **Bust** — la volée entière est annulée et le score revient à sa valeur d'avant : reste
+  `< 0` ; et, **quand le double out est actif**, reste `== 1` (impossible à finir sur un double)
+  ou reste `== 0` sans que la **dernière** fléchette soit un double. L'écran propose la sortie
+  libre par défaut ; le double out se coche à la création de partie.
 - **Le triple bull n'existe pas** — `Dart.of('BULL', 'TRIPLE')` est refusé par le domaine. Le
   bullseye à 50 **compte comme un double** pour la sortie.
 - **Les 7 bogey numbers** (169, 168, 166, 165, 163, 162, 159) affichent « pas de finish ». Ils
@@ -257,8 +258,9 @@ volontairement documenté ici :
   servi. La saisie 3-taps tient très bien, et c'était elle la condition technique des stats de
   doubles. Parti avec son pavé, son port, son use case et ses tests.
 - **Le « best of N »** ne voulait plus rien dire à trois ou quatre joueurs, où la partie peut
-  durer plus de legs que le format n'en annonce. Remplacé par **« premier à N legs »**, qui est
-  d'ailleurs ce que le domaine stockait depuis le début.
+  durer plus de legs que le format n'en annonce. Remplacé par **« premier à N manches »**
+  (« manche » à l'écran, *leg* dans le code), qui est d'ailleurs ce que le domaine stockait
+  depuis le début.
 
 ---
 
@@ -267,7 +269,7 @@ volontairement documenté ici :
 Projet **personnel**, pour jouer entre potes. Pas de licence publiée, pas de contribution
 attendue — mais le code est lisible et les décisions sont écrites.
 
-Il reste une chose que les 318 tests ne peuvent pas couvrir : **la validation sur vrai
+Il reste une chose que les 517 tests ne peuvent pas couvrir : **la validation sur vrai
 matériel** — la lisibilité à 3 mètres dans un vrai garage, le confort des cibles au pouce
 debout, la tenue du wake lock sur une partie entière, et un passage sur un vrai iPhone.
 

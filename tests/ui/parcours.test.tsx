@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from '@/App'
@@ -19,12 +19,22 @@ describe('Parcours complet', () => {
 
     await utilisateur.click(screen.getByRole('link', { name: /nouvelle partie/i }))
 
-    // --- Configuration : on crée un joueur à la volée ---
-    await utilisateur.type(await screen.findByLabelText('Nouveau joueur'), 'Kevin')
-    await utilisateur.click(screen.getByRole('button', { name: 'Ajouter' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: /kevin/i })).toBeInTheDocument())
+    // --- Étape 1 : le jeu ---
+    await utilisateur.click(await screen.findByRole('link', { name: /^X01/ }))
 
-    await utilisateur.click(screen.getByRole('button', { name: '1' })) // un seul leg à gagner
+    // --- Étape 2 : on crée un joueur à la volée ---
+    await utilisateur.click(await screen.findByRole('button', { name: 'Ajouter un joueur' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Nouveau joueur' }))
+    await utilisateur.type(screen.getByLabelText('Pseudo'), 'Kevin')
+    await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
+    const rangee = screen.getByRole('list', { name: 'Joueurs de la partie' })
+    await waitFor(() => expect(within(rangee).getByText('Kevin')).toBeInTheDocument())
+
+    // Une seule manche à gagner, et le double out (décoché par défaut) activé.
+    const manches = within(screen.getByRole('group', { name: 'Manches à gagner' }))
+    await utilisateur.click(manches.getByRole('button', { name: '1' }))
+    await utilisateur.click(screen.getByRole('button', { name: /double out/i }))
+    // Seul en piste : pas d'étape d'ordre, on commence d'ici.
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 
     // --- Match : 180, 180, puis sortie sur 141 ---
@@ -47,10 +57,10 @@ describe('Parcours complet', () => {
     expect(await screen.findByText('Vainqueur')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Kevin' })).toBeInTheDocument()
 
-    // 501 points en 9 fléchettes : le leg le plus court possible.
-    expect(screen.getByText('Meilleur leg').nextElementSibling).toHaveTextContent('9')
+    // 501 points en 9 fléchettes : la manche la plus courte possible.
+    expect(screen.getByText('Meilleure manche').nextElementSibling).toHaveTextContent('9')
     expect(screen.getByText('Plus haut checkout').nextElementSibling).toHaveTextContent('141')
-    // La moyenne et le « first 9 » valent tous deux 167 sur un leg de 9 fléchettes.
+    // La moyenne et le « first 9 » valent tous deux 167 sur une manche de 9 fléchettes.
     expect(screen.getAllByText('167,0')).toHaveLength(2)
 
     // --- « On remet ça » : même joueur, mêmes règles, un tap ---

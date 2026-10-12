@@ -346,9 +346,9 @@ export const moyenne = (valeur: number): string =>
 /**
  * ⚠️ Un tiret plutôt que « 0 % » quand rien n'a été joué ou tenté : zéro pour
  * cent, ça veut dire « il a tout perdu ». Rien du tout, ça veut dire « on ne
- * sait pas encore » — un leg en cours n'est ni gagné ni perdu, et un joueur
- * qui n'a jamais eu de double à jouer n'a pas raté ses sorties, il n'en a
- * simplement pas eu. Sert aux trois pourcentages de l'app : matchs, legs,
+ * sait pas encore » — une manche en cours n'est ni gagnée ni perdue, et un
+ * joueur qui n'a jamais eu de double à jouer n'a pas raté ses sorties, il n'en
+ * a simplement pas eu. Sert aux trois pourcentages de l'app : matchs, manches,
  * doubles.
  */
 export const pourcent = (valeur: number, occasions: number): string =>
@@ -385,14 +385,246 @@ export const pluriel = (nombre: number, singulier: string, pluriel = `${singulie
  * c'est ce qu'on affiche désormais, tel quel.
  */
 export const libelleLegs = (legsToWin: number): string =>
-  legsToWin === 1 ? '1 leg' : `premier à ${legsToWin} legs`
+  legsToWin === 1 ? '1 manche' : `premier à ${legsToWin} manches`
 
 /**
  * La même chose pour le bandeau de match, où chaque caractère compte : le mot
- * « leg » y est déjà posé juste avant par le numéro de leg en cours.
+ * « manche » y est déjà posé juste avant par le numéro de la manche en cours.
+ *
+ * ⚠️ À l'écran on dit « manche », jamais « leg » (lot
+ * `nouvelle-partie-en-etapes`). Le code garde `legsToWin`, `Leg`, `LegWon` :
+ * seul ce qui s'affiche — ou se prononce — change.
  */
 export const libelleLegsCourt = (legsToWin: number): string =>
-  legsToWin === 1 ? '1 leg' : `premier à ${legsToWin}`
+  legsToWin === 1 ? '1 manche' : `premier à ${legsToWin}`
+
+/**
+ * Le format complet d'une partie X01 : les manches seules, ou les sets puis les
+ * manches de chaque set. « Set » reste « set ».
+ */
+export const libelleFormat = (legsToWin: number, setsToWin: number): string =>
+  setsToWin <= 1
+    ? libelleLegs(legsToWin)
+    : `premier à ${setsToWin} sets · ${libelleLegs(legsToWin)} par set`
+
+/** Le bandeau de match : « Manche 3 ». Numérotée sur la partie. */
+export const libelleMancheEnCours = (numero: number): string => `Manche ${numero}`
+
+/** Le moment célébré quand une manche tombe (le checkout qui la gagne). */
+export const TITRE_MOMENT_MANCHE = 'Manche !'
+
+/** Les en-têtes et lignes de statistiques qui parlaient de « legs ». */
+export const LIBELLE_MANCHES = 'Manches'
+export const LIBELLE_MEILLEURE_MANCHE = 'Meilleure manche'
+export const LIBELLE_MANCHES_GAGNEES = 'Gagnées'
+export const LIBELLE_MANCHES_JOUEES = 'Jouées'
+
+/** L'aperçu d'une partie X01 en cours : « 1 set · 2 manches ». « Set » reste « set ». */
+export const libelleSetsGagnes = (sets: number): string => pluriel(sets, 'set')
+export const libelleManchesDuSet = (manches: number): string => pluriel(manches, 'manche')
+
+/** Le nom accessible de la colonne des bâtons, sur la ligne d'un joueur. */
+export const etiquetteManchesGagnees = (nom: string, gagnees: number, requises: number): string =>
+  `Manches gagnées par ${nom} : ${gagnees} sur ${requises}`
+
+/* ------------------------------------------------------------------------
+ * Nouvelle partie, en étapes : le jeu, puis joueurs et réglages, puis l'ordre.
+ * ---------------------------------------------------------------------- */
+
+export const TITRE_NOUVELLE_PARTIE = 'Nouvelle partie'
+export const SOUS_TITRE_ETAPE_JEU = 'Choisissez le jeu'
+export const TITRE_ETAPE_ORDRE = 'Ordre de jeu'
+export const TITRE_JOUEURS_EXISTANTS = 'Joueurs existants'
+export const SOUS_TITRE_JOUEURS_EXISTANTS = 'Cochez ceux qui jouent'
+
+export const RETOUR_ACCUEIL = 'Retour à l’accueil'
+export const RETOUR_ETAPE_PRECEDENTE = 'Étape précédente'
+
+/**
+ * Les deux lignes de règles de chaque carte de l'étape 1 — fidèles à
+ * `CLAUDE.md` § Règles du jeu. Les bornes de l'entraînement sont passées par
+ * l'appelant (lues sur `DEFAUT` du domaine), jamais recopiées ici.
+ */
+export const reglesCarteJeu = (
+  mode: GameModeId,
+  entrainement: { readonly min: number; readonly max: number },
+): readonly [string, string] => {
+  switch (mode) {
+    case 'X01':
+      return [
+        'Décompter 301, 501 ou 701 jusqu’à zéro pile.',
+        'En manches, éventuellement en sets ; double out au choix.',
+      ]
+    case 'CRICKET':
+      return [
+        'Fermer le 20 au 15 et la bulle, trois marques chacun.',
+        'Le surplus marque tant qu’un adversaire n’a pas fermé.',
+      ]
+    case 'TOUR_DU_MONDE':
+      return [
+        'Du 20 au 1, puis la bulle : toucher le secteur suffit.',
+        'On finit le tour de table ; le moins de fléchettes gagne.',
+      ]
+    case 'CHECKOUT_PRACTICE':
+      return [
+        `Seul : un reste tiré entre ${entrainement.min} et ${entrainement.max}.`,
+        'Trois fléchettes pour le sortir sur un double.',
+      ]
+    default: {
+      const jamais: never = mode
+      return jamais
+    }
+  }
+}
+
+export const LEGENDE_JOUEURS_PARTIE = 'Joueurs de la partie'
+export const TITRE_PANNEAU_JOUEURS = 'Joueurs'
+export const TITRE_PANNEAU_REGLAGES = 'Réglages'
+export const AUCUN_JOUEUR_PARTIE = 'Aucun joueur pour l’instant : touchez + pour en ajouter.'
+export const LIBELLE_AJOUTER_JOUEUR = 'Ajouter un joueur'
+export const LIBELLE_NOUVEAU_JOUEUR = 'Nouveau joueur'
+export const LIBELLE_SELECTIONNER_EXISTANT = 'Sélectionner un joueur existant'
+export const retirerDeLaPartie = (nom: string): string => `Retirer ${nom} de la partie`
+
+export const LIBELLE_PSEUDO = 'Pseudo'
+export const LIBELLE_ANNULER = 'Annuler'
+export const LIBELLE_TERMINE = 'Terminé'
+export const LIBELLE_CONTINUER = 'Continuer'
+export const LIBELLE_COMMENCER = 'Commencer'
+export const CHARGEMENT_PROFILS = 'Chargement des profils…'
+
+/** L'erreur de création d'un profil, à l'écran. Le domaine ne parle qu'anglais. */
+export const erreurPseudo = (cause: unknown): string =>
+  cause instanceof Error && cause.message === 'Player name already taken'
+    ? 'Ce pseudo est déjà pris.'
+    : 'Ce pseudo n’est pas valide.'
+
+export const ERREUR_DEMARRAGE = 'Impossible de démarrer la partie.'
+
+export const TITRE_AUCUN_PROFIL = 'Aucun profil'
+export const DESCRIPTION_AUCUN_PROFIL =
+  'Personne n’est encore inscrit sur ce téléphone : créez un premier joueur.'
+
+/** Sous un joueur existant : ses manches X01 jouées, jamais « 0 manche ». */
+export const libelleManchesJouees = (manches: number): string => pluriel(manches, 'manche')
+
+/* Réglages par jeu. */
+export const LEGENDE_SCORE_DEPART = 'Score de départ'
+export const LEGENDE_MANCHES_A_GAGNER = 'Manches à gagner'
+export const LEGENDE_SETS_A_GAGNER = 'Sets à gagner'
+export const LEGENDE_COMPTAGE = 'Comptage'
+export const LEGENDE_NOMBRE_SORTIES = 'Nombre de sorties'
+export const LIBELLE_DOUBLE_OUT = 'Double out'
+export const AIDE_DOUBLE_OUT = 'Finir obligatoirement sur un double'
+export const LIBELLE_DOUBLE_IN = 'Double in'
+export const AIDE_DOUBLE_IN = 'Ne décompter qu’après un premier double'
+export const LIBELLE_ORDRE_ALEATOIRE = 'Ordre aléatoire'
+export const AIDE_ORDRE_ALEATOIRE = 'Le sort décide qui commence'
+
+/**
+ * Ce que « premier à N manches » veut dire ce soir-là, en clair.
+ *
+ * À trois ou quatre, le nombre de manches jouées n'est plus borné par le
+ * format, il dépend de qui gagne quoi : autant le dire au moment où on choisit.
+ * Avec des sets, les manches se comptent **par set**.
+ */
+export const aideManches = (legs: number, sets: number, joueurs: number): string => {
+  const parSet = sets > 1
+  if (legs === 1) {
+    return parSet
+      ? 'Une seule manche par set : le premier qui sort gagne le set.'
+      : 'Une seule manche : le premier qui sort gagne la partie.'
+  }
+  const base = parSet
+    ? `Par set : le premier à ${legs} manches gagne le set`
+    : `Le premier à ${legs} manches gagne la partie`
+  return joueurs > 2
+    ? `${base} — à ${joueurs} joueurs, ${parSet ? 'un set' : 'la partie'} peut en durer davantage.`
+    : `${base}.`
+}
+
+/** Un set se gagne au premier à N manches, la partie au premier à S sets. */
+export const aideSets = (sets: number, legs: number): string =>
+  sets <= 1
+    ? 'Sans sets : la partie se joue en manches.'
+    : `Un set se gagne ${legs === 1 ? 'à la première manche' : `au premier à ${legs} manches`}, la partie au premier à ${sets} sets.`
+
+/**
+ * Un paragraphe de règles, avec ses mots en gras. Le texte reste ici ; l'écran
+ * ne fait que le poser.
+ */
+export type Segment = string | { readonly fort: string }
+
+export const PARAGRAPHE_TOUR_DU_MONDE: readonly Segment[] = [
+  'On part du ',
+  { fort: '20' },
+  ' et on descend jusqu’au 1, puis on finit sur la ',
+  { fort: 'bulle' },
+  '. Simple, double ou triple : peu importe, il suffit de toucher le secteur. Quand quelqu’un boucle, le tour de table se termine — c’est le nombre de fléchettes qui départage.',
+]
+
+export const paragrapheCricket = (cutThroat: boolean): readonly Segment[] => [
+  'Sept cibles à fermer en trois touches : ',
+  { fort: '20' },
+  ' à ',
+  { fort: '15' },
+  ' et la ',
+  { fort: 'bulle' },
+  '. Une cible fermée chez soi mais pas chez les autres rapporte des points ; ',
+  cutThroat
+    ? 'en cut-throat ils sont infligés aux adversaires, et le plus PETIT score gagne.'
+    : 'gagne celui qui ferme tout sans être derrière au score.',
+]
+
+export const paragrapheEntrainement = (min: number, max: number): readonly Segment[] => [
+  'Un reste est tiré au sort entre ',
+  { fort: `${min} et ${max}` },
+  ', et vous avez trois fléchettes pour le sortir sur un double. Jamais de reste impossible : les bogey numbers sont écartés du tirage.',
+]
+
+/** La ligne récapitulative au-dessus du bouton de l'étape 2. */
+export const recapX01 = ({
+  score,
+  legs,
+  sets,
+  doubleOut,
+  doubleIn,
+}: {
+  readonly score: number
+  readonly legs: number
+  readonly sets: number
+  readonly doubleOut: boolean
+  readonly doubleIn: boolean
+}): string =>
+  [
+    String(score),
+    libelleFormat(legs, sets),
+    doubleOut ? 'double out' : 'sortie libre',
+    ...(doubleIn ? ['double in'] : []),
+  ].join(' · ')
+
+export const recapCricket = (variante: 'STANDARD' | 'CUT_THROAT'): string =>
+  `Cricket ${LIBELLE_VARIANTE_CRICKET[variante]} · 20 → 15 · bulle`
+
+export const RECAP_TOUR_DU_MONDE = 'Tour du monde · 20 → bulle'
+
+export const recapEntrainement = (sorties: number, min: number, max: number): string =>
+  `${pluriel(sorties, 'sortie')} · ${min} à ${max}`
+
+/* Étape 3 — l'ordre de jeu. */
+export const LEGENDE_ORDRE = 'Ordre de passage'
+export const AIDE_POIGNEE = 'Glissez, ou flèches haut et bas'
+export const deplacerJoueur = (nom: string): string => `Déplacer ${nom}`
+export const rangOrdre = (rang: number): string => `n°${rang}`
+export const annonceOrdre = (nom: string, position: number, total: number): string =>
+  `${nom} : position ${position} sur ${total}`
+export const quiCommence = (nom: string): string => `${nom} commence`
+export const ORDRE_TIRE_AU_SORT = 'Tiré au sort au lancement'
+
+/* Réglages → Joueurs. */
+export const SOUS_TITRE_REGLAGES = 'Joueurs, affichage, sauvegarde et informations'
+export const TEXTE_PANNEAU_JOUEURS = 'Renommer, changer la couleur, supprimer un profil.'
+export const LIEN_GERER_JOUEURS = 'Gérer les joueurs'
 
 /** Phrases d'ambiance pour les résumés — le côté apéro, hors saisie. */
 export const PHRASE_VICTOIRE = [
