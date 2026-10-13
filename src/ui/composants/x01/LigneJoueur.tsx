@@ -119,9 +119,8 @@ export const LigneJoueur = ({
         'ligne-tableau relative',
         GRILLE_LIGNE,
         HAUTEUR[echelle],
-        'transition-opacity duration-300',
         bust ? 'animate-secousse' : '',
-        actif ? 'au-lancer' : 'opacity-70',
+        actif ? 'au-lancer' : '',
       ].join(' ')}
     >
       {/* COLONNE 1 — qui joue, et ce qu'il vient d'écrire. */}
@@ -135,7 +134,7 @@ export const LigneJoueur = ({
           />
           <span
             className={`truncate font-score text-base font-bold uppercase tracking-[0.08em] ${
-              actif ? 'text-craie-vive' : 'text-craie/75'
+              actif ? 'text-craie-vive' : 'text-craie-2'
             }`}
           >
             {nom}
@@ -173,7 +172,7 @@ export const LigneJoueur = ({
                     ? bust
                       ? 'text-rouge-cible line-through'
                       : 'text-craie-vive'
-                    : 'text-craie/20',
+                    : 'text-craie-3',
                 ].join(' ')}
               >
                 {dart ? DartVO.label(dart) : '—'}
@@ -196,7 +195,7 @@ export const LigneJoueur = ({
         ) : (
           <span
             className={`chiffres text-2xl font-bold leading-none ${
-              volee && volee.darts.length > 0 ? 'text-craie' : 'text-craie/20'
+              volee && volee.darts.length > 0 ? 'text-craie' : 'text-craie-3'
             }`}
           >
             {volee && volee.darts.length > 0 ? volee.total : '—'}
@@ -204,7 +203,7 @@ export const LigneJoueur = ({
         )}
 
         <span className="entete-colonne text-[0.55rem] normal-case tracking-normal">
-          moy <span className="chiffres font-semibold text-craie/80">{formatMoyenne(moyenne)}</span>
+          moy <span className="chiffres font-semibold text-craie-2">{formatMoyenne(moyenne)}</span>
         </span>
       </div>
 
@@ -223,7 +222,7 @@ export const LigneJoueur = ({
       <div className="filet-colonne flex flex-col items-center justify-center px-1">
         <output
           aria-label={`Score restant de ${nom}`}
-          className={`chiffres trace-craie block font-bold text-craie-vive ${RESTE[echelle]}`}
+          className={`chiffres ${actif ? 'trace-craie' : ''} block font-bold text-craie-vive ${RESTE[echelle]}`}
         >
           {/* La `key` fait rejouer le « pop » à chaque changement de valeur. */}
           <span key={reste} className="inline-block animate-pop-score">

@@ -132,7 +132,7 @@ export const CartePartie = ({
         <Titre className="break-words font-score text-base font-bold tracking-wide text-craie-vive">
           {nomDePartie(partie)}
         </Titre>
-        <p className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/70">
+        <p className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
           {regles(partie)} · {quand}
         </p>
 
@@ -152,7 +152,7 @@ export const CartePartie = ({
           </span>
 
           {statut === 'ABANDONED' && (
-            <span className="border border-craie/40 px-2 py-0.5 font-score text-[0.65rem] uppercase tracking-wider text-craie/80">
+            <span className="border border-craie/40 px-2 py-0.5 font-score text-[0.65rem] uppercase tracking-wider text-craie-2">
               {LIBELLE_ABANDONNEE}
             </span>
           )}

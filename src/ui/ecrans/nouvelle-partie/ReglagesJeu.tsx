@@ -31,7 +31,7 @@ import { Bascule } from './Bascule'
 
 /** Un paragraphe de règles écrit dans `labels.ts`, ses mots forts compris. */
 const Paragraphe = ({ segments }: { readonly segments: readonly Segment[] }) => (
-  <p className="border border-chene/50 bg-feutre/60 px-4 py-3 text-sm text-craie/75">
+  <p className="border border-chene/50 bg-feutre/60 px-4 py-3 text-sm text-craie-2">
     {segments.map((segment, rang) =>
       typeof segment === 'string' ? (
         segment

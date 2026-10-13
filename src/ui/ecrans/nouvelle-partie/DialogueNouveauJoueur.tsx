@@ -91,7 +91,7 @@ export const DialogueNouveauJoueur = ({ ouvert, onFermer, onCreer }: Props) => {
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor={idChamp}
-            className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65"
+            className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie-3"
           >
             {LIBELLE_PSEUDO}
           </label>

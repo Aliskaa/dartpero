@@ -185,18 +185,18 @@ export const CarteImpacts = ({ nom, hits, className = '' }: Props) => {
           {nom}
         </span>
         {sommet.length === 0 ? (
-          <span className="text-[0.7rem] text-craie/60">Aucune fléchette</span>
+          <span className="text-[0.7rem] text-craie-3">Aucune fléchette</span>
         ) : (
           <span className="flex flex-wrap gap-x-2 gap-y-0.5">
             {sommet.map((zone) => (
-              <span key={Dart.label(zone)} className="chiffres text-[0.7rem] text-craie/75">
+              <span key={Dart.label(zone)} className="chiffres text-[0.7rem] text-craie-2">
                 <span className="text-laiton-clair">{Dart.label(zone)}</span> ×{zone.hits}
               </span>
             ))}
           </span>
         )}
         {hits.missed > 0 && (
-          <span className="chiffres text-[0.7rem] text-craie/60">Hors cible ×{hits.missed}</span>
+          <span className="chiffres text-[0.7rem] text-craie-3">Hors cible ×{hits.missed}</span>
         )}
       </figcaption>
     </figure>

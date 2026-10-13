@@ -32,7 +32,7 @@ tableau à **2–3 mètres**. Souvent dans un garage ou une cave mal éclairés,
 
 | Plancher | Règle | Pourquoi |
 | -------- | ----- | -------- |
-| Lisibilité | Aucun texte sous **`craie/60`** | Garage mal éclairé + téléphone en luminosité basse |
+| Lisibilité | Aucun texte sous **`craie-3`**, en couleur pleine (jamais `text-craie/NN`) : **≥ 4,5:1** sur les 4 surfaces, dans les 2 thèmes | Garage mal éclairé + téléphone en luminosité basse ; l'encre transparente tombe sous 4,5:1 sur papier |
 | Tactile | **≥ 48 px** partout (`min-h-12`) | On tape debout, une fléchette dans l'autre main |
 | Angle | **`--radius-*` = 0** dans `@theme` | Point de contrôle unique de l'angle vif (voir plus bas) |
 
@@ -81,6 +81,9 @@ Tokens `@theme` dans `src/index.css`. Utiliser les classes Tailwind (`bg-feutre`
 | Bois | `chene` | `#5A3E24` | `#5A3E24` | Cadres — **le bois ne change pas de bois** |
 | **Accent principal** | `laiton` | `#C9A227` | `#8A6D12` | Ligne au lancer, CTA, focus |
 | Texte courant | `craie` | `#F2E8D5` | `#1F2D24` | Corps, libellés |
+| Texte secondaire | `craie-2` | `#BCB8A8` | `#354137` | Texte courant atténué, noms des joueurs inactifs |
+| Légendes, en-têtes | `craie-3` | `#9B9B8A` | `#485249` | Le plancher : rien de lisible en dessous |
+| Décor | `craie-decor` | `#52584D` | `#A8A592` | Séparateurs « · », « \| », glyphes `aria-hidden` seulement — aucune contrainte de contraste |
 | **Chiffres du tableau** | `craie-vive` | `#FFFFFF` | `#0C1512` | Scores géants |
 | Texte sur laiton | `sur-laiton` | `#1A1206` | `#FBF7EC` | Étiquette d'un bouton primaire |
 | Alerte / bust | `rouge-cible` | `#C1272D` | `#A81F25` | Bust, danger |
@@ -94,6 +97,33 @@ papier : le filet de `.au-lancer`, qui dit **qui est en train de lancer**, y dev
 invisible — l'information la plus lue de l'app. Il passe donc en laiton foncé (4,4:1), et
 `laiton-clair` y veut dire « plus lisible sur le fond », donc **plus foncé** (6,6:1). C'est le
 **rôle** qui s'inverse, pas la teinte.
+
+**Le texte secondaire est en couleur pleine, jamais en alpha.** `text-craie/60` posait de l'encre
+transparente sur le papier : en clair, le rapport tombait sous 4,5:1. Désormais `craie-2`
+(ancien 75-85 %) et `craie-3` (ancien 55-70 %) ; `craie-decor` n'est réservé qu'aux glyphes
+`aria-hidden`. Un « — » qui tient la place d'une valeur absente est une **information** : il
+prend `craie-3`. `text-craie/NN` et `text-craie-vive/NN` sont interdits (garde
+`themeBoundary`) ; l'alpha reste permis pour les bordures et les fonds (`border-craie/25`).
+
+**Contrastes WCAG** (sRGB linéarisé : `c ≤ 0,03928 ? c/12,92 : ((c+0,055)/1,055)^2,4`,
+`L = 0,2126 R + 0,7152 G + 0,0722 B`, rapport `(L1+0,05)/(L2+0,05)`) :
+
+| Token | Thème | `feutre` | `feutre-nuit` | `ardoise` | `ardoise-claire` |
+| ----- | ----- | -------- | ------------- | --------- | ---------------- |
+| `craie` | sombre | 14,70 | 15,79 | 13,27 | 11,33 |
+| `craie-2` | sombre | 8,98 | 9,65 | 8,11 | 6,92 |
+| `craie-3` | sombre | 6,34 | 6,81 | 5,72 | **4,88** |
+| `craie` | clair | 10,25 | 8,26 | 12,88 | 14,14 |
+| `craie-2` | clair | 7,62 | 6,14 | 9,58 | 10,51 |
+| `craie-3` | clair | 5,80 | **4,67** | 7,29 | 8,00 |
+
+**Onglet actif de `NavigationBasse`** : texte `craie-vive` (19,19:1 en sombre, 10,65:1 en clair
+sur `feutre-nuit`), inactif `craie-3`. Le `laiton-clair` ne tenait que 4,25:1 en clair ; l'identité
+laiton reste portée par le trait `bg-laiton` de 3 px sous l'onglet.
+
+**Lignes de joueurs inactives** : plus d'`opacity-70` (il grisait aussi les chiffres et faisait
+retomber le contraste) ; l'inactif se distingue par le nom en `craie-2` et l'absence de
+`.au-lancer` et de `trace-craie`.
 
 ### Ce qui n'est pas une couleur
 
@@ -237,7 +267,7 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `CartePartie` | La carte d'une partie, à l'Accueil et dans Parties (a remplacé `ApercuPartie`) : liseré `border-l-4` à l'accent du mode, nom en titre, règles et heure, avatars, badge « Abandonnée », statut (« X gagne · N manches » au X01 terminé) et ✓ `text-laiton`. **Une seule cible** (lien `min-h-16`) ; « Reprendre », sur la partie en cours seulement, n'en est que le visuel ; `actions` hors du lien. **Le seul endroit** de l'UI qui ouvre l'union `MatchSummary` |
 | `ActionsFinDePartie` | « On remet ça » / « Changer les règles » / « Accueil » — les 4 résumés |
 | `DispositionPartie` | Ossature portrait / paysage des écrans de jeu, et l'accent du mode |
-| `LayoutPrincipal` / `NavigationBasse` | Coquille des écrans hors partie. La barre a une hauteur **fixe** (`--hauteur-nav-basse`, 3,5 rem, filet du haut compris, plus la safe-area), jamais une hauteur minimale ; le bouton « Nouvelle partie » de l'Accueil se cale en `sticky` sur **le même `calc`** (un test le vérifie). ⚠️ Compromis : avec une police système très agrandie, un libellé d'onglet serait **rogné** plutôt que de faire grandir la barre — à vérifier sur appareil réel ; repli possible : un conteneur `sticky` unique dans `LayoutPrincipal` pour la barre et le bouton |
+| `LayoutPrincipal` / `NavigationBasse` | Coquille des écrans hors partie. Onglet actif en `craie-vive` souligné du trait `bg-laiton`. La barre a une hauteur **fixe** (`--hauteur-nav-basse`, 3,5 rem, filet du haut compris, plus la safe-area), jamais une hauteur minimale ; le bouton « Nouvelle partie » de l'Accueil se cale en `sticky` sur **le même `calc`** (un test le vérifie). ⚠️ Compromis : avec une police système très agrandie, un libellé d'onglet serait **rogné** plutôt que de faire grandir la barre — à vérifier sur appareil réel ; repli possible : un conteneur `sticky` unique dans `LayoutPrincipal` pour la barre et le bouton |
 | `Etats` | `EmptyState` · `Skeleton` · `Spinner` / `SpinnerLigne` · `MessageErreur` · `EcranErreur` |
 | `CarteJoueur` (`composants/match/`) | Score géant, jetons de manches, volée en cours |
 
@@ -333,7 +363,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 - **Portrait** par défaut. **Paysage** (téléphone couché) : lecture à gauche, pavé à droite —
   porté par `DispositionPartie` pour les quatre modes.
 - **Le nom de la partie** (lot `nom-de-partie`) occupe sa propre ligne sous la rangée du bandeau,
-  dans le même `<header>` (`h-4 truncate pl-12 text-craie/70`, hauteur réservée même vide, prop obligatoire `nomPartie` de `DispositionPartie`) :
+  dans le même `<header>` (`h-4 truncate pl-12 text-craie-3`, hauteur réservée même vide, prop obligatoire `nomPartie` de `DispositionPartie`) :
   lu à 30 cm, il ne prend rien à la zone de lecture et ne pousse pas le bandeau. Forme
   **à confirmer à la relecture à l'écran** (D5), cas le plus serré : X01 en sets, double in et
   double out, téléphone peu haut.
@@ -382,7 +412,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 1. Poser du bois / laiton / grain **derrière un chiffre de score**.
 2. Utiliser un hex hors `index.css` / `couleurs.ts` — **et en particulier une teinte d'accent
    dans un `style=` inline** : elle ne suivrait pas le thème.
-3. Descendre sous `craie/60` pour du texte utile.
+3. Descendre sous `craie-3` pour du texte utile, ou écrire un texte en alpha (`text-craie/NN`).
 4. Remettre un rayon dans les tokens `--radius-*` (ou une classe `rounded-*` dans `src/ui`).
 5. Créer une variante de bouton / panneau ad hoc hors des composants communs.
 6. Laisser une icône lucide sans `aria-hidden`.

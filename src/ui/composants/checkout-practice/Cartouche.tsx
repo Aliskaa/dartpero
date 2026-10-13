@@ -39,7 +39,7 @@ export const Cartouche = ({
   return (
     <section aria-label="Manche en cours" className="flex flex-col gap-2.5">
       <div className="feuille flex flex-col items-center gap-1 px-4 py-5">
-        <p className="font-score text-[0.6rem] uppercase tracking-[0.3em] text-craie/60">
+        <p className="font-score text-[0.6rem] uppercase tracking-[0.3em] text-craie-3">
           Sortie demandée
         </p>
 
@@ -53,8 +53,8 @@ export const Cartouche = ({
         </output>
 
         {cible !== null && resteAffiche !== cible && (
-          <p className="chiffres text-xs text-craie/55">
-            manche partie de <span className="font-bold text-craie/80">{cible}</span>
+          <p className="chiffres text-xs text-craie-3">
+            manche partie de <span className="font-bold text-craie-2">{cible}</span>
           </p>
         )}
 
@@ -68,10 +68,10 @@ export const Cartouche = ({
                   'chiffres flex h-7 min-w-12 items-center justify-center text-xs font-bold',
                   dart
                     ? 'border border-laiton/60 bg-laiton/20 text-craie-vive'
-                    : 'border border-dashed border-craie/20 text-craie/20',
+                    : 'border border-dashed border-craie/20 text-craie-decor',
                 ].join(' ')}
               >
-                {dart ? DartVO.label(dart) : '·'}
+                {dart ? DartVO.label(dart) : <span aria-hidden="true">·</span>}
               </span>
             )
           })}
@@ -106,11 +106,11 @@ export const Cartouche = ({
       </div>
 
       <div className="flex items-center justify-between gap-3 px-1">
-        <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
+        <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
           Manche <span className="chiffres font-bold text-craie">{manche}</span>
-          <span className="text-craie/40">/{total}</span>
+          <span className="text-craie-3">/{total}</span>
         </span>
-        <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
+        <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
           Réussies <span className="chiffres font-bold text-vert-cible">{reussies}</span>
         </span>
       </div>

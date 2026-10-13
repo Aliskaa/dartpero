@@ -56,8 +56,8 @@ const CarteJeu = ({ mode }: { readonly mode: GameModeId }) => {
           <span className="font-score text-lg font-bold uppercase tracking-wide text-craie-vive">
             {LIBELLE_MODE[mode]}
           </span>
-          <span className="text-sm leading-snug text-craie/75">{premiere}</span>
-          <span className="text-sm leading-snug text-craie/75">{seconde}</span>
+          <span className="text-sm leading-snug text-craie-2">{premiere}</span>
+          <span className="text-sm leading-snug text-craie-2">{seconde}</span>
         </span>
         <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-laiton" />
       </Link>
@@ -79,7 +79,7 @@ const ChampNom = ({ nom }: { readonly nom: NomPartieSaisi }) => {
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={idChamp}
-        className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65"
+        className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie-3"
       >
         {LIBELLE_NOM_PARTIE}
       </label>
@@ -92,7 +92,7 @@ const ChampNom = ({ nom }: { readonly nom: NomPartieSaisi }) => {
         autoComplete="off"
         enterKeyHint="done"
         onChange={(evenement) => nom.setSaisie(evenement.target.value)}
-        className="min-h-12 border border-chene/60 bg-feutre/70 px-4 text-craie placeholder:text-craie/60"
+        className="min-h-12 border border-chene/60 bg-feutre/70 px-4 text-craie placeholder:text-craie-3"
       />
     </div>
   )

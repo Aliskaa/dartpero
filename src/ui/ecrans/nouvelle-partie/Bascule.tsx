@@ -28,12 +28,12 @@ export const Bascule = ({
     <span className="min-w-0">
       <span
         className={`block font-score text-sm font-bold uppercase tracking-widest ${
-          actif ? 'text-laiton-clair' : 'text-craie/75'
+          actif ? 'text-laiton-clair' : 'text-craie-2'
         }`}
       >
         {libelle}
       </span>
-      <span className="block truncate text-xs text-craie/60">{aide}</span>
+      <span className="block truncate text-xs text-craie-3">{aide}</span>
     </span>
 
     <span

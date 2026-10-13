@@ -9,7 +9,16 @@ Palette et rôles : `docs/CHARTE_GRAPHIQUE.md`.
   `hsl(…)`…). Vérifié par `tests/architecture/themeBoundary.test.ts`.
 - **Obligatoire** : les classes de tokens (`text-craie`, `bg-laiton`…),
   définies dans `@theme` de `src/index.css`.
-- Aucun texte sous **`craie/60`** (garage mal éclairé, luminosité basse).
+- Le texte secondaire s'écrit en **couleur pleine** : `text-craie-2` (courant
+  atténué) ou `text-craie-3` (légendes, en-têtes — le plancher). Aucun texte
+  sous `craie-3` (garage mal éclairé, luminosité basse), ≥ 4,5:1 sur les
+  quatre surfaces dans les deux thèmes.
+- **Interdits** : `text-craie/NN` et `text-craie-vive/NN` (l'encre transparente
+  tombe sous 4,5:1 sur papier) — garde `themeBoundary`. L'alpha reste permis
+  pour les bordures et les fonds (`border-craie/25`).
+- `text-craie-decor` : **uniquement** pour un glyphe purement décoratif
+  `aria-hidden` (séparateurs « · », « | »). Un « — » qui remplace une valeur
+  absente est une information : `craie-3`.
 - Les tokens s'emploient **en paires de rôle** : c'est ce qui permet au
   thème clair de n'être qu'une redéfinition des **valeurs** sous
   `html[data-theme="clair"]`, sans toucher une classe. Une couleur

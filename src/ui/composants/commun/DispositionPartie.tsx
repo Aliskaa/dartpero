@@ -57,7 +57,7 @@ export const DispositionPartie = ({ mode, enTete, nomPartie, children, saisie }:
     >
       <div className="flex items-center gap-3">{enTete}</div>
       {/* Aligné sur le texte de la rangée, après la flèche de retour (3rem). */}
-      <p className="grave h-4 truncate pl-12 font-score text-[0.7rem] leading-4 tracking-wide text-craie/70">
+      <p className="grave h-4 truncate pl-12 font-score text-[0.7rem] leading-4 tracking-wide text-craie-3">
         {nomPartie}
       </p>
     </header>

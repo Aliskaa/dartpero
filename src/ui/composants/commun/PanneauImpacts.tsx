@@ -42,7 +42,7 @@ export const PanneauImpacts = ({ joueurs, aide }: Props) => {
           <CarteImpacts key={joueur.id} nom={joueur.nom} hits={joueur.hits} />
         ))}
       </div>
-      <p className="mt-4 text-xs leading-snug text-craie/60">{aide}</p>
+      <p className="mt-4 text-xs leading-snug text-craie-3">{aide}</p>
     </Panneau>
   )
 }

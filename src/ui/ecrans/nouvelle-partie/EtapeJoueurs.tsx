@@ -84,7 +84,7 @@ export const EtapeJoueurs = ({
         aria-label={TITRE_PANNEAU_JOUEURS}
         titre={TITRE_PANNEAU_JOUEURS}
         action={
-          <span className="chiffres text-xs text-craie/60">
+          <span className="chiffres text-xs text-craie-3">
             {n}/{partie.max(mode)}
           </span>
         }
@@ -114,7 +114,7 @@ export const EtapeJoueurs = ({
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
 
       <div className="mt-auto flex flex-col gap-2 pt-1">
-        <p className="flex items-center justify-center gap-2 text-center font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
+        <p className="flex items-center justify-center gap-2 text-center font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
           <Check aria-hidden="true" className="size-3.5 shrink-0" />
           {recapitulatif(mode, partie)}
         </p>

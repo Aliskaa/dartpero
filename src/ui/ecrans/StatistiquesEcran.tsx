@@ -61,13 +61,13 @@ const TableauComparatif = ({
       <table aria-label={titre} className="w-full min-w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-chene/40">
-            <th className="px-3 py-2 text-left font-score text-[0.6rem] uppercase tracking-widest text-craie/55">
+            <th className="px-3 py-2 text-left font-score text-[0.6rem] uppercase tracking-widest text-craie-3">
               Joueur
             </th>
             {colonnes.map((colonne) => (
               <th
                 key={colonne.libelle}
-                className="px-2 py-2 text-right font-score text-[0.6rem] uppercase tracking-widest text-craie/55"
+                className="px-2 py-2 text-right font-score text-[0.6rem] uppercase tracking-widest text-craie-3"
               >
                 {colonne.libelle}
               </th>
@@ -84,7 +84,7 @@ const TableauComparatif = ({
                 <span className="flex min-w-0 items-center gap-2">
                   <span
                     className={`chiffres w-3 shrink-0 text-xs ${
-                      rang === 0 ? 'font-bold text-laiton' : 'text-craie/40'
+                      rang === 0 ? 'font-bold text-laiton' : 'text-craie-3'
                     }`}
                   >
                     {rang + 1}

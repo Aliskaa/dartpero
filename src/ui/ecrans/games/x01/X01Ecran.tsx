@@ -31,19 +31,19 @@ const EnTeteManche = ({
     <Link
       to="/"
       aria-label="Retour à l’accueil"
-      className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie/80 active:bg-craie/15"
+      className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie-2 active:bg-craie/15"
     >
       <ArrowLeft aria-hidden="true" className="size-5" />
     </Link>
 
     {/* « Manche » est plus long que « Leg » : le bandeau passe à la ligne
         entre ses morceaux plutôt qu'au milieu de l'un d'eux. */}
-    <p className="grave flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 font-score text-xs uppercase tracking-[0.2em] text-craie/75">
+    <p className="grave flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 font-score text-xs uppercase tracking-[0.2em] text-craie-2">
       <span className="whitespace-nowrap font-bold text-accent-mode-clair">
         {libelleMancheEnCours(legNumber + 1)}
       </span>
       {config.setsToWin > 1 && <span className="whitespace-nowrap">· Set {setNumber + 1}</span>}
-      <span aria-hidden="true" className="whitespace-nowrap text-craie/25">
+      <span aria-hidden="true" className="whitespace-nowrap text-craie-decor">
         |
       </span>
       <span className="chiffres whitespace-nowrap">{config.startingScore}</span>

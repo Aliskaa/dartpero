@@ -27,6 +27,13 @@
   --color-laiton-sombre: #6f5410;
   --color-craie: #f2e8d5;
   --color-craie-vive: #ffffff;
+  /* Le texte secondaire, en couleur PLEINE (jamais en alpha : l'encre
+     transparente tombe sous 4,5:1 sur papier). craie-2 = texte courant
+     secondaire, craie-3 = légendes et en-têtes. craie-decor n'a aucune
+     contrainte de contraste : glyphes décoratifs `aria-hidden` seulement. */
+  --color-craie-2: #bcb8a8;
+  --color-craie-3: #9b9b8a;
+  --color-craie-decor: #52584d;
   --color-rouge-cible: #c1272d;
   --color-vert-cible: #2e7d4f;
 
@@ -165,10 +172,13 @@ html[data-theme="clair"] {
   --color-laiton-clair: #6b5209;
   --color-laiton-sombre: #4a3a06;
 
-  /* L'encre. Le plancher « aucun texte sous craie/60 » tient : à 60 %,
-     l'encre garde 5:1 sur le papier. */
+  /* L'encre. Le plancher « aucun texte sous craie-3 » tient : craie-2 et
+     craie-3 gardent au moins 4,5:1 sur les quatre surfaces. */
   --color-craie: #1f2d24;
   --color-craie-vive: #0c1512;
+  --color-craie-2: #354137;
+  --color-craie-3: #485249;
+  --color-craie-decor: #a8a592;
 
   /* Assombris pour tenir sur du papier : le rouge et le vert du plateau sont
      calibrés pour être vus sur du feutre. */
@@ -387,7 +397,7 @@ html[data-theme="clair"] {
     font-size: 0.62rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: color-mix(in srgb, var(--color-craie) 62%, transparent);
+    color: var(--color-craie-3);
   }
 
   /* Une ligne de la feuille : un filet, et rien d'autre. Le chiffre doit

@@ -132,21 +132,21 @@ export const ResumeX01Ecran = () => {
       >
         {joueurs.length > 1 && (
           <div className="mt-4 flex flex-col items-center gap-1">
-            <p className="font-score text-[0.6rem] uppercase tracking-[0.28em] text-craie/55">
+            <p className="font-score text-[0.6rem] uppercase tracking-[0.28em] text-craie-3">
               {LIBELLE_MANCHES}
             </p>
-            <p className="chiffres flex items-center gap-3 text-2xl font-bold text-craie/80">
+            <p className="chiffres flex items-center gap-3 text-2xl font-bold text-craie-2">
               {joueurs.map((joueur, index) => (
                 <span key={joueur.playerId} className="flex items-center gap-3">
                   {index > 0 && (
-                    <span aria-hidden="true" className="text-craie/25">
+                    <span aria-hidden="true" className="text-craie-decor">
                       –
                     </span>
                   )}
                   <span
                     title={nomJoueur(profils.get(joueur.playerId)?.name ?? null)}
                     className={
-                      joueur.playerId === stats.data.winnerId ? 'text-accent-mode' : 'text-craie/50'
+                      joueur.playerId === stats.data.winnerId ? 'text-accent-mode' : 'text-craie-3'
                     }
                   >
                     {joueur.legsWon}

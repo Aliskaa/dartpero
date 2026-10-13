@@ -67,7 +67,7 @@ const InvitationInstallation = () => {
           <p className="font-score text-sm font-bold uppercase tracking-wide text-craie">
             {TITRE_INVITATION_INSTALLATION}
           </p>
-          <p className="mt-0.5 text-sm text-craie/70 paysage:hidden">
+          <p className="mt-0.5 text-sm text-craie-3 paysage:hidden">
             {TEXTE_INVITATION_INSTALLATION}
           </p>
         </div>
@@ -197,12 +197,12 @@ export const AccueilEcran = () => {
           </output>
         ) : jamaisJoue ? (
           <div className="flex flex-col items-start gap-1">
-            <p className="text-sm text-craie/70">{LIBELLE_AUCUNE_PARTIE_ENCORE}</p>
+            <p className="text-sm text-craie-3">{LIBELLE_AUCUNE_PARTIE_ENCORE}</p>
             {profils.size === 0 && lienCreerJoueur}
           </div>
         ) : semaineCalme ? (
           <div className="flex flex-col items-start gap-1">
-            <p className="text-sm text-craie/70">{LIBELLE_AUCUNE_PARTIE_SEMAINE}</p>
+            <p className="text-sm text-craie-3">{LIBELLE_AUCUNE_PARTIE_SEMAINE}</p>
             {lienParties}
             {profils.size === 0 && lienCreerJoueur}
           </div>
@@ -217,7 +217,7 @@ export const AccueilEcran = () => {
             )}
             {groupes.map(({ cle, titre, parties }) => (
               <section key={cle} aria-labelledby={`accueil-${cle}`} className="flex flex-col gap-3">
-                <h2 id={`accueil-${cle}`} className="entete-colonne text-craie/70">
+                <h2 id={`accueil-${cle}`} className="entete-colonne text-craie-3">
                   {titre}
                 </h2>
                 <ul className="flex flex-col gap-3">{parties.map((partie) => carte(partie))}</ul>

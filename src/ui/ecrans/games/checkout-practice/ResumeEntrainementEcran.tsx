@@ -66,7 +66,7 @@ export const ResumeEntrainementEcran = () => {
           className="chiffres trace-craie mt-3 block text-[4.5rem] font-bold leading-none text-craie-vive"
         >
           {pourcentage}
-          <span className="text-3xl font-normal text-craie/60"> %</span>
+          <span className="text-3xl font-normal text-craie-3"> %</span>
         </output>
 
         <p className="mt-1 font-score text-sm uppercase tracking-[0.2em] text-vert-cible">
@@ -76,7 +76,7 @@ export const ResumeEntrainementEcran = () => {
 
       <Panneau titre="Les sorties réussies" contenuClassName="p-3">
         {reussies.length === 0 ? (
-          <p className="py-2 text-center text-sm text-craie/60">
+          <p className="py-2 text-center text-sm text-craie-3">
             Aucune cette fois — le prochain double est le bon.
           </p>
         ) : (
@@ -88,7 +88,7 @@ export const ResumeEntrainementEcran = () => {
               >
                 <Target aria-hidden="true" className="size-3.5 shrink-0 text-vert-cible" />
                 <span className="chiffres text-base font-bold text-craie-vive">{round.target}</span>
-                <span className="chiffres text-xs text-craie/60">en {round.darts.length} fl.</span>
+                <span className="chiffres text-xs text-craie-3">en {round.darts.length} fl.</span>
               </li>
             ))}
           </ul>

@@ -97,7 +97,7 @@ const Resume = ({ rapport }: { readonly rapport: ImportReport }) => {
         {pluriel(rapport.matchesImported, 'partie', 'parties')} importés.
       </p>
       {ignores > 0 && (
-        <p className="mt-1 flex items-start gap-1.5 text-craie/70">
+        <p className="mt-1 flex items-start gap-1.5 text-craie-3">
           <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
           {pluriel(ignores, 'entrée illisible', 'entrées illisibles')} — ignorée
           {ignores > 1 ? 's' : ''}.
@@ -136,7 +136,7 @@ const EtatProtection = () => {
         className={`flex items-start gap-2 border px-3 py-2 text-sm ${
           etat === 'persisted'
             ? 'border-vert-cible/60 bg-vert-cible/12 text-craie'
-            : 'border-craie/25 text-craie/75'
+            : 'border-craie/25 text-craie-2'
         }`}
       >
         <Icone
@@ -145,7 +145,7 @@ const EtatProtection = () => {
         />
         <span>
           {LIBELLE_PROTECTION_STOCKAGE[etat]}{' '}
-          <span className="block text-craie/75">{RAPPEL_EXPORT_STOCKAGE[etat]}</span>
+          <span className="block text-craie-2">{RAPPEL_EXPORT_STOCKAGE[etat]}</span>
           {refusee && etat === 'not-persisted' && (
             <span className="mt-1 block text-craie">{REFUS_REDEMANDE_STOCKAGE}</span>
           )}
@@ -206,7 +206,7 @@ const EntreeInstallation = () => {
         className={`flex items-start gap-2 border px-3 py-2 text-sm ${
           installee
             ? 'border-vert-cible/60 bg-vert-cible/12 text-craie'
-            : 'border-craie/25 text-craie/75'
+            : 'border-craie/25 text-craie-2'
         }`}
       >
         <Icone
@@ -232,7 +232,7 @@ const EntreeInstallation = () => {
                 key={etape}
                 className="ligne-tableau flex min-h-12 items-center gap-3 px-1 py-2 text-sm text-craie last:border-b-0"
               >
-                <span className="chiffres w-4 shrink-0 text-xs font-bold text-craie/60">
+                <span className="chiffres w-4 shrink-0 text-xs font-bold text-craie-3">
                   {rang + 1}
                 </span>
                 <span className="min-w-0 flex-1">{etape}</span>
@@ -307,7 +307,7 @@ export const ReglagesEcran = () => {
         {/* L'onglet Joueurs a quitté la barre du bas : on y ajoute ses potes
             en créant une partie, on ne gère les profils qu'occasionnellement. */}
         <Panneau titre={TITRE_PANNEAU_JOUEURS} contenuClassName="flex flex-col gap-3 p-4">
-          <p className="text-sm text-craie/75">{TEXTE_PANNEAU_JOUEURS}</p>
+          <p className="text-sm text-craie-2">{TEXTE_PANNEAU_JOUEURS}</p>
           <Link
             to="/joueurs"
             className="flex min-h-12 w-full items-center justify-between gap-3 border-t border-craie/25 pt-3 text-sm text-craie active:text-craie-vive"
@@ -318,7 +318,7 @@ export const ReglagesEcran = () => {
         </Panneau>
 
         <Panneau titre="Sauvegarde" contenuClassName="flex flex-col gap-3 p-4">
-          <p className="text-sm text-craie/75">
+          <p className="text-sm text-craie-2">
             Tout vit sur ce téléphone : pas de compte, pas de serveur. Le fichier JSON est donc la
             <strong className="text-craie"> seule façon</strong> de changer d’appareil sans repartir
             de zéro.
@@ -355,9 +355,9 @@ export const ReglagesEcran = () => {
             />
           </div>
 
-          <p className="text-xs text-craie/60">
-            La restauration <strong className="text-craie/80">complète</strong> la base : les
-            profils et parties du fichier s’ajoutent, et ceux déjà présents (même identifiant) sont
+          <p className="text-xs text-craie-3">
+            La restauration <strong className="text-craie-2">complète</strong> la base : les profils
+            et parties du fichier s’ajoutent, et ceux déjà présents (même identifiant) sont
             remplacés par la version du fichier. Le reste n’est pas touché.
           </p>
 
@@ -400,17 +400,17 @@ export const ReglagesEcran = () => {
               {voix ? (
                 <Volume2 aria-hidden="true" className="size-5 shrink-0 text-laiton-clair" />
               ) : (
-                <VolumeX aria-hidden="true" className="size-5 shrink-0 text-craie/50" />
+                <VolumeX aria-hidden="true" className="size-5 shrink-0 text-craie-3" />
               )}
               <span className="min-w-0">
                 <span
                   className={`block font-score text-sm font-bold uppercase tracking-widest ${
-                    voix ? 'text-laiton-clair' : 'text-craie/75'
+                    voix ? 'text-laiton-clair' : 'text-craie-2'
                   }`}
                 >
                   Annoncer les volées
                 </span>
-                <span className="block truncate text-xs text-craie/60">
+                <span className="block truncate text-xs text-craie-3">
                   Le score, les bust et les sorties, à voix haute
                 </span>
               </span>
@@ -443,11 +443,11 @@ export const ReglagesEcran = () => {
         </Panneau>
 
         <Panneau titre="À propos" contenuClassName="flex flex-col gap-3 p-4">
-          <p className="flex items-center gap-2 text-sm text-craie/75">
+          <p className="flex items-center gap-2 text-sm text-craie-2">
             <WifiOff aria-hidden="true" className="size-4 shrink-0" />
             100 % local, hors ligne, sans compte.
           </p>
-          <p className="text-xs text-craie/60">{PRESENTATION_DARTPERO}</p>
+          <p className="text-xs text-craie-3">{PRESENTATION_DARTPERO}</p>
           <EntreeInstallation />
           {/* Hors de toute liste : l'entrée d'installation en rend une sur iOS. */}
           <Link

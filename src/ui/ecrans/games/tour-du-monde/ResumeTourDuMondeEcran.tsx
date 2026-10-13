@@ -98,7 +98,7 @@ export const ResumeTourDuMondeEcran = () => {
               <li key={joueur.playerId} className="flex items-center gap-3">
                 <span
                   className={`chiffres w-4 shrink-0 text-sm font-bold ${
-                    rang === 0 ? 'text-accent-mode' : 'text-craie/40'
+                    rang === 0 ? 'text-accent-mode' : 'text-craie-3'
                   }`}
                 >
                   {rang + 1}
@@ -111,9 +111,9 @@ export const ResumeTourDuMondeEcran = () => {
                     {joueur.finishedInDarts} fl.
                   </span>
                 ) : (
-                  <span className="chiffres text-sm text-craie/60">
+                  <span className="chiffres text-sm text-craie-3">
                     {joueur.targetIndex}
-                    <span className="text-craie/40">/{total}</span>
+                    <span className="text-craie-3">/{total}</span>
                   </span>
                 )}
               </li>

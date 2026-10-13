@@ -44,7 +44,7 @@ export const ChoixSegmente = <T extends string | number>({
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65">
+      <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie-3">
         {legende}
       </legend>
       <div
@@ -66,14 +66,14 @@ export const ChoixSegmente = <T extends string | number>({
             aria-pressed={option === valeur}
             onClick={() => onChange(option)}
             className={`relative z-10 min-h-12 px-1 transition-colors duration-150 ${TEXTE[taille]} ${
-              option === valeur ? 'text-sur-laiton' : 'text-craie/75'
+              option === valeur ? 'text-sur-laiton' : 'text-craie-2'
             }`}
           >
             {libelle(option)}
           </button>
         ))}
       </div>
-      {aide && <p className="text-xs leading-snug text-craie/60">{aide}</p>}
+      {aide && <p className="text-xs leading-snug text-craie-3">{aide}</p>}
     </fieldset>
   )
 }

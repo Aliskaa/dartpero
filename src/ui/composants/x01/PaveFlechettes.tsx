@@ -103,7 +103,7 @@ export const PaveFlechettes = ({
           disabled={desactive}
           /* Une fléchette manquée n'a ni double ni triple : elle ignore la bascule. */
           onClick={() => onFlechette(Dart.miss())}
-          className="touche chiffres min-h-[3.25rem] text-lg font-bold text-craie/60 paysage:min-h-12"
+          className="touche chiffres min-h-[3.25rem] text-lg font-bold text-craie-3 paysage:min-h-12"
         >
           0
         </button>
@@ -147,7 +147,7 @@ export const PaveFlechettes = ({
                 className={[
                   'relative z-10 min-h-12 font-score text-sm font-bold uppercase',
                   'tracking-widest transition-colors duration-150',
-                  actif ? 'text-sur-laiton' : 'text-craie/75',
+                  actif ? 'text-sur-laiton' : 'text-craie-2',
                 ].join(' ')}
               >
                 {libelle}

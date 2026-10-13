@@ -58,6 +58,49 @@ describe('Frontière des thèmes', () => {
     expect(fautes).toEqual([])
   })
 
+  /**
+   * Le texte secondaire s'écrit en couleur PLEINE (`text-craie-2`,
+   * `text-craie-3`), jamais en alpha : sur papier, l'encre transparente tombe
+   * sous 4,5:1. Le motif vise `text-craie` et toutes ses variantes
+   * (`-2`, `-3`, `-decor`, `-vive`…) suivies d'une barre : il laisse passer
+   * `border-craie/25` et `bg-craie/…`, dont l'alpha est un filet ou un fond,
+   * pas un texte.
+   */
+  const ALPHA_TEXTE = /\btext-craie(?:-[a-z0-9]+)?\/(?:\d+|\[)/g
+
+  it('aucun texte en alpha (text-craie/NN) dans src/ui', () => {
+    const tous = fichiers(UI)
+    expect(tous.length).toBeGreaterThan(40)
+
+    const fautes = tous.flatMap((fichier) =>
+      (readFileSync(fichier, 'utf8').match(ALPHA_TEXTE) ?? []).map(
+        (classe) => `${enUi(fichier)} → ${classe}`,
+      ),
+    )
+
+    expect(fautes).toEqual([])
+  })
+
+  it('le motif d’alpha attrape le texte en alpha et laisse passer le reste', () => {
+    const attrape = (chaine: string) => chaine.match(ALPHA_TEXTE) !== null
+
+    for (const alpha of [
+      'text-craie/60',
+      'text-craie-vive/80',
+      'hover:text-craie/5',
+      'text-craie/[.6]',
+      'text-craie-2/60',
+      'text-craie-3/50',
+      'text-craie-decor/40',
+      'text-craie-vive/[.8]',
+    ]) {
+      expect(attrape(alpha), alpha).toBe(true)
+    }
+    for (const plein of ['text-craie-2', 'text-craie', 'border-craie/25', 'text-craie-decor']) {
+      expect(attrape(plein), plein).toBe(false)
+    }
+  })
+
   /** Le CSS a le droit d'écrire des couleurs : c'est lui qui les définit. Mais
    *  les deux thèmes doivent définir EXACTEMENT les mêmes tokens, sinon l'un
    *  des deux hérite silencieusement d'une valeur de l'autre. */

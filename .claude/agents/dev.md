@@ -48,7 +48,7 @@ touchée (tests, couleurs, persistance, front…).
   `Services.devices` et `Services.clock` (l'heure courante, jamais `Date.now()` dans l'UI).
 - **Charte** : angle vif partout (pas de `rounded-*`), aucune couleur en dur dans `src/ui`
   (les tokens uniquement), cibles tactiles ≥ 48 px, icônes `lucide-react` toujours
-  `aria-hidden`, aucun texte sous `craie/60`.
+  `aria-hidden`, aucun texte sous `craie-3`, pas d'alpha de texte (`text-craie*/NN`), `craie-decor` réservé à l'`aria-hidden`.
 - **Réutiliser `src/ui/composants/commun/`**, ne jamais dupliquer une variante ad hoc.
 - **Biome**, jamais ESLint ni Prettier. `npm run lint`, `npm run typecheck`, `npm test`
   doivent passer avant de rendre ton rapport — et tu dis franchement s'ils ne passent pas.

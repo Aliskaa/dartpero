@@ -45,7 +45,7 @@ export const EnTeteEtape = ({
         type="button"
         aria-label={libelleRetour}
         onClick={retour}
-        className="flex size-12 shrink-0 items-center justify-center border border-chene/45 bg-ardoise text-craie/80 active:bg-chene/30"
+        className="flex size-12 shrink-0 items-center justify-center border border-chene/45 bg-ardoise text-craie-2 active:bg-chene/30"
       >
         <ArrowLeft aria-hidden="true" className="size-5" />
       </button>
@@ -54,7 +54,7 @@ export const EnTeteEtape = ({
           {titre}
         </h1>
         {sousTitre && (
-          <p className="truncate font-score text-[0.6rem] uppercase tracking-[0.25em] text-craie/60">
+          <p className="truncate font-score text-[0.6rem] uppercase tracking-[0.25em] text-craie-3">
             {sousTitre}
           </p>
         )}

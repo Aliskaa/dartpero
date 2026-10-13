@@ -37,7 +37,7 @@ const Marques = ({
     className={[
       'mx-auto',
       grande ? 'size-10' : 'size-8',
-      morte ? 'text-craie/20' : marques >= 3 ? 'text-accent-mode' : 'text-craie-vive',
+      morte ? 'text-craie-decor' : marques >= 3 ? 'text-accent-mode' : 'text-craie-vive',
     ].join(' ')}
     fill="none"
     stroke="currentColor"
@@ -99,7 +99,7 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
               scope="col"
               className={[
                 'grave pb-1 text-center font-score text-sm font-bold tracking-wider',
-                mortes[index] ? 'text-craie/25 line-through' : 'text-craie/75',
+                mortes[index] ? 'text-craie-3 line-through' : 'text-craie-2',
               ].join(' ')}
             >
               {libelleColonne(cible)}
@@ -107,7 +107,7 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
           ))}
           <th
             scope="col"
-            className="grave w-[16%] pb-1 text-right font-score text-[0.65rem] uppercase tracking-wider text-craie/65"
+            className="grave w-[16%] pb-1 text-right font-score text-[0.65rem] uppercase tracking-wider text-craie-3"
           >
             {cutThroat ? 'Pts ↓' : 'Pts'}
           </th>
@@ -122,10 +122,7 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
             <tr
               key={joueur.playerId}
               aria-current={joueur.actif ? 'true' : undefined}
-              className={[
-                'ligne-tableau transition-opacity duration-300',
-                joueur.actif ? 'au-lancer' : 'opacity-70',
-              ].join(' ')}
+              className={['ligne-tableau', joueur.actif ? 'au-lancer' : ''].join(' ')}
             >
               <th
                 scope="row"
@@ -146,7 +143,7 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
                     <span
                       className={`truncate font-score font-bold uppercase tracking-wider ${
                         compact ? 'text-xs' : 'text-sm'
-                      } ${joueur.actif ? 'text-accent-mode-clair' : 'text-craie'}`}
+                      } ${joueur.actif ? 'text-accent-mode-clair' : 'text-craie-2'}`}
                     >
                       {joueur.nom}
                     </span>
@@ -185,7 +182,8 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
                 <output
                   aria-label={`Points de ${joueur.nom}`}
                   className={[
-                    'chiffres trace-craie block font-bold leading-none text-craie-vive',
+                    'chiffres block font-bold leading-none text-craie-vive',
+                    joueur.actif ? 'trace-craie' : '',
                     compact ? 'text-3xl' : 'text-4xl',
                   ].join(' ')}
                 >

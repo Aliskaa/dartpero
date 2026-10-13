@@ -113,13 +113,13 @@ export const ChoixJoueursExistants = ({
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span
                       className={`truncate font-score text-base uppercase tracking-wide ${
-                        choisi ? 'text-craie-vive' : 'text-craie/75'
+                        choisi ? 'text-craie-vive' : 'text-craie-2'
                       }`}
                     >
                       {profil.name}
                     </span>
                     {jouees > 0 && (
-                      <span className="text-xs text-craie/65">{libelleManchesJouees(jouees)}</span>
+                      <span className="text-xs text-craie-3">{libelleManchesJouees(jouees)}</span>
                     )}
                   </span>
                   <span

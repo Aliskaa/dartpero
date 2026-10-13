@@ -29,7 +29,7 @@ export const StatTile = ({ libelle, valeur, accent = false, suffixe }: Props) =>
       }`}
     >
       {valeur}
-      {suffixe && <span className="ml-0.5 text-sm font-normal text-craie/60">{suffixe}</span>}
+      {suffixe && <span className="ml-0.5 text-sm font-normal text-craie-3">{suffixe}</span>}
     </dd>
   </div>
 )

@@ -71,7 +71,7 @@ export const MomentCelebratif = ({ moment, dureeMs = 2200 }: Props) => {
         {affiche.titre}
       </p>
       {affiche.detail && (
-        <p className="relative mt-0.5 font-score text-sm uppercase tracking-wider text-craie/80">
+        <p className="relative mt-0.5 font-score text-sm uppercase tracking-wider text-craie-2">
           {affiche.detail}
         </p>
       )}

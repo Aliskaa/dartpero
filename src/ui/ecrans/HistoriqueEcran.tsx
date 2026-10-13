@@ -48,7 +48,7 @@ const BoutonSupprimer = ({ onSupprimer }: { readonly onSupprimer: () => Promise<
         'font-score text-sm font-bold uppercase tracking-widest transition-colors',
         confirme
           ? 'border-rouge-cible bg-rouge-cible/30 text-craie-vive'
-          : 'border-rouge-cible/50 bg-rouge-cible/10 text-craie/80',
+          : 'border-rouge-cible/50 bg-rouge-cible/10 text-craie-2',
       ].join(' ')}
     >
       <Trash2 aria-hidden="true" className="size-4" />

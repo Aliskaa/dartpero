@@ -69,7 +69,7 @@ const RubanSortie = ({
   if (aucunFinish) {
     return (
       <div className="flex items-center gap-3 border-t border-craie/25 px-3 py-2">
-        <CircleOff aria-hidden="true" className="size-4 shrink-0 text-craie/55" />
+        <CircleOff aria-hidden="true" className="size-4 shrink-0 text-craie-3" />
         <span className="entete-colonne">Pas de finish</span>
       </div>
     )

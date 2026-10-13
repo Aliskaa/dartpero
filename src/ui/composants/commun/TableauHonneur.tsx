@@ -67,7 +67,7 @@ export const TableauHonneur = ({
       <p className="grave mb-1 min-h-6 max-w-full break-words font-score text-base font-bold tracking-wide text-craie-vive">
         {nomPartie}
       </p>
-      <p className="font-score text-[0.65rem] uppercase tracking-[0.35em] text-craie/60">
+      <p className="font-score text-[0.65rem] uppercase tracking-[0.35em] text-craie-3">
         {surtitre}
       </p>
 
@@ -93,7 +93,7 @@ export const TableauHonneur = ({
             Vainqueur
           </p>
           {vainqueur.detail && (
-            <p className="chiffres mt-2 text-sm text-craie/70">{vainqueur.detail}</p>
+            <p className="chiffres mt-2 text-sm text-craie-3">{vainqueur.detail}</p>
           )}
         </>
       ) : exAequo ? (
@@ -102,7 +102,7 @@ export const TableauHonneur = ({
           <h1 className="mt-3 font-display text-4xl text-craie-vive drop-shadow-[0_3px_0_var(--ombre-plaque)]">
             {exAequo.titre}
           </h1>
-          <p className="mt-1 max-w-xs text-sm text-craie/70">{exAequo.detail}</p>
+          <p className="mt-1 max-w-xs text-sm text-craie-3">{exAequo.detail}</p>
         </>
       ) : children ? null : (
         <h1 className="mt-4 font-display text-3xl text-accent-mode">Partie en cours</h1>
@@ -111,7 +111,7 @@ export const TableauHonneur = ({
       {children}
 
       {phrase && (
-        <p className="mt-4 max-w-xs animate-craie text-sm italic text-craie/75">{phrase}</p>
+        <p className="mt-4 max-w-xs animate-craie text-sm italic text-craie-2">{phrase}</p>
       )}
     </div>
   </section>

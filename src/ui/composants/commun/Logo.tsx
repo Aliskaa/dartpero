@@ -31,7 +31,7 @@ export const LogoHero = () => (
     </div>
 
     <div className="relative flex flex-col items-center pt-10">
-      <p className="font-score text-[0.65rem] uppercase tracking-[0.42em] text-craie/70">
+      <p className="font-score text-[0.65rem] uppercase tracking-[0.42em] text-craie-3">
         {LIBELLE_COMPTEUR_FLECHETTES}
       </p>
       <h1 className="mt-1">

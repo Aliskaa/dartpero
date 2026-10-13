@@ -13,7 +13,7 @@ const VARIANTES: Record<Variante, string> = {
   // Un filet de craie de 2 px, et rien d'autre : sur une fiche, un bouton
   // secondaire est un cadre, pas un objet en relief.
   secondaire: 'border-2 border-craie/55 text-craie active:bg-craie active:text-feutre',
-  discret: 'text-craie/70 active:text-craie',
+  discret: 'text-craie-3 active:text-craie',
   danger: 'border-2 border-rouge-cible text-rouge-cible active:bg-rouge-cible active:text-craie',
 }
 

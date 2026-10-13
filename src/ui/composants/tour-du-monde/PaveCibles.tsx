@@ -62,7 +62,7 @@ export const PaveCibles = ({
         type="button"
         disabled={desactive}
         onClick={() => onFlechette(Dart.miss())}
-        className="touche min-h-[3.25rem] shrink-0 px-4 font-score text-base font-bold uppercase tracking-wider text-craie/65 paysage:min-h-12"
+        className="touche min-h-[3.25rem] shrink-0 px-4 font-score text-base font-bold uppercase tracking-wider text-craie-3 paysage:min-h-12"
       >
         Hors
       </button>

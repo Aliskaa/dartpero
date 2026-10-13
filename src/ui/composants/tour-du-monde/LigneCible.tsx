@@ -52,8 +52,7 @@ export const LigneCible = ({
       className={[
         'ligne-tableau relative flex items-center gap-3 overflow-hidden pl-4 pr-3',
         compact ? 'py-2.5' : 'py-3.5',
-        'transition-opacity duration-300',
-        actif ? 'au-lancer' : 'opacity-70',
+        actif ? 'au-lancer' : '',
       ].join(' ')}
     >
       <span
@@ -67,7 +66,8 @@ export const LigneCible = ({
         <output
           aria-label={`Cible de ${nom}`}
           className={[
-            'chiffres trace-craie block font-bold leading-none',
+            'chiffres block font-bold leading-none',
+            actif ? 'trace-craie' : '',
             boucle ? 'text-vert-cible' : 'text-craie-vive',
             compact ? 'text-5xl' : 'text-6xl',
           ].join(' ')}
@@ -82,7 +82,7 @@ export const LigneCible = ({
           <span
             className={`truncate font-score font-bold uppercase tracking-wider ${
               compact ? 'text-xs' : 'text-sm'
-            } ${actif ? 'text-accent-mode-clair' : 'text-craie'}`}
+            } ${actif ? 'text-accent-mode-clair' : 'text-craie-2'}`}
           >
             {nom}
           </span>
@@ -92,12 +92,12 @@ export const LigneCible = ({
 
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/65">
+          <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
             Parcours
           </span>
           <span className={`chiffres font-bold text-craie-vive ${compact ? 'text-lg' : 'text-xl'}`}>
             {validees}
-            <span className="font-normal text-craie/50">/{total}</span>
+            <span className="font-normal text-craie-3">/{total}</span>
           </span>
         </div>
 
@@ -112,7 +112,7 @@ export const LigneCible = ({
           />
         </div>
 
-        <span className="font-score text-[0.65rem] uppercase tracking-wider text-craie/65">
+        <span className="font-score text-[0.65rem] uppercase tracking-wider text-craie-3">
           {flechettes} fléchette{flechettes > 1 ? 's' : ''}
         </span>
       </div>

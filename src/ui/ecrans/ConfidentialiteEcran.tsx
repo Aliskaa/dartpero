@@ -45,7 +45,7 @@ export const ConfidentialiteEcran = () => (
 
     {/* `max-w-prose` : en paysage, une ligne de toute la largeur ne se lit plus. */}
     <div className="flex w-full max-w-prose flex-col gap-3 px-4">
-      <p className="text-xs text-craie/75">{DATE_MISE_A_JOUR_CONFIDENTIALITE}</p>
+      <p className="text-xs text-craie-2">{DATE_MISE_A_JOUR_CONFIDENTIALITE}</p>
 
       {SECTIONS_CONFIDENTIALITE.map((section) => (
         <Panneau
@@ -54,7 +54,7 @@ export const ConfidentialiteEcran = () => (
           contenuClassName="flex flex-col gap-3 p-4"
         >
           {section.paragraphes.map((paragraphe) => (
-            <p key={paragraphe} className="text-sm text-craie/85">
+            <p key={paragraphe} className="text-sm text-craie-2">
               {paragraphe}
             </p>
           ))}
@@ -65,9 +65,7 @@ export const ConfidentialiteEcran = () => (
         <dl className="flex flex-col gap-3 text-sm">
           {MENTIONS.map(({ terme, valeurs }) => (
             <div key={terme} className="flex flex-col gap-0.5">
-              <dt className="font-score text-xs uppercase tracking-widest text-craie/75">
-                {terme}
-              </dt>
+              <dt className="font-score text-xs uppercase tracking-widest text-craie-2">{terme}</dt>
               {valeurs.map((valeur) => (
                 <dd key={valeur} className="text-craie">
                   {valeur}

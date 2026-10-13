@@ -74,7 +74,7 @@ const CarteProfil = ({
           <span className="block truncate font-score text-base uppercase tracking-wide text-craie">
             {joueur.name}
           </span>
-          <span className="block text-xs text-craie/60">
+          <span className="block text-xs text-craie-3">
             {joueur.createdAt > 0 ? `Depuis le ${dateCourte(joueur.createdAt)}` : 'Profil local'}
           </span>
         </span>
@@ -82,7 +82,7 @@ const CarteProfil = ({
           type="button"
           aria-label={`Modifier ${joueur.name}`}
           onClick={ouvrir}
-          className="touche flex size-11 shrink-0 items-center justify-center text-craie/75"
+          className="touche flex size-11 shrink-0 items-center justify-center text-craie-2"
         >
           <Pencil aria-hidden="true" className="size-4" />
         </button>
@@ -142,7 +142,7 @@ const CarteProfil = ({
       </div>
 
       {confirmeSuppression && (
-        <p className="text-xs text-craie/70">
+        <p className="text-xs text-craie-3">
           Ses parties passées restent dans l’historique, mais son pseudo y sera remplacé par «
           Joueur supprimé ».
         </p>
@@ -227,7 +227,7 @@ export const JoueursEcran = () => {
             value={nouveauNom}
             maxLength={20}
             onChange={(evenement) => setNouveauNom(evenement.target.value)}
-            className="min-h-12 min-w-0 flex-1 border border-chene/60 bg-feutre/70 px-4 text-craie placeholder:text-craie/40"
+            className="min-h-12 min-w-0 flex-1 border border-chene/60 bg-feutre/70 px-4 text-craie placeholder:text-craie-3"
           />
           <Button type="submit" disabled={nouveauNom.trim() === ''}>
             <UserPlus aria-hidden="true" className="size-4" />

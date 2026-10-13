@@ -48,7 +48,7 @@ export const NavigationBasse = () => (
             // overflow-hidden (hauteur fixe), un contour décalé vers l'extérieur serait rogné.
             'focus-visible:outline-offset-[-2px]',
             'font-score text-[0.6rem] uppercase tracking-wider transition-colors duration-150',
-            isActive ? 'text-laiton-clair' : 'text-craie/60 active:text-craie',
+            isActive ? 'text-craie-vive' : 'text-craie-3 active:text-craie',
           ].join(' ')
         }
       >

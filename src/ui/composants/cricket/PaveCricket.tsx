@@ -86,7 +86,7 @@ export const PaveCricket = ({
           disabled={desactive}
           /* Une fléchette hors des sept cibles ne vaut rien : elle ignore la bascule. */
           onClick={() => onFlechette(Dart.miss())}
-          className="touche min-h-14 font-score text-base font-bold uppercase tracking-wider text-craie/65 paysage:min-h-12"
+          className="touche min-h-14 font-score text-base font-bold uppercase tracking-wider text-craie-3 paysage:min-h-12"
         >
           Hors
         </button>
@@ -114,7 +114,7 @@ export const PaveCricket = ({
                 className={[
                   'relative z-10 min-h-12 font-score text-sm font-bold uppercase',
                   'tracking-widest transition-colors duration-150',
-                  actif ? 'text-sur-laiton' : 'text-craie/75',
+                  actif ? 'text-sur-laiton' : 'text-craie-2',
                 ].join(' ')}
               >
                 {libelle}

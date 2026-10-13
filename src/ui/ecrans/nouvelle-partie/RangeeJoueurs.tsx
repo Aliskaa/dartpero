@@ -94,7 +94,7 @@ export const RangeeJoueurs = ({ joueurs, max, onRetirer, onNouveau, versExistant
         )}
       </ul>
 
-      {joueurs.length === 0 && <p className="text-sm text-craie/70">{AUCUN_JOUEUR_PARTIE}</p>}
+      {joueurs.length === 0 && <p className="text-sm text-craie-3">{AUCUN_JOUEUR_PARTIE}</p>}
 
       {!plein && (
         // biome-ignore lint/a11y/noStaticElementInteractions: Échap referme le panneau depuis n'importe lequel de ses deux boutons.

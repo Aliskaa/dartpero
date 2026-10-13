@@ -195,7 +195,7 @@ export const ListeOrdonnable = ({ joueurs, tirage, onDeplacer }: Props) => {
                   onPointerUp={relacher}
                   onPointerCancel={abandonner}
                   className={[
-                    'flex size-12 shrink-0 cursor-grab items-center justify-center text-craie/80',
+                    'flex size-12 shrink-0 cursor-grab items-center justify-center text-craie-2',
                     'touch-none select-none [-webkit-touch-callout:none] active:cursor-grabbing',
                   ].join(' ')}
                 >

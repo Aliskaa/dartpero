@@ -92,7 +92,7 @@ export const ResumeCricketEcran = () => {
               <li key={joueur.playerId} className="flex items-center gap-3">
                 <span
                   className={`chiffres w-4 shrink-0 text-sm font-bold ${
-                    rang === 0 ? 'text-accent-mode' : 'text-craie/40'
+                    rang === 0 ? 'text-accent-mode' : 'text-craie-3'
                   }`}
                 >
                   {rang + 1}
@@ -100,9 +100,9 @@ export const ResumeCricketEcran = () => {
                 <Avatar nom={nom} couleur={profil?.color ?? null} taille="sm" />
                 <span className="min-w-0 flex-1 truncate text-craie">{nom}</span>
 
-                <span className="chiffres text-sm text-craie/60">
+                <span className="chiffres text-sm text-craie-3">
                   {fermees(joueur.marks)}
-                  <span className="text-craie/40">/{total}</span>
+                  <span className="text-craie-3">/{total}</span>
                 </span>
                 <span className="chiffres w-12 text-right text-base font-bold text-craie-vive">
                   {joueur.score}
