@@ -8,6 +8,7 @@ import { useServices } from '../providers/ServicesProvider'
 import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
 import { useProfils } from './useJoueurs'
+import { usePauseAnnulation } from './usePauseAnnulation'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -28,6 +29,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
   const dire = useVoix()
+  const { enPause, armer, ecoulee } = usePauseAnnulation()
 
   // Les pseudos, pour appeler le joueur suivant par son nom. Gardés dans une
   // ref : la Map est reconstruite à chaque rendu.
@@ -121,13 +123,18 @@ export const useTourDuMonde = (matchId: MatchId) => {
    * enregistrée.
    */
   const annuler = useCallback(async () => {
+    if (occupe) return
     setErreur(null)
 
     if (dartsEnCours.length > 0) {
       services.devices.haptics.tap()
       setDartsEnCours((darts) => darts.slice(0, -1))
+      // La dernière fléchette vient de partir : un second appui réflexe ne doit
+      // pas défaire la volée d'un autre joueur (voir `usePauseAnnulation`).
+      if (dartsEnCours.length === 1) armer()
       return
     }
+    if (!ecoulee()) return
     if (!state || state.history.length === 0) return
 
     setOccupe(true)
@@ -141,7 +148,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     } finally {
       setOccupe(false)
     }
-  }, [services, state, matchId, dartsEnCours.length, queryClient])
+  }, [services, state, matchId, dartsEnCours.length, queryClient, occupe, armer, ecoulee])
 
   /** Ce que le bouton va défaire, écrit dessus — voir `libelleAnnulation`. */
   const annulation = useMemo(() => {
@@ -166,7 +173,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     ajouterFlechette,
     annuler,
     annulation,
-    peutAnnuler: dartsEnCours.length > 0 || (state?.history.length ?? 0) > 0,
+    peutAnnuler: dartsEnCours.length > 0 || (!enPause && (state?.history.length ?? 0) > 0),
     occupe,
     erreur,
   }

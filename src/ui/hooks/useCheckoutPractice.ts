@@ -5,6 +5,7 @@ import type { MatchId } from '@/core/domain/value-objects/ids'
 import { annonceIssue } from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
 import { useVoix } from './useAppareil'
+import { usePauseAnnulation } from './usePauseAnnulation'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -21,6 +22,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
   const dire = useVoix()
+  const { enPause, armer, ecoulee } = usePauseAnnulation()
 
   const requete = useQuery({
     queryKey: ['checkoutPractice', matchId],
@@ -80,13 +82,18 @@ export const useCheckoutPractice = (matchId: MatchId) => {
   )
 
   const annuler = useCallback(async () => {
+    if (occupe) return
     setErreur(null)
 
     if (dartsEnCours.length > 0) {
       services.devices.haptics.tap()
       setDartsEnCours((darts) => darts.slice(0, -1))
+      // La dernière fléchette vient de partir : un second appui réflexe ne doit
+      // pas défaire la manche précédente (voir `usePauseAnnulation`).
+      if (dartsEnCours.length === 1) armer()
       return
     }
+    if (!ecoulee()) return
     if (!state || state.roundsPlayed === 0) return
 
     setOccupe(true)
@@ -99,7 +106,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
     } finally {
       setOccupe(false)
     }
-  }, [services, state, matchId, dartsEnCours.length, queryClient])
+  }, [services, state, matchId, dartsEnCours.length, queryClient, occupe, armer, ecoulee])
 
   return {
     state,
@@ -113,7 +120,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
     setMultiplicateur,
     ajouterFlechette,
     annuler,
-    peutAnnuler: dartsEnCours.length > 0 || (state?.roundsPlayed ?? 0) > 0,
+    peutAnnuler: dartsEnCours.length > 0 || (!enPause && (state?.roundsPlayed ?? 0) > 0),
     occupe,
     erreur,
   }
