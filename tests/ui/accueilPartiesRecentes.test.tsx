@@ -11,9 +11,18 @@ import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
+import { InMemoryMatchRepository } from '@/infrastructure/memory/InMemoryMatchRepository'
+import { InMemoryPlayerRepository } from '@/infrastructure/memory/InMemoryPlayerRepository'
 import { ACCENTS_MODE } from '@/ui/accents'
 import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
-import { JOUEUR_SUPPRIME, libelleGagneEnManches, TITRE_PARTIE_EN_COURS } from '@/ui/labels'
+import { CLE_JOUEURS } from '@/ui/hooks/useJoueurs'
+import {
+  JOUEUR_SUPPRIME,
+  LIBELLE_CHARGEMENT_PARTIES,
+  LIBELLE_ERREUR_ACCUEIL,
+  libelleGagneEnManches,
+  TITRE_PARTIE_EN_COURS,
+} from '@/ui/labels'
 import { fakeServices, SettableClock } from '../fakes'
 import { lancer } from '../use-cases/lancerPartie'
 import { flechette, retourTelephone } from './gestes'
@@ -511,7 +520,7 @@ describe('Accueil — état vide', () => {
 
     ouvrir(services)
 
-    expect(await screen.findByText('Pas de partie cette semaine')).toBeInTheDocument()
+    expect(await screen.findByText('Aucune partie jouée pour l’instant')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Créer un joueur/ })).toHaveAttribute(
       'href',
       '/joueurs',
@@ -524,7 +533,7 @@ describe('Accueil — état vide', () => {
 
     ouvrir(services)
 
-    expect(await screen.findByText('Pas de partie cette semaine')).toBeInTheDocument()
+    expect(await screen.findByText('Aucune partie jouée pour l’instant')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Créer un joueur/ })).not.toBeInTheDocument()
   })
 
@@ -548,6 +557,240 @@ describe('Accueil — état vide', () => {
 
     expect(screen.queryByRole('region', { name: 'Partie en cours' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Ce soir à l’oche/)).not.toBeInTheDocument()
+  })
+})
+
+/** Un dépôt de parties dont les lectures échouent : une panne, sans mock. */
+class DepotPartiesEnPanne extends InMemoryMatchRepository {
+  override async listRecent(): Promise<never> {
+    throw new Error('IndexedDB indisponible')
+  }
+  override async listAll(): Promise<never> {
+    throw new Error('IndexedDB indisponible')
+  }
+}
+
+/** Un dépôt de parties qui ne répond jamais : l'écran reste en chargement. */
+class DepotPartiesLent extends InMemoryMatchRepository {
+  override listRecent(): Promise<never> {
+    return new Promise<never>(() => {})
+  }
+}
+
+class DepotJoueursEnPanne extends InMemoryPlayerRepository {
+  override async listAll(): Promise<never> {
+    throw new Error('IndexedDB indisponible')
+  }
+}
+
+class DepotJoueursLent extends InMemoryPlayerRepository {
+  override listAll(): Promise<never> {
+    return new Promise<never>(() => {})
+  }
+}
+
+const LIBELLE_JAMAIS = 'Aucune partie jouée pour l’instant'
+const LIBELLE_SEMAINE = 'Pas de partie cette semaine'
+
+describe('Accueil — robustesse : erreur, chargement, états vides, fin de liste', () => {
+  it('une lecture des parties qui échoue : une alerte, jamais « Pas de partie cette semaine »', async () => {
+    const { services } = fakeServices({
+      clock: new SettableClock(MAINTENANT),
+      matches: new DepotPartiesEnPanne(),
+    })
+
+    ouvrir(services)
+
+    const alerte = await screen.findByRole('alert')
+    expect(alerte).toHaveTextContent(LIBELLE_ERREUR_ACCUEIL)
+    expect(alerte).not.toHaveTextContent('IndexedDB')
+    expect(screen.queryByText(LIBELLE_SEMAINE)).not.toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_JAMAIS)).not.toBeInTheDocument()
+    // Le bouton reste là : on peut toujours lancer une partie.
+    expect(screen.getByRole('link', { name: 'Nouvelle partie' })).toBeInTheDocument()
+  })
+
+  /**
+   * Isoler une requête : les deux autres sont déjà au chaud dans le cache (valeurs
+   * vides, `staleTime` infini), seule celle qu'on omet s'exécute, contre le dépôt
+   * en panne. Couplé aux clés de `clesRequetes.ts` (+ `['historique', 'accueil']`
+   * et `['joueurs']`, publiques) ; aucune valeur interne comme 20 ou 30.
+   */
+  const CLE_ACCUEIL = [...CLE_HISTORIQUE, 'accueil'] as const
+  const clientAmorce = (chaudes: readonly ('encours' | 'historique' | 'joueurs')[]) => {
+    const queryClient = clientSansRevalidation()
+    if (chaudes.includes('encours')) queryClient.setQueryData(CLE_MATCH_EN_COURS, null)
+    if (chaudes.includes('historique')) queryClient.setQueryData(CLE_ACCUEIL, [])
+    if (chaudes.includes('joueurs')) queryClient.setQueryData(CLE_JOUEURS, [])
+    return queryClient
+  }
+
+  it('seule la lecture de la partie en cours échoue : la même alerte', async () => {
+    const { services } = fakeServices({
+      clock: new SettableClock(MAINTENANT),
+      matches: new DepotPartiesEnPanne(),
+    })
+
+    renderWithServices(<App />, {
+      services,
+      route: '/',
+      queryClient: clientAmorce(['historique', 'joueurs']),
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(LIBELLE_ERREUR_ACCUEIL)
+    expect(screen.queryByText(LIBELLE_SEMAINE)).not.toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_JAMAIS)).not.toBeInTheDocument()
+  })
+
+  it('seule la lecture de l’historique échoue : la même alerte', async () => {
+    const { services } = fakeServices({
+      clock: new SettableClock(MAINTENANT),
+      matches: new DepotPartiesEnPanne(),
+    })
+
+    renderWithServices(<App />, {
+      services,
+      route: '/',
+      queryClient: clientAmorce(['encours', 'joueurs']),
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(LIBELLE_ERREUR_ACCUEIL)
+    expect(screen.queryByText(LIBELLE_SEMAINE)).not.toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_JAMAIS)).not.toBeInTheDocument()
+  })
+
+  it('seule la lecture des joueurs échoue : la même alerte', async () => {
+    const { services } = fakeServices({
+      clock: new SettableClock(MAINTENANT),
+      players: new DepotJoueursEnPanne(),
+    })
+
+    renderWithServices(<App />, {
+      services,
+      route: '/',
+      queryClient: clientAmorce(['encours', 'historique']),
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(LIBELLE_ERREUR_ACCUEIL)
+    expect(screen.queryByText(LIBELLE_SEMAINE)).not.toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_JAMAIS)).not.toBeInTheDocument()
+  })
+
+  it('seuls les joueurs sont en chargement : le statut, ni « jamais joué » ni « Créer un joueur »', async () => {
+    const { services } = fakeServices({
+      clock: new SettableClock(MAINTENANT),
+      players: new DepotJoueursLent(),
+    })
+
+    renderWithServices(<App />, {
+      services,
+      route: '/',
+      queryClient: clientAmorce(['encours', 'historique']),
+    })
+
+    expect(await screen.findByRole('status')).toHaveTextContent(LIBELLE_CHARGEMENT_PARTIES)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_JAMAIS)).not.toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_SEMAINE)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Créer un joueur/ })).not.toBeInTheDocument()
+  })
+
+  it('une partie en cours seule, vieille de plus de 7 jours : épinglée, ni état vide ni « semaine calme »', async () => {
+    const { services, enCours } = await base()
+    await enCours(le(OCT, 2, 8, 0), 'X01', 'Vieille seule')
+
+    ouvrir(services)
+
+    expect(await screen.findByRole('link', { name: /Vieille seule/ })).toHaveTextContent(
+      'Reprendre',
+    )
+    expect(screen.queryByText(LIBELLE_SEMAINE)).not.toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_JAMAIS)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Toutes les parties' })).not.toBeInTheDocument()
+  })
+
+  it('le chargement est annoncé par un statut', async () => {
+    const { services } = fakeServices({
+      clock: new SettableClock(MAINTENANT),
+      matches: new DepotPartiesLent(),
+    })
+
+    ouvrir(services)
+
+    const statut = await screen.findByRole('status')
+    expect(statut).toHaveTextContent(LIBELLE_CHARGEMENT_PARTIES)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_SEMAINE)).not.toBeInTheDocument()
+  })
+
+  it('jamais joué : le libellé dédié, et pas de lien « Toutes les parties »', async () => {
+    const { services } = fakeServices({ clock: new SettableClock(MAINTENANT) })
+
+    ouvrir(services)
+
+    expect(await screen.findByText(LIBELLE_JAMAIS)).toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_SEMAINE)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Toutes les parties' })).not.toBeInTheDocument()
+  })
+
+  it('semaine calme : « Pas de partie cette semaine » et le lien vers l’historique', async () => {
+    const { services, x01Termine } = await base()
+    await x01Termine(le(OCT, 1, 20, 0), 'Ancienne finie')
+
+    ouvrir(services)
+
+    expect(await screen.findByText(LIBELLE_SEMAINE)).toBeInTheDocument()
+    expect(screen.queryByText(LIBELLE_JAMAIS)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Toutes les parties' })).toHaveAttribute(
+      'href',
+      '/historique',
+    )
+  })
+
+  it('une récente et une ancienne : la liste est visible, avec le lien', async () => {
+    const { services, x01Termine } = await base()
+    await x01Termine(le(OCT, 13, 20, 0), 'Récente')
+    await x01Termine(le(OCT, 1, 20, 0), 'Ancienne')
+
+    ouvrir(services)
+
+    expect(await screen.findByRole('heading', { name: 'Récente' })).toBeVisible()
+    expect(screen.queryByText('Ancienne')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Toutes les parties' })).toHaveAttribute(
+      'href',
+      '/historique',
+    )
+  })
+
+  it('31 parties dans la journée (30 ou plus) : le plafond est atteint, le lien vers l’historique est là', async () => {
+    const { services, x01Termine } = await base()
+    for (let rang = 0; rang < 31; rang += 1)
+      await x01Termine(le(OCT, 13, 8, rang), `Partie ${rang}`)
+
+    ouvrir(services)
+    await screen.findByRole('region', { name: 'Aujourd’hui' })
+
+    expect(cartes()).toHaveLength(30)
+    expect(screen.getByRole('link', { name: 'Toutes les parties' })).toBeInTheDocument()
+  })
+
+  it('peu de parties, toutes visibles : pas de lien « Toutes les parties »', async () => {
+    const { services, x01Termine } = await base()
+    await x01Termine(le(OCT, 13, 20, 0), 'Seule visible')
+
+    ouvrir(services)
+    await screen.findByRole('region', { name: 'Aujourd’hui' })
+
+    expect(screen.queryByRole('link', { name: 'Toutes les parties' })).not.toBeInTheDocument()
+  })
+
+  it('« Créer un joueur » : le nom accessible est sans la flèche', async () => {
+    const { services } = fakeServices({ clock: new SettableClock(MAINTENANT) })
+
+    ouvrir(services)
+
+    const lien = await screen.findByRole('link', { name: 'Créer un joueur' })
+    expect(lien.querySelector('[aria-hidden="true"]')).toHaveTextContent('→')
   })
 })
 
@@ -741,7 +984,7 @@ describe('Accueil — l’invalidation du cache, avec un seul QueryClient', () =
       route: '/',
       queryClient: clientSansRevalidation(),
     })
-    await screen.findByText('Pas de partie cette semaine')
+    await screen.findByText('Aucune partie jouée pour l’instant')
 
     await utilisateur.click(screen.getByRole('link', { name: 'Réglages' }))
     const fichier = new File([JSON.stringify(sauvegarde)], 'dartpero.json', {
@@ -753,6 +996,7 @@ describe('Accueil — l’invalidation du cache, avec un seul QueryClient', () =
     await utilisateur.click(screen.getByRole('link', { name: 'Début' }))
 
     expect(await screen.findByRole('heading', { name: 'Venue d’ailleurs' })).toBeVisible()
+    expect(screen.queryByText('Aucune partie jouée pour l’instant')).not.toBeInTheDocument()
     expect(screen.queryByText('Pas de partie cette semaine')).not.toBeInTheDocument()
   })
 })
@@ -802,7 +1046,7 @@ describe('Accueil — mise à jour après les mutations', () => {
       </>,
       { services, route: '/' },
     )
-    await screen.findByText('Pas de partie cette semaine')
+    await screen.findByText('Aucune partie jouée pour l’instant')
     const cleAccueil = [...CLE_HISTORIQUE, 'accueil']
     expect(client?.getQueryState(cleAccueil)?.isInvalidated).toBe(false)
     expect(client?.getQueryState(CLE_MATCH_EN_COURS)?.isInvalidated).toBe(false)
@@ -820,7 +1064,7 @@ describe('Accueil — mise à jour après les mutations', () => {
   it('un Accueil rouvert à neuf (autre client) affiche la partie terminée entre-temps', async () => {
     const { services, x01Termine } = await base()
     const { unmount } = ouvrir(services)
-    await screen.findByText('Pas de partie cette semaine')
+    await screen.findByText('Aucune partie jouée pour l’instant')
     unmount()
 
     await x01Termine(le(OCT, 13, 21, 0), 'Tout juste finie')

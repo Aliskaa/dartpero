@@ -452,6 +452,25 @@ export const LIBELLE_TERMINEE = 'Terminée'
 export const LIBELLE_AUCUNE_PARTIE_SEMAINE = 'Pas de partie cette semaine'
 export const LIBELLE_CREER_JOUEUR = 'Créer un joueur'
 
+/* Robustesse de l'Accueil (lot `accueil-robustesse`). */
+
+/** Aucune partie dans toute la base : l'appli n'a jamais servi (≠ semaine calme). */
+export const LIBELLE_AUCUNE_PARTIE_ENCORE = 'Aucune partie jouée pour l’instant'
+export const LIBELLE_TOUTES_LES_PARTIES = 'Toutes les parties'
+/** Une lecture a échoué : on ne promet pas que les données sont intactes, on n'affiche pas l'erreur brute. */
+export const LIBELLE_ERREUR_ACCUEIL =
+  'Impossible de lire les parties pour le moment. Rouvrez l’application ; si le problème persiste, vos données sont peut-être inaccessibles sur cet appareil.'
+export const LIBELLE_CHARGEMENT_PARTIES = 'Chargement des parties…'
+
+/* La barre du bas et l'enseigne : libellés d'écran sortis des composants. */
+
+export const LIBELLE_NAVIGATION_PRINCIPALE = 'Navigation principale'
+export const LIBELLE_ONGLET_DEBUT = 'Début'
+export const LIBELLE_ONGLET_STATS = 'Stats'
+export const LIBELLE_ONGLET_PARTIES = 'Parties'
+export const LIBELLE_ONGLET_REGLAGES = 'Réglages'
+export const LIBELLE_COMPTEUR_FLECHETTES = 'Compteur de fléchettes'
+
 /** Titre invisible au-dessus de la carte épinglée : la hiérarchie `h1` → `h2` → `h3` reste continue. */
 export const TITRE_PARTIE_EN_COURS = 'Partie en cours'
 

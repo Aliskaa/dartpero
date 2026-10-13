@@ -1,6 +1,13 @@
 import { CalendarDays, ChartColumn, House, Settings } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { NavLink } from 'react-router'
+import {
+  LIBELLE_NAVIGATION_PRINCIPALE,
+  LIBELLE_ONGLET_DEBUT,
+  LIBELLE_ONGLET_PARTIES,
+  LIBELLE_ONGLET_REGLAGES,
+  LIBELLE_ONGLET_STATS,
+} from '@/ui/labels'
 
 type Onglet = {
   readonly to: string
@@ -9,10 +16,10 @@ type Onglet = {
 }
 
 const ONGLETS: readonly Onglet[] = [
-  { to: '/', libelle: 'Début', Icone: House },
-  { to: '/statistiques', libelle: 'Stats', Icone: ChartColumn },
-  { to: '/historique', libelle: 'Parties', Icone: CalendarDays },
-  { to: '/reglages', libelle: 'Réglages', Icone: Settings },
+  { to: '/', libelle: LIBELLE_ONGLET_DEBUT, Icone: House },
+  { to: '/statistiques', libelle: LIBELLE_ONGLET_STATS, Icone: ChartColumn },
+  { to: '/historique', libelle: LIBELLE_ONGLET_PARTIES, Icone: CalendarDays },
+  { to: '/reglages', libelle: LIBELLE_ONGLET_REGLAGES, Icone: Settings },
 ]
 
 /**
@@ -26,7 +33,7 @@ const ONGLETS: readonly Onglet[] = [
  */
 export const NavigationBasse = () => (
   <nav
-    aria-label="Navigation principale"
+    aria-label={LIBELLE_NAVIGATION_PRINCIPALE}
     className="bandeau-bas sticky bottom-0 z-20 flex h-[calc(var(--hauteur-nav-basse)+env(safe-area-inset-bottom))] shrink-0 overflow-hidden pb-[env(safe-area-inset-bottom)]"
   >
     {ONGLETS.map(({ to, libelle, Icone }) => (

@@ -7,7 +7,7 @@ import { cheminNouvellePartie, ETAT_PARCOURS } from '@/ui/chemins'
 import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { Button, classesBouton } from '@/ui/composants/commun/Button'
 import { CartePartie } from '@/ui/composants/commun/CartePartie'
-import { Skeleton } from '@/ui/composants/commun/Etats'
+import { MessageErreur, Skeleton } from '@/ui/composants/commun/Etats'
 import { LogoHero } from '@/ui/composants/commun/Logo'
 import { usePreference } from '@/ui/hooks/useAppareil'
 import {
@@ -19,10 +19,14 @@ import { useJoueurs, useProfils } from '@/ui/hooks/useJoueurs'
 import { groupeDeJour } from '@/ui/jourCalendaire'
 import {
   dateHeure,
+  LIBELLE_AUCUNE_PARTIE_ENCORE,
   LIBELLE_AUCUNE_PARTIE_SEMAINE,
+  LIBELLE_CHARGEMENT_PARTIES,
   LIBELLE_CREER_JOUEUR,
+  LIBELLE_ERREUR_ACCUEIL,
   LIBELLE_INSTALLER,
   LIBELLE_PLUS_TARD,
+  LIBELLE_TOUTES_LES_PARTIES,
   libelleQuand,
   TEXTE_INVITATION_INSTALLATION,
   TITRE_AUJOURDHUI,
@@ -147,8 +151,34 @@ export const AccueilEcran = () => {
     { cle: 'CETTE_SEMAINE', titre: TITRE_CETTE_SEMAINE, parties: parGroupe.CETTE_SEMAINE },
   ].filter(({ parties }) => parties.length > 0)
 
+  // Une lecture en échec ne se lit jamais comme « rien à montrer ».
+  const enErreur = encours.isError || historique.isError || joueurs.isError
   const chargement = encours.isPending || historique.isPending || joueurs.isPending
-  const vide = !enCours && groupes.length === 0
+
+  // Les cas, déduits de l'historique déjà lu (aucun compte en base).
+  const total = historique.data?.length ?? 0
+  const affichees = (enCours ? 1 : 0) + groupes.reduce((n, { parties }) => n + parties.length, 0)
+  const jamaisJoue = total === 0 && !enCours
+  const semaineCalme = affichees === 0 && total > 0
+  // Des parties hors de l'Accueil (trop anciennes), ou le plafond atteint : la suite est à l'onglet Parties.
+  const lienToutesLesParties = total > affichees || total >= PLAFOND_CARTES
+
+  const lienCreerJoueur = (
+    <Link
+      to="/joueurs"
+      className="inline-flex min-h-12 items-center font-score text-sm font-bold uppercase tracking-wider text-laiton"
+    >
+      {LIBELLE_CREER_JOUEUR} <span aria-hidden="true">→</span>
+    </Link>
+  )
+  const lienParties = (
+    <Link
+      to="/historique"
+      className="inline-flex min-h-12 items-center font-score text-sm font-bold uppercase tracking-wider text-laiton"
+    >
+      {LIBELLE_TOUTES_LES_PARTIES} <span aria-hidden="true">→</span>
+    </Link>
+  )
 
   return (
     // Le tapis et la barre du bas viennent du layout : l'écran ne pose que son
@@ -157,19 +187,24 @@ export const AccueilEcran = () => {
       <LogoHero />
 
       <section aria-label={TITRE_PARTIES_RECENTES} className="flex flex-col gap-6">
-        {chargement ? (
-          <Skeleton className="h-36" />
-        ) : vide ? (
+        {enErreur ? (
+          <MessageErreur>{LIBELLE_ERREUR_ACCUEIL}</MessageErreur>
+        ) : chargement ? (
+          // Le Skeleton est décoratif : le statut vocal vit à côté, dans un `<output>`.
+          <output className="block">
+            <Skeleton className="h-36" />
+            <span className="sr-only">{LIBELLE_CHARGEMENT_PARTIES}</span>
+          </output>
+        ) : jamaisJoue ? (
+          <div className="flex flex-col items-start gap-1">
+            <p className="text-sm text-craie/70">{LIBELLE_AUCUNE_PARTIE_ENCORE}</p>
+            {profils.size === 0 && lienCreerJoueur}
+          </div>
+        ) : semaineCalme ? (
           <div className="flex flex-col items-start gap-1">
             <p className="text-sm text-craie/70">{LIBELLE_AUCUNE_PARTIE_SEMAINE}</p>
-            {profils.size === 0 && (
-              <Link
-                to="/joueurs"
-                className="inline-flex min-h-12 items-center font-score text-sm font-bold uppercase tracking-wider text-laiton"
-              >
-                {LIBELLE_CREER_JOUEUR} →
-              </Link>
-            )}
+            {lienParties}
+            {profils.size === 0 && lienCreerJoueur}
           </div>
         ) : (
           <>
@@ -188,6 +223,7 @@ export const AccueilEcran = () => {
                 <ul className="flex flex-col gap-3">{parties.map((partie) => carte(partie))}</ul>
               </section>
             ))}
+            {lienToutesLesParties && <div>{lienParties}</div>}
           </>
         )}
       </section>

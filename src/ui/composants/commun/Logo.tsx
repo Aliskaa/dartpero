@@ -1,3 +1,4 @@
+import { LIBELLE_COMPTEUR_FLECHETTES } from '@/ui/labels'
 import { Cible } from './Cible'
 
 /**
@@ -31,7 +32,7 @@ export const LogoHero = () => (
 
     <div className="relative flex flex-col items-center pt-10">
       <p className="font-score text-[0.65rem] uppercase tracking-[0.42em] text-craie/70">
-        Compteur de fléchettes
+        {LIBELLE_COMPTEUR_FLECHETTES}
       </p>
       <h1 className="mt-1">
         <Enseigne className="text-6xl" />
