@@ -1,3 +1,4 @@
+import { nameOf } from '../../domain/events/MatchEvent'
 import { GameModes } from '../../domain/games'
 import { MARKS_TO_CLOSE } from '../../domain/games/cricket/config'
 import type { PlayerId } from '../../domain/value-objects/ids'
@@ -16,8 +17,10 @@ export const nameIndex = async (
 /**
  * Condense un match en rejouant son journal, quel que soit son mode.
  *
- * `name` vaut `null` quand le profil local a été supprimé depuis : c'est à
- * l'UI de choisir comment l'afficher, le cœur ne connaît pas le français.
+ * Le `name` d'un joueur vaut `null` quand le profil local a été supprimé
+ * depuis ; le `name` de la partie vaut `null` quand aucun nom n'a été tapé.
+ * Dans les deux cas, c'est à l'UI de choisir le libellé : le cœur ne connaît
+ * pas le français.
  */
 export const summarize = (
   record: MatchRecord,
@@ -27,6 +30,7 @@ export const summarize = (
 
   const commun = {
     id: record.id,
+    name: nameOf(record.events),
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
     finished: GameModes.isFinished(state),

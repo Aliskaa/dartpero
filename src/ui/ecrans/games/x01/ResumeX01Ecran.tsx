@@ -11,6 +11,7 @@ import { PanneauImpacts } from '@/ui/composants/commun/PanneauImpacts'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
 import { type LigneStat, TableauJoueurs } from '@/ui/composants/commun/TableauJoueurs'
 import { useProfils } from '@/ui/hooks/useJoueurs'
+import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import {
   LIBELLE_MANCHES,
   LIBELLE_MEILLEURE_MANCHE,
@@ -78,6 +79,7 @@ const LIGNES: readonly LigneStat<X01PlayerStats>[] = [
 export const ResumeX01Ecran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
+  const nomPartie = useNomDePartie(identifiant)
   const services = useServices()
   const profils = useProfils()
 
@@ -115,6 +117,7 @@ export const ResumeX01Ecran = () => {
       className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]"
     >
       <TableauHonneur
+        nomPartie={nomPartie}
         mode="X01"
         surtitre="Partie terminée"
         vainqueur={

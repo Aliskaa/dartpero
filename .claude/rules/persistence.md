@@ -20,6 +20,10 @@
   jour **dans le même lot**. Une sauvegarde d'une version antérieure doit
   toujours s'importer (le lot 5c l'a appris : `backupSchema` ne
   connaissait que le X01).
+- Un champ **facultatif** absent = **clé absente**, jamais
+  `name: undefined` (le clonage d'IndexedDB garderait la clé). Un ajout
+  facultatif n'incrémente pas `BACKUP_VERSION` : l'ancienne sauvegarde
+  reste valide telle quelle (lot `nom-de-partie`).
 - L'import JSON est la **seule entrée non fiable** de l'appli : validé
   entièrement avant la moindre écriture.
 - `localStorage` : préférences d'appareil seulement

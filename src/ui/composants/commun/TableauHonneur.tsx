@@ -19,6 +19,12 @@ type ExAequo = {
 
 type Props = {
   readonly mode: GameModeId
+  /**
+   * Le nom de la partie, en tête (« Finale des potes », « Dimanche soir ») ;
+   * `null` tant qu'il charge. Obligatoire : un résumé qui l'oublierait ne
+   * compilerait pas.
+   */
+  readonly nomPartie: string | null
   readonly surtitre: string
   readonly vainqueur?: Vainqueur
   readonly exAequo?: ExAequo
@@ -32,7 +38,15 @@ type Props = {
  * Le tableau d'honneur commun aux résumés : on lit le vainqueur avant tout.
  * Accent du mode + éclat vert — célébration hors saisie, jamais pendant une volée.
  */
-export const TableauHonneur = ({ mode, surtitre, vainqueur, exAequo, children, phrase }: Props) => (
+export const TableauHonneur = ({
+  mode,
+  nomPartie,
+  surtitre,
+  vainqueur,
+  exAequo,
+  children,
+  phrase,
+}: Props) => (
   <section
     style={variablesAccent(mode)}
     className="feuille relative animate-monter overflow-hidden px-6 py-7 text-center"
@@ -47,6 +61,12 @@ export const TableauHonneur = ({ mode, surtitre, vainqueur, exAequo, children, p
     />
 
     <div className="relative flex flex-col items-center">
+      {/* Le nom, au-dessus du surtitre. Un paragraphe et non un titre : le
+          seul `<h1>` du résumé reste le vainqueur. Hauteur réservée pendant le
+          chargement ; un nom long passe à la ligne, il y a la place. */}
+      <p className="grave mb-1 min-h-6 max-w-full break-words font-score text-base font-bold tracking-wide text-craie-vive">
+        {nomPartie}
+      </p>
       <p className="font-score text-[0.65rem] uppercase tracking-[0.35em] text-craie/60">
         {surtitre}
       </p>

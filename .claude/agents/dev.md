@@ -44,8 +44,8 @@ touchée (tests, couleurs, persistance, front…).
   identifiants en branded types.
 - **Aucun `Date.now()` ni `Math.random()` dans le domaine.** Aucun `new Dexie` dans un use
   case : les dépendances arrivent par le constructeur.
-- **L'UI passe par les use cases**, jamais par Dexie directement. Exception documentée :
-  `Services.devices`.
+- **L'UI passe par les use cases**, jamais par Dexie directement. Exceptions documentées :
+  `Services.devices` et `Services.clock` (l'heure courante, jamais `Date.now()` dans l'UI).
 - **Charte** : angle vif partout (pas de `rounded-*`), aucune couleur en dur dans `src/ui`
   (les tokens uniquement), cibles tactiles ≥ 48 px, icônes `lucide-react` toujours
   `aria-hidden`, aucun texte sous `craie/60`.

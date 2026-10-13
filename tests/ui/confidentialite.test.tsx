@@ -82,7 +82,17 @@ describe('Confidentialité — en accès direct', () => {
     ouvrir('/confidentialite')
     await titre()
 
-    expect(screen.getAllByText('Mise à jour le 10 octobre 2026')).toHaveLength(1)
+    expect(screen.getAllByText('Mise à jour le 12 octobre 2026')).toHaveLength(1)
+  })
+
+  it('dit que le nom donné à une partie est enregistré sur l’appareil', async () => {
+    ouvrir('/confidentialite')
+    await titre()
+
+    const section = screen
+      .getByRole('heading', { level: 2, name: 'Sur votre appareil' })
+      .closest('section') as HTMLElement
+    expect(within(section).getByText(/le nom que vous leur avez donné/)).toBeInTheDocument()
   })
 
   it('décrit l’export, l’import et l’effacement', async () => {

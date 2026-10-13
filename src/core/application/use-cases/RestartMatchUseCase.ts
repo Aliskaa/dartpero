@@ -22,6 +22,10 @@ import { loadMatch } from './loadMatch'
  * cibles. On refait le même exercice, pas la même série — refaire la série à
  * l'identique n'aurait aucun intérêt, on connaîtrait déjà les restes.
  *
+ * Le nom **tapé** voyage avec la relance et repasse par `MatchName.of`, comme
+ * un premier départ. Sans nom tapé, rien n'est écrit : la nouvelle partie
+ * prend le nom par défaut de **sa** date de création, pas celui de l'ancienne.
+ *
  * L'aiguillage porte sur le type de l'événement d'ouverture, exactement comme
  * `modeOf` côté domaine : le mode se lit sur le premier événement du journal,
  * jamais sur un champ ajouté après coup.
@@ -44,6 +48,7 @@ export class RestartMatchUseCase implements RestartMatch {
           playerIds: ouverture.playerIds,
           config: ouverture.config,
           startingPlayerIndex: ouverture.startingPlayerIndex,
+          name: ouverture.name,
         })
 
       case 'TourDuMondeStarted':
@@ -51,6 +56,7 @@ export class RestartMatchUseCase implements RestartMatch {
           playerIds: ouverture.playerIds,
           config: ouverture.config,
           startingPlayerIndex: ouverture.startingPlayerIndex,
+          name: ouverture.name,
         })
 
       case 'CricketStarted':
@@ -58,12 +64,13 @@ export class RestartMatchUseCase implements RestartMatch {
           playerIds: ouverture.playerIds,
           config: ouverture.config,
           startingPlayerIndex: ouverture.startingPlayerIndex,
+          name: ouverture.name,
         })
 
       case 'CheckoutPracticeStarted': {
         const [playerId] = ouverture.playerIds
         if (!playerId) throw new DomainError('A practice session needs its player')
-        return this.practice.start({ playerId, config: ouverture.config })
+        return this.practice.start({ playerId, config: ouverture.config, name: ouverture.name })
       }
 
       default:

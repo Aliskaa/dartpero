@@ -10,6 +10,7 @@ import { LigneCible, libelleCible } from '@/ui/composants/tour-du-monde/LigneCib
 import { PaveCibles } from '@/ui/composants/tour-du-monde/PaveCibles'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
+import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { useTourDuMonde } from '@/ui/hooks/useTourDuMonde'
 import { nomJoueur, pluriel } from '@/ui/labels'
 
@@ -38,6 +39,7 @@ const VoleeEnCours = ({ darts }: { readonly darts: readonly Dart[] }) => (
 export const TourDuMondeEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
+  const nomPartie = useNomDePartie(identifiant)
   const navigate = useNavigate()
   const profils = useProfils()
 
@@ -83,6 +85,7 @@ export const TourDuMondeEcran = () => {
 
   return (
     <DispositionPartie
+      nomPartie={nomPartie}
       mode="TOUR_DU_MONDE"
       enTete={
         <>

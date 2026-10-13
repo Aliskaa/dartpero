@@ -7,6 +7,7 @@ import { TourDuMondeConfig } from '../../domain/games/tour-du-monde/config'
 import { X01Config } from '../../domain/games/x01/config'
 import { Dart, type Multiplier, type Segment } from '../../domain/value-objects/Dart'
 import { MatchId, PlayerId } from '../../domain/value-objects/ids'
+import { MatchName } from '../../domain/value-objects/MatchName'
 import { PlayerColor } from '../../domain/value-objects/PlayerColor'
 import type { MatchRecord } from '../ports/driven/MatchRepository'
 import { BACKUP_FORMAT, BACKUP_VERSION } from '../ports/driving/ManageBackup'
@@ -68,11 +69,19 @@ const versSegment = (valeur: unknown): Segment => {
   throw new DomainError(`invalid segment: ${String(valeur)}`)
 }
 
-/** La partie commune à toutes les ouvertures : qui joue, et qui commence. */
+/**
+ * La partie commune à toutes les ouvertures : qui joue, qui commence, et le
+ * nom tapé s'il y en a un.
+ *
+ * Le nom est facultatif : une sauvegarde d'avant le lot `nom-de-partie` n'a
+ * pas la clé et s'importe sans nom. Présent, il doit être du texte (sinon la
+ * partie est écartée) et passe par `MatchName.of` — un nom trop long est
+ * refusé, un nom vide ou fait d'espaces revient à « pas de nom » (clé absente).
+ */
 const versOuverture = (
   valeur: Record<string, unknown>,
   type: string,
-): { playerIds: readonly PlayerId[]; startingPlayerIndex: number } => {
+): { playerIds: readonly PlayerId[]; startingPlayerIndex: number; name?: MatchName } => {
   const playerIds = liste(valeur.playerIds, 'playerIds').map((id) =>
     PlayerId.of(texte(id, 'playerId')),
   )
@@ -83,7 +92,13 @@ const versOuverture = (
     throw new DomainError(`invalid startingPlayerIndex: ${String(index)}`)
   }
 
-  return { playerIds, startingPlayerIndex: index as number }
+  const name = valeur.name === undefined ? null : MatchName.of(texte(valeur.name, 'name'))
+
+  return {
+    playerIds,
+    startingPlayerIndex: index as number,
+    ...(name === null ? {} : { name }),
+  }
 }
 
 /**

@@ -210,6 +210,8 @@ Hors saisie uniquement — jamais pendant qu'on tape une volée :
   fermée), `pointer-events-none`, ~2,2 s.
 - **`TableauHonneur`** : le podium des résumés (avatar, couronne, phrase d'ambiance), à l'accent
   du mode. Phrase tirée de `phraseVictoire(matchId)` — **déterministe**, pas de `Math.random`.
+  Le **nom de la partie** s'affiche en tête (prop obligatoire `nomPartie`), dans un `<p>` —
+  **jamais un second `<h1>`** : l'écran en porte déjà un.
 
 ---
 
@@ -293,6 +295,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 ```
 ┌──────────────────────────────────┐
 │ ← MANCHE 2 | 501 · PREMIER À 2 DO│  bandeau de match
+│     Dimanche soir                │  nom de la partie : ligne à part, tronquée
 ├──────────────────────────────────┤
 │ JOUEUR          │ VOLÉE │  RESTE │  en-têtes EN INVERSION (craie pleine)
 │▌■ KEVIN         │  140  │    361 │  ZONE LECTURE — une ligne par joueur
@@ -328,6 +331,11 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   sous les colonnes de fléchettes. Elle ne flotte plus au-dessus du tableau.
 - **Portrait** par défaut. **Paysage** (téléphone couché) : lecture à gauche, pavé à droite —
   porté par `DispositionPartie` pour les quatre modes.
+- **Le nom de la partie** (lot `nom-de-partie`) occupe sa propre ligne sous la rangée du bandeau,
+  dans le même `<header>` (`h-4 truncate pl-12 text-craie/70`, hauteur réservée même vide, prop obligatoire `nomPartie` de `DispositionPartie`) :
+  lu à 30 cm, il ne prend rien à la zone de lecture et ne pousse pas le bandeau. Forme
+  **à confirmer à la relecture à l'écran** (D5), cas le plus serré : X01 en sets, double in et
+  double out, téléphone peu haut.
 - ⚠️ Variante `paysage` : `@media (orientation: landscape) and (max-height: 34rem)` —
   conditionnée à la **hauteur** autant qu'à l'orientation. Ce qui manque au téléphone couché,
   c'est la hauteur, pas la largeur : une tablette et un navigateur de bureau gardent la

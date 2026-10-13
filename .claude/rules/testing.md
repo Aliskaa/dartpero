@@ -9,7 +9,13 @@
   un test unitaire ; les adapters Dexie se testent à part sur
   `fake-indexeddb`.
 - Déterminisme : `Clock`, `IdGenerator`, `RandomSource` fakes. Un test
-  daté construit ses bornes en heure **locale**.
+  daté construit ses bornes en heure **locale**, dans le fuseau fixé
+  des tests (`test.env.TZ = 'Europe/Paris'`, `vite.config.ts`). Un test
+  qui franchit un changement d'heure vérifie d'abord la durée du jour
+  (23 h / 25 h) : sous UTC, il serait vert sans rien prouver
+  (`CONVENTIONS` § 11).
+- Une règle commune aux modes : `it.each(GAME_MODE_IDS)`, jamais une
+  liste de modes recopiée.
 - `fakeServices()` enveloppe le **vrai** `createServices` : ne jamais
   réimplémenter le composition root dans un test.
 - Intitulés `describe` / `it` en français, au plus près de la règle de

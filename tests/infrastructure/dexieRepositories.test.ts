@@ -1,13 +1,17 @@
 import Dexie from 'dexie'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { MatchRecord } from '@/core/application/ports/driven/MatchRepository'
+import { GAME_MODE_IDS } from '@/core/domain/games'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import { MatchName } from '@/core/domain/value-objects/MatchName'
 import { PLAYER_COLORS } from '@/core/domain/value-objects/PlayerColor'
 import { DexieMatchRepository } from '@/infrastructure/dexie/DexieMatchRepository'
 import { DexiePlayerRepository } from '@/infrastructure/dexie/DexiePlayerRepository'
 import { createDatabase, type DartperoDatabase } from '@/infrastructure/dexie/database'
+import { fakeServices } from '../fakes'
+import { lancer, ouverture } from '../use-cases/lancerPartie'
 
 const KEVIN = PlayerId.of('kevin')
 const JULIEN = PlayerId.of('julien')
@@ -48,6 +52,43 @@ describe('Adapters Dexie (IndexedDB)', () => {
       // Le journal est ce qui fait foi : il doit survivre au stockage à l'octet près.
       expect(relu).toEqual(original)
     })
+
+    /** Lot `nom-de-partie` : le nom tapé vit dans l'ouverture, sans migration. */
+    it('fait traverser la base au nom tapé de l’ouverture', async () => {
+      const repository = new DexieMatchRepository(db)
+      const sansNom = record('anonyme', 2000)
+      const [ouverture, ...suite] = sansNom.events
+      if (ouverture?.type !== 'MatchStarted') throw new Error('ouverture X01 attendue')
+      const nomme: MatchRecord = {
+        ...record('nomme', 2000),
+        events: [{ ...ouverture, name: MatchName.of('Finale des potes') as MatchName }, ...suite],
+      }
+
+      await repository.save(nomme)
+
+      expect(await repository.findById(nomme.id)).toEqual(nomme)
+    })
+
+    /**
+     * Les **vrais** lancements, sur la vraie base : IndexedDB garde une clé
+     * `name: undefined` (clonage structuré). Un lancement sans nom qui la
+     * poserait se verrait donc ici, une fois relu depuis la base.
+     */
+    it.each(GAME_MODE_IDS)(
+      '%s : un lancement sans nom n’écrit aucune clé `name` en base',
+      async (mode) => {
+        const { services, dependencies } = fakeServices({ matches: new DexieMatchRepository(db) })
+        const kevin = (await services.managePlayers.create('Kevin')).id
+        const julien = (await services.managePlayers.create('Julien')).id
+        const joueurs = mode === 'CHECKOUT_PRACTICE' ? [kevin] : [kevin, julien]
+
+        const anonyme = await lancer(services, mode, joueurs)
+        const nommee = await lancer(services, mode, joueurs, 'Finale des potes')
+
+        expect('name' in (await ouverture(dependencies, anonyme))).toBe(false)
+        expect(await ouverture(dependencies, nommee)).toMatchObject({ name: 'Finale des potes' })
+      },
+    )
 
     it('renvoie null pour un match inconnu', async () => {
       expect(await new DexieMatchRepository(db).findById(MatchId.of('absent'))).toBeNull()

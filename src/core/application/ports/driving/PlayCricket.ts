@@ -21,6 +21,12 @@ export type StartCricketCommand = {
    * mélanger à la projection redistribuerait les joueurs à chaque annulation.
    */
   readonly shuffle?: boolean
+  /**
+   * Le nom **tapé**, brut : absent si rien n'a été tapé. Le use case le passe
+   * par `MatchName.of` avant toute écriture ; le nom par défaut n'arrive
+   * jamais ici.
+   */
+  readonly name?: string
 }
 
 export type CricketVisitResult = {

@@ -13,7 +13,7 @@ Patterns : `CONVENTIONS` § 9 et § 10.
 - `composants/commun/` : le design system — réutiliser, ne jamais
   dupliquer une variante ad hoc.
 - `composants/<mode>/` : ce qui est propre à un mode.
-- `hooks/` : un hook par mode (`useX01`…), `useJoueurs`, `useAppareil`, `useStockagePersistant`, `useInstallation`, `useNouvellePartie`.
+- `hooks/` : un hook par mode (`useX01`…), `useJoueurs`, `useAppareil`, `useStockagePersistant`, `useInstallation`, `useNouvellePartie`, `useNomDePartie`.
 - `labels.ts` : **tout** le français affiché, annonces vocales comprises.
   À l'écran on dit **« manche »**, jamais « leg » (les identifiants du
   code gardent `leg`).
@@ -23,6 +23,9 @@ Patterns : `CONVENTIONS` § 9 et § 10.
 - **L'UI appelle les use cases**, fournis par `useServices()`. Jamais
   Dexie, jamais une règle de jeu réimplémentée : pour anticiper, un port
   de prévisualisation (`PreviewVisit`…).
+- **L'heure courante** passe par `services.clock`, jamais `Date.now()`
+  ni `new Date()` sans argument (garde `horlogeBoundary`) ; `Date` ne
+  sert que de calendrier sur un horodatage donné.
 - **Le match en cours** = état local synchrone, porté par le hook du
   mode. TanStack Query sert l'historique, les profils, les stats — en
   cache (`CONVENTIONS` § 10).

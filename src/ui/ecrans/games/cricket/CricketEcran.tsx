@@ -12,6 +12,7 @@ import { TableauCricket } from '@/ui/composants/cricket/TableauCricket'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useCricket } from '@/ui/hooks/useCricket'
 import { useProfils } from '@/ui/hooks/useJoueurs'
+import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { LIBELLE_VARIANTE_CRICKET, nomJoueur } from '@/ui/labels'
 
 /** Les trois encoches de la volée, collées au pavé — « t’as mis quoi, là ? ». */
@@ -39,6 +40,7 @@ const VoleeEnCours = ({ darts }: { readonly darts: readonly Dart[] }) => (
 export const CricketEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
+  const nomPartie = useNomDePartie(identifiant)
   const navigate = useNavigate()
   const profils = useProfils()
 
@@ -95,6 +97,7 @@ export const CricketEcran = () => {
 
   return (
     <DispositionPartie
+      nomPartie={nomPartie}
       mode="CRICKET"
       enTete={
         <>

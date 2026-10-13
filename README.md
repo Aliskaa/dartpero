@@ -52,6 +52,8 @@ activé.
 - **L'écran ne s'éteint pas** (Wake Lock), le téléphone **vibre** à la validation, et une
   **voix française** annonce le score puis appelle le joueur suivant.
 - **Mode paysage** automatique quand on couche le téléphone : lecture à gauche, pavé à droite.
+- **Un nom pour chaque partie** — « Finale des potes », ou à défaut « Dimanche soir » : on la
+  retrouve dans l'historique, en tête du résumé et sous le bandeau.
 
 ### Après la partie
 
@@ -139,7 +141,7 @@ npm run dev:mobile   # https://<IP-du-PC>:5173 — accepter le certificat auto-s
 
 | Commande | Ce qu'elle fait |
 | -------- | --------------- |
-| `npm test` | La suite Vitest — **517 tests** |
+| `npm test` | La suite Vitest — **689 tests** |
 | `npm run test:watch` | La même, en continu |
 | `npm run lint` | Biome (lint + format). **Jamais ESLint ni Prettier.** |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -269,7 +271,7 @@ volontairement documenté ici :
 Projet **personnel**, pour jouer entre potes. Pas de licence publiée, pas de contribution
 attendue — mais le code est lisible et les décisions sont écrites.
 
-Il reste une chose que les 517 tests ne peuvent pas couvrir : **la validation sur vrai
+Il reste une chose que les 689 tests ne peuvent pas couvrir : **la validation sur vrai
 matériel** — la lisibilité à 3 mètres dans un vrai garage, le confort des cibles au pouce
 debout, la tenue du wake lock sur une partie entière, et un passage sur un vrai iPhone.
 

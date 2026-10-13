@@ -130,6 +130,13 @@ téléphone vident la base quand même — le rappel d'exporter s'affiche dans *
 `src/main.tsx`, **avant** `createRoot`. Ligne discrète sur l'Accueil (« Plus tard » mémorisé,
 Accueil seulement), entrée complète dans Réglages → À propos. Jamais sur un écran de partie,
 jamais ouverte d'elle-même.
+- **Nom de partie** (lot `nom-de-partie`) : seul un nom **tapé** s'écrit — champ facultatif
+`name` de l'événement d'ouverture des quatre modes, 30 caractères au plus, espaces autour
+retirés (`MatchName.of`). Le nom par défaut (« Dimanche soir » ; nuit de 0 h à 5 h, au nom
+du jour du calendrier : dimanche 1 h → « Dimanche nuit ») est un **libellé recalculé à
+l'affichage** depuis `createdAt` (`labels.ts`) : ne jamais l'écrire, ni « compléter » les
+anciennes parties. L'UI lit l'heure par `services.clock` (même exception que `devices`),
+jamais par `Date.now()` — garde `tests/architecture/horlogeBoundary.test.ts`.
 
 ---
 

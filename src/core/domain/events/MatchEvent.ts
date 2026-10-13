@@ -4,6 +4,7 @@ import type { TourDuMondeConfig } from '../games/tour-du-monde/config'
 import type { X01Config } from '../games/x01/config'
 import type { Dart } from '../value-objects/Dart'
 import type { PlayerId } from '../value-objects/ids'
+import type { MatchName } from '../value-objects/MatchName'
 
 /**
  * Le journal d'un match.
@@ -39,6 +40,8 @@ export type X01Started = {
   readonly playerIds: readonly PlayerId[]
   /** Qui commence le premier leg (index dans `playerIds`). */
   readonly startingPlayerIndex: number
+  /** Le nom tapé à la création, s'il y en a un (voir `MatchName`). */
+  readonly name?: MatchName
 }
 
 /**
@@ -55,6 +58,8 @@ export type TourDuMondeStarted = {
   readonly playerIds: readonly PlayerId[]
   /** Qui commence la partie (index dans `playerIds`). */
   readonly startingPlayerIndex: number
+  /** Le nom tapé à la création, s'il y en a un (voir `MatchName`). */
+  readonly name?: MatchName
 }
 
 /** L'ouverture d'une partie de Cricket. La variante (standard ou cut-throat)
@@ -66,6 +71,8 @@ export type CricketStarted = {
   readonly playerIds: readonly PlayerId[]
   /** Qui commence la partie (index dans `playerIds`). */
   readonly startingPlayerIndex: number
+  /** Le nom tapé à la création, s'il y en a un (voir `MatchName`). */
+  readonly name?: MatchName
 }
 
 /** L'ouverture d'une session d'entraînement au checkout (solo). */
@@ -74,6 +81,8 @@ export type CheckoutPracticeStarted = {
   readonly config: CheckoutPracticeConfig
   readonly playerIds: readonly PlayerId[]
   readonly startingPlayerIndex: number
+  /** Le nom tapé à la création, s'il y en a un (voir `MatchName`). */
+  readonly name?: MatchName
 }
 
 /**
@@ -107,6 +116,38 @@ export type MatchEvent =
   | CheckoutPracticeStarted
   | RoundStarted
   | VisitRecorded
+
+/**
+ * Le nom tapé d'une partie, lu sur son événement d'ouverture.
+ *
+ * ⚠️ Le champ `name` des quatre ouvertures est **facultatif** et, sans nom
+ * tapé, la clé est **absente** — jamais `name: undefined`, jamais le nom par
+ * défaut. Les journaux d'avant le lot `nom-de-partie` n'ont pas la clé et
+ * restent valides : ils rendent `null`, et l'UI calcule leur nom à
+ * l'affichage depuis la date de création.
+ *
+ * `switch` exhaustif : un cinquième mode qui oublierait son ouverture ici ne
+ * compilerait pas.
+ */
+export const nameOf = (events: readonly MatchEvent[]): MatchName | null => {
+  const [ouverture] = events
+  if (ouverture === undefined) return null
+
+  switch (ouverture.type) {
+    case 'MatchStarted':
+    case 'TourDuMondeStarted':
+    case 'CricketStarted':
+    case 'CheckoutPracticeStarted':
+      return ouverture.name ?? null
+    case 'RoundStarted':
+    case 'VisitRecorded':
+      return null
+    default: {
+      const impossible: never = ouverture
+      return impossible
+    }
+  }
+}
 
 /**
  * Les conséquences déduites d'une volée. Elles ne sont pas persistées : l'UI

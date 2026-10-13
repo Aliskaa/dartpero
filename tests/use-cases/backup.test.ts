@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Services } from '@/composition/container'
 import type { X01Summary } from '@/core/application/ports/driving/MatchSummary'
 import { DomainError } from '@/core/domain/DomainError'
+import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
+import { MatchId } from '@/core/domain/value-objects/ids'
 import { fakeServices } from '../fakes'
+import { lancer, ouverture } from './lancerPartie'
 
 /** Une base peuplée : deux joueurs, une partie entamée. */
 const baseGarnie = async (services: Services) => {
@@ -242,5 +245,210 @@ describe('Sauvegarde JSON', () => {
 
     expect(rapport.matchesImported).toBe(0)
     expect(rapport.matchesSkipped).toBe(1)
+  })
+})
+
+describe('Sauvegarde JSON — le nom de partie', () => {
+  /** Une ouverture X01 telle qu'un fichier la porte, avec ce qu'on veut en `name`. */
+  const fichier = (ouvertures: readonly Record<string, unknown>[]) => ({
+    format: 'dartpero-backup',
+    version: 1,
+    exportedAt: 1,
+    players: [{ id: 'kevin', name: 'Kevin', color: 'brique', createdAt: 1 }],
+    matches: ouvertures.map((extra, rang) => ({
+      id: `partie-${rang}`,
+      createdAt: 1_700_000_000_000,
+      updatedAt: 1_700_000_000_000,
+      events: [
+        {
+          type: 'MatchStarted',
+          config: {
+            startingScore: 501,
+            legsToWin: 2,
+            setsToWin: 1,
+            doubleIn: false,
+            doubleOut: true,
+          },
+          playerIds: ['kevin'],
+          startingPlayerIndex: 0,
+          ...extra,
+        },
+      ],
+    })),
+  })
+
+  /** Critère 8 : une sauvegarde d'avant le lot, écrite à la main, sans aucune clé `name`. */
+  it('importe une sauvegarde d’avant le lot, sans nom', async () => {
+    const neuf = fakeServices()
+    const rapport = await neuf.services.manageBackup.importFrom(fichier([{}]))
+
+    expect(rapport.matchesImported).toBe(1)
+    const [partie] = await neuf.services.getMatchHistory.execute()
+    expect(partie?.name).toBeNull()
+    expect('name' in (await ouverture(neuf.dependencies, MatchId.of('partie-0')))).toBe(false)
+  })
+
+  it.each(GAME_MODE_IDS)(
+    '%s : un aller-retour export → import restitue le nom tapé',
+    async (mode) => {
+      const { services } = fakeServices()
+      const kevin = (await services.managePlayers.create('Kevin')).id
+      const julien = (await services.managePlayers.create('Julien')).id
+      const joueurs = (m: GameModeId) => (m === 'CHECKOUT_PRACTICE' ? [kevin] : [kevin, julien])
+      const nommee = await lancer(services, mode, joueurs(mode), 'Finale des potes')
+      const anonyme = await lancer(services, mode, joueurs(mode))
+
+      const sauvegarde = JSON.parse(JSON.stringify(await services.manageBackup.exportAll()))
+      const neuf = fakeServices()
+      const rapport = await neuf.services.manageBackup.importFrom(sauvegarde)
+
+      expect(rapport.matchesSkipped).toBe(0)
+      expect(await ouverture(neuf.dependencies, nommee)).toMatchObject({ name: 'Finale des potes' })
+      expect('name' in (await ouverture(neuf.dependencies, anonyme))).toBe(false)
+    },
+  )
+
+  it.each([
+    ['un nombre', 42],
+    ['null', null],
+    ['un booléen', true],
+    ['un objet', {}],
+    ['un tableau', []],
+    ['31 caractères', 'x'.repeat(31)],
+  ] as const)('écarte une partie dont le nom est %s, et importe le reste', async (_, name) => {
+    const neuf = fakeServices().services
+    const rapport = await neuf.manageBackup.importFrom(fichier([{ name }, {}]))
+
+    expect(rapport.matchesSkipped).toBe(1)
+    expect(rapport.matchesImported).toBe(1)
+    expect(await neuf.getMatchHistory.execute()).toHaveLength(1)
+  })
+
+  it('nettoie un nom importé, et ignore un nom vide', async () => {
+    const neuf = fakeServices()
+    await neuf.services.manageBackup.importFrom(fichier([{ name: '  Finale  ' }, { name: '   ' }]))
+
+    expect(await ouverture(neuf.dependencies, MatchId.of('partie-0'))).toMatchObject({
+      name: 'Finale',
+    })
+    expect('name' in (await ouverture(neuf.dependencies, MatchId.of('partie-1')))).toBe(false)
+  })
+
+  /**
+   * Le refus d'un nom invalide vaut pour **chaque** ouverture, pas seulement
+   * `MatchStarted` : le fichier part d'un vrai export, dont on abîme le nom
+   * d'une des deux parties.
+   */
+  it.each(
+    GAME_MODE_IDS.filter((mode) => mode !== 'X01').flatMap((mode) =>
+      (
+        [
+          ['un nombre', 42],
+          ['31 caractères', 'x'.repeat(31)],
+        ] as const
+      ).map(([cas, name]) => [mode, cas, name] as const),
+    ),
+  )('%s : écarte une ouverture dont le nom est %s', async (mode, _, name) => {
+    const { services } = fakeServices()
+    const kevin = (await services.managePlayers.create('Kevin')).id
+    const julien = (await services.managePlayers.create('Julien')).id
+    const joueurs = mode === 'CHECKOUT_PRACTICE' ? [kevin] : [kevin, julien]
+    const abimee = await lancer(services, mode, joueurs)
+    await lancer(services, mode, joueurs)
+
+    const sauvegarde = JSON.parse(JSON.stringify(await services.manageBackup.exportAll()))
+    const cible = sauvegarde.matches.find((partie: { id: string }) => partie.id === abimee)
+    cible.events[0].name = name
+
+    const neuf = fakeServices().services
+    const rapport = await neuf.manageBackup.importFrom(sauvegarde)
+
+    expect(rapport.matchesSkipped).toBe(1)
+    expect(rapport.matchesImported).toBe(1)
+  })
+
+  it('ignore un `name` posé sur une volée importée : seule l’ouverture nomme la partie', async () => {
+    const sauvegarde = fichier([{}])
+    const [partie] = sauvegarde.matches
+    if (!partie) throw new Error('partie attendue')
+    const abimee = {
+      ...sauvegarde,
+      matches: [
+        {
+          ...partie,
+          events: [
+            ...partie.events,
+            {
+              type: 'VisitRecorded',
+              darts: [{ segment: 20, multiplier: 'SIMPLE' }],
+              name: 'Pirate',
+            },
+          ],
+        },
+      ],
+    }
+
+    const neuf = fakeServices()
+    const rapport = await neuf.services.manageBackup.importFrom(abimee)
+
+    expect(rapport.matchesImported).toBe(1)
+    const record = await neuf.dependencies.matches.findById(MatchId.of('partie-0'))
+    expect(record?.events).toHaveLength(2)
+    expect(record?.events.some((evenement) => 'name' in evenement)).toBe(false)
+    const [resume] = await neuf.services.getMatchHistory.execute()
+    expect(resume?.name).toBeNull()
+  })
+
+  /**
+   * Un fichier hostile qui glisse un `name` par la chaîne de prototypes. Le
+   * texte passe par un vrai `JSON.parse` : c'est lui qui fait de `"__proto__"`
+   * une clé **propre** (un littéral JS, lui, changerait le prototype). Si
+   * l'import recopiait un jour l'objet lu par affectation (`Object.assign`,
+   * `obj[clé] = …`), le setter `__proto__` ferait hériter `name: 'Pirate'` et
+   * la partie s'importerait nommée — ce test le verrait.
+   */
+  it('ne lit pas un nom glissé par `__proto__` dans le fichier', async () => {
+    const texte = `{
+      "format": "dartpero-backup",
+      "version": 1,
+      "exportedAt": 1,
+      "players": [{ "id": "kevin", "name": "Kevin", "color": "brique", "createdAt": 1 }],
+      "matches": [{
+        "id": "partie-0",
+        "createdAt": 1700000000000,
+        "updatedAt": 1700000000000,
+        "__proto__": { "name": "Pirate" },
+        "events": [{
+          "type": "MatchStarted",
+          "config": { "startingScore": 501, "legsToWin": 2, "setsToWin": 1, "doubleIn": false, "doubleOut": true },
+          "playerIds": ["kevin"],
+          "startingPlayerIndex": 0,
+          "__proto__": { "name": "Pirate" }
+        }]
+      }]
+    }`
+    const fichierHostile = JSON.parse(texte)
+    // Garde-fou du test lui-même : la clé est bien propre, le prototype intact.
+    expect(Object.hasOwn(fichierHostile.matches[0].events[0], '__proto__')).toBe(true)
+    expect(fichierHostile.matches[0].events[0].name).toBeUndefined()
+
+    const neuf = fakeServices()
+    const rapport = await neuf.services.manageBackup.importFrom(fichierHostile)
+
+    expect(rapport.matchesImported).toBe(1)
+    expect(rapport.matchesSkipped).toBe(0)
+    const importee = await ouverture(neuf.dependencies, MatchId.of('partie-0'))
+    expect('name' in importee).toBe(false)
+    expect(Object.getPrototypeOf(importee)).toBe(Object.prototype)
+    const [resume] = await neuf.services.getMatchHistory.execute()
+    expect(resume?.name).toBeNull()
+  })
+
+  it('exporte toujours en version 1 : le nom est un ajout facultatif', async () => {
+    const { services } = fakeServices()
+    const kevin = (await services.managePlayers.create('Kevin')).id
+    await lancer(services, 'X01', [kevin], 'Finale')
+
+    expect((await services.manageBackup.exportAll()).version).toBe(1)
   })
 })

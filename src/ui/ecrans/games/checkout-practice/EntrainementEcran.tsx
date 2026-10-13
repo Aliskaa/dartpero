@@ -8,11 +8,13 @@ import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etat
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useCheckoutPractice } from '@/ui/hooks/useCheckoutPractice'
+import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const EntrainementEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
+  const nomPartie = useNomDePartie(identifiant)
   const navigate = useNavigate()
   const services = useServices()
 
@@ -56,6 +58,7 @@ export const EntrainementEcran = () => {
 
   return (
     <DispositionPartie
+      nomPartie={nomPartie}
       mode="CHECKOUT_PRACTICE"
       enTete={
         <>

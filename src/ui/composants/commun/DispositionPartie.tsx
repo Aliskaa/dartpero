@@ -7,6 +7,12 @@ type Props = {
   readonly mode: GameModeId
   /** Le bandeau de chêne : où on en est, et par quelles règles on joue. */
   readonly enTete: ReactNode
+  /**
+   * Le nom de la partie (« Finale des potes », « Dimanche soir »), en petit sous
+   * la rangée du bandeau ; `null` tant qu'il charge. Obligatoire : un écran de
+   * partie qui l'oublierait ne compilerait pas.
+   */
+  readonly nomPartie: string | null
   /** La ZONE LECTURE — ce qui se lit à 3 mètres. */
   readonly children: ReactNode
   /** La ZONE SAISIE — le pavé, qu'on tape à 30 cm. */
@@ -34,16 +40,26 @@ type Props = {
  * En paysage l'encoche passe sur le côté : les marges de sécurité horizontales
  * ne sont pas décoratives, sans elles une touche finit sous l'arrondi de
  * l'écran.
+ *
+ * **Le nom de la partie** a sa propre ligne, sous la rangée du bandeau, en
+ * portrait comme en paysage : le loger dans la rangée la ferait passer à la
+ * ligne en X01 avec sets, DI et DO. Sa hauteur est **réservée** (`h-4`) même
+ * pendant le chargement, pour que la zone de lecture ne saute pas quand le nom
+ * arrive ; un nom long est tronqué (« … »), jamais renvoyé à la ligne.
  */
-export const DispositionPartie = ({ mode, enTete, children, saisie }: Props) => (
+export const DispositionPartie = ({ mode, enTete, nomPartie, children, saisie }: Props) => (
   <div className="feutre-tapis flex min-h-dvh flex-col" style={variablesAccent(mode)}>
     <header
       className={[
-        'bandeau-match flex items-center gap-3 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]',
-        'paysage:pb-1 paysage:pt-[max(0.25rem,env(safe-area-inset-top))]',
+        'bandeau-match flex flex-col px-3 pb-1.5 pt-[max(0.5rem,env(safe-area-inset-top))]',
+        'paysage:pb-0.5 paysage:pt-[max(0.25rem,env(safe-area-inset-top))]',
       ].join(' ')}
     >
-      {enTete}
+      <div className="flex items-center gap-3">{enTete}</div>
+      {/* Aligné sur le texte de la rangée, après la flèche de retour (3rem). */}
+      <p className="grave h-4 truncate pl-12 font-score text-[0.7rem] leading-4 tracking-wide text-craie/70">
+        {nomPartie}
+      </p>
     </header>
 
     <div

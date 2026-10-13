@@ -120,7 +120,10 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
 
 - **Seul fichier** qui a le droit de `new` un adapter.
 - `Dependencies` (les ports driven) et `Services` (les ports driving que l'UI peut appeler,
-  plus `devices`) sont deux types distincts.
+  plus `devices` et `clock`) sont deux types distincts.
+- `Services.clock` (lot `nom-de-partie`) est **la même instance** que celle des use cases :
+  l'UI lit l'heure courante par elle, jamais par `Date.now()` — `Date` n'y sert que de
+  calendrier sur un instant donné. Garde : `tests/architecture/horlogeBoundary.test.ts`.
 - `createServices(deps)` est pure et injectable — c'est elle que `fakeServices()` appelle dans
   les tests, jamais une réimplémentation du câblage.
 - `createBrowserDependencies()` / `createBrowserServices()` sont les **seules** fonctions du
@@ -204,6 +207,28 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
 - **Le retour du téléphone** se simule par `retourTelephone()` (`tests/ui/gestes.ts`) : un
   `navigate(-1)` (POP d'historique) capturé par `SondeHistorique`, que `renderWithServices`
   monte à côté de l'écran — jamais en cliquant un bouton de l'écran.
+- **Le fuseau des tests est fixé** à `Europe/Paris` (`test.env.TZ`, § 12). Un test daté
+  construit ses bornes en heure **locale** (`new Date(2026, 9, 11, 1, 0)`), et un test qui
+  passe un changement d'heure vérifie d'abord sa **précondition** — la durée du jour (23 h ou
+  25 h) — sur le modèle de `tests/ui/nomDePartie.test.ts:88-98`. ⚠️ Sous un fuseau UTC, un
+  tel test serait vert partout sans rien prouver.
+- **`horlogeBoundary`** lit `src/ui/**`, `src/core/**` et la racine de `src` (`App.tsx`,
+  `main.tsx`), commentaires retirés par un petit lecteur qui respecte chaînes, gabarits et
+  regex, et refuse `Date.now` (appelé ou passé en référence), `new Date` sans argument et
+  `Date(…)` appelé en fonction. `new Date(horodatage)` reste permis : c'est un calendrier.
+  `performance.now()` et `Temporal.Now` n'y sont pas, à dessein (Q-D1 : aucune occurrence, pas
+  de date calendaire) — à reconsidérer s'ils entrent. Limites connues (N2), absentes de `src/`
+  aujourd'hui : `new globalThis.Date()`, `Date?.now()`, `const { now } = Date`,
+  `Intl.DateTimeFormat().format()` sans argument, un `//` ou `/*` dans du texte JSX.
+- **Une règle commune aux quatre modes se teste par `it.each(GAME_MODE_IDS)`**, jamais par une
+  liste recopiée : un mode ajouté entre de lui-même dans le test. `tests/use-cases/lancerPartie.ts`
+  lance une partie de n'importe quel mode (`switch` sur `GameModeId`) ; c'est une **aide de
+  scénario**, pas un fake — d'où sa place hors de `tests/fakes/`.
+- Pour prouver qu'une date vient de `createdAt` et non de `updatedAt`, **avancer l'horloge et
+  enregistrer un événement** avant de lire : sans second événement, les deux se confondent.
+  ⚠️ Trou connu (R2, laissé par décision utilisateur) : le test `getMatchName`
+  (`tests/use-cases/nomDePartie.test.ts:52-66`) ne le fait pas encore — le code est juste
+  (`GetMatchNameUseCase.ts`), mais rien ne le prouve.
 
 ## 12 · Outillage
 
@@ -218,6 +243,8 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   quoi que ce soit fini — ce que `dev.md` et `test.md` exigent déjà, répété ici parce que
   c'est aussi un pattern de code, pas seulement un gate de process.
 - `vite.config.ts` importe `defineConfig` depuis **`vitest/config`** (pour le bloc `test`).
+- Le bloc `test` fixe `env.TZ = 'Europe/Paris'` (lot `nom-de-partie`) : les noms par défaut et
+  leurs tests de changement d'heure dépendent du fuseau (§ 11). Le build n'en est pas affecté.
 
 ## 13 · Ajouter un mode de jeu (la couture `GameMode`)
 
@@ -273,11 +300,22 @@ testé en dur dans le hook (`max`, `selection`, mais aussi `ajouter` / `retirer`
 (`NouvellePartieEcran`) et dans `versOrdre` (`EtapeJoueurs`). Un nouveau mode y est traité en jeu
 de groupe — juste pour Killer ou Shanghai, faux pour un deuxième exercice solo.
 
+⚠️ **Depuis le lot « nom-de-partie »**, l'événement d'ouverture d'un mode porte le champ
+facultatif `name?: MatchName`. TypeScript signale : la branche de `nameOf` (`switch` au
+`default` typé `never`), la prop `nomPartie` de `DispositionPartie` et `TableauHonneur`,
+`lancer` de `tests/use-cases/lancerPartie.ts` et la `CARTE` de `tests/ui/nomDePartieEcrans.test.tsx`
+(des `switch` / `Record<GameModeId, …>`). Il **ne signale pas** :
+oublier `name?` sur l'ouverture ou l'appel à `nameField` dans le use case de lancement, le
+`...name` de `lancer` dans `useNouvellePartie`, le `name: ouverture.name` de `RestartMatch`, le
+`...versOuverture(...)` de `backupSchema` — tous attrapés par les `it.each(GAME_MODE_IDS)`.
+Reste hors de tout filet (R1) : la liste `OUVERTURES` de `tests/domain/matchName.test.ts`, à
+compléter à la main.
+
 ## 14 · Arborescence
 
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
-invariants). Vérifié contre `src/` (`ls`) au lot « nouvelle-partie-en-etapes » : 20 ports driving
-(hors `MatchSummary.ts`, un type), 11 driven, 9 hooks (plus `tourDeTable.ts`, un utilitaire),
+invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie » : 21 ports driving
+(hors `MatchSummary.ts`, un type), 11 driven, 10 hooks (plus `tourDeTable.ts`, un utilitaire),
 4 modes, 4 services transverses.
 
 ```
@@ -290,18 +328,20 @@ src/
 │  │  │  ├─ tour-du-monde/     config · rules
 │  │  │  ├─ cricket/           config · rules
 │  │  │  └─ checkout-practice/ config · rules      (solo)
-│  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, PlayerColor, ids
+│  │  ├─ value-objects/   Dart, Segment, Multiplier, Score, PlayerColor, ids,
+│  │  │                   MatchName (nom tapé, ≤ 30)
 │  │  ├─ entities/        Visit, Player          (transverses aux modes)
 │  │  ├─ events/          MatchEvent : X01Started | TourDuMondeStarted |
 │  │  │                   CricketStarted | CheckoutPracticeStarted |
 │  │  │                   RoundStarted | VisitRecorded
+│  │  │                   (+ nameOf : le nom de l'ouverture, `name?`)
 │  │  └─ services/        dartSearch · checkout · visitOutcome · dartboardHits
 │  │                      ⚠️ TRANSVERSES : un mode n'importe jamais un autre mode
 │  └─ application/
 │     ├─ ports/driving/   StartMatch, RestartMatch, RecordVisit, UndoLastVisit,
 │     │                   PreviewVisit,
 │     │                   GetMatchState, GetCheckoutSuggestion,
-│     │                   GetMatchStats, GetMatchHistory, GetMatchMode,
+│     │                   GetMatchStats, GetMatchHistory, GetMatchMode, GetMatchName,
 │     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
 │     │                   ManagePlayers, ManageBackup, PlayTourDuMonde,
 │     │                   PlayCricket, PreviewCricketVisit, PreviewTourDuMondeVisit,
@@ -310,6 +350,7 @@ src/
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
 │     │                   PersistentStorage, AppInstallation
 │     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
+│                         + nameField.ts (`{}` ou `{ name }` : jamais `name: undefined`)
 ├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
 ├─ ui/
@@ -326,7 +367,8 @@ src/
 │  │                        Historique, Statistiques, Réglages, Confidentialité
 │  ├─ hooks/              useX01 · useTourDuMonde · useCricket ·
 │  │                      useCheckoutPractice · useJoueurs ·
-│  │                      useNouvellePartie (réglages mémorisés, démarrage) ·
+│  │                      useNouvellePartie (réglages mémorisés, nom, démarrage) ·
+│  │                      useNomDePartie (le nom affiché d'une partie) ·
 │  │                      useAppareil (wake lock, préférences, voix) ·
 │  │                      useStockagePersistant (protection des données) ·
 │  │                      useInstallation (invitation à installer)

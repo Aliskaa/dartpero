@@ -3,6 +3,7 @@ import type { CricketConfig } from '../../../domain/games/cricket/config'
 import type { TourDuMondeConfig } from '../../../domain/games/tour-du-monde/config'
 import type { X01Config } from '../../../domain/games/x01/config'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
+import type { MatchName } from '../../../domain/value-objects/MatchName'
 
 type SummaryPlayer = {
   readonly playerId: PlayerId
@@ -31,6 +32,11 @@ export type CricketSummaryPlayer = SummaryPlayer & {
 
 type BaseSummary = {
   readonly id: MatchId
+  /**
+   * Le nom **tapé** à la création, `null` s'il n'y en a pas — l'UI affiche
+   * alors le nom par défaut, calculé depuis `createdAt`.
+   */
+  readonly name: MatchName | null
   readonly createdAt: number
   readonly updatedAt: number
   readonly finished: boolean

@@ -7,6 +7,7 @@ import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
+import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /** Un mot sur la performance — encourageant sans être malhonnête. */
@@ -20,6 +21,7 @@ const appreciation = (pourcentage: number): string => {
 export const ResumeEntrainementEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
+  const nomPartie = useNomDePartie(identifiant)
   const services = useServices()
 
   const session = useQuery({
@@ -54,6 +56,7 @@ export const ResumeEntrainementEcran = () => {
   return (
     <main className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
       <TableauHonneur
+        nomPartie={nomPartie}
         mode="CHECKOUT_PRACTICE"
         surtitre="Séance terminée"
         phrase={appreciation(pourcentage)}

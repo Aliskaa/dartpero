@@ -1,11 +1,15 @@
 import { ChevronRight, ChevronsDown, Globe2, Grid3x3, Target } from 'lucide-react'
+import { useId } from 'react'
 import { Link } from 'react-router'
 import type { GameModeId } from '@/core/domain/games'
 import { DEFAUT as DEFAUT_ENTRAINEMENT } from '@/core/domain/games/checkout-practice/config'
+import { MATCH_NAME_MAX_LENGTH } from '@/core/domain/value-objects/MatchName'
 import { ACCENTS_MODE } from '@/ui/accents'
 import { cheminNouvellePartie, ETAT_PARCOURS } from '@/ui/chemins'
+import type { NomPartieSaisi } from '@/ui/hooks/useNouvellePartie'
 import {
   LIBELLE_MODE,
+  LIBELLE_NOM_PARTIE,
   RETOUR_ACCUEIL,
   reglesCarteJeu,
   SOUS_TITRE_ETAPE_JEU,
@@ -61,8 +65,45 @@ const CarteJeu = ({ mode }: { readonly mode: GameModeId }) => {
   )
 }
 
-/** Étape 1 — le jeu. Une question par écran : on choisit à quoi on joue, rien d'autre. */
-export const EtapeJeu = () => (
+/**
+ * Le nom de la partie : prérempli avec la proposition (« Dimanche soir »),
+ * modifiable, jamais obligatoire.
+ *
+ * ⚠️ Pas d'`autoFocus` : le clavier masquerait les cartes, alors que la plupart
+ * des parties gardent le nom proposé. Vidé, le champ montre la proposition en
+ * filigrane — c'est elle que la partie portera.
+ */
+const ChampNom = ({ nom }: { readonly nom: NomPartieSaisi }) => {
+  const idChamp = useId()
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        htmlFor={idChamp}
+        className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie/65"
+      >
+        {LIBELLE_NOM_PARTIE}
+      </label>
+      <input
+        id={idChamp}
+        type="text"
+        value={nom.saisie}
+        placeholder={nom.proposition}
+        maxLength={MATCH_NAME_MAX_LENGTH}
+        autoComplete="off"
+        enterKeyHint="done"
+        onChange={(evenement) => nom.setSaisie(evenement.target.value)}
+        className="min-h-12 border border-chene/60 bg-feutre/70 px-4 text-craie placeholder:text-craie/60"
+      />
+    </div>
+  )
+}
+
+/**
+ * Étape 1 — le jeu, et le nom de la partie au-dessus des cartes. Le nom est la
+ * seule autre question de l'écran, et elle n'en est pas vraiment une : il est
+ * déjà proposé, toucher une carte suffit pour avancer.
+ */
+export const EtapeJeu = ({ nom }: { readonly nom: NomPartieSaisi }) => (
   <>
     <EnTeteEtape
       titre={TITRE_NOUVELLE_PARTIE}
@@ -70,6 +111,7 @@ export const EtapeJeu = () => (
       cheminPrecedent="/"
       libelleRetour={RETOUR_ACCUEIL}
     />
+    <ChampNom nom={nom} />
     <ul className="flex flex-col gap-3">
       {JEUX.map((mode) => (
         <CarteJeu key={mode} mode={mode} />

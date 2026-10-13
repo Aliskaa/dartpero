@@ -16,7 +16,21 @@ visuelle « feuille de match », retraits décidés par l'usage, statistiques d'
 résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit 2026-09-10**
 (détaillés en fin de § 6) : `tour-du-monde-cloture-volee`, `pourcentage-doubles-tiret`,
 `bundle-par-route`. App déployée sur https://dartpero.web.app.
-**517 tests verts** (dont 61 du lot `nouvelle-partie-en-etapes`), `lint`, `typecheck`, `build` et `smoke` verts.
+**689 tests verts** (dont 172 du lot `nom-de-partie`), `lint`, `typecheck` et `build` verts.
+Lot `nom-de-partie` livré (un nom pour chaque partie, quatre modes, voir § 6) — vérifications
+restantes : la **relecture à l'écran** de `03-plan-de-test.md` (`docs/lots/nom-de-partie/`) ;
+**T1** sur iPhone (plus de 16 emoji tapés : `maxlength` de Safari compte-t-il comme
+`MatchName.of` ? Si le lancement échoue, petit lot pour un message clair) ; **D5** la forme de
+la ligne du nom dans le bandeau (cas serré : X01 en sets, double in / out, téléphone peu
+haut) ; **constat 6** faut-il effacer « Dimanche soir » avant de taper un nom ; captures du
+README à refaire avec un nom. Pour le **prochain audit** : R2 (aucun test ne distingue
+`createdAt` de `updatedAt` pour le nom par défaut, `CONVENTIONS` § 11), R3 (`joueurs(mode)`
+teste `'CHECKOUT_PRACTICE'` en dur dans 5 fichiers de test au lieu de `GameModes.isSolo`), R4
+(antérieur : `hexagonalBoundary.test.ts` ne contrôle l'import entre modes que pour `x01` et
+`tour-du-monde`), N2 (limites connues de `horlogeBoundary`, `CONVENTIONS` § 11) ;
+`npm audit` : 8 vulnérabilités, toutes en dépendances de dev (vitest, sharp), 0 en production ;
+« undefined nuit » sur un `createdAt` importé absurde (constat 8 de la Revue) à joindre au
+constat 11 de l'index (borne haute de `horodatage` à l'import).
 Lot `nouvelle-partie-en-etapes` livré (Nouvelle partie en trois étapes, « manche » à l'écran,
 voir § 6) — vérifications restantes : la **relecture à l'écran** de `03-plan-de-test.md`
 (`docs/lots/nouvelle-partie-en-etapes/`), le **glisser au doigt** et le **retour matériel** sur
@@ -81,6 +95,7 @@ Tout ce qui suit est **pur** : aucun import de React, Dexie, ni API navigateur. 
 | `Dart` | `{ segment, multiplier }` → `points` | **Triple sur BULL interdit.** `SIMPLE BULL` = 25, `DOUBLE BULL` = 50. `isDouble` vrai pour tout double **y compris** le bull 50. |
 | `Score` | entier ≥ 0 | Rejette les négatifs. |
 | `MatchId` / `PlayerId` / `LegId` | branded types | Générés par `IdGenerator`. |
+| `MatchName` | branded `string` (lot `nom-de-partie`) | `MatchName.of` retire les espaces autour ; vide → `null` (pas de nom) ; plus de 30 caractères → erreur. |
 
 Cas particulier : la **fléchette hors cible** (« manqué ») est un `Dart` à 0 point —
 modélisée explicitement, car elle compte dans la moyenne et dans les tentatives de double.
@@ -109,6 +124,10 @@ CheckoutPracticeStarted   { config, playerIds[], startingPlayerIndex }
 RoundStarted              { target }          ← entraînement : le tirage est STOCKÉ
 VisitRecorded             { darts[] }         ← partagé par tous les modes
 ```
+
+Les quatre ouvertures portent aussi un champ **facultatif** `name?: MatchName` (lot
+`nom-de-partie`) : **clé absente** quand rien n'a été tapé, jamais `name: undefined`. `nameOf(events)`
+le lit (`switch` exhaustif sur l'ouverture). Le nom par défaut n'est jamais écrit.
 
 ⚠️ **Le mode se lit sur le premier événement du journal**, via un événement d'ouverture qui lui
 est propre — jamais via un champ `mode`. C'est ce qui rend les parties d'avant le lot 5a
@@ -178,7 +197,12 @@ fléchettes **sont comptées**.
 `PlayCheckoutPractice`
 **Transverses** : `GetMatchMode` · `GetMatchHistory` · `GetOngoingMatch` · `DeleteMatch` ·
 `GetCheckoutSuggestion` · `GetPlayerStats` · `ManagePlayers` · `ManageBackup` ·
-**`RestartMatch`** (lot UX)
+**`RestartMatch`** (lot UX) · **`GetMatchName`** (lot `nom-de-partie` : `{ name, createdAt }`,
+de quoi afficher le nom tapé ou recalculer le nom par défaut)
+
+⚠️ **L'horloge est exposée à l'UI** (`Services.clock`, lot `nom-de-partie`) : la même instance que
+celle des use cases, pour proposer « Dimanche soir » à l'étape 1 sans `Date.now()`. Exception de
+même nature que `devices` ; garde `tests/architecture/horlogeBoundary.test.ts`.
 
 - `PreviewVisit` est né au lot 3 pour que l'UI ne réimplémente jamais les règles : il évalue
   la volée en cours de saisie, qui n'est pas persistée. ⚠️ Il avait un jumeau,
@@ -219,7 +243,7 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | Route | Écran | Lot |
 | --- | --- | --- |
 | `/` | Accueil — *Reprendre la partie* (si une partie est en cours), *Nouvelle partie*, accès rapide ; invitation à installer, écartable (*Plus tard*) | 3 ✅ |
-| `/nouvelle-partie` | Étape 1 : le jeu (X01, Cricket, Tour du monde, Entraînement) | `nouvelle-partie-en-etapes` ✅ |
+| `/nouvelle-partie` | Étape 1 : le jeu (X01, Cricket, Tour du monde, Entraînement) et le **nom de la partie** (prérempli « Dimanche soir », 30 caractères au plus) | `nouvelle-partie-en-etapes` ✅ · nom : `nom-de-partie` ✅ |
 | `/nouvelle-partie/:jeu` | Étape 2 : joueurs (rangée, menu « + ») et réglages du jeu (manches, sets, double in/out…) | `nouvelle-partie-en-etapes` ✅ |
 | `/nouvelle-partie/:jeu/ordre` | Étape 3 : ordre de jeu (glisser-déposer, ordre aléatoire), dès 2 joueurs | `nouvelle-partie-en-etapes` ✅ |
 | `/nouvelle-partie/:jeu/joueurs` | Sélectionner un joueur existant | `nouvelle-partie-en-etapes` ✅ |
@@ -236,6 +260,10 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 
 ⚠️ **Une seule URL par partie**, quel que soit le mode : `PartieEcran` lit le mode sur le
 journal et rend l'écran correspondant. Un lien d'historique reste donc valable pour toujours.
+
+Le **nom de la partie** (lot `nom-de-partie`) se lit à trois endroits : le titre (`<h2>`) de sa
+carte dans l'historique, la tête des quatre résumés (`TableauHonneur`, un `<p>`), et une ligne à
+part sous la rangée du bandeau des quatre écrans de jeu (`DispositionPartie`).
 
 Les deux dernières lignes sont **une décision en suspens, pas un oubli** : l'écran
 `/statistiques` (lot 4) donne déjà les tableaux comparatifs classés, et l'historique porte
@@ -624,6 +652,14 @@ joueurs et réglages ; ordre de jeu dès 2 joueurs), sur le modèle de DartsOn m
 Rangée d'avatars avec ×, menu « + » (nouveau joueur en `<dialog>`, joueurs existants), ordre par
 glisser-déposer natif et clavier, sets exposés, entraînement en carte de l'étape 1, « manche » à
 l'écran, onglet Joueurs déplacé dans Réglages. Détail § 6 ; relecture sur appareil en § 0.
+
+### Lot « nom-de-partie »
+
+✅ **Fait — 689 tests verts** (+172). Un nom pour chaque partie, dans les quatre modes : champ
+« Nom de la partie » à l'étape 1, prérempli d'un nom par défaut (« Dimanche soir ») ; seul un
+nom tapé s'écrit (30 caractères au plus, champ facultatif de l'ouverture). Le nom s'affiche
+dans l'historique, en tête des résumés et sous le bandeau de jeu ; « Rejouer » le garde,
+`backupSchema` le transporte. Détail § 6 ; relecture sur appareil en § 0.
 
 ---
 
@@ -1700,3 +1736,50 @@ règles » des résumés mène à l'étape 2 du même jeu.
 `checkout.ts` suggère jusqu'à 180) ; « Manche N » du bandeau numérotée sur la partie, pas dans
 le set ; le résumé X01 n'affiche pas les sets ; boutons retour de 44 px ailleurs.
 - **456 → 517 tests verts** (+61).
+
+### Décisions du lot « nom-de-partie »
+
+Session complète : `docs/lots/nom-de-partie/` (intake validé, architecture `archi-authority`,
+trois tours de boucle : Test → Dev, Sécurité → Dev, Revue → Dev).
+
+- **Le nom vit dans l'événement d'ouverture** (`name?` sur les quatre `…Started`), ni dans
+`MatchRecord` (six points de mapping, chacun capable de perdre le nom en silence) ni dans un
+événement `MatchNamed` (les quatre projections refusent tout événement non-volée après
+l'ouverture, l'annulation aurait pu retirer le nom, une vieille app aurait refusé la partie à
+l'import). Gravé dans `CLAUDE.md` § Décisions structurantes.
+- **Seul un nom tapé s'écrit.** Le nom par défaut (« Jour tranche » : matin 5-12 h, après-midi
+12-18 h, soir 18-24 h, nuit 0-5 h) est un libellé recalculé à l'affichage depuis `createdAt`
+(`nomParDefaut`, `labels.ts`) : jamais écrit, jamais « complété » sur les anciennes parties.
+- ⚠️ **Amendement de la nuit**, décidé par l'utilisateur (deux fois confirmé) : la nuit porte le
+nom du **jour du calendrier** — samedi 1 h → « Samedi nuit ». L'intake disait « rattachée à la
+veille » ; `docs/request/nom-de-partie.md` et le snapshot du lot gardent cette formulation, à
+dessein (provenance) : **`CLAUDE.md` fait foi**. Classé en changement de spécification d'un
+libellé (Révision 1 de `01-architecture.md`), sans relance de la chaîne d'architecture.
+- **`Services.clock`** : l'UI lit l'heure par la même horloge que les use cases (proposition et
+`createdAt` cohérentes, test déterministe), exception de même nature que `devices`. Garde
+`horlogeBoundary.test.ts`. Port driving `GetMatchName` → `{ name, createdAt }`, lu par
+`useNomDePartie` (`staleTime: Infinity` : un nom ne change pas).
+- **Clé absente, jamais `name: undefined`** (`nameField`, `backupSchema`) : le clonage
+d'IndexedDB garderait la clé. `BACKUP_VERSION` reste à 1 : un ajout facultatif laisse les
+anciennes sauvegardes valides ; un nom importé repasse par `MatchName.of`.
+- **« Rejouer »** garde le nom tapé ; « Changer les règles » repart de la proposition (voulu,
+décision utilisateur T4).
+- **Politique `/confidentialite`** mise à jour (le nom donné aux parties est stocké), date au
+12 octobre 2026. Caractères de contrôle et bidi dans un nom : pas de refus, rendu en texte
+React — résiduel bas **accepté par l'utilisateur** (D2).
+- **Tests datés** : fuseau fixé (`test.env.TZ = 'Europe/Paris'`), bornes locales, précondition
+de durée du jour avant un changement d'heure — sans elle, un test sous UTC serait vert à vide.
+Règles communes aux modes en `it.each(GAME_MODE_IDS)`.
+- ⚠️ **Le premier `sansCommentaires` de la garde abîmait `src/App.tsx`** : une regex avalait la
+suite de la ligne `"/nouvelle-partie/*"` comme un commentaire ouvert. Réécrit en petit lecteur
+qui respecte chaînes, gabarits et regex (tour 1), avec échantillons attrapés / permis.
+- **Leçon de processus (constat 11 de la Revue)** : au gate Architecture, l'Orchestrator a clos
+la question de la nuit comme « évidente » alors que l'intake se contredisait (son exemple
+contre son critère 2) ; l'utilisateur a tranché à l'inverse. Une question où l'intake se
+contredit n'est **jamais** évidente : elle se pose.
+- **Laissés, décision utilisateur** : R1 (liste `OUVERTURES` recopiée dans `matchName.test.ts`,
+`CONVENTIONS` § 13), R2 (`CONVENTIONS` § 11). Au prochain audit : R3, R4, N2 (§ 0).
+- **Hors lot, relevés** : `nom` de `useNouvellePartie` ambigu (`nomPartie` serait plus clair) ;
+troisième copie du couple libellé + champ (composant `ChampTexte` à prévoir) ; « undefined
+nuit » sur un `createdAt` importé absurde, antérieur au lot.
+- **517 → 689 tests verts** (+172).

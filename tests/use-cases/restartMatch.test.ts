@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Services } from '@/composition/container'
 import { DomainError } from '@/core/domain/DomainError'
+import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
-import { fakeServices } from '../fakes'
+import { fakeServices, SettableClock } from '../fakes'
+import { lancer, ouverture } from './lancerPartie'
 
 /**
  * « On remet ça » — la relance à l'identique.
@@ -130,5 +132,45 @@ describe('Relancer une partie à l’identique', () => {
 
   it('refuse un identifiant inconnu', async () => {
     await expect(services.restartMatch.execute('inconnu' as MatchId)).rejects.toThrow(DomainError)
+  })
+})
+
+/**
+ * Critère 9 : « On remet ça » garde un nom tapé, et sinon la nouvelle partie
+ * prend le nom de **sa** date — jamais celui de l'ancienne, jamais écrit.
+ */
+describe('Relancer une partie — son nom', () => {
+  const base = async () => {
+    const clock = new SettableClock(new Date(2026, 9, 10, 21, 0).getTime())
+    const { services, dependencies } = fakeServices({ clock })
+    const kevin = (await services.managePlayers.create('Kevin')).id
+    const julien = (await services.managePlayers.create('Julien')).id
+    const joueurs = (mode: GameModeId) => (mode === 'CHECKOUT_PRACTICE' ? [kevin] : [kevin, julien])
+    return { services, dependencies, joueurs, clock }
+  }
+
+  it.each(GAME_MODE_IDS)('%s : garde le nom tapé', async (mode) => {
+    const { services, dependencies, joueurs } = await base()
+    const ancienne = await lancer(services, mode, joueurs(mode), 'Finale des potes')
+
+    const nouvelle = await services.restartMatch.execute(ancienne)
+
+    expect(nouvelle).not.toBe(ancienne)
+    expect(await ouverture(dependencies, nouvelle)).toMatchObject({ name: 'Finale des potes' })
+  })
+
+  it.each(GAME_MODE_IDS)('%s : sans nom tapé, n’écrit rien et date la relance', async (mode) => {
+    const { services, dependencies, joueurs, clock } = await base()
+    const ancienne = await lancer(services, mode, joueurs(mode))
+
+    const lendemain = new Date(2026, 9, 11, 10, 0).getTime()
+    clock.regler(lendemain)
+    const nouvelle = await services.restartMatch.execute(ancienne)
+
+    expect('name' in (await ouverture(dependencies, nouvelle))).toBe(false)
+    expect(await services.getMatchName.execute(nouvelle)).toEqual({
+      name: null,
+      createdAt: lendemain,
+    })
   })
 })

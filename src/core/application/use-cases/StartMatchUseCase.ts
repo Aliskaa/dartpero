@@ -8,6 +8,7 @@ import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
 import type { RandomSource } from '../ports/driven/RandomSource'
 import type { StartMatch, StartMatchCommand } from '../ports/driving/StartMatch'
+import { nameField } from './nameField'
 import { shufflePlayers } from './shufflePlayers'
 
 export class StartMatchUseCase implements StartMatch {
@@ -21,6 +22,8 @@ export class StartMatchUseCase implements StartMatch {
 
   async execute(command: StartMatchCommand): Promise<MatchId> {
     const { config, startingPlayerIndex = 0, shuffle = false } = command
+    // Le nom d'abord : trop long, rien n'est tiré ni écrit.
+    const name = nameField(command.name)
     // Le tirage a lieu ici, une fois, et son résultat part dans le journal.
     const playerIds = shuffle ? shufflePlayers(command.playerIds, this.random) : command.playerIds
 
@@ -35,6 +38,7 @@ export class StartMatchUseCase implements StartMatch {
       config,
       playerIds,
       startingPlayerIndex,
+      ...name,
     }
     // Valide la composition du match AVANT de persister quoi que ce soit.
     X01Rules.start(started)

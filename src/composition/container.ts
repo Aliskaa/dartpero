@@ -13,6 +13,7 @@ import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
 import type { GetMatchHistory } from '@/core/application/ports/driving/GetMatchHistory'
 import type { GetMatchMode } from '@/core/application/ports/driving/GetMatchMode'
+import type { GetMatchName } from '@/core/application/ports/driving/GetMatchName'
 import type { GetMatchState } from '@/core/application/ports/driving/GetMatchState'
 import type { GetMatchStats } from '@/core/application/ports/driving/GetMatchStats'
 import type { GetOngoingMatch } from '@/core/application/ports/driving/GetOngoingMatch'
@@ -33,6 +34,7 @@ import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseC
 import { GetCheckoutSuggestionUseCase } from '@/core/application/use-cases/GetCheckoutSuggestionUseCase'
 import { GetMatchHistoryUseCase } from '@/core/application/use-cases/GetMatchHistoryUseCase'
 import { GetMatchModeUseCase } from '@/core/application/use-cases/GetMatchModeUseCase'
+import { GetMatchNameUseCase } from '@/core/application/use-cases/GetMatchNameUseCase'
 import { GetMatchStateUseCase } from '@/core/application/use-cases/GetMatchStateUseCase'
 import { GetMatchStatsUseCase } from '@/core/application/use-cases/GetMatchStatsUseCase'
 import { GetOngoingMatchUseCase } from '@/core/application/use-cases/GetOngoingMatchUseCase'
@@ -114,6 +116,8 @@ export type Services = {
   readonly getMatchStats: GetMatchStats
   readonly getMatchHistory: GetMatchHistory
   readonly getMatchMode: GetMatchMode
+  /** Le nom tapé d'une partie et sa date de création, pour son bandeau et son résumé. */
+  readonly getMatchName: GetMatchName
   readonly getOngoingMatch: GetOngoingMatch
   readonly getPlayerStats: GetPlayerStats
   readonly deleteMatch: DeleteMatch
@@ -129,6 +133,14 @@ export type Services = {
   readonly previewTourDuMondeVisit: PreviewTourDuMondeVisit
   readonly previewCricketVisit: PreviewCricketVisit
   readonly devices: Devices
+  /**
+   * L'horloge des use cases, la **même instance**. Seconde exception de même
+   * nature que `devices` : l'étape 1 de Nouvelle partie propose un nom d'après
+   * l'heure (« Dimanche soir ») avant que la partie n'existe. Lire `Date.now()`
+   * dans l'UI rendrait ce calcul intestable ; passer par ce port garde la
+   * proposition et le `createdAt` de la partie sur la même horloge.
+   */
+  readonly clock: Clock
 }
 
 export const createServices = ({
@@ -166,6 +178,7 @@ export const createServices = ({
     getMatchStats: new GetMatchStatsUseCase(matches),
     getMatchHistory: new GetMatchHistoryUseCase(matches, players),
     getMatchMode: new GetMatchModeUseCase(matches),
+    getMatchName: new GetMatchNameUseCase(matches),
     getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
     getPlayerStats: new GetPlayerStatsUseCase(matches, players, clock),
     deleteMatch: new DeleteMatchUseCase(matches),
@@ -178,6 +191,7 @@ export const createServices = ({
     previewTourDuMondeVisit: new PreviewTourDuMondeVisitUseCase(),
     previewCricketVisit: new PreviewCricketVisitUseCase(),
     devices,
+    clock,
   }
 }
 

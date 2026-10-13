@@ -9,12 +9,14 @@ import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
 import { useProfils } from '@/ui/hooks/useJoueurs'
+import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { nomJoueur, phraseVictoire, pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const ResumeTourDuMondeEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
+  const nomPartie = useNomDePartie(identifiant)
   const services = useServices()
   const profils = useProfils()
 
@@ -62,6 +64,7 @@ export const ResumeTourDuMondeEcran = () => {
       className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]"
     >
       <TableauHonneur
+        nomPartie={nomPartie}
         mode="TOUR_DU_MONDE"
         surtitre="Tour du monde terminé"
         vainqueur={

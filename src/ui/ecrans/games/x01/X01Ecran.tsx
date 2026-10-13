@@ -12,6 +12,7 @@ import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
 import { Tableau } from '@/ui/composants/x01/Tableau'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
+import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { useX01 } from '@/ui/hooks/useX01'
 import { libelleLegsCourt, libelleMancheEnCours, nomJoueur } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
@@ -67,6 +68,7 @@ const EnTeteManche = ({
 export const X01Ecran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
+  const nomPartie = useNomDePartie(identifiant)
   const services = useServices()
   const navigate = useNavigate()
   const profils = useProfils()
@@ -133,6 +135,7 @@ export const X01Ecran = () => {
 
   return (
     <DispositionPartie
+      nomPartie={nomPartie}
       mode="X01"
       enTete={
         <EnTeteManche

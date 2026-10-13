@@ -21,6 +21,7 @@ import type {
   StartCheckoutPracticeCommand,
 } from '../ports/driving/PlayCheckoutPractice'
 import { loadMatch } from './loadMatch'
+import { nameField } from './nameField'
 
 export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
   constructor(
@@ -47,7 +48,9 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
     return cible
   }
 
-  async start({ playerId, config }: StartCheckoutPracticeCommand): Promise<MatchId> {
+  async start({ playerId, config, name: nomTape }: StartCheckoutPracticeCommand): Promise<MatchId> {
+    // Le nom d'abord : trop long, rien n'est tiré ni écrit.
+    const name = nameField(nomTape)
     if (!(await this.players.findById(playerId))) {
       throw new DomainError(`Unknown player: ${playerId}`)
     }
@@ -57,6 +60,7 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
       config,
       playerIds: [playerId],
       startingPlayerIndex: 0,
+      ...name,
     }
     // Valide avant de persister, puis ouvre déjà la première manche : une
     // session commence toujours avec une cible à viser.

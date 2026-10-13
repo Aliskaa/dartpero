@@ -15,7 +15,7 @@ import {
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
-import { ERREUR_DEMARRAGE } from '@/ui/labels'
+import { ERREUR_DEMARRAGE, nomParDefaut } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 import { usePreference } from './useAppareil'
 import { CLE_JOUEURS, useJoueurs } from './useJoueurs'
@@ -59,6 +59,18 @@ const dansLaListe = <T>(liste: readonly T[], valeur: unknown, defaut: T): T =>
 
 const booleen = (valeur: unknown, defaut: boolean): boolean =>
   typeof valeur === 'boolean' ? valeur : defaut
+
+/**
+ * Ce qui part dans la commande de lancement : le nom **tapé**, ou rien.
+ *
+ * Un champ vide, fait d'espaces, ou resté sur la proposition n'est pas un nom
+ * tapé : rien n'est écrit, et la partie affichera le nom de sa propre date de
+ * création. ⚠️ Écrire la proposition figerait un libellé dans le journal.
+ */
+export const nomTape = (saisie: string, proposition: string): { readonly name?: string } => {
+  const propre = saisie.trim()
+  return propre === '' || propre === proposition ? {} : { name: propre }
+}
 
 /**
  * L'état partagé des trois étapes de « Nouvelle partie ».
@@ -108,6 +120,16 @@ export const useNouvellePartie = () => {
     sortiesBrutes,
     DEFAUT_ENTRAINEMENT.rounds as (typeof SORTIES)[number],
   )
+
+  /**
+   * Le nom proposé (« Dimanche soir »), calculé **une seule fois** par passage
+   * dans le parcours : l'horloge est lue dans un initialiseur paresseux, jamais
+   * à chaque rendu. Le nom tapé vit ici, à la racine du parcours, pour suivre
+   * aux étapes 2 et 3 et survivre au retour du téléphone — jamais dans une
+   * préférence : il ne se mémorise pas d'une partie à l'autre.
+   */
+  const [proposition] = useState(() => nomParDefaut(services.clock.now()))
+  const [saisieNom, setSaisieNom] = useState(proposition)
 
   const [erreur, setErreur] = useState<string | null>(null)
   const [occupe, setOccupe] = useState(false)
@@ -187,6 +209,7 @@ export const useNouvellePartie = () => {
   const lancer = (mode: GameModeId): Promise<MatchId> => {
     const playerIds = selection(mode)
     const shuffle = tirageActif(mode)
+    const name = nomTape(saisieNom, proposition)
     switch (mode) {
       case 'X01':
         return services.startMatch.execute({
@@ -199,18 +222,21 @@ export const useNouvellePartie = () => {
             doubleIn,
           }),
           shuffle,
+          ...name,
         })
       case 'CRICKET':
         return services.playCricket.start({
           playerIds,
           config: CricketConfig.create({ variant: variante }),
           shuffle,
+          ...name,
         })
       case 'TOUR_DU_MONDE':
         return services.playTourDuMonde.start({
           playerIds,
           config: TourDuMondeConfig.create(),
           shuffle,
+          ...name,
         })
       case 'CHECKOUT_PRACTICE': {
         const [playerId] = playerIds
@@ -218,6 +244,7 @@ export const useNouvellePartie = () => {
         return services.playCheckoutPractice.start({
           playerId,
           config: CheckoutPracticeConfig.create({ rounds: sorties }),
+          ...name,
         })
       }
       default: {
@@ -255,6 +282,7 @@ export const useNouvellePartie = () => {
     demarrer,
     erreur,
     occupe,
+    nom: { saisie: saisieNom, setSaisie: setSaisieNom, proposition },
     reglages: {
       score,
       setScore,
@@ -278,3 +306,4 @@ export const useNouvellePartie = () => {
 
 export type NouvellePartie = ReturnType<typeof useNouvellePartie>
 export type ReglagesNouvellePartie = NouvellePartie['reglages']
+export type NomPartieSaisi = NouvellePartie['nom']

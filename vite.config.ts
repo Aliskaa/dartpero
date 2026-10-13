@@ -153,6 +153,11 @@ export default defineConfig(({ mode, command }) => {
       setupFiles: ['./tests/setup.ts'],
       include: ['tests/**/*.test.{ts,tsx}'],
       css: true,
+      // Un fuseau à heure d'été, le même sur toute machine : sans lui, les tests
+      // des jours de 23 et 25 h (nom de partie, `tests/ui/nomDePartie.test.ts`)
+      // seraient verts à vide en UTC. Ces tests vérifient en plus, en
+      // précondition, que la journée dure bien 23 / 25 h.
+      env: { TZ: 'Europe/Paris' },
     },
   }
 })

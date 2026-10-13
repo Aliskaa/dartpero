@@ -270,7 +270,7 @@ export const TITRE_CONFIDENTIALITE = 'Confidentialité'
 export const SOUS_TITRE_CONFIDENTIALITE = 'Politique et mentions légales'
 
 /** Chaîne française littérale : jamais recalculée depuis une date ISO. */
-export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 10 octobre 2026'
+export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 12 octobre 2026'
 
 export const RETOUR_REGLAGES = 'Retour aux réglages'
 
@@ -292,7 +292,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
   {
     titre: 'Sur votre appareil',
     paragraphes: [
-      'Vos profils (pseudo, couleur, date de création) et vos parties (chaque fléchette saisie, avec ses dates) sont enregistrés dans la base de données du navigateur (IndexedDB), sur ce téléphone seulement.',
+      'Vos profils (pseudo, couleur, date de création) et vos parties (le nom que vous leur avez donné, s’il y en a un, et chaque fléchette saisie, avec ses dates) sont enregistrés dans la base de données du navigateur (IndexedDB), sur ce téléphone seulement.',
       'Les préférences de l’appareil vont dans le stockage local du navigateur (localStorage) : le thème, l’annonce vocale, les réglages de la dernière partie, les derniers joueurs choisis (leurs identifiants internes) et le « Plus tard » de l’invitation à installer. Au démarrage, une valeur de test y est écrite puis effacée aussitôt.',
       'Si une mise à jour de l’application ne parvient pas à se charger, un marqueur technique est posé dans le stockage de session (sessionStorage), pour ne recharger la page qu’une seule fois.',
       'Une copie des fichiers de l’application est gardée en cache par le navigateur, pour qu’elle fonctionne hors ligne.',
@@ -369,6 +369,72 @@ export const dateHeure = (horodatage: number): string =>
     hour: '2-digit',
     minute: '2-digit',
   })
+
+/* ------------------------------------------------------------------------
+ * Le nom d'une partie (lot `nom-de-partie`).
+ * ---------------------------------------------------------------------- */
+
+/** Le libellé visible du champ de l'étape 1. */
+export const LIBELLE_NOM_PARTIE = 'Nom de la partie'
+
+/**
+ * Les jours, indexés par `Date.prototype.getDay()` : 0 = dimanche.
+ * ⚠️ Une table, pas `toLocaleString` : le résultat doit être exact et
+ * identique sur tous les téléphones, quelle que soit la langue du système.
+ */
+export const JOURS = [
+  'Dimanche',
+  'Lundi',
+  'Mardi',
+  'Mercredi',
+  'Jeudi',
+  'Vendredi',
+  'Samedi',
+] as const
+
+/** Les tranches de la journée, par heure de **début** (heure locale), de la plus tardive à la plus tôt. */
+export const TRANCHES = [
+  { debut: 18, libelle: 'soir' },
+  { debut: 12, libelle: 'après-midi' },
+  { debut: 5, libelle: 'matin' },
+] as const
+
+/** De minuit à 5 h : la nuit, au nom du jour du calendrier. */
+export const TRANCHE_NUIT = 'nuit'
+
+/**
+ * Le nom par défaut d'une partie : « Dimanche soir ».
+ *
+ * Matin de 5 h à 12 h, après-midi de 12 h à 18 h, soir de 18 h à minuit ; de
+ * minuit à 5 h, c'est la nuit — et elle porte le nom du **jour du calendrier**,
+ * comme les autres tranches : dimanche 1 h donne « Dimanche nuit ». Aucun
+ * rattachement au jour d'avant (choix de l'utilisateur).
+ *
+ * ⚠️ Le jour se lit sur le **calendrier local** (`getDay()`), jamais en
+ * décalant l'horodatage d'un nombre d'heures : les jours de changement
+ * d'heure durent 23 ou 25 h.
+ *
+ * `Date` sert ici de **calendrier** pour un horodatage donné, jamais
+ * d'horloge : l'heure courante vient de `services.clock`.
+ *
+ * Ce nom est un **libellé** : il n'est jamais écrit dans le journal, il se
+ * recalcule à chaque affichage depuis la date de création.
+ */
+export const nomParDefaut = (horodatage: number): string => {
+  const date = new Date(horodatage)
+  const heure = date.getHours()
+  const tranche = TRANCHES.find(({ debut }) => heure >= debut)
+  return `${JOURS[date.getDay()]} ${tranche ? tranche.libelle : TRANCHE_NUIT}`
+}
+
+/** Le nom à afficher : le nom tapé s'il y en a un, sinon celui de sa date de création. */
+export const nomDePartie = ({
+  name,
+  createdAt,
+}: {
+  readonly name: string | null
+  readonly createdAt: number
+}): string => name ?? nomParDefaut(createdAt)
 
 /** « 3 parties », « 1 partie » — l'accord au singulier revient partout. */
 export const pluriel = (nombre: number, singulier: string, pluriel = `${singulier}s`): string =>

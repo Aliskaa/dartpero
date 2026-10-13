@@ -6,6 +6,8 @@ import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
 export type StartCheckoutPracticeCommand = {
   readonly playerId: PlayerId
   readonly config: CheckoutPracticeConfig
+  /** Le nom tapé, brut : absent si rien n'a été tapé (voir `StartMatchCommand.name`). */
+  readonly name?: string
 }
 
 export type CheckoutPracticeResult = {

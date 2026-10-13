@@ -29,7 +29,7 @@ qui font foi, pas l'index.
    cas c'est `.claude/CONVENTIONS.md` qu'il faut mettre à jour, pas le code qu'il faut aligner.
 2. **La liste des exceptions délibérées.** Ce projet documente ses entorses : les trois
    exceptions de `themeBoundary` (`couleurs.ts`, `Cible.tsx`, `theme.ts`), le doublon assumé du
-   script d'amorçage de `index.html`, `Services.devices` qui court-circuite les use cases, le
+   script d'amorçage de `index.html`, `Services.devices` et `Services.clock` qui court-circuitent les use cases, le
    `MatchStarted` persisté qu'on ne renomme pas.
 
 ⚠️ **Ce qui est documenté comme délibéré n'est pas un constat.** Le signaler quand même est la

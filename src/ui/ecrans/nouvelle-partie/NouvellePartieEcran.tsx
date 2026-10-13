@@ -50,7 +50,8 @@ const GardeOrdre = ({
  * ⚠️ **Chaque étape est une route** descendante de `/nouvelle-partie/*`, jamais
  * un état interne : c'est ce qui fait que le retour du téléphone ramène à
  * l'étape précédente. Ce composant reste monté d'une étape à l'autre, et c'est
- * lui seul qui appelle `useNouvellePartie` : les choix survivent au retour.
+ * lui seul qui appelle `useNouvellePartie` : les choix survivent au retour —
+ * le nom tapé à l'étape 1 compris.
  */
 export const NouvellePartieEcran = () => {
   const partie = useNouvellePartie()
@@ -66,7 +67,7 @@ export const NouvellePartieEcran = () => {
   return (
     <main className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
       <Routes>
-        <Route index element={<EtapeJeu />} />
+        <Route index element={<EtapeJeu nom={partie.nom} />} />
         <Route
           path=":jeu"
           element={<AvecJeu>{(mode) => <EtapeJoueurs mode={mode} partie={partie} />}</AvecJeu>}

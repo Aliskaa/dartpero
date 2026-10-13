@@ -10,7 +10,7 @@ import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { EmptyState, MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { useProfils } from '@/ui/hooks/useJoueurs'
-import { dateHeure, LIBELLE_MODE, LIBELLE_MODE_COURT, pluriel } from '@/ui/labels'
+import { dateHeure, LIBELLE_MODE, LIBELLE_MODE_COURT, nomDePartie, pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const CLE_HISTORIQUE = ['historique'] as const
@@ -61,6 +61,11 @@ const CartePartie = ({
       </header>
 
       <div className="flex flex-col gap-2 p-3">
+        {/* Le nom en titre de la carte : tapé, ou celui de sa date de création.
+            Il passe à la ligne plutôt que d'être tronqué — la carte a la place. */}
+        <h2 className="break-words font-score text-base font-bold tracking-wide text-craie-vive">
+          {nomDePartie(partie)}
+        </h2>
         <p className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
           {libelleRegles(partie)}
         </p>

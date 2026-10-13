@@ -22,6 +22,7 @@ ce que lit le joueur, la deuxième ce qu'écrit le code.
 | Tour du monde | `tour-du-monde` | 20 → 1 puis bulle ; on finit le tour de table. |
 | entraînement | `checkout-practice` | Mode solo d'entraînement à la sortie. |
 | manche (entraînement) | `rounds` | Une tentative de l'entraînement : un reste tiré, une volée pour le sortir. Même mot que la manche X01, autre objet. |
+| nom de partie | `MatchName` | Nom **tapé** (≤ 30 caractères, espaces autour retirés), seul écrit, dans l'événement d'ouverture. À défaut, « Jour tranche » recalculé depuis la date de création, jamais écrit — la nuit (0-5 h) au nom du jour du calendrier. |
 | joueur / profil | `Player` | Profil **local** (pseudo + couleur), pas un compte. |
 | oche | — | La ligne de lancer. Contexte d'usage, pas un objet du code. |
 

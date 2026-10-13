@@ -1,6 +1,14 @@
 import type { MatchEvent } from '../../../domain/events/MatchEvent'
 
-/** La version du format de fichier. À incrémenter si sa forme change. */
+/**
+ * La version du format de fichier. À incrémenter si sa forme change de façon
+ * **incompatible**.
+ *
+ * Un ajout facultatif ne l'incrémente pas : le `name` des ouvertures (lot
+ * `nom-de-partie`) est resté en version 1, comme les trois modes ajoutés avant
+ * lui. Une version plus ancienne de l'app perd le nom (cosmétique) au lieu de
+ * refuser tout le fichier.
+ */
 export const BACKUP_VERSION = 1
 
 /** Signature du fichier : évite d'importer par erreur un JSON qui n'a rien à voir. */

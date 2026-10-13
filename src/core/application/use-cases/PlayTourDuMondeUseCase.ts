@@ -14,6 +14,7 @@ import type {
   TourDuMondeVisitResult,
 } from '../ports/driving/PlayTourDuMonde'
 import { loadMatch } from './loadMatch'
+import { nameField } from './nameField'
 import { shufflePlayers } from './shufflePlayers'
 
 export class PlayTourDuMondeUseCase implements PlayTourDuMonde {
@@ -27,6 +28,8 @@ export class PlayTourDuMondeUseCase implements PlayTourDuMonde {
 
   async start(command: StartTourDuMondeCommand): Promise<MatchId> {
     const { config, startingPlayerIndex = 0, shuffle = false } = command
+    // Le nom d'abord : trop long, rien n'est tiré ni écrit.
+    const name = nameField(command.name)
     // Le tirage a lieu ici, une fois, et son résultat part dans le journal.
     const playerIds = shuffle ? shufflePlayers(command.playerIds, this.random) : command.playerIds
 
@@ -39,6 +42,7 @@ export class PlayTourDuMondeUseCase implements PlayTourDuMonde {
       config,
       playerIds,
       startingPlayerIndex,
+      ...name,
     }
     // Valide la composition AVANT de persister quoi que ce soit.
     TourDuMondeRules.start(started)
