@@ -14,6 +14,30 @@ export const nameIndex = async (
   return new Map(all.map((player) => [player.id, player.name]))
 }
 
+export type MatchStatus = 'FINISHED' | 'ONGOING' | 'ABANDONED'
+
+/**
+ * Le statut d'une partie, **calculé ici et nulle part ailleurs** : l'Accueil
+ * comme l'Historique l'appellent, avec le même `ongoingId`.
+ *
+ * `ongoingId` est l'identifiant de la partie en cours **globale** (celle de
+ * `GetOngoingMatch`), jamais filtrée par mode : sous un filtre de mode, la
+ * plus récente non terminée *de ce mode* serait faussement « en cours ».
+ * Une partie non terminée qui n'est pas celle-là est « abandonnée » (elle
+ * reste reprenable). Rien n'est enregistré.
+ *
+ * ⚠️ `GetOngoingMatch` ne regarde que les 20 parties les plus récentes : si
+ * aucune non terminée ne s'y trouve, `ongoingId` vaut `null` et toute non
+ * terminée est « abandonnée ».
+ */
+export const matchStatus = (
+  summary: Pick<MatchSummary, 'id' | 'finished'>,
+  ongoingId: MatchSummary['id'] | null,
+): MatchStatus => {
+  if (summary.finished) return 'FINISHED'
+  return summary.id === ongoingId ? 'ONGOING' : 'ABANDONED'
+}
+
 /**
  * Condense un match en rejouant son journal, quel que soit son mode.
  *
@@ -85,6 +109,7 @@ export const summarize = (
     ...commun,
     mode: 'X01',
     config: state.config,
+    legsPlayed: state.milestones.filter((milestone) => milestone.type === 'LegWon').length,
     players: state.players.map((player) => ({
       playerId: player.playerId,
       name: names.get(player.playerId) ?? null,

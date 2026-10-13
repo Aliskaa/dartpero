@@ -23,6 +23,10 @@ Patterns : `CONVENTIONS` § 9 et § 10.
 - **L'UI appelle les use cases**, fournis par `useServices()`. Jamais
   Dexie, jamais une règle de jeu réimplémentée : pour anticiper, un port
   de prévisualisation (`PreviewVisit`…).
+- Une **fonction pure** d'`application` (`matchStatus`) s'importe comme le
+  domaine ; un use case, jamais : toujours par `useServices()`
+  (`CONVENTIONS` § 8). Les clés de requête partagées viennent de
+  `clesRequetes.ts` (§ 10).
 - **L'heure courante** passe par `services.clock`, jamais `Date.now()`
   ni `new Date()` sans argument (garde `horlogeBoundary`) ; `Date` ne
   sert que de calendrier sur un horodatage donné.

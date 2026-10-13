@@ -15,7 +15,7 @@ describe('Parcours complet', () => {
 
     // --- Accueil : aucune partie en cours ---
     expect(await screen.findByRole('heading', { name: /dartpéro/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Reprendre' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Reprendre/ })).not.toBeInTheDocument()
 
     await utilisateur.click(screen.getByRole('link', { name: /nouvelle partie/i }))
 
@@ -82,7 +82,8 @@ describe('Parcours complet', () => {
 
     renderWithServices(<App />, { services, route: '/' })
 
-    expect(await screen.findByRole('button', { name: 'Reprendre' })).toBeInTheDocument()
-    expect(screen.getByText('501')).toBeInTheDocument()
+    const carte = await screen.findByRole('link', { name: /Reprendre/ })
+    expect(carte).toHaveAttribute('href', expect.stringMatching(/^\/partie\/[^/]+$/))
+    expect(carte).toHaveTextContent('X01 · 501')
   })
 })

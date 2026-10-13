@@ -174,7 +174,7 @@ describe('Cricket — création et historique', () => {
     expect(historique[0]?.mode).toBe('CRICKET')
   })
 
-  it('apparaît dans l’historique avec ses cibles fermées et ses points', async () => {
+  it('apparaît dans l’historique avec ses règles et « En cours »', async () => {
     const { services } = fakeServices()
     const { matchId } = await partieCourte(services)
     await services.playCricket.recordVisit(matchId, [
@@ -188,7 +188,7 @@ describe('Cricket — création et historique', () => {
     const libelles = parties.map((partie) => partie.textContent ?? '')
 
     expect(libelles.some((texte) => texte.includes('Cricket Standard'))).toBe(true)
-    expect(libelles.some((texte) => texte.includes('1/3'))).toBe(true)
-    expect(libelles.some((texte) => texte.includes('20'))).toBe(true)
+    // La carte commune dit l'avancement, plus le détail par joueur (le résumé le garde).
+    expect(libelles.some((texte) => texte.includes('En cours'))).toBe(true)
   })
 })

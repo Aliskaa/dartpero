@@ -13,12 +13,17 @@ import { SondeHistorique } from './gestes'
  */
 export const renderWithServices = (
   ui: ReactNode,
-  { services, route = '/' }: { readonly services: Services; readonly route?: string },
+  {
+    services,
+    route = '/',
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  }: {
+    readonly services: Services
+    readonly route?: string
+    /** Un client partagé (et gardé par le test) : pour prouver une invalidation de cache. */
+    readonly queryClient?: QueryClient
+  },
 ) => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
-
   return render(
     <QueryClientProvider client={queryClient}>
       <ServicesProvider services={services}>

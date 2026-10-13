@@ -49,6 +49,11 @@ export type X01Summary = BaseSummary & {
   readonly mode: 'X01'
   readonly config: X01Config
   readonly players: readonly X01SummaryPlayer[]
+  /**
+   * Manches jouées, **tous sets confondus** : le nombre de `LegWon` du journal.
+   * Dérivé, jamais stocké ; juste en cours comme une fois la partie terminée.
+   */
+  readonly legsPlayed: number
 }
 
 export type TourDuMondeSummary = BaseSummary & {
@@ -79,8 +84,16 @@ export type CheckoutPracticeSummary = BaseSummary & {
 }
 
 /**
- * Vue condensée d'un match, pour l'accueil (« reprendre la partie ») et
- * l'historique. Entièrement dérivée du journal : rien de tout ceci n'est stocké.
+ * Vue condensée d'un match. Entièrement dérivée du journal : rien de tout ceci
+ * n'est stocké.
+ *
+ * L'Accueil et l'Historique (`CartePartie`) n'en lisent que `id`, `createdAt`,
+ * le mode, le nom, les joueurs, `finished`, `winnerId`, `legsPlayed`,
+ * `targetsTotal`, `roundsWon` / `roundsPlayed` et la config (aucun fichier de
+ * `src/ui` ne lit `updatedAt`). Les autres champs (`remaining`, `legsWonInSet`,
+ * `setsWon`, `targetIndex`, `finishedInDarts`, `closedTargets`, `score`, `successPercent`,
+ * `totalVisits`) ne sont plus lus par aucun écran : ils sont gardés pour les use
+ * cases, les tests et un éventuel écran de détail.
  *
  * ⚠️ Union discriminée par `mode` : un Tour du monde n'a pas de score restant,
  * un X01 n'a pas de cible courante. Plutôt qu'un type mou dont la moitié des

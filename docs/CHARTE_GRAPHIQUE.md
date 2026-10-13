@@ -126,7 +126,8 @@ Sans couleur choisie à la création : **première libre** en tourniquet — zé
 ### Accent par mode
 
 Le laiton reste la couleur de l'**app**. Chaque mode pose une teinte secondaire sur la ligne du
-joueur actif, le titre du bandeau et les pastilles de sélection — jamais derrière un chiffre.
+joueur actif, le titre du bandeau, les pastilles de sélection et le liseré des cartes de partie
+(`CartePartie`) — jamais derrière un chiffre.
 
 | Mode | Accent | Sombre | Clair |
 | ---- | ------ | ------ | ----- |
@@ -233,10 +234,10 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `TableauJoueurs` | La feuille **transposée** : joueurs en colonnes, statistiques en lignes |
 | `CarteImpacts` / `PanneauImpacts` | La carte de chaleur du plateau, et les cartes côte à côte |
 | `TableauHonneur` / `MomentCelebratif` | Podium de résumé · bandeau de célébration |
-| `ApercuPartie` | **Le seul endroit** de l'UI qui ouvre l'union `MatchSummary` |
+| `CartePartie` | La carte d'une partie, à l'Accueil et dans Parties (a remplacé `ApercuPartie`) : liseré `border-l-4` à l'accent du mode, nom en titre, règles et heure, avatars, badge « Abandonnée », statut (« X gagne · N manches » au X01 terminé) et ✓ `text-laiton`. **Une seule cible** (lien `min-h-16`) ; « Reprendre », sur la partie en cours seulement, n'en est que le visuel ; `actions` hors du lien. **Le seul endroit** de l'UI qui ouvre l'union `MatchSummary` |
 | `ActionsFinDePartie` | « On remet ça » / « Changer les règles » / « Accueil » — les 4 résumés |
 | `DispositionPartie` | Ossature portrait / paysage des écrans de jeu, et l'accent du mode |
-| `LayoutPrincipal` / `NavigationBasse` | Coquille des écrans hors partie |
+| `LayoutPrincipal` / `NavigationBasse` | Coquille des écrans hors partie. La barre a une hauteur **fixe** (`--hauteur-nav-basse`, 3,5 rem, filet du haut compris, plus la safe-area), jamais une hauteur minimale ; le bouton « Nouvelle partie » de l'Accueil se cale en `sticky` sur **le même `calc`** (un test le vérifie). ⚠️ Compromis : avec une police système très agrandie, un libellé d'onglet serait **rogné** plutôt que de faire grandir la barre — à vérifier sur appareil réel ; repli possible : un conteneur `sticky` unique dans `LayoutPrincipal` pour la barre et le bouton |
 | `Etats` | `EmptyState` · `Skeleton` · `Spinner` / `SpinnerLigne` · `MessageErreur` · `EcranErreur` |
 | `CarteJoueur` (`composants/match/`) | Score géant, jetons de manches, volée en cours |
 
@@ -369,7 +370,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 
 | Élément | Règle |
 | ------- | ----- |
-| `:focus-visible` | Contour `laiton` 2 px, offset 2 px |
+| `:focus-visible` | Contour `laiton` 2 px, offset 2 px — sauf les onglets de `NavigationBasse` : offset **−2 px** (anneau intérieur), car la barre coupe ce qui déborde |
 | `::selection` | Fond laiton semi-transparent, texte `craie-vive` |
 | Body | `touch-action: manipulation`, pas de tap-highlight bleu, pas d'overscroll vertical |
 | Contrôles natifs | `color-scheme` suit le thème — sinon une barre de défilement blanche longe une page en feutre |

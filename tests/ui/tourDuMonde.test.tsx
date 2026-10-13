@@ -337,7 +337,7 @@ describe('Couture GameMode — côté écrans', () => {
     expect(screen.queryByLabelText('Score restant de Kevin')).toBeNull()
   })
 
-  it('range les deux modes dans le même historique, chacun avec ses chiffres', async () => {
+  it('range les deux modes dans le même historique, chacun avec son statut', async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
 
@@ -360,9 +360,9 @@ describe('Couture GameMode — côté écrans', () => {
 
     expect(libelles.some((texte) => texte.includes('Tour du monde'))).toBe(true)
     expect(libelles.some((texte) => texte.includes('X01'))).toBe(true)
-    // Le X01 montre son reste, le Tour du monde son parcours.
-    expect(libelles.some((texte) => texte.includes('321'))).toBe(true)
-    expect(libelles.some((texte) => texte.includes('1/3'))).toBe(true)
+    // Le X01 montre ses manches jouées, le Tour du monde « En cours ».
+    expect(libelles.some((texte) => texte.includes('0 manche jouée'))).toBe(true)
+    expect(libelles.some((texte) => texte.includes('En cours'))).toBe(true)
   })
 
   it('laisse les statistiques de carrière au X01', async () => {

@@ -1,19 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, Trash2 } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary'
+import { matchStatus } from '@/core/application/use-cases/summarize'
 import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { ApercuPartie, libelleRegles } from '@/ui/composants/commun/ApercuPartie'
+import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
+import { CartePartie } from '@/ui/composants/commun/CartePartie'
 import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { EmptyState, MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { useProfils } from '@/ui/hooks/useJoueurs'
-import { dateHeure, LIBELLE_MODE, LIBELLE_MODE_COURT, nomDePartie, pluriel } from '@/ui/labels'
+import { dateHeure, LIBELLE_MODE, LIBELLE_MODE_COURT, pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
-
-export const CLE_HISTORIQUE = ['historique'] as const
 
 /**
  * `'TOUS'` n'est pas un mode : c'est l'absence de filtre.
@@ -30,88 +28,39 @@ const FILTRES: readonly FiltreMode[] = [TOUS, ...GAME_MODE_IDS]
 const libelleFiltre = (filtre: FiltreMode): string =>
   filtre === TOUS ? 'Tous' : LIBELLE_MODE_COURT[filtre]
 
-const CartePartie = ({
-  partie,
-  onOuvrir,
-  onSupprimer,
-}: {
-  readonly partie: MatchSummary
-  readonly onOuvrir: () => void
-  readonly onSupprimer: () => Promise<void>
-}) => {
-  const profils = useProfils()
+/** La suppression, hors de la cible principale de la carte : sa propre cible, en deux temps. */
+const BoutonSupprimer = ({ onSupprimer }: { readonly onSupprimer: () => Promise<void> }) => {
   const [confirme, setConfirme] = useState(false)
 
   return (
-    <li className="overflow-hidden border border-chene/40 bg-ardoise">
-      <header className="flex items-center justify-between gap-2 border-b border-chene/35 px-3 py-2">
-        <span className="font-score text-[0.65rem] uppercase tracking-widest text-craie/75">
-          {dateHeure(partie.createdAt)}
-        </span>
-        <span
-          className={[
-            'border px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider',
-            partie.finished
-              ? 'border-vert-cible/60 bg-vert-cible/20 text-vert-cible'
-              : 'border-laiton/60 bg-laiton/15 text-laiton-clair',
-          ].join(' ')}
-        >
-          {partie.finished ? 'Terminée' : 'En cours'}
-        </span>
-      </header>
-
-      <div className="flex flex-col gap-2 p-3">
-        {/* Le nom en titre de la carte : tapé, ou celui de sa date de création.
-            Il passe à la ligne plutôt que d'être tronqué — la carte a la place. */}
-        <h2 className="break-words font-score text-base font-bold tracking-wide text-craie-vive">
-          {nomDePartie(partie)}
-        </h2>
-        <p className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/60">
-          {libelleRegles(partie)}
-        </p>
-
-        <ApercuPartie partie={partie} profils={profils} classe />
-
-        <div className="mt-1 grid grid-cols-[1fr_auto] gap-2">
-          <button
-            type="button"
-            onClick={onOuvrir}
-            className="touche flex min-h-12 items-center justify-center gap-2 font-score text-sm font-bold uppercase tracking-widest text-craie"
-          >
-            {partie.finished ? 'Voir le résumé' : 'Reprendre'}
-            <ChevronRight aria-hidden="true" className="size-4" />
-          </button>
-
-          <button
-            type="button"
-            aria-label={confirme ? 'Confirmer la suppression de la partie' : 'Supprimer la partie'}
-            onClick={async () => {
-              if (!confirme) {
-                setConfirme(true)
-                return
-              }
-              await onSupprimer()
-            }}
-            className={[
-              'flex min-h-12 items-center justify-center gap-2 border-2 px-4',
-              'font-score text-sm font-bold uppercase tracking-widest transition-colors',
-              confirme
-                ? 'border-rouge-cible bg-rouge-cible/30 text-craie-vive'
-                : 'border-rouge-cible/50 bg-rouge-cible/10 text-craie/80',
-            ].join(' ')}
-          >
-            <Trash2 aria-hidden="true" className="size-4" />
-            {confirme && 'Sûr ?'}
-          </button>
-        </div>
-      </div>
-    </li>
+    <button
+      type="button"
+      aria-label={confirme ? 'Confirmer la suppression de la partie' : 'Supprimer la partie'}
+      onClick={async () => {
+        if (!confirme) {
+          setConfirme(true)
+          return
+        }
+        await onSupprimer()
+      }}
+      className={[
+        'flex min-h-12 min-w-12 shrink-0 items-center justify-center gap-2 border-l-2 px-3',
+        'font-score text-sm font-bold uppercase tracking-widest transition-colors',
+        confirme
+          ? 'border-rouge-cible bg-rouge-cible/30 text-craie-vive'
+          : 'border-rouge-cible/50 bg-rouge-cible/10 text-craie/80',
+      ].join(' ')}
+    >
+      <Trash2 aria-hidden="true" className="size-4" />
+      {confirme && 'Sûr ?'}
+    </button>
   )
 }
 
 export const HistoriqueEcran = () => {
   const services = useServices()
-  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const profils = useProfils()
   const [erreur, setErreur] = useState<string | null>(null)
   const [filtre, setFiltre] = useState<FiltreMode>(TOUS)
 
@@ -121,11 +70,22 @@ export const HistoriqueEcran = () => {
     queryFn: () => services.getMatchHistory.execute(50, filtre === TOUS ? undefined : filtre),
   })
 
+  // ⚠️ La partie en cours est **globale**, jamais filtrée par mode : c'est ce
+  // qui rend « Abandonnée » identique ici et à l'Accueil, même sous un filtre.
+  const encours = useQuery({
+    queryKey: CLE_MATCH_EN_COURS,
+    queryFn: () => services.getOngoingMatch.execute(),
+  })
+  const enCoursId = encours.data?.id ?? null
+
   const supprimer = async (id: MatchId) => {
     setErreur(null)
     try {
       await services.deleteMatch.execute(id)
-      await historique.refetch()
+      // Supprimer la partie en cours change aussi celle de l'Accueil et le
+      // statut des autres : les deux requêtes repartent.
+      await queryClient.invalidateQueries({ queryKey: CLE_HISTORIQUE })
+      await queryClient.invalidateQueries({ queryKey: CLE_MATCH_EN_COURS })
     } catch {
       setErreur('Cette partie n’a pas pu être supprimée.')
     }
@@ -156,7 +116,7 @@ export const HistoriqueEcran = () => {
 
         {erreur && <MessageErreur>{erreur}</MessageErreur>}
 
-        {historique.isPending ? (
+        {historique.isPending || encours.isPending ? (
           <SpinnerLigne label="Chargement de l’historique…" />
         ) : parties.length === 0 ? (
           // ⚠️ Deux vides à ne pas confondre, comme sur l'écran Statistiques :
@@ -178,10 +138,10 @@ export const HistoriqueEcran = () => {
               <CartePartie
                 key={partie.id}
                 partie={partie}
-                onOuvrir={() =>
-                  navigate(partie.finished ? `/partie/${partie.id}/resume` : `/partie/${partie.id}`)
-                }
-                onSupprimer={() => supprimer(partie.id)}
+                statut={matchStatus(partie, enCoursId)}
+                profils={profils}
+                quand={dateHeure(partie.createdAt)}
+                actions={<BoutonSupprimer onSupprimer={() => supprimer(partie.id)} />}
               />
             ))}
           </ul>

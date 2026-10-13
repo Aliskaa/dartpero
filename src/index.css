@@ -105,6 +105,13 @@
      l'encre ne se voit pas, elle salit. */
   --teinte-relief: rgb(0 0 0 / 0.6);
 
+  /* La hauteur de la barre du bas, FILET DU HAUT COMPRIS (border-box), SANS la
+     zone de sécurité. `NavigationBasse` la tient en `height` fixe (jamais en
+     `min-height` : une police système agrandie ne doit pas la faire grandir) et
+     le bouton fixé de l'Accueil se cale juste au-dessus, en `sticky`. C'est la
+     seule source du décalage. */
+  --hauteur-nav-basse: 3.5rem;
+
   /* L'ombre portée de l'ENSEIGNE et du nom du vainqueur : une plaque posée
      sur le mur, pas un relief de texte. ⚠️ Elle ne peut PAS être blanche en
      thème clair : à 3 px sous du laiton foncé, le blanc ne fait pas une

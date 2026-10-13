@@ -15,6 +15,7 @@ import {
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { ERREUR_DEMARRAGE, nomParDefaut } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 import { usePreference } from './useAppareil'
@@ -259,7 +260,9 @@ export const useNouvellePartie = () => {
     setOccupe(true)
     try {
       const matchId = await lancer(mode)
-      await queryClient.invalidateQueries({ queryKey: ['matchEnCours'] })
+      await queryClient.invalidateQueries({ queryKey: CLE_MATCH_EN_COURS })
+      // La nouvelle partie est une carte de plus à l'Accueil et à l'Historique.
+      await queryClient.invalidateQueries({ queryKey: CLE_HISTORIQUE })
       navigate(`/partie/${matchId}`)
     } catch {
       setErreur(ERREUR_DEMARRAGE)

@@ -137,6 +137,11 @@ du jour du calendrier : dimanche 1 h → « Dimanche nuit ») est un **libellé 
 l'affichage** depuis `createdAt` (`labels.ts`) : ne jamais l'écrire, ni « compléter » les
 anciennes parties. L'UI lit l'heure par `services.clock` (même exception que `devices`),
 jamais par `Date.now()` — garde `tests/architecture/horlogeBoundary.test.ts`.
+- **Accueil en parties récentes** (lot `accueil-parties-recentes`) : cartes « Aujourd'hui » puis
+« Cette semaine » ; la partie en cours, épinglée en tête, est seule à porter « Reprendre ».
+⚠️ **« Abandonnée » est dérivée, jamais écrite** : `matchStatus`, et lui seul, la calcule contre
+la partie en cours **globale** (`GetOngoingMatch`), jamais contre une liste filtrée par mode —
+même statut à l'Accueil et dans Parties. La mise en page de l'Accueil, elle, n'est pas gravée.
 
 ---
 

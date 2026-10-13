@@ -92,8 +92,8 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     await services.recordVisit.execute({ matchId, darts: [Dart.double(20)] })
 
     renderWithServices(<App />, { services, route: '/' })
-    await screen.findByRole('button', { name: 'Reprendre' })
-    expect(screen.getByText(/0 set · 1 manche/)).toBeInTheDocument()
+    await screen.findByRole('link', { name: /Reprendre/ })
+    expect(screen.getByText('1 manche jouée')).toBeInTheDocument()
     sansLeg()
   })
 

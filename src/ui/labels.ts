@@ -436,6 +436,75 @@ export const nomDePartie = ({
   readonly createdAt: number
 }): string => name ?? nomParDefaut(createdAt)
 
+/* ------------------------------------------------------------------------
+ * L'Accueil en parties récentes et la carte de partie (lot `accueil-parties-recentes`).
+ * ---------------------------------------------------------------------- */
+
+export const TITRE_AUJOURDHUI = 'Aujourd’hui'
+export const TITRE_CETTE_SEMAINE = 'Cette semaine'
+export const TITRE_PARTIES_RECENTES = 'Parties récentes'
+export const LIBELLE_REPRENDRE = 'Reprendre'
+export const LIBELLE_EN_COURS = 'En cours'
+/** Non terminée, et pas la plus récente des non terminées : reprenable d'un tap. */
+export const LIBELLE_ABANDONNEE = 'Abandonnée'
+export const LIBELLE_MATCH_NUL = 'Match nul'
+export const LIBELLE_TERMINEE = 'Terminée'
+export const LIBELLE_AUCUNE_PARTIE_SEMAINE = 'Pas de partie cette semaine'
+export const LIBELLE_CREER_JOUEUR = 'Créer un joueur'
+
+/** Titre invisible au-dessus de la carte épinglée : la hiérarchie `h1` → `h2` → `h3` reste continue. */
+export const TITRE_PARTIE_EN_COURS = 'Partie en cours'
+
+export const libelleGagne = (nom: string): string => `${nom} gagne`
+
+/* Les règles d'une carte de partie, par mode : des primitives, jamais un `MatchSummary`. */
+
+export const reglesTourDuMonde = (premiereCible: number | string): string =>
+  `Tour du monde · ${premiereCible} → bulle`
+
+export const reglesCricket = (variante: 'STANDARD' | 'CUT_THROAT', cibles: number): string =>
+  `Cricket ${LIBELLE_VARIANTE_CRICKET[variante]} · ${cibles} cibles`
+
+export const reglesEntrainement = (sorties: number, min: number, max: number): string =>
+  `Entraînement · ${sorties} sorties · ${min} à ${max}`
+
+export const reglesX01 = (options: {
+  readonly score: number
+  readonly legsToWin: number
+  readonly setsToWin: number
+  readonly doubleOut: boolean
+  readonly doubleIn: boolean
+}): string =>
+  [
+    `X01 · ${options.score}`,
+    libelleFormat(options.legsToWin, options.setsToWin),
+    ...(options.doubleOut ? ['double out'] : []),
+    ...(options.doubleIn ? ['double in'] : []),
+  ].join(' · ')
+
+/** X01 : tous sets confondus. « 0 manche jouée » au départ. */
+export const libelleManchesDePartie = (nombre: number): string =>
+  pluriel(nombre, 'manche jouée', 'manches jouées')
+
+/** X01 terminé : le vainqueur, puis les manches jouées (« Julien gagne · 5 manches »). */
+export const libelleGagneEnManches = (nom: string, manches: number): string =>
+  `${libelleGagne(nom)} · ${pluriel(manches, 'manche', 'manches')}`
+
+export const libelleSorties = (reussies: number, jouees: number): string =>
+  `${reussies} / ${jouees} sorties`
+
+/** « 21 h 04 » — l'heure **locale**, deux chiffres aux minutes. */
+export const heureCourte = (horodatage: number): string => {
+  const date = new Date(horodatage)
+  return `${date.getHours()} h ${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+/** « 21 h 04 » aujourd'hui, « mardi 21 h 10 » dans la semaine. */
+export const libelleQuand = (horodatage: number, aujourdhui: boolean): string =>
+  aujourdhui
+    ? heureCourte(horodatage)
+    : `${(JOURS[new Date(horodatage).getDay()] ?? '').toLowerCase()} ${heureCourte(horodatage)}`
+
 /** « 3 parties », « 1 partie » — l'accord au singulier revient partout. */
 export const pluriel = (nombre: number, singulier: string, pluriel = `${singulier}s`): string =>
   `${nombre} ${nombre > 1 ? pluriel : singulier}`
@@ -484,10 +553,6 @@ export const LIBELLE_MANCHES = 'Manches'
 export const LIBELLE_MEILLEURE_MANCHE = 'Meilleure manche'
 export const LIBELLE_MANCHES_GAGNEES = 'Gagnées'
 export const LIBELLE_MANCHES_JOUEES = 'Jouées'
-
-/** L'aperçu d'une partie X01 en cours : « 1 set · 2 manches ». « Set » reste « set ». */
-export const libelleSetsGagnes = (sets: number): string => pluriel(sets, 'set')
-export const libelleManchesDuSet = (manches: number): string => pluriel(manches, 'manche')
 
 /** Le nom accessible de la colonne des bâtons, sur la ligne d'un joueur. */
 export const etiquetteManchesGagnees = (nom: string, gagnees: number, requises: number): string =>

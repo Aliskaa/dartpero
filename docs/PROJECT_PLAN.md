@@ -16,7 +16,22 @@ visuelle « feuille de match », retraits décidés par l'usage, statistiques d'
 résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit 2026-09-10**
 (détaillés en fin de § 6) : `tour-du-monde-cloture-volee`, `pourcentage-doubles-tiret`,
 `bundle-par-route`. App déployée sur https://dartpero.web.app.
-**689 tests verts** (dont 172 du lot `nom-de-partie`), `lint`, `typecheck` et `build` verts.
+**765 tests verts** (dont 76 du lot `accueil-parties-recentes`), `lint`, `typecheck` et `build` verts.
+Lot `accueil-parties-recentes` livré (l'Accueil en parties récentes, « Abandonnée », voir § 6) —
+vérifications restantes : la **relecture à l'écran** de `03-plan-de-test.md`
+(`docs/lots/accueil-parties-recentes/`) en portrait et paysage, deux thèmes, avec 0, 1 et 15
+parties ; sur vrai téléphone, le bouton « Nouvelle partie » fixé contre la barre et la
+safe-area d'iPhone ; ⚠️ **la barre du bas avec la police système au maximum, avant tout
+`firebase:deploy`** (taille système et zoom de Chrome sur Android, taille du texte sur iPhone :
+un libellé d'onglet rogné appellerait le repli de la charte) ; l'anneau de focus sur l'onglet
+actif ; la forme du badge « Abandonnée » ; « Kevin gagne · 3 manches » sur une carte à
+4 avatars ; le temps d'affichage de l'Accueil (deux lectures, 20 + 30 journaux) ; captures du
+README à refaire (`accueil.png`, `accueil-clair.png`, `historique.png`). Pour le **prochain
+audit** : **T1** (aucun test ne garde le texte des règles des cartes), une garde « `src/ui`
+n'importe aucune classe `*UseCase` » (R7), les exports en français de `backupSchema.ts`, la
+double lecture 20 + 30 de l'Accueil, les états d'erreur des listes (une erreur s'affiche comme
+« Pas de partie cette semaine » ; aucun `ErrorBoundary`), « 1 sorties » sans accord ; un
+`createdAt` importé absurde affiche aussi « Invalid Date » dans Parties (constat 11 de l'index).
 Lot `nom-de-partie` livré (un nom pour chaque partie, quatre modes, voir § 6) — vérifications
 restantes : la **relecture à l'écran** de `03-plan-de-test.md` (`docs/lots/nom-de-partie/`) ;
 **T1** sur iPhone (plus de 16 emoji tapés : `maxlength` de Safari compte-t-il comme
@@ -200,6 +215,12 @@ fléchettes **sont comptées**.
 **`RestartMatch`** (lot UX) · **`GetMatchName`** (lot `nom-de-partie` : `{ name, createdAt }`,
 de quoi afficher le nom tapé ou recalculer le nom par défaut)
 
+Lot `accueil-parties-recentes` : `X01Summary.legsPlayed` (manches jouées, tous sets confondus,
+dérivé des `LegWon`) ; `matchStatus(summary, ongoingId)` (`use-cases/summarize.ts`), fonction
+pure qui rend `'FINISHED' | 'ONGOING' | 'ABANDONED'`, **importée directement par l'UI** — la
+seule de `use-cases/`. `GetOngoingMatch` sert désormais aussi de **référence globale** à
+« Abandonnée », à l'Accueil comme dans Parties. Aucun port nouveau.
+
 ⚠️ **L'horloge est exposée à l'UI** (`Services.clock`, lot `nom-de-partie`) : la même instance que
 celle des use cases, pour proposer « Dimanche soir » à l'étape 1 sans `Date.now()`. Exception de
 même nature que `devices` ; garde `tests/architecture/horlogeBoundary.test.ts`.
@@ -242,7 +263,7 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 
 | Route | Écran | Lot |
 | --- | --- | --- |
-| `/` | Accueil — *Reprendre la partie* (si une partie est en cours), *Nouvelle partie*, accès rapide ; invitation à installer, écartable (*Plus tard*) | 3 ✅ |
+| `/` | Accueil — les parties récentes en cartes (« Aujourd'hui », « Cette semaine », 30 au plus), la partie en cours épinglée en tête avec *Reprendre*, *Nouvelle partie* fixé au-dessus de la barre ; invitation à installer, écartable (*Plus tard*) | 3 ✅ · cartes : `accueil-parties-recentes` ✅ |
 | `/nouvelle-partie` | Étape 1 : le jeu (X01, Cricket, Tour du monde, Entraînement) et le **nom de la partie** (prérempli « Dimanche soir », 30 caractères au plus) | `nouvelle-partie-en-etapes` ✅ · nom : `nom-de-partie` ✅ |
 | `/nouvelle-partie/:jeu` | Étape 2 : joueurs (rangée, menu « + ») et réglages du jeu (manches, sets, double in/out…) | `nouvelle-partie-en-etapes` ✅ |
 | `/nouvelle-partie/:jeu/ordre` | Étape 3 : ordre de jeu (glisser-déposer, ordre aléatoire), dès 2 joueurs | `nouvelle-partie-en-etapes` ✅ |
@@ -250,7 +271,7 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | `/partie/:id` | **Écran de partie** — le cœur de l'app | 3 ✅ |
 | `/partie/:id/resume` | Résumé de fin : vainqueur, stats du match, rejouer | 3 ✅ |
 | `/entrainement` | Redirige vers `/nouvelle-partie/entrainement` (l'écran de lancement a disparu) | `nouvelle-partie-en-etapes` ✅ |
-| `/historique` | Liste des parties jouées, tous modes, avec statut et suppression | 4 ✅ |
+| `/historique` | Liste des parties jouées, tous modes, avec statut et suppression — même carte que l'Accueil (`CartePartie`), même statut « Abandonnée », sans détail par joueur (il reste dans le résumé) | 4 ✅ · carte : `accueil-parties-recentes` ✅ |
 | `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) — atteint depuis Réglages → Joueurs (plus d'onglet) | 4 ✅ |
 | `/statistiques` | Carrière : tableaux comparatifs classés | 4 ✅ |
 | `/reglages` | Préférences (voix, haptique), **thème clair / sombre / système**, export / import JSON, à propos (entrée d'installation, ancre `#installer`, lien Confidentialité) | 4 ✅ |
@@ -261,18 +282,21 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 ⚠️ **Une seule URL par partie**, quel que soit le mode : `PartieEcran` lit le mode sur le
 journal et rend l'écran correspondant. Un lien d'historique reste donc valable pour toujours.
 
-Le **nom de la partie** (lot `nom-de-partie`) se lit à trois endroits : le titre (`<h2>`) de sa
-carte dans l'historique, la tête des quatre résumés (`TableauHonneur`, un `<p>`), et une ligne à
-part sous la rangée du bandeau des quatre écrans de jeu (`DispositionPartie`).
+Le **nom de la partie** (lot `nom-de-partie`) se lit à quatre endroits : le titre de sa carte
+dans l'historique (`<h2>`) et à l'Accueil (`<h3>`, lot `accueil-parties-recentes`), la tête des
+quatre résumés (`TableauHonneur`, un `<p>`), et une ligne à part sous la rangée du bandeau des
+quatre écrans de jeu (`DispositionPartie`).
 
 Les deux dernières lignes sont **une décision en suspens, pas un oubli** : l'écran
 `/statistiques` (lot 4) donne déjà les tableaux comparatifs classés, et l'historique porte
 déjà l'essentiel de chaque partie. À trancher : les écrans de détail apportent-ils assez pour
 exister, ou disparaissent-ils de ce plan ?
 
-Navigation basse : **Début · Joueurs · Stats · Parties · Réglages** — cinq entrées et non
-quatre, l'écran de statistiques ayant gagné sa place au lot 4. Icônes lucide `aria-hidden`,
-cibles ≥ 48 px, `env(safe-area-inset-bottom)`. Elle **n'apparaît pas** pendant une partie ni
+Navigation basse : **Début · Stats · Parties · Réglages** — quatre entrées depuis le lot
+`nouvelle-partie-en-etapes` (Joueurs est passé dans Réglages ; l'écran de statistiques avait
+gagné sa place au lot 4). Icônes lucide `aria-hidden`, cibles ≥ 48 px,
+`env(safe-area-inset-bottom)`. Hauteur **fixe** depuis le lot `accueil-parties-recentes` (le
+bouton fixé de l'Accueil s'y cale ; charte § Composants). Elle **n'apparaît pas** pendant une partie ni
 sur l'écran de configuration.
 
 ---
@@ -429,7 +453,8 @@ fichier. Les stats sont des **tableaux comparatifs classés**, chacun sur sa pre
 ✅ **Fait — 167 tests verts.** Aucun dénominateur commun artificiel : chaque mode garde ses
 règles et son état complets, `games/index.ts` ne fait qu'aiguiller sur le discriminant `mode`,
 et TypeScript garantit qu'aucun cas n'est oublié. `MatchSummary` est une union discriminée,
-ouverte au seul endroit de l'UI qui en a besoin (`ApercuPartie`).
+ouverte au seul endroit de l'UI qui en a besoin (`ApercuPartie`, devenu `CartePartie` au lot
+`accueil-parties-recentes`).
 Suivi d'un commit de **renommage** : ce qui décrit l'état et les règles d'un mode dit
 maintenant son nom (`MatchState` → `X01State`, `useMatch` → `useX01`…), tandis que ce qui
 désigne une partie tous modes confondus (`MatchId`, `MatchRepository`, `MatchEvent`) ne bouge
@@ -660,6 +685,15 @@ l'écran, onglet Joueurs déplacé dans Réglages. Détail § 6 ; relecture sur 
 nom tapé s'écrit (30 caractères au plus, champ facultatif de l'ouverture). Le nom s'affiche
 dans l'historique, en tête des résumés et sous le bandeau de jeu ; « Rejouer » le garde,
 `backupSchema` le transporte. Détail § 6 ; relecture sur appareil en § 0.
+
+### Lot « accueil-parties-recentes »
+
+✅ **Fait — 765 tests verts** (+76). L'Accueil montre les parties récentes en cartes,
+« Aujourd'hui » puis « Cette semaine » (30 au plus), la partie en cours épinglée en tête avec
+« Reprendre », et un seul appel, « Nouvelle partie », fixé au-dessus de la barre. « Abandonnée »
+est dérivée, la même à l'Accueil et dans Parties, qui passe à la même carte. Le X01 gagne
+« manches jouées » ; un X01 terminé affiche « Kevin gagne · 3 manches ». Détail § 6 ;
+relecture sur appareil en § 0.
 
 ---
 
@@ -1488,7 +1522,8 @@ initial) confirment la couverture sur les deux écrans et sur le helper lui-mêm
 couleur/dorage décidés uniquement par des valeurs restées brutes) : zéro classe Tailwind, zéro
 token, zéro balise nouvelle dans le diff.
 - Même défaut identifié, non traité, sur `successPercent` (mode entraînement,
-`ApercuPartie.tsx`, `ResumeEntrainementEcran.tsx`) — hors périmètre assumé, à verser à un futur
+`ApercuPartie.tsx` — retiré depuis, la carte d'entraînement affiche « N / M sorties » —,
+`ResumeEntrainementEcran.tsx`) — hors périmètre assumé, à verser à un futur
 audit : cet écran n'a pas de tableau, et une phrase d'appréciation dérivée du même chiffre pose
 une question ergonomique propre.
 
@@ -1783,3 +1818,57 @@ contredit n'est **jamais** évidente : elle se pose.
 troisième copie du couple libellé + champ (composant `ChampTexte` à prévoir) ; « undefined
 nuit » sur un `createdAt` importé absurde, antérieur au lot.
 - **517 → 689 tests verts** (+172).
+
+### Décisions du lot « accueil-parties-recentes »
+
+Session complète : `docs/lots/accueil-parties-recentes/` (intake validé ; architecture
+`archi-scout` en PASS au premier essai, aucune surface gravée ; trois tours de boucle : deux fois
+Test → Dev, puis Revue → Dev). Étude source : `docs/prospective/2026-10-11-NEW-nouvelle-partie-en-etapes.md`,
+lot n° 3 du découpage.
+
+- **« Abandonnée » est dérivée, jamais écrite**, calculée en un seul endroit, `matchStatus`
+(`use-cases/summarize.ts`), contre la partie en cours **globale** de `GetOngoingMatch`. ⚠️ Un
+champ calculé dans `GetMatchHistory` aurait été **faux sous le filtre de mode** de l'onglet
+Parties (il aurait pris la plus récente non terminée *de ce mode*). Gravé dans `CLAUDE.md` § DS
+(la règle, pas la mise en page). `matchStatus` est la première fonction de `use-cases/` importée
+par l'UI : pure, dans le bon sens de dépendance, jamais une classe `*UseCase`.
+- **La partie en cours** est cherchée parmi les **20** parties les plus récentes (comportement
+existant de `GetOngoingMatch`, gardé par l'utilisateur) : au-delà, personne n'est épinglé et
+toute non terminée est « Abandonnée ». Elle reste épinglée en tête même si elle a plus de 7 jours.
+- **Fenêtre** : aujourd'hui plus les 6 jours calendaires **locaux** précédents, bornes construites
+par composantes (`new Date(a, m, j - 6)`), jamais par `86 400 000 × N` (jours de 23 h et 25 h).
+Une date **future** (import absurde) est écartée de l'Accueil. Pas de minuteur à minuit : un
+Accueil laissé ouvert se recalcule à la navigation suivante (accepté). Tri par `createdAt` à
+l'Accueil, par `updatedAt` dans le port et l'onglet Parties.
+- **30 cartes au plus** (`getMatchHistory.execute(30)`, puis filtre en mémoire) ; la partie en
+cours fait partie des lectures, le maximum est donc 30, pas 31.
+- **Une carte commune**, `CartePartie`, remplace `ApercuPartie` et la carte locale de
+l'Historique : l'onglet Parties perd le détail par joueur (il reste dans le résumé, décision de
+l'utilisateur). Les champs du `MatchSummary` qu'aucun écran ne lit plus sont **gardés**
+(documentés dans le port).
+- ⚠️ **Amendement de l'utilisateur (C7)** : un X01 **terminé** affiche « Kevin gagne · N manches »
+(« N manches jouées » en cours). `docs/request/accueil-parties-recentes.md` et le snapshot du lot
+gardent « N manches jouées », à dessein (provenance).
+- **Bouton « Nouvelle partie » fixé** : `sticky`, calé sur la **hauteur fixe** de la barre du bas
+(`--hauteur-nav-basse`, filet compris), le même `calc` des deux côtés, gardé par un test
+structurel. Effets : la barre passe de 59 à 56 px sur tous les écrans ; `overflow-hidden`
+coupait l'anneau de focus des onglets → anneau **intérieur** (−2 px). ⚠️ Compromis : avec une
+police système très agrandie, un libellé d'onglet serait rogné ; repli : un conteneur `sticky`
+unique dans `LayoutPrincipal` (changement de design).
+- **Clés de requête** : `src/ui/clesRequetes.ts`, hors de tout écran chargé à la demande (sinon
+l'Accueil, statique, l'aurait importé). La suppression et le lancement invalident désormais
+l'historique et la partie en cours. Les tests d'invalidation partagent **un seul**
+`QueryClient` en `staleTime: Infinity` : démonter puis rendre à neuf ne prouvait qu'un
+chargement à froid (constat du Test).
+- **Revue (R1 à R5)** : le français des règles courtes est sorti de la carte vers `labels.ts`
+(constructeurs sur primitives) ; la surface exportée du cœur est passée en anglais
+(`matchStatus`, `'FINISHED' | 'ONGOING' | 'ABANDONED'`) ; un `h2` invisible évite le saut
+`h1` → `h3` à l'Accueil.
+- ⚠️ **Incident d'outillage** : au tour 3, le Dev a lancé `npm run lint:fix` sur **tout** le
+dépôt ; il a réécrit 7 scripts d'un skill tiers (`impeccable`) que l'utilisateur venait
+d'installer dans `.claude/skills/`, non suivis par git — réinstallé par l'utilisateur.
+Décision : **`.claude/skills` et `.agents` exclus de Biome** (`biome.json`) ; leçon dans
+`rules/biome.md` : `lint:fix` sur les chemins du lot.
+- **Dette d'audit** : T1 (aucun test ne garde le texte des règles des cartes — vérifié identique
+à la main, choix de l'utilisateur pour garder un tour de marge), voir § 0.
+- **689 → 765 tests verts** (+76).

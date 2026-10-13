@@ -27,7 +27,7 @@ const ONGLETS: readonly Onglet[] = [
 export const NavigationBasse = () => (
   <nav
     aria-label="Navigation principale"
-    className="bandeau-bas sticky bottom-0 z-20 flex shrink-0 pb-[env(safe-area-inset-bottom)]"
+    className="bandeau-bas sticky bottom-0 z-20 flex h-[calc(var(--hauteur-nav-basse)+env(safe-area-inset-bottom))] shrink-0 overflow-hidden pb-[env(safe-area-inset-bottom)]"
   >
     {ONGLETS.map(({ to, libelle, Icone }) => (
       <NavLink
@@ -36,7 +36,10 @@ export const NavigationBasse = () => (
         end={to === '/'}
         className={({ isActive }) =>
           [
-            'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 pt-1.5',
+            'flex min-h-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 pt-1.5',
+            // Anneau de focus tracé À L'INTÉRIEUR de l'onglet : le <nav> est en
+            // overflow-hidden (hauteur fixe), un contour décalé vers l'extérieur serait rogné.
+            'focus-visible:outline-offset-[-2px]',
             'font-score text-[0.6rem] uppercase tracking-wider transition-colors duration-150',
             isActive ? 'text-laiton-clair' : 'text-craie/60 active:text-craie',
           ].join(' ')

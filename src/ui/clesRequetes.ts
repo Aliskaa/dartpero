@@ -1,0 +1,12 @@
+/**
+ * Les clés TanStack Query partagées entre écrans.
+ *
+ * ⚠️ Ici et non dans `HistoriqueEcran` : l'Accueil (importé statiquement) les
+ * lit aussi, et importer un écran lazy depuis lui annulerait le découpage.
+ */
+
+/** Préfixe de tout ce qui lit l'historique : l'invalider les rafraîchit toutes. */
+export const CLE_HISTORIQUE = ['historique'] as const
+
+/** La partie en cours (la plus récente non terminée, parmi les 20 dernières). */
+export const CLE_MATCH_EN_COURS = ['matchEnCours'] as const

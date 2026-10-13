@@ -3,6 +3,7 @@ import { House, RotateCcw, Settings } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
+import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { useServices } from '@/ui/providers/ServicesProvider'
 import { Button } from './Button'
 import { MessageErreur } from './Etats'
@@ -48,8 +49,8 @@ export const ActionsFinDePartie = ({
     try {
       const nouvelle = await services.restartMatch.execute(matchId)
       // L'accueil propose de reprendre, l'historique liste : les deux changent.
-      await queryClient.invalidateQueries({ queryKey: ['matchEnCours'] })
-      await queryClient.invalidateQueries({ queryKey: ['historique'] })
+      await queryClient.invalidateQueries({ queryKey: CLE_MATCH_EN_COURS })
+      await queryClient.invalidateQueries({ queryKey: CLE_HISTORIQUE })
       navigate(`/partie/${nouvelle}`)
     } catch {
       // Le cas réel : un profil supprimé depuis. On ne relance pas en silence.

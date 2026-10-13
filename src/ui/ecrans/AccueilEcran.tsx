@@ -1,97 +1,44 @@
 import { useQuery } from '@tanstack/react-query'
-import { Download, Play, Users } from 'lucide-react'
-import { Link, useNavigate } from 'react-router'
-import type { Player } from '@/core/domain/entities/Player'
+import { Download } from 'lucide-react'
+import { Link } from 'react-router'
+import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary'
+import { matchStatus } from '@/core/application/use-cases/summarize'
 import { cheminNouvellePartie, ETAT_PARCOURS } from '@/ui/chemins'
-import { ApercuPartie, libelleRegles } from '@/ui/composants/commun/ApercuPartie'
+import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { Button, classesBouton } from '@/ui/composants/commun/Button'
+import { CartePartie } from '@/ui/composants/commun/CartePartie'
 import { Skeleton } from '@/ui/composants/commun/Etats'
 import { LogoHero } from '@/ui/composants/commun/Logo'
-import { Panneau } from '@/ui/composants/commun/Panneau'
-import { couleurJoueur } from '@/ui/couleurs'
 import { usePreference } from '@/ui/hooks/useAppareil'
 import {
   CLE_INSTALLATION_ECARTEE,
   installationPossible,
   useInstallation,
 } from '@/ui/hooks/useInstallation'
-import { useProfils } from '@/ui/hooks/useJoueurs'
+import { useJoueurs, useProfils } from '@/ui/hooks/useJoueurs'
+import { groupeDeJour } from '@/ui/jourCalendaire'
 import {
+  dateHeure,
+  LIBELLE_AUCUNE_PARTIE_SEMAINE,
+  LIBELLE_CREER_JOUEUR,
   LIBELLE_INSTALLER,
   LIBELLE_PLUS_TARD,
+  libelleQuand,
   TEXTE_INVITATION_INSTALLATION,
+  TITRE_AUJOURDHUI,
+  TITRE_CETTE_SEMAINE,
   TITRE_INVITATION_INSTALLATION,
   TITRE_NOUVELLE_PARTIE,
+  TITRE_PARTIE_EN_COURS,
+  TITRE_PARTIES_RECENTES,
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-/** Signal vivant entre l'enseigne et le CTA — plus de trou au milieu. */
-const SignalAccueil = ({ joueurs }: { readonly joueurs: readonly Player[] }) => {
-  if (joueurs.length === 0) {
-    return (
-      <Panneau aria-label="Premiers pas" className="animate-monter">
-        <div className="flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center border border-chene/40 bg-feutre/80 text-laiton">
-            <Users aria-hidden="true" className="size-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-score text-sm font-bold uppercase tracking-wide text-craie">
-              Qui joue ce soir ?
-            </p>
-            <p className="mt-1 text-sm text-craie/70">
-              Ajoutez vos potes — un pseudo, une couleur, c’est parti.
-            </p>
-            <Link
-              to="/joueurs"
-              className="mt-3 inline-flex min-h-11 items-center font-score text-sm font-bold uppercase tracking-wider text-laiton"
-            >
-              Créer un joueur →
-            </Link>
-          </div>
-        </div>
-      </Panneau>
-    )
-  }
-
-  const apercu = joueurs.slice(0, 5)
-
-  // La feuille du soir : une liste numérotée plutôt que des pastilles
-  // superposées. On y lit qui est là, dans l'ordre où on les a inscrits.
-  return (
-    <section aria-label="Joueurs inscrits" className="feuille animate-monter flex flex-col">
-      <div className="bandeau-feuille flex items-baseline justify-between px-3 py-1">
-        <span className="entete-colonne text-feutre/70">Ce soir à l’oche</span>
-        <span className="chiffres text-xs font-bold text-feutre/70">{joueurs.length}</span>
-      </div>
-
-      <ul className="flex flex-col">
-        {apercu.map((joueur, rang) => (
-          <li
-            key={joueur.id}
-            className="ligne-tableau flex items-center gap-3 px-3 py-2 last:border-b-0"
-          >
-            <span className="chiffres w-4 shrink-0 text-xs font-bold text-craie/45">
-              {rang + 1}
-            </span>
-            <span
-              aria-hidden="true"
-              style={{ backgroundColor: couleurJoueur(joueur.color).fond }}
-              className="size-3 shrink-0"
-            />
-            <span className="min-w-0 flex-1 truncate font-score text-sm uppercase tracking-[0.08em] text-craie">
-              {joueur.name}
-            </span>
-          </li>
-        ))}
-        {joueurs.length > apercu.length && (
-          <li className="px-3 py-2 font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie/50">
-            + {joueurs.length - apercu.length} autre{joueurs.length - apercu.length > 1 ? 's' : ''}
-          </li>
-        )}
-      </ul>
-    </section>
-  )
-}
+/**
+ * Le plafond de cartes de l'Accueil : au-delà, c'est l'onglet Parties.
+ * `GetMatchHistory` rend les N plus récentes sans désérialiser toute la base.
+ */
+const PLAFOND_CARTES = 30
 
 /**
  * L'invitation à installer : une ligne discrète, jamais au-dessus de
@@ -145,55 +92,126 @@ const InvitationInstallation = () => {
 
 export const AccueilEcran = () => {
   const services = useServices()
-  const navigate = useNavigate()
+  const joueurs = useJoueurs()
   const profils = useProfils()
-  const joueurs = [...profils.values()]
 
   const encours = useQuery({
-    queryKey: ['matchEnCours'],
+    queryKey: CLE_MATCH_EN_COURS,
     queryFn: () => services.getOngoingMatch.execute(),
   })
+  const historique = useQuery({
+    // Sous le préfixe `['historique']` : tout ce qui l'invalide (fin de partie,
+    // suppression, lancement) rafraîchit aussi l'Accueil.
+    queryKey: [...CLE_HISTORIQUE, 'accueil'],
+    queryFn: () => services.getMatchHistory.execute(PLAFOND_CARTES),
+  })
+
+  // L'heure par l'horloge injectée, jamais `Date.now()`. Lue à chaque rendu :
+  // pas de minuteur à minuit, le groupement se recalcule à la navigation
+  // suivante (décision de l'utilisateur).
+  const maintenant = services.clock.now()
+
+  const enCours = encours.data ?? null
+  const enCoursId = enCours?.id ?? null
+
+  // Les plus récentes d'abord ; la partie en cours est épinglée à part, une
+  // seule fois, même quand sa date la ferait entrer dans un groupe.
+  const parGroupe = { AUJOURDHUI: [] as MatchSummary[], CETTE_SEMAINE: [] as MatchSummary[] }
+  for (const partie of [...(historique.data ?? [])].sort((a, b) => b.createdAt - a.createdAt)) {
+    if (partie.id === enCoursId) continue
+    const groupe = groupeDeJour(partie.createdAt, maintenant)
+    if (groupe) parGroupe[groupe].push(partie)
+  }
+
+  const quand = (partie: MatchSummary): string => {
+    const groupe = groupeDeJour(partie.createdAt, maintenant)
+    return groupe
+      ? libelleQuand(partie.createdAt, groupe === 'AUJOURDHUI')
+      : dateHeure(partie.createdAt)
+  }
+
+  const carte = (partie: MatchSummary, reprise = false) => (
+    <CartePartie
+      key={partie.id}
+      partie={partie}
+      statut={matchStatus(partie, enCoursId)}
+      profils={profils}
+      quand={quand(partie)}
+      niveauTitre={3}
+      reprise={reprise}
+    />
+  )
+
+  const groupes = [
+    { cle: 'AUJOURDHUI', titre: TITRE_AUJOURDHUI, parties: parGroupe.AUJOURDHUI },
+    { cle: 'CETTE_SEMAINE', titre: TITRE_CETTE_SEMAINE, parties: parGroupe.CETTE_SEMAINE },
+  ].filter(({ parties }) => parties.length > 0)
+
+  const chargement = encours.isPending || historique.isPending || joueurs.isPending
+  const vide = !enCours && groupes.length === 0
 
   return (
     // Le tapis et la barre du bas viennent du layout : l'écran ne pose que son
-    // propre rythme vertical.
-    <main className="flex flex-1 flex-col gap-6 px-5 pb-4 pt-[max(2rem,env(safe-area-inset-top))]">
+    // propre rythme vertical. Pas de padding bas : le bouton fixé clôt l'écran.
+    <main className="flex flex-1 flex-col gap-6 px-5 pt-[max(2rem,env(safe-area-inset-top))]">
       <LogoHero />
 
-      {encours.isPending ? (
-        <Skeleton className="h-36" />
-      ) : encours.data ? (
-        <Panneau
-          aria-label="Partie en cours"
-          titre="Partie en cours"
-          action={
-            <span className="text-[0.65rem] uppercase tracking-widest text-craie/60">
-              {libelleRegles(encours.data)}
-            </span>
-          }
-          className="animate-monter"
-        >
-          <ApercuPartie partie={encours.data} profils={profils} />
-
-          <Button className="mt-4 w-full" onClick={() => navigate(`/partie/${encours.data?.id}`)}>
-            <Play aria-hidden="true" className="size-4 fill-current" />
-            Reprendre
-          </Button>
-        </Panneau>
-      ) : (
-        <SignalAccueil joueurs={joueurs} />
-      )}
+      <section aria-label={TITRE_PARTIES_RECENTES} className="flex flex-col gap-6">
+        {chargement ? (
+          <Skeleton className="h-36" />
+        ) : vide ? (
+          <div className="flex flex-col items-start gap-1">
+            <p className="text-sm text-craie/70">{LIBELLE_AUCUNE_PARTIE_SEMAINE}</p>
+            {profils.size === 0 && (
+              <Link
+                to="/joueurs"
+                className="inline-flex min-h-12 items-center font-score text-sm font-bold uppercase tracking-wider text-laiton"
+              >
+                {LIBELLE_CREER_JOUEUR} →
+              </Link>
+            )}
+          </div>
+        ) : (
+          <>
+            {enCours && (
+              <>
+                {/* Les cartes sont des `h3` : sans ce titre, la page sauterait de `h1` à `h3`. */}
+                <h2 className="sr-only">{TITRE_PARTIE_EN_COURS}</h2>
+                <ul className="flex flex-col gap-3">{carte(enCours, true)}</ul>
+              </>
+            )}
+            {groupes.map(({ cle, titre, parties }) => (
+              <section key={cle} aria-labelledby={`accueil-${cle}`} className="flex flex-col gap-3">
+                <h2 id={`accueil-${cle}`} className="entete-colonne text-craie/70">
+                  {titre}
+                </h2>
+                <ul className="flex flex-col gap-3">{parties.map((partie) => carte(partie))}</ul>
+              </section>
+            ))}
+          </>
+        )}
+      </section>
 
       <InvitationInstallation />
 
-      <div className="mt-auto flex flex-col gap-2">
-        {/* L'entraînement est une carte de l'étape 1 : un seul point d'entrée.
-            L'état de parcours laisse le retour de l'étape 1 revenir ici. */}
+      {/*
+        Le bouton fixé : `sticky` plutôt qu'une hauteur bornée du `main`. Il est
+        dans le flux, juste après la dernière carte (rien à masquer, pas de
+        padding à deviner), et ne se « colle » qu'une fois la liste plus haute
+        que l'écran — calé au-dessus de la barre du bas, dont la hauteur est la
+        variable partagée `--hauteur-nav-basse` (la zone de sécurité est portée
+        par la barre elle-même, on l'ajoute ici sans la redoubler). Une hauteur
+        bornée aurait dû contraindre `LayoutPrincipal` (`min-h-dvh`, qui grandit
+        avec le contenu) et dépendre de `dvh`, instable sous la barre d'adresse.
+        L'entraînement est une carte de l'étape 1 : un seul point d'entrée.
+        L'état de parcours laisse le retour de l'étape 1 revenir ici.
+      */}
+      <div className="sticky bottom-[calc(var(--hauteur-nav-basse)+env(safe-area-inset-bottom))] z-10 -mx-5 mt-auto border-t border-chene/40 bg-feutre px-5 py-3">
         <Link
           to={cheminNouvellePartie()}
           state={ETAT_PARCOURS}
           className={[
-            'laiton-poli inline-flex min-h-16 items-center justify-center gap-3 px-6',
+            'laiton-poli flex min-h-16 items-center justify-center gap-3 px-6',
             'font-score text-xl font-bold uppercase tracking-[0.15em]',
           ].join(' ')}
         >

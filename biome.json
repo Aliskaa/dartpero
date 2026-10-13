@@ -7,7 +7,15 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/dist", "!**/dev-dist", "!**/node_modules", "!**/public"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/dev-dist",
+      "!**/node_modules",
+      "!**/public",
+      "!**/.claude/skills",
+      "!**/.agents"
+    ]
   },
   "css": {
     "parser": {

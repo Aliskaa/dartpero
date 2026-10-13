@@ -62,6 +62,9 @@ activé.
   manche, plus haut checkout.
 - **La carte des impacts** — où les fléchettes se sont réellement plantées, dessinée sur un
   plateau. L'échelle est propre à chaque joueur : on compare des **formes**, pas des volumes.
+- **L'accueil en parties récentes** — celles d'aujourd'hui puis de la semaine, en cartes, la
+  partie en cours épinglée en tête ; une partie laissée en plan est marquée « Abandonnée »,
+  mais se reprend toujours d'un tap.
 - **Statistiques de carrière** filtrables par période, historique filtrable par mode.
 - **Export / import JSON** de toute la base — le seul moyen de changer de téléphone sans tout
   perdre, puisqu'il n'y a pas de serveur.
@@ -72,7 +75,7 @@ activé.
 
 <table>
 <tr>
-<td width="33%" align="center"><img src="docs/captures/accueil.png" alt="Écran d'accueil" width="240"><br><sub><b>L'accueil</b><br>La partie en cours se reprend d'un doigt</sub></td>
+<td width="33%" align="center"><img src="docs/captures/accueil.png" alt="Écran d'accueil" width="240"><br><sub><b>L'accueil</b><br>Les parties de la semaine, la partie en cours en tête</sub></td>
 <td width="33%" align="center"><img src="docs/captures/resume-x01.png" alt="Résumé d'une partie X01" width="240"><br><sub><b>Le résumé</b><br>La feuille transposée, meneur par ligne</sub></td>
 <td width="33%" align="center"><img src="docs/captures/impacts.png" alt="Carte des impacts sur un plateau" width="240"><br><sub><b>Les impacts</b><br>Le plateau réduit à sa structure</sub></td>
 </tr>
@@ -141,7 +144,7 @@ npm run dev:mobile   # https://<IP-du-PC>:5173 — accepter le certificat auto-s
 
 | Commande | Ce qu'elle fait |
 | -------- | --------------- |
-| `npm test` | La suite Vitest — **689 tests** |
+| `npm test` | La suite Vitest — **765 tests** |
 | `npm run test:watch` | La même, en continu |
 | `npm run lint` | Biome (lint + format). **Jamais ESLint ni Prettier.** |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -271,7 +274,7 @@ volontairement documenté ici :
 Projet **personnel**, pour jouer entre potes. Pas de licence publiée, pas de contribution
 attendue — mais le code est lisible et les décisions sont écrites.
 
-Il reste une chose que les 689 tests ne peuvent pas couvrir : **la validation sur vrai
+Il reste une chose que les 765 tests ne peuvent pas couvrir : **la validation sur vrai
 matériel** — la lisibilité à 3 mètres dans un vrai garage, le confort des cibles au pouce
 debout, la tenue du wake lock sur une partie entière, et un passage sur un vrai iPhone.
 

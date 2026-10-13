@@ -141,6 +141,11 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
 - Partout ailleurs (`ui/`, `infrastructure/`, `composition/`, `tests/`) : l'alias `@/` depuis
   `src/`.
 - `organizeImports` de Biome trie à l'enregistrement / au `lint:fix` — ne pas trier à la main.
+- **Ce que l'UI importe du cœur** : des types, des constantes (`GAME_MODE_IDS`, `STATS_PERIODS`)
+  et des **fonctions pures** (`X01Config.create`, `matchStatus`). `matchStatus`
+  (`use-cases/summarize.ts`, lot `accueil-parties-recentes`) est la seule fonction de
+  `use-cases/` importée hors du composition root. **Jamais** une classe `*UseCase` ni un port
+  driven : toute I/O passe par `useServices()`.
 
 ## 9 · Composants UI
 
@@ -160,6 +165,14 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   (`src/ui/labels.ts`) : sans occasion, un tiret **cadratin** `—` (U+2014), jamais « 0 % » — qui
   se lit « il a tout raté ». Trois appelants : matchs, manches, doubles. ⚠️ Un pourcentage de
   **progression** (`LigneCible.tsx`) garde son `0` : là, zéro est un vrai zéro, pas une absence.
+- **Une carte, une seule cible** (`CartePartie`, lot `accueil-parties-recentes`) : toute la
+  carte est un lien ; « Reprendre » n'en est que le visuel, jamais un second élément focalisable.
+  Une action propre (la suppression de l'onglet Parties) passe par `actions`, **hors** du lien.
+  L'appelant choisit le niveau du titre (`niveauTitre`) pour qu'il n'y ait **aucun saut** de
+  niveau — au besoin un `h2` `sr-only` (le titre invisible de la partie épinglée à l'Accueil).
+- **Le français d'un composant qui ouvre une union** (les règles courtes d'une carte) vit dans
+  `labels.ts` sous forme de **constructeurs sur primitives** (`reglesX01`, `reglesCricket`…) ;
+  le `switch` exhaustif reste dans le composant, seul endroit qui ouvre l'union.
 
 ## 10 · Hooks (`ui/hooks/use<Mode>.ts`)
 
@@ -169,7 +182,14 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
 - TanStack Query sert de **cache uniquement** : `staleTime: Infinity`,
   `queryKey: ['match', matchId]`, et chaque mutation appelle
   `queryClient.setQueryData(...)` avec l'état renvoyé par le use case, jamais un
-  `invalidateQueries` qui redéclenche un fetch.
+  `invalidateQueries` qui redéclenche un fetch. ⚠️ Cette règle vaut pour le **cache d'un hook de
+  mode** ; les **listes** (historique, Accueil, partie en cours), elles, s'invalident.
+- **Clés de requête partagées** : `src/ui/clesRequetes.ts` — `CLE_HISTORIQUE`, préfixe de toute
+  lecture d'historique (l'Accueil lit `[...CLE_HISTORIQUE, 'accueil']`), et `CLE_MATCH_EN_COURS`.
+  Le lancement (`useNouvellePartie`), « On remet ça » (`ActionsFinDePartie`) et la suppression
+  (`HistoriqueEcran`) invalident les deux ; l'import (`ReglagesEcran`) invalide tout. ⚠️ Jamais
+  une clé déclarée dans un écran chargé à la demande : l'Accueil, importé statiquement,
+  l'importerait et le ferait revenir dans le chunk commun. `CLE_JOUEURS` reste dans `useJoueurs`.
 - Une valeur qui doit survivre aux rendus sans réarmer un callback passe par une **ref**
   resynchronisée à chaque rendu (`profilsRef.current = profils`) plutôt que par une dépendance.
 - Les erreurs `unknown` sont normalisées une seule fois, via un petit `message(erreur: unknown):
@@ -229,6 +249,16 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   ⚠️ Trou connu (R2, laissé par décision utilisateur) : le test `getMatchName`
   (`tests/use-cases/nomDePartie.test.ts:52-66`) ne le fait pas encore — le code est juste
   (`GetMatchNameUseCase.ts`), mais rien ne le prouve.
+- **Prouver une invalidation** (lot `accueil-parties-recentes`) : un **seul** `QueryClient`,
+  partagé et en `staleTime: Infinity`, passé par `renderWithServices(…, { queryClient })` ; on
+  navigue d'un écran à l'autre dans le même rendu. Sans cela, l'écran rouvert recharge au
+  remontage et le test passe **à vide** — démonter puis rendre à neuf ne prouve qu'un chargement
+  à froid. Le **comportement réel** (reprendre une partie abandonnée inverse les statuts) se
+  prouve, lui, sur le client par défaut, comme en production.
+- **Deux valeurs qui doivent rester égales** sans source commune possible (le `calc` de la
+  hauteur de la barre du bas et celui du décalage du bouton fixé de l'Accueil) : un test
+  structurel les extrait et les compare, et casse bruyamment si l'une disparaît
+  (`accueilPartiesRecentes.test.tsx`).
 
 ## 12 · Outillage
 
@@ -263,8 +293,9 @@ test le vérifie explicitement.
 - **`VisitRecorded` est partagé par tous les modes** : une volée, c'est 1 à 3 fléchettes, que
 l'on décompte un 501 ou que l'on remonte le plateau. Seule l'interprétation change.
 - **`MatchSummary` est une union discriminée**, pas un type mou : un Tour du monde n'a pas de
-score restant, un X01 n'a pas de cible courante. `ApercuPartie` est le **seul** endroit de
-l'UI qui ouvre cette union, pour ne pas la disperser entre l'accueil et l'historique.
+score restant, un X01 n'a pas de cible courante. `CartePartie` (qui a remplacé `ApercuPartie`
+au lot `accueil-parties-recentes`) est le **seul** endroit de l'UI qui ouvre cette union, pour
+ne pas la disperser entre l'accueil et l'historique.
 - **Une seule URL par partie** (`/partie/:id`) : `PartieEcran` lit le mode et rend l'écran
 correspondant. Un lien d'historique reste valable quel que soit le jeu, et l'utilisateur n'a
 pas à savoir dans quel mode il reprend. Chaque mode a son **propre** écran plutôt qu'un écran
@@ -281,6 +312,12 @@ d'ouverture, un module de règles avec son `mode` discriminant, trois lignes dan
 aiguillage de `games/index.ts`, un dossier `ui/composants/<mode>/`, un écran de jeu et un
 résumé. Rien d'autre ne bouge — vérifié trois fois de suite (Tour du monde, Cricket,
 entraînement).
+
+⚠️ **Depuis le lot « accueil-parties-recentes »**, un mode doit aussi à `CartePartie` : son
+entrée dans `ACCENTS_MODE` (le liseré), son constructeur `regles*` dans `labels.ts` et sa
+branche dans les `switch` de la carte (règles courtes, texte de statut). Les `switch` au
+`default` typé `never` et les `it.each(GAME_MODE_IDS)` le signalent ; le **texte** des règles,
+lui, n'est gardé par aucun test (T1, dette d'audit).
 
 ⚠️ **Depuis le lot « bundle-par-route »** : un mode ajoute aussi son écran de jeu et son écran
 de résumé à la liste des `lazy()` de `src/ui/ecrans/games/PartieEcran.tsx` — sinon il revient
@@ -314,7 +351,8 @@ compléter à la main.
 ## 14 · Arborescence
 
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
-invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie » : 21 ports driving
+invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchangé au lot
+« accueil-parties-recentes » : 21 ports driving
 (hors `MatchSummary.ts`, un type), 11 driven, 10 hooks (plus `tourDeTable.ts`, un utilitaire),
 4 modes, 4 services transverses.
 
@@ -350,12 +388,15 @@ src/
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
 │     │                   PersistentStorage, AppInstallation
 │     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
+│                         + summarize.ts (summarize, nameIndex, matchStatus — seule
+│                           fonction de use-cases/ importée par l'UI)
 │                         + nameField.ts (`{}` ou `{ name }` : jamais `name: undefined`)
 ├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
 ├─ ui/
-│  ├─ composants/         commun/ (dont ApercuPartie, qui ouvre l'union des modes,
-│  │                      et DispositionPartie, l'ossature portrait/paysage)
+│  ├─ composants/         commun/ (dont CartePartie, la carte de l'Accueil et de
+│  │                      Parties, qui ouvre l'union des modes, et DispositionPartie,
+│  │                      l'ossature portrait/paysage)
 │  │                      x01/ · tour-du-monde/ · cricket/ · checkout-practice/
 │  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
@@ -374,7 +415,9 @@ src/
 │  │                      useInstallation (invitation à installer)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
 │     theme.ts (clair / sombre / système) · accents.ts ·
-│     chemins.ts (slugs et URL du parcours Nouvelle partie)
+│     chemins.ts (slugs et URL du parcours Nouvelle partie) ·
+│     clesRequetes.ts (clés TanStack Query partagées) ·
+│     jourCalendaire.ts (« Aujourd'hui » / « Cette semaine », bornes locales)
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
 ```

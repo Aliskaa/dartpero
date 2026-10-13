@@ -8,6 +8,14 @@
   § 12 — ne pas reformater à la main contre eux.
 - `organizeImports` trie au `lint:fix` — ne pas trier à la main.
 - `npm run lint` = `biome check .` ; `npm run lint:fix` écrit.
+- **Exclus du lint** (`files.includes` de `biome.json`) : `.claude/skills` et
+  `.agents`, où s'installent des skills tiers (lot `accueil-parties-recentes`).
+  ⚠️ L'exclusion couvre aussi **nos** skills (`intake`, `orchestrate`…) : du
+  Markdown aujourd'hui, mais un script ajouté là ne serait jamais linté.
+- ⚠️ **`lint:fix` sur les chemins du lot** (`npx biome check --write src
+  tests`), jamais sur tout le dépôt sans avoir lu `git status` : un `lint:fix`
+  global a réécrit des scripts d'un skill tiers non suivi par git,
+  irrécupérables autrement qu'en réinstallant.
 - Biome 2.5 : `linter.rules.preset` (pas `recommended`), motifs
   d'exclusion sans `/**` final, `css.parser.tailwindDirectives: true`
   obligatoire pour `src/index.css` (voir `biome.json`).
