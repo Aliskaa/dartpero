@@ -92,7 +92,7 @@ export const LigneCible = ({
 
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
+          <span className="font-score text-etiquette uppercase tracking-[0.2em] text-craie-3">
             Parcours
           </span>
           <span className={`chiffres font-bold text-craie-vive ${compact ? 'text-lg' : 'text-xl'}`}>
@@ -112,7 +112,7 @@ export const LigneCible = ({
           />
         </div>
 
-        <span className="font-score text-[0.65rem] uppercase tracking-wider text-craie-3">
+        <span className="font-score text-etiquette uppercase tracking-wider text-craie-3">
           {flechettes} fléchette{flechettes > 1 ? 's' : ''}
         </span>
       </div>

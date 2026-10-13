@@ -107,7 +107,7 @@ export const TourDuMondeEcran = () => {
 
           {/* Le dernier tour de table : tout le monde a droit au même nombre de volées. */}
           {state.lastRound && (
-            <span className="grave shrink-0 animate-respirer border border-accent-mode/60 bg-accent-mode/15 px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
+            <span className="grave shrink-0 border border-accent-mode/60 bg-accent-mode/15 px-2 py-0.5 font-score text-etiquette uppercase tracking-wider text-accent-mode-clair">
               Dernier tour
             </span>
           )}

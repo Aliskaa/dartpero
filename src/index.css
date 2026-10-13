@@ -66,15 +66,27 @@
   --font-score: "Oswald", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
 
-  /* Mouvement : généreux mais ciblé. Tout est neutralisé plus bas si
+  /* Échelle typographique : un plancher (0,75 rem, jamais en dessous) et
+     quatre grands chiffres. Aucune taille arbitraire `text-[…]` dans
+     `src/ui` — garde `typographieBoundary`. */
+  --text-etiquette: 0.75rem;
+  --text-score-xl: 4.25rem;
+  --text-score-l: 3.25rem;
+  --text-score-m: 2.5rem;
+  --text-score-solo: 4.5rem;
+
+  /* Mouvement : court, sec, sans rebond. Tout est neutralisé plus bas si
      l'utilisateur a demandé moins d'animations. */
-  --animate-pop-score: pop-score 360ms cubic-bezier(0.2, 1.5, 0.4, 1);
-  --animate-secousse: secousse 440ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
-  --animate-monter: monter 280ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
-  --animate-craie: craie 340ms ease-out both;
-  --animate-eclat: eclat 900ms ease-out both;
-  --animate-tourner-lent: tourner-lent 120s linear infinite;
-  --animate-respirer: respirer 3.4s ease-in-out infinite;
+  --duration-vif: 100ms;
+  --duration-normal: 180ms;
+  --duration-lent: 240ms;
+  --ease-sec: cubic-bezier(0.2, 0, 0, 1);
+  --animate-pop-score: pop-score 200ms var(--ease-sec);
+  --animate-secousse: secousse 260ms var(--ease-sec);
+  --animate-monter: monter var(--duration-lent) var(--ease-sec) both;
+  --animate-craie: craie var(--duration-lent) ease-out both;
+  --animate-tour-logo: tour-logo 1.2s var(--ease-sec) 1 forwards;
+  --animate-trace-filet: trace-filet 360ms var(--ease-sec) both;
   --animate-defiler: defiler 1.4s ease-in-out infinite;
 }
 
@@ -103,10 +115,6 @@
      long d'une page en feutre. */
   color-scheme: dark;
 
-  --tapis-image:
-    radial-gradient(120% 85% at 50% -10%, rgba(46, 125, 79, 0.12), transparent 60%),
-    radial-gradient(100% 70% at 50% 110%, rgba(0, 0, 0, 0.5), transparent 62%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   /* Le RELIEF des petits textes (`.grave`) : un filet de 1 px sous la ligne.
      Noir sous de la craie, blanc sous de l'encre — une ombre noire sous de
      l'encre ne se voit pas, elle salit. */
@@ -189,10 +197,6 @@ html[data-theme="clair"] {
   --color-accent-mode: #8a6d12;
   --color-accent-mode-clair: #6b5209;
 
-  --tapis-image:
-    radial-gradient(120% 85% at 50% -10%, rgba(255, 253, 246, 0.6), transparent 60%),
-    radial-gradient(100% 70% at 50% 110%, rgba(90, 62, 36, 0.12), transparent 62%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
   --teinte-relief: rgb(255 255 255 / 0.85);
   --ombre-plaque: rgb(90 62 36 / 0.3);
   /* Le rouge et le vert du plateau virent au pastel sur du papier et tirent
@@ -213,39 +217,37 @@ html[data-theme="clair"] {
   --accent-checkout-practice-clair: #562e6b;
 }
 
-/* Le score qui change doit se voir depuis l'oche, pas seulement de près. */
+/* Le score qui change doit se voir depuis l'oche, pas seulement de près :
+   un pouce de grossissement, qui retombe, sans rebond. */
 @keyframes pop-score {
-  0% {
-    transform: scale(1);
+  from {
+    transform: scale(1.06);
   }
-  38% {
-    transform: scale(1.14);
-  }
-  100% {
+  to {
     transform: scale(1);
   }
 }
 
-/* Bust : la carte encaisse le coup. */
+/* Bust : la carte encaisse le coup — trois allers-retours de 4 px. */
 @keyframes secousse {
   0%,
   100% {
     transform: translateX(0);
   }
-  15% {
-    transform: translateX(-7px);
-  }
-  30% {
-    transform: translateX(6px);
-  }
-  45% {
+  17% {
     transform: translateX(-4px);
   }
-  60% {
-    transform: translateX(3px);
+  33% {
+    transform: translateX(4px);
   }
-  80% {
-    transform: translateX(-1px);
+  50% {
+    transform: translateX(-4px);
+  }
+  67% {
+    transform: translateX(4px);
+  }
+  83% {
+    transform: translateX(-4px);
   }
 }
 
@@ -274,34 +276,21 @@ html[data-theme="clair"] {
   }
 }
 
-/* Sortie réussie : un éclat vert traverse le bandeau. */
-@keyframes eclat {
-  0% {
-    opacity: 0;
-    transform: translateX(-100%) skewX(-18deg);
+/* Fin de manche ou de partie : un filet se trace autour du bandeau, de
+   gauche à droite. Ni dégradé ni halo ; il finit visible (`both`). */
+@keyframes trace-filet {
+  from {
+    clip-path: inset(0 100% 0 0);
   }
-  35% {
-    opacity: 0.85;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(220%) skewX(-18deg);
+  to {
+    clip-path: inset(0);
   }
 }
 
-@keyframes tourner-lent {
+/* Le plateau de l'enseigne fait un tour, une seule fois, puis se pose. */
+@keyframes tour-logo {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes respirer {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
   }
 }
 
@@ -357,8 +346,6 @@ html[data-theme="clair"] {
   /* Le tapis : le sol de l'app, sur lequel la feuille est posée. */
   .feutre-tapis {
     background-color: var(--color-feutre);
-    background-image: var(--tapis-image);
-    background-attachment: fixed, fixed, scroll;
   }
 
   /* LA FEUILLE : le conteneur de tout ce qui se lit. Un filet de craie de
@@ -394,10 +381,16 @@ html[data-theme="clair"] {
   .entete-colonne {
     font-family: var(--font-score);
     font-weight: 600;
-    font-size: 0.62rem;
+    font-size: var(--text-etiquette);
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--color-craie-3);
+  }
+
+  /* Dans le bandeau du tableau (colonnes de 44 px), 0,75 rem ne tient qu'en
+     interlettrage resserré : jamais au-delà de 0,06 em. */
+  .bandeau-feuille .entete-colonne {
+    letter-spacing: 0.06em;
   }
 
   /* Une ligne de la feuille : un filet, et rien d'autre. Le chiffre doit

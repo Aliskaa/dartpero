@@ -15,7 +15,7 @@ export const EnTeteEcran = ({ titre, sousTitre, action }: Props) => (
         {titre}
       </h1>
       {sousTitre && (
-        <p className="mt-0.5 font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
+        <p className="mt-0.5 font-score text-etiquette uppercase tracking-[0.2em] text-craie-3">
           {sousTitre}
         </p>
       )}

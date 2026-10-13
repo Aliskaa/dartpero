@@ -52,12 +52,12 @@ const EnTeteManche = ({
 
     <span className="flex shrink-0 gap-1">
       {config.doubleIn && (
-        <span className="grave border border-accent-mode/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
+        <span className="grave border border-accent-mode/50 px-1.5 py-0.5 font-score text-etiquette uppercase tracking-wider text-accent-mode-clair">
           DI
         </span>
       )}
       {config.doubleOut && (
-        <span className="grave border border-accent-mode/50 px-1.5 py-0.5 font-score text-[0.6rem] uppercase tracking-wider text-accent-mode-clair">
+        <span className="grave border border-accent-mode/50 px-1.5 py-0.5 font-score text-etiquette uppercase tracking-wider text-accent-mode-clair">
           DO
         </span>
       )}

@@ -39,13 +39,13 @@ export const Cartouche = ({
   return (
     <section aria-label="Manche en cours" className="flex flex-col gap-2.5">
       <div className="feuille flex flex-col items-center gap-1 px-4 py-5">
-        <p className="font-score text-[0.6rem] uppercase tracking-[0.3em] text-craie-3">
+        <p className="font-score text-etiquette uppercase tracking-[0.3em] text-craie-3">
           Sortie demandée
         </p>
 
         <output
           aria-label="Reste à sortir"
-          className="chiffres trace-craie block text-[4.5rem] font-bold leading-none text-craie-vive"
+          className="chiffres trace-craie block text-score-solo font-bold leading-none text-craie-vive"
         >
           <span key={resteAffiche} className="inline-block animate-pop-score">
             {resteAffiche}
@@ -88,7 +88,7 @@ export const Cartouche = ({
             ].join(' ')}
           >
             <Target aria-hidden="true" className="size-4 shrink-0 text-vert-cible" />
-            <span className="font-score text-[0.6rem] uppercase tracking-[0.28em] text-vert-cible">
+            <span className="font-score text-etiquette uppercase tracking-[0.28em] text-vert-cible">
               Route
             </span>
             <span className="flex items-center gap-1.5">
@@ -106,12 +106,12 @@ export const Cartouche = ({
       </div>
 
       <div className="flex items-center justify-between gap-3 px-1">
-        <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
-          Manche <span className="chiffres font-bold text-craie">{manche}</span>
+        <span className="font-score text-etiquette uppercase tracking-[0.2em] text-craie-3">
+          Manche<span className="chiffres font-bold text-craie">{manche}</span>
           <span className="text-craie-3">/{total}</span>
         </span>
-        <span className="font-score text-[0.65rem] uppercase tracking-[0.2em] text-craie-3">
-          Réussies <span className="chiffres font-bold text-vert-cible">{reussies}</span>
+        <span className="font-score text-etiquette uppercase tracking-[0.2em] text-craie-3">
+          Réussies<span className="chiffres font-bold text-vert-cible">{reussies}</span>
         </span>
       </div>
     </section>

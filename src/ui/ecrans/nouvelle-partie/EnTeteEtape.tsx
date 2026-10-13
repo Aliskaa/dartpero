@@ -54,7 +54,7 @@ export const EnTeteEtape = ({
           {titre}
         </h1>
         {sousTitre && (
-          <p className="truncate font-score text-[0.6rem] uppercase tracking-[0.25em] text-craie-3">
+          <p className="truncate font-score text-etiquette uppercase tracking-[0.25em] text-craie-3">
             {sousTitre}
           </p>
         )}

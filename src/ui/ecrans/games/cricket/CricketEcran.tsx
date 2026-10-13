@@ -120,7 +120,7 @@ export const CricketEcran = () => {
           {/* Rappel de la condition de victoire — standard vs cut-throat. */}
           <span
             className={[
-              'grave shrink-0 border px-2 py-0.5 font-score text-[0.6rem] uppercase tracking-wider',
+              'grave shrink-0 border px-2 py-0.5 font-score text-etiquette uppercase tracking-wider',
               cutThroat
                 ? 'border-rouge-cible/60 bg-rouge-cible/15 text-craie'
                 : 'border-accent-mode/50 bg-accent-mode/10 text-accent-mode-clair',

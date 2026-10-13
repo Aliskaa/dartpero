@@ -18,7 +18,17 @@ palette, mais ils ne modèlent plus rien — le laiton ne sert qu'à marquer la 
 lance, le bois se replie sur les cadres. Les nombres lus à 3 mètres sont en craie quasi-blanche
 sur feutre sombre.
 
-⚠️ **Zéro dégradé de décor, zéro biseau, zéro angle arrondi.**
+⚠️ **Zéro dégradé de décor, zéro halo, zéro biseau, zéro angle arrondi.** Une seule exception
+de dégradé : `.chargement-balai` (le balayage d'un skeleton, un état d'attente). Les **ombres
+portées** restent permises (`drop-shadow-[0_3px_0_var(--ombre-plaque)]` de l'enseigne et du
+nom du vainqueur, `drop-shadow-[0_2px_2px_…]` de la médaille, `drop-shadow` du `Check` de
+`JoueursEcran`, ombre de la ligne qu'on fait glisser dans `ListeOrdonnable`) : elles posent une
+plaque sur un mur, elles ne rayonnent pas. Un **halo** est
+une lueur sans décalage (`shadow-[0_0_…]`) : il n'y en a plus. `.trace-craie` (le souffle de
+craie) est **réservé au reste du joueur qui lance** : les lignes actives du tableau
+(`LigneJoueur`, `LigneCible`, `TableauCricket`) et le grand chiffre de la `Cartouche`
+d'entraînement (joueur seul, qui lance toujours) ; **jamais** sur un résumé. Gardes :
+`tests/architecture/typographieBoundary.test.ts` (dégradés, halos, `text-shadow` à flou).
 
 ### Contexte d'usage (dicte tout le design)
 
@@ -128,7 +138,7 @@ retomber le contraste) ; l'inactif se distingue par le nom en `craie-2` et l'abs
 ### Ce qui n'est pas une couleur
 
 Déclarés hors de `@theme` (qui ne fabrique que des utilitaires), et redéfinis eux aussi en
-thème clair : `--tapis-image` (le fond), `--teinte-relief` (le filet de `.grave` : noir sous de
+thème clair : `--teinte-relief` (le filet de `.grave` : noir sous de
 la craie, **blanc** sous de l'encre), `--ombre-plaque` (l'ombre de l'enseigne : du brun de bois
 en clair, jamais du blanc, qui ferait un contour et non une ombre), `--voile-cible`,
 `--voile-trace` (**transparent** en clair : l'encre ne rayonne pas) et `--eclat-balai`.
@@ -186,10 +196,24 @@ Import par `@fontsource/<police>/latin-<poids>.css` : précache workbox de **542
 | `font-score` | **Oswald** | 500 / 700 | **Tous les chiffres du tableau**, titres, boutons (uppercase). Condensé + `tabular-nums`. |
 | `font-sans` | **Barlow** | 400 / 600 | Corps, listes, stats, libellés courants. |
 
+**Échelle de tailles** (tokens `--text-*` du `@theme`) : aucune taille sous **0,75 rem**, et
+aucune taille arbitraire `text-[…rem]` dans `src/ui` (garde `typographieBoundary`).
+
+| Classe | Taille | Usage |
+| ------ | ------ | ----- |
+| `text-etiquette` | 0,75 rem | Le plancher : légendes, badges, en-têtes de colonnes, exposants du pavé |
+| `text-score-xl` / `-l` / `-m` | 4,25 / 3,25 / 2,5 rem | Le reste X01 selon le nombre de joueurs |
+| `text-score-solo` | 4,5 rem | Le reste de l'entraînement (`Cartouche`, résumé) |
+
+**Interlettrage** : large (jusqu'à `0.42em`) là où la place existe ; **resserré à 0,06 em au
+plus** là où 0,75 rem déborderait — `.bandeau-feuille .entete-colonne` (le tableau X01, colonne
+« Manches » de 44 px en `tracking-normal`), en-têtes de `TableauCricket`, libellés de
+`NavigationBasse`, `Avatar` xs (`size-6`, deux initiales).
+
 | Classe | Effet |
 | ------ | ----- |
 | `.chiffres` | Oswald + `tabular-nums` — les chiffres ne dansent pas quand le score change |
-| `.trace-craie` | Souffle de craie sous les grands chiffres (**disparaît en thème clair**) |
+| `.trace-craie` | Souffle de craie sous les grands chiffres **du joueur actif seulement** (**disparaît en thème clair**) |
 | `.grave` | Filet de relief sous les petits textes |
 
 ---
@@ -201,7 +225,7 @@ SVG inline.
 
 | Classe | Effet | Où |
 | ------ | ----- | --- |
-| `.feutre-tapis` | Le sol : `--tapis-image` + grain | Fond d'écran |
+| `.feutre-tapis` | Le sol : feutre **uni** (plus d'image de fond) | Fond d'écran |
 | **`.feuille`** | Le conteneur : ardoise cerclée d'un filet de craie de 3 px | Tableau de match, panneaux de résumé |
 | **`.bandeau-feuille`** | En-tête **en inversion** : craie pleine, texte sombre | En-têtes de colonnes uniquement |
 | **`.bandeau-match`** | Bandeau de partie, sombre, refermé par un filet de 3 px | Haut des écrans de jeu |
@@ -217,7 +241,7 @@ SVG inline.
 | `.laiton-plat` | Laiton sans tranche | Curseurs, pastilles, S/D/T |
 | `.touche` | Filet de craie, tranche de 2 px, **s'inverse à l'appui** | Pavé de saisie |
 | `.filet-laiton` | Séparateur horizontal discret | Entre zones |
-| `.chargement-balai` | Lueur qui balaie | Skeletons |
+| `.chargement-balai` | Lueur qui balaie — **seule exception au zéro dégradé** | Skeletons |
 
 ⚠️ **`.bois-veine` et l'animation `halo` ont été supprimées.** Le veinage tirait l'œil vers le
 décor, et **une fiche ne rayonne pas** — un `box-shadow` animé en continu coûtait en plus un
@@ -298,19 +322,23 @@ charte, c'est de la donnée.
 
 ## Mouvement
 
-Tokens `--animate-*` du `@theme`, keyframes au niveau racine. Généreux mais **ciblé** : le
-mouvement crée la présence (qui joue, bust, score qui change), pas le bruit.
+Tokens `--animate-*` du `@theme`, keyframes au niveau racine. Court, sec, **sans rebond** (aucun
+paramètre de courbe > 1) : le mouvement crée la présence (qui joue, bust, score qui change), pas
+le bruit. Durées : `--duration-vif` 100 ms, `--duration-normal` 180 ms, `--duration-lent`
+240 ms ; courbe `--ease-sec` (`cubic-bezier(0.2, 0, 0, 1)`, décélération).
 
 | Animation | Durée | Rôle |
 | --------- | ----- | ---- |
-| `pop-score` | 360 ms | Le score qui change (lisible depuis l'oche) |
-| `secousse` | 440 ms | Bust — la ligne encaisse le coup |
-| `monter` | 280 ms | Entrée d'élément |
-| `craie` | 340 ms | Texte qui s'écrit (flou → net) |
-| `eclat` | 900 ms | Sortie réussie |
-| `tourner-lent` | 120 s ∞ | La cible de l'accueil |
-| `respirer` | 3,4 s ∞ | Pulsation douce |
-| `defiler` | 1,4 s ∞ | Balayage de chargement |
+| `pop-score` | 200 ms | Le score qui change : `scale(1.06)` → 1, sans rebond |
+| `secousse` | 260 ms | Bust — trois allers-retours de 4 px |
+| `monter` | 240 ms | Entrée d'élément |
+| `craie` | 240 ms | Texte qui s'écrit (flou → net) |
+| `tour-logo` | 1,2 s, une fois | La cible de l'accueil fait un tour puis se pose |
+| `trace-filet` | 360 ms | Fin de manche / de partie : un filet de 2 px se trace de gauche à droite (`clip-path`), `vert-cible` partout (`MomentCelebratif` et `TableauHonneur`) — ni dégradé ni halo |
+| `defiler` | 1,4 s ∞ | Balayage de chargement (état d'attente) |
+
+Supprimées : `eclat` (remplacé par `trace-filet`), `tourner-lent` (boucle de 120 s) et
+`respirer` (le badge du Tour du monde est fixe).
 
 ⚠️ `prefers-reduced-motion: reduce` coupe **tout** (animations + transitions). Le bloc vit
 **hors de toute `@layer`** : le CSS sans couche l'emporte sur n'importe quelle couche, donc il
@@ -347,8 +375,8 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 ### Règles de layout
 
 - **Une ligne par joueur, toujours** — pas de grille, pas de disposition alternative. Seule
-  l'**échelle** du reste suit le nombre de joueurs : 2 → `4.25rem`, 3 → `3.25rem`,
-  4 → `2.5rem`.
+  l'**échelle** du reste suit le nombre de joueurs : 2 → `text-score-xl` (4,25 rem),
+  3 → `text-score-l` (3,25 rem), 4 → `text-score-m` (2,5 rem).
 - Les deux dernières colonnes sont à **largeur fixe** : `GRILLE_LIGNE` est exportée par
   `LigneJoueur` et consommée par la ligne d'en-têtes — **une seule définition de colonnes**,
   donc aucun désalignement possible. C'est en alignant les chiffres d'une ligne à l'autre qu'on

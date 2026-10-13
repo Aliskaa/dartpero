@@ -104,9 +104,7 @@ export const ChoixJoueursExistants = ({
                   className={[
                     'flex min-h-14 w-full items-center gap-3 border px-3 py-2 text-left',
                     'transition-colors duration-150 disabled:opacity-40',
-                    choisi
-                      ? 'border-laiton/60 bg-laiton/10 shadow-[0_0_20px_-10px_var(--color-laiton)]'
-                      : 'border-chene/55 bg-feutre/60',
+                    choisi ? 'border-laiton/60 bg-laiton/10' : 'border-chene/55 bg-feutre/60',
                   ].join(' ')}
                 >
                   <Avatar nom={profil.name} couleur={profil.color} />

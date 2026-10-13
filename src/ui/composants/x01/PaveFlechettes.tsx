@@ -69,7 +69,7 @@ export const PaveFlechettes = ({
             {facteur > 1 && (
               <span
                 aria-hidden="true"
-                className="absolute right-1.5 top-1 text-[0.6rem] font-bold leading-none text-laiton"
+                className="absolute right-1.5 top-1 text-etiquette font-bold leading-none text-laiton"
               >
                 {numero * facteur}
               </span>
@@ -90,7 +90,7 @@ export const PaveFlechettes = ({
           {multiplicateur === 'DOUBLE' && (
             <span
               aria-hidden="true"
-              className="absolute right-1.5 top-1 text-[0.6rem] font-bold leading-none text-laiton"
+              className="absolute right-1.5 top-1 text-etiquette font-bold leading-none text-laiton"
             >
               50
             </span>

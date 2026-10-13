@@ -71,7 +71,7 @@ export const PaveCricket = ({
               {marques > 1 && (
                 <span
                   aria-hidden="true"
-                  className="absolute right-1.5 top-1 font-score text-[0.65rem] font-bold leading-none text-accent-mode-clair"
+                  className="absolute right-1.5 top-1 font-score text-etiquette font-bold leading-none text-accent-mode-clair"
                 >
                   ×{marques}
                 </span>

@@ -22,9 +22,9 @@ export type VoleeAffichee = {
 export type Echelle = 'large' | 'moyen' | 'compact'
 
 const RESTE: Record<Echelle, string> = {
-  large: 'text-[4.25rem] leading-[0.84]',
-  moyen: 'text-[3.25rem] leading-[0.88]',
-  compact: 'text-[2.5rem] leading-[0.9]',
+  large: 'text-score-xl leading-[0.84]',
+  moyen: 'text-score-l leading-[0.88]',
+  compact: 'text-score-m leading-[0.9]',
 }
 
 const HAUTEUR: Record<Echelle, string> = {
@@ -202,7 +202,7 @@ export const LigneJoueur = ({
           </span>
         )}
 
-        <span className="entete-colonne text-[0.55rem] normal-case tracking-normal">
+        <span className="entete-colonne normal-case tracking-normal">
           moy <span className="chiffres font-semibold text-craie-2">{formatMoyenne(moyenne)}</span>
         </span>
       </div>

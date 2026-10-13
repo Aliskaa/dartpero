@@ -4,11 +4,12 @@ import { couleurJoueur, initiales } from '@/ui/couleurs'
 type Taille = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
 const TAILLES: Record<Taille, string> = {
-  xs: 'size-5 border text-[0.5rem]',
-  sm: 'size-7 text-[0.65rem]',
-  md: 'size-10 text-sm',
-  lg: 'size-14 text-lg',
-  xl: 'size-24 text-3xl',
+  // xs : deux capitales à 0,75 rem dans 24 px ne tiennent qu'au interlettrage normal.
+  xs: 'size-6 border text-etiquette tracking-normal',
+  sm: 'size-7 text-etiquette tracking-wide',
+  md: 'size-10 text-sm tracking-wide',
+  lg: 'size-14 text-lg tracking-wide',
+  xl: 'size-24 text-3xl tracking-wide',
 }
 
 type Props = {
@@ -37,7 +38,7 @@ export const Avatar = ({ nom, couleur, taille = 'md', className = '' }: Props) =
       }}
       className={[
         'inline-flex shrink-0 items-center justify-center border',
-        'font-score font-bold uppercase tracking-wide',
+        'font-score font-bold uppercase',
         TAILLES[taille],
         className,
       ].join(' ')}

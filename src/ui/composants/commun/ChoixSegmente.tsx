@@ -44,7 +44,7 @@ export const ChoixSegmente = <T extends string | number>({
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie-3">
+      <legend className="font-score text-etiquette uppercase tracking-[0.25em] text-craie-3">
         {legende}
       </legend>
       <div

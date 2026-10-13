@@ -17,7 +17,7 @@ type Props = {
  * Bandeau de récompense — checkout, leg, set, match.
  *
  * ⚠️ `pointer-events-none` : il ne doit jamais bloquer le pavé. Il vit hors de
- * la saisie, disparaît tout seul, et `prefers-reduced-motion` coupe l'éclat.
+ * la saisie, disparaît tout seul, et `prefers-reduced-motion` montre le filet déjà tracé, sans animation.
  *
  * ⚠️ On s'accroche à `moment.cle`, pas à l'objet : le parent recalcule un
  * nouvel objet à chaque rendu, et un effet sur la référence réafficherait le
@@ -59,13 +59,12 @@ export const MomentCelebratif = ({ moment, dureeMs = 2200 }: Props) => {
       className={[
         'pointer-events-none relative overflow-hidden',
         'border border-vert-cible/55 bg-vert-cible/18 px-4 py-3 text-center',
-        'shadow-[0_0_28px_-8px_var(--color-vert-cible)]',
         'animate-monter',
       ].join(' ')}
     >
       <span
         aria-hidden="true"
-        className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-vert-cible/50 to-transparent animate-eclat"
+        className="absolute inset-0 animate-trace-filet border-2 border-vert-cible"
       />
       <p className="relative font-score text-lg font-bold uppercase tracking-[0.28em] text-vert-cible">
         {affiche.titre}

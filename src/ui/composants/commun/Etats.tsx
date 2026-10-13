@@ -44,7 +44,7 @@ export const MessageErreur = ({ children }: { readonly children: ReactNode }) =>
     role="alert"
     className={[
       'animate-monter border-2 border-rouge-cible/70 bg-rouge-cible/15 px-4 py-3',
-      'text-sm text-craie shadow-[0_0_20px_-8px_var(--color-rouge-cible)]',
+      'text-sm text-craie',
     ].join(' ')}
   >
     {children}

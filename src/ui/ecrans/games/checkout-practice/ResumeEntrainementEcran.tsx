@@ -63,7 +63,7 @@ export const ResumeEntrainementEcran = () => {
       >
         <output
           aria-label="Taux de réussite"
-          className="chiffres trace-craie mt-3 block text-[4.5rem] font-bold leading-none text-craie-vive"
+          className="chiffres mt-3 block text-score-solo font-bold leading-none text-craie-vive"
         >
           {pourcentage}
           <span className="text-3xl font-normal text-craie-3"> %</span>

@@ -47,7 +47,7 @@ export const NavigationBasse = () => (
             // Anneau de focus tracé À L'INTÉRIEUR de l'onglet : le <nav> est en
             // overflow-hidden (hauteur fixe), un contour décalé vers l'extérieur serait rogné.
             'focus-visible:outline-offset-[-2px]',
-            'font-score text-[0.6rem] uppercase tracking-wider transition-colors duration-150',
+            'font-score text-etiquette uppercase tracking-normal transition-colors duration-150',
             isActive ? 'text-craie-vive' : 'text-craie-3 active:text-craie',
           ].join(' ')
         }

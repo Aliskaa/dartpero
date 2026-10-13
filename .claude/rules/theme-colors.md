@@ -13,9 +13,13 @@ Palette et rôles : `docs/CHARTE_GRAPHIQUE.md`.
   atténué) ou `text-craie-3` (légendes, en-têtes — le plancher). Aucun texte
   sous `craie-3` (garage mal éclairé, luminosité basse), ≥ 4,5:1 sur les
   quatre surfaces dans les deux thèmes.
-- **Interdits** : `text-craie/NN` et `text-craie-vive/NN` (l'encre transparente
-  tombe sous 4,5:1 sur papier) — garde `themeBoundary`. L'alpha reste permis
-  pour les bordures et les fonds (`border-craie/25`).
+- **Interdits** : `text-craie*/NN` — toute variante (`-2`, `-3`, `-decor`,
+  `-vive`…) suivie d'un alpha (l'encre transparente tombe sous 4,5:1 sur
+  papier) — garde `themeBoundary`. L'alpha reste permis pour les bordures et
+  les fonds (`border-craie/25`).
+- **Pas de dégradé ni de halo** (`shadow-[0_0_…]`) : garde
+  `typographieBoundary` (seule exception de dégradé : `.chargement-balai`).
+  Les ombres portées (`drop-shadow-[0_3px_0_…]`) restent permises.
 - `text-craie-decor` : **uniquement** pour un glyphe purement décoratif
   `aria-hidden` (séparateurs « · », « | »). Un « — » qui remplace une valeur
   absente est une information : `craie-3`.

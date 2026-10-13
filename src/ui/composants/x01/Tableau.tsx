@@ -108,9 +108,9 @@ export const Tableau = ({
       <div className={`bandeau-feuille ${GRILLE_LIGNE} py-1`} aria-hidden="true">
         <span className="entete-colonne px-3 text-feutre/70">Joueur</span>
         <span className="entete-colonne px-1 text-center text-feutre/70">Volée</span>
-        {/* « Manches » tient dans ses 44 px à condition de rapetisser et de
-            relâcher tout son interlettrage : la colonne la plus étroite. */}
-        <span className="entete-colonne px-0.5 text-center text-[0.55rem] tracking-normal text-feutre/70">
+        {/* « Manches » tient dans ses 44 px à 0,75 rem à condition de relâcher
+            tout son interlettrage : la colonne la plus étroite. */}
+        <span className="entete-colonne px-0.5 text-center tracking-normal text-feutre/70">
           {LIBELLE_MANCHES}
         </span>
         <span className="entete-colonne px-1 text-center text-feutre/70">Reste</span>

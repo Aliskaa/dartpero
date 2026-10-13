@@ -36,7 +36,7 @@ type Props = {
 
 /**
  * Le tableau d'honneur commun aux résumés : on lit le vainqueur avant tout.
- * Accent du mode + éclat vert — célébration hors saisie, jamais pendant une volée.
+ * Accent du mode + filet vert qui se trace — célébration hors saisie, jamais pendant une volée.
  */
 export const TableauHonneur = ({
   mode,
@@ -53,7 +53,7 @@ export const TableauHonneur = ({
   >
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-accent-mode/35 to-transparent animate-eclat"
+      className="pointer-events-none absolute inset-0 animate-trace-filet border-2 border-vert-cible"
     />
     <Cible
       className="pointer-events-none absolute -right-16 -top-16 size-56 opacity-[0.09]"
@@ -67,19 +67,14 @@ export const TableauHonneur = ({
       <p className="grave mb-1 min-h-6 max-w-full break-words font-score text-base font-bold tracking-wide text-craie-vive">
         {nomPartie}
       </p>
-      <p className="font-score text-[0.65rem] uppercase tracking-[0.35em] text-craie-3">
+      <p className="font-score text-etiquette uppercase tracking-[0.35em] text-craie-3">
         {surtitre}
       </p>
 
       {vainqueur ? (
         <>
           <span className="relative mt-4 inline-flex">
-            <Avatar
-              nom={vainqueur.nom}
-              couleur={vainqueur.couleur}
-              taille="xl"
-              className="shadow-[0_0_40px_-8px_var(--color-accent-mode)]"
-            />
+            <Avatar nom={vainqueur.nom} couleur={vainqueur.couleur} taille="xl" />
             <Crown
               aria-hidden="true"
               className="absolute -top-4 left-1/2 size-8 -translate-x-1/2 -rotate-12 fill-accent-mode text-accent-mode drop-shadow-[0_2px_2px_var(--ombre-plaque)]"

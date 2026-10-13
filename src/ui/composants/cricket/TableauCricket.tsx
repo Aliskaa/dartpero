@@ -107,7 +107,7 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
           ))}
           <th
             scope="col"
-            className="grave w-[16%] pb-1 text-right font-score text-[0.65rem] uppercase tracking-wider text-craie-3"
+            className="grave w-[16%] pb-1 text-right font-score text-etiquette uppercase tracking-normal text-craie-3"
           >
             {cutThroat ? 'Pts ↓' : 'Pts'}
           </th>

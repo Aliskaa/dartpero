@@ -80,7 +80,7 @@ export const TableauJoueurs = <T,>({ libelle, colonnes, joueurs, lignes }: Props
                 )}
               </span>
               <span
-                className={`w-full truncate text-[0.6rem] font-bold uppercase tracking-wide ${
+                className={`w-full truncate text-etiquette font-bold uppercase tracking-wide ${
                   colonne.vainqueur ? 'text-accent-mode-clair' : 'text-craie-3'
                 }`}
               >
@@ -100,7 +100,7 @@ export const TableauJoueurs = <T,>({ libelle, colonnes, joueurs, lignes }: Props
           <tr key={ligne.libelle} className="border-b border-craie/12 last:border-0">
             <th
               scope="row"
-              className="py-2 pr-2 text-left align-middle text-[0.6rem] font-normal uppercase leading-[1.15] tracking-widest text-craie-3"
+              className="py-2 pr-2 text-left align-middle text-etiquette font-normal uppercase leading-[1.15] tracking-wider text-craie-3"
             >
               {ligne.libelle}
             </th>

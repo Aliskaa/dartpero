@@ -60,7 +60,7 @@ export const EtapeOrdre = ({
         }
       />
 
-      <p className="flex items-center gap-2 font-score text-[0.65rem] uppercase tracking-[0.2em] text-laiton-clair">
+      <p className="flex items-center gap-2 font-score text-etiquette uppercase tracking-[0.2em] text-laiton-clair">
         {tirage ? (
           <>
             <Shuffle aria-hidden="true" className="size-3.5 shrink-0" />

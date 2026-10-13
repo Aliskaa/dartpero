@@ -79,7 +79,7 @@ const ChampNom = ({ nom }: { readonly nom: NomPartieSaisi }) => {
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={idChamp}
-        className="font-score text-[0.65rem] uppercase tracking-[0.25em] text-craie-3"
+        className="font-score text-etiquette uppercase tracking-[0.25em] text-craie-3"
       >
         {LIBELLE_NOM_PARTIE}
       </label>

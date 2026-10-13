@@ -1872,3 +1872,31 @@ Décision : **`.claude/skills` et `.agents` exclus de Biome** (`biome.json`) ; l
 - **Dette d'audit** : T1 (aucun test ne garde le texte des règles des cartes — vérifié identique
 à la main, choix de l'utilisateur pour garder un tour de marge), voir § 0.
 - **689 → 765 tests verts** (+76).
+
+### Décisions du lot « charte-typo-mouvement » (lot 3 de la refonte de la charte)
+
+Session : `docs/lots/charte-typo-mouvement/` (niveau `light`, aucune surface gravée). Étude
+source : `docs/prospective/2026-10-13-NEW-revision-charte-graphique.md`, maquette « A · Affiner ».
+
+- **Échelle typographique** : `--text-etiquette` (0,75 rem, le plancher) et quatre paliers de
+  grands chiffres (`text-score-xl` / `-l` / `-m` / `-solo`). Les 44 `text-[…rem]` de `src/ui`
+  sont partis ; 32 d'entre eux étaient sous 0,75 rem. Interlettrage resserré (≤ 0,06 em) là où
+  0,75 rem débordait ; `Avatar` xs passe à `size-6` et `tracking-normal`.
+- **Mouvement** : une courbe en token (`--ease-sec`, aucun paramètre > 1) et trois durées
+  déclarées (`--duration-vif` / `-normal` / `-lent`) dont seule `--duration-lent` est consommée
+  (`monter`, `craie`) ; les autres durées (transitions Tailwind, keyframes) restent littérales.
+  `pop-score` sans
+  rebond, `secousse` à 4 px, logo en un seul tour (`tour-logo`), badge du Tour du monde fixe.
+  `eclat`, `respirer`, `tourner-lent` supprimés.
+- **Halos et dégradés** : les quatre `shadow-[0_0_…]` retirés ; tapis uni (`--tapis-image` supprimé) ;
+  enseigne en `text-laiton` plein ; `trace-craie` réservé au reste du joueur qui lance (lignes
+  actives du tableau et `Cartouche` d'entraînement), retiré du résumé d'entraînement. L'`eclat`
+  est remplacé par un **filet vert qui se trace** (`trace-filet`, 2 px, `clip-path`, `vert-cible`
+  dans `MomentCelebratif` comme dans `TableauHonneur`). Les ombres
+  portées (enseigne, nom du vainqueur, médaille, `Check`) sont **gardées** : décision de
+  l'utilisateur, la maquette n'y touchait pas.
+- **Garde** `tests/architecture/typographieBoundary.test.ts` : tailles arbitraires, dégradés
+  (exception `.chargement-balai`), halos et `text-shadow` à flou. Contre-épreuve réelle de
+  chacune faite (casser, voir rouge, restaurer). Tests : **805 → 815** (+10, tous de la garde).
+- ⚠️ **Angle mort** : troncatures à 0,75 rem (colonne « Manches », barre du bas, `Avatar` xs,
+  `LigneCible`) et rendu du filet : à juger à l'écran, portrait et paysage, sombre et clair.
