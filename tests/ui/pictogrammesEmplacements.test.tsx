@@ -1,0 +1,82 @@
+import { screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import App from '@/App'
+import type { Services } from '@/composition/container'
+import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
+import { Dart } from '@/core/domain/value-objects/Dart'
+import { fakeServices } from '../fakes'
+import { renderWithServices } from './renderWithServices'
+import { TRACES_ATTENDUS } from './tracesPictogrammes'
+
+const COURT = TourDuMondeConfig.create({ targets: [20, 19, 'BULL'] })
+const BOUCLAGE = [Dart.single(20), Dart.single(19), Dart.bull()]
+const RATE = [Dart.miss(), Dart.miss(), Dart.miss()]
+
+const partie = async (services: Services) => {
+  const kevin = await services.managePlayers.create('Kevin')
+  const julien = await services.managePlayers.create('Julien')
+  const matchId = await services.playTourDuMonde.start({
+    playerIds: [kevin.id, julien.id],
+    config: COURT,
+  })
+  return matchId
+}
+
+const svgsDe = (largeur: number, racine: ParentNode = document) =>
+  [...racine.querySelectorAll('svg')].filter((svg) => svg.getAttribute('width') === String(largeur))
+
+describe('Pictogrammes — leurs emplacements', () => {
+  it('étape 1 : un pictogramme de 40 px, décoratif, sur chacune des quatre cartes', async () => {
+    const { services } = fakeServices()
+    renderWithServices(<App />, { services, route: '/nouvelle-partie' })
+
+    const cartes = await screen.findAllByRole('link')
+    expect(cartes).toHaveLength(4)
+    const svgs = svgsDe(40)
+    expect(svgs).toHaveLength(4)
+    for (const svg of svgs) expect(svg.getAttribute('aria-hidden')).toBe('true')
+    // Un par carte : le mode se reconnaît à sa forme.
+    for (const carte of cartes) expect(svgsDe(40, carte)).toHaveLength(1)
+    // Et c'est bien la forme du mode : pas une icône de même taille.
+    expect(svgs.map((svg) => svg.innerHTML).sort()).toEqual(
+      [
+        TRACES_ATTENDUS.x01,
+        TRACES_ATTENDUS.cricket,
+        TRACES_ATTENDUS['tour-du-monde'],
+        TRACES_ATTENDUS.entrainement,
+      ].sort(),
+    )
+  })
+
+  it('résumé avec vainqueur : la couronne fait 32 px et reste décorative', async () => {
+    const { services } = fakeServices()
+    const matchId = await partie(services)
+    await services.playTourDuMonde.recordVisit(matchId, BOUCLAGE)
+    await services.playTourDuMonde.recordVisit(matchId, RATE)
+
+    renderWithServices(<App />, { services, route: `/partie/${matchId}/resume` })
+
+    await screen.findByText('Vainqueur')
+    const couronnes = svgsDe(32)
+    expect(couronnes).toHaveLength(1)
+    expect(couronnes[0]?.getAttribute('aria-hidden')).toBe('true')
+    expect(couronnes[0]?.innerHTML).toBe(TRACES_ATTENDUS.victoire)
+    expect(svgsDe(64)).toHaveLength(0)
+  })
+
+  it('résumé sans vainqueur : le « nul » fait 64 px, sans couronne', async () => {
+    const { services } = fakeServices()
+    const matchId = await partie(services)
+    await services.playTourDuMonde.recordVisit(matchId, BOUCLAGE)
+    await services.playTourDuMonde.recordVisit(matchId, BOUCLAGE)
+
+    renderWithServices(<App />, { services, route: `/partie/${matchId}/resume` })
+
+    await screen.findByRole('heading', { name: 'Ex æquo' })
+    const nuls = svgsDe(64)
+    expect(nuls).toHaveLength(1)
+    expect(nuls[0]?.getAttribute('aria-hidden')).toBe('true')
+    expect(nuls[0]?.innerHTML).toBe(TRACES_ATTENDUS.nul)
+    expect(svgsDe(32)).toHaveLength(0)
+  })
+})

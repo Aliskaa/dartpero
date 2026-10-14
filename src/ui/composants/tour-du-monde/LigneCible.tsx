@@ -1,8 +1,10 @@
-import { Crown, Flag } from 'lucide-react'
+import { Flag } from 'lucide-react'
 import type { Segment } from '@/core/domain/value-objects/Dart'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { Avatar } from '@/ui/composants/commun/Avatar'
+import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import { couleurJoueur } from '@/ui/couleurs'
+import { LIBELLE_VAINQUEUR } from '@/ui/labels'
 
 /** « BULL » est le nom de la cible dans le domaine ; à l'écran on dit « bulle ». */
 export const libelleCible = (cible: Segment | null): string => {
@@ -86,7 +88,12 @@ export const LigneCible = ({
           >
             {nom}
           </span>
-          {vainqueur && <Crown aria-hidden="true" className="size-3.5 shrink-0 text-accent-mode" />}
+          {vainqueur && (
+            <>
+              <Pictogramme nom="victoire" taille={20} className="shrink-0 text-laiton-clair" />
+              <span className="sr-only">, {LIBELLE_VAINQUEUR}</span>
+            </>
+          )}
         </p>
       </div>
 

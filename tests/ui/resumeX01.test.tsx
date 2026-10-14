@@ -78,7 +78,10 @@ describe('La feuille de match (tableau transposé)', () => {
     // l'annonce, mais elles sont bien dans le texte brut du DOM.
     const enTetes = within(tableau).getAllByRole('columnheader')
     expect(enTetes).toHaveLength(2)
-    expect(within(tableau).getByRole('columnheader', { name: 'Kevin' })).toBeInTheDocument()
+    // Kevin gagne : sa colonne porte « vainqueur » pour les lecteurs d'écran.
+    expect(
+      within(tableau).getByRole('columnheader', { name: 'Kevin, vainqueur' }),
+    ).toBeInTheDocument()
     expect(within(tableau).getByRole('columnheader', { name: 'Julien' })).toBeInTheDocument()
     expect(within(tableau).getByRole('rowheader', { name: 'Valeur' })).toBeInTheDocument()
   })
@@ -140,7 +143,10 @@ describe('Le résumé de partie, de bout en bout', () => {
 
     const feuille = await screen.findByRole('table', { name: 'Statistiques de la partie' })
 
-    expect(within(feuille).getByRole('columnheader', { name: 'Kevin' })).toBeInTheDocument()
+    // Kevin gagne : sa colonne porte « vainqueur » pour les lecteurs d'écran.
+    expect(
+      within(feuille).getByRole('columnheader', { name: 'Kevin, vainqueur' }),
+    ).toBeInTheDocument()
     expect(within(feuille).getByRole('columnheader', { name: 'Julien' })).toBeInTheDocument()
 
     // 501 en 9 fléchettes : la manche la plus courte possible.

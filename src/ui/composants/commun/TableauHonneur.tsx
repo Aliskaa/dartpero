@@ -1,10 +1,10 @@
-import { Crown, Handshake } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { GameModeId } from '@/core/domain/games'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { variablesAccent } from '@/ui/accents'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Cible } from '@/ui/composants/commun/Cible'
+import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 
 type Vainqueur = {
   readonly nom: string
@@ -75,9 +75,10 @@ export const TableauHonneur = ({
         <>
           <span className="relative mt-4 inline-flex">
             <Avatar nom={vainqueur.nom} couleur={vainqueur.couleur} taille="xl" />
-            <Crown
-              aria-hidden="true"
-              className="absolute -top-4 left-1/2 size-8 -translate-x-1/2 -rotate-12 fill-accent-mode text-accent-mode drop-shadow-[0_2px_2px_var(--ombre-plaque)]"
+            <Pictogramme
+              nom="victoire"
+              taille={32}
+              className="absolute -top-4 left-1/2 -translate-x-1/2 -rotate-12 text-laiton-clair drop-shadow-[0_2px_2px_var(--ombre-plaque)]"
             />
           </span>
 
@@ -93,7 +94,7 @@ export const TableauHonneur = ({
         </>
       ) : exAequo ? (
         <>
-          <Handshake aria-hidden="true" className="mt-4 size-16 text-accent-mode" />
+          <Pictogramme nom="nul" taille={64} className="mt-4 text-craie" />
           <h1 className="mt-3 font-display text-4xl text-craie-vive drop-shadow-[0_3px_0_var(--ombre-plaque)]">
             {exAequo.titre}
           </h1>

@@ -1,6 +1,6 @@
-import { Target } from 'lucide-react'
 import type { Dart } from '@/core/domain/value-objects/Dart'
 import { Dart as DartVO } from '@/core/domain/value-objects/Dart'
+import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 
 type Props = {
   readonly cible: number | null
@@ -87,7 +87,7 @@ export const Cartouche = ({
               'border border-vert-cible/60 bg-vert-cible/12',
             ].join(' ')}
           >
-            <Target aria-hidden="true" className="size-4 shrink-0 text-vert-cible" />
+            <Pictogramme nom="sortie" taille={20} className="shrink-0 text-vert-cible" />
             <span className="font-score text-etiquette uppercase tracking-[0.28em] text-vert-cible">
               Route
             </span>

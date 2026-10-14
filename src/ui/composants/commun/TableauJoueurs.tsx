@@ -1,6 +1,7 @@
-import { Crown } from 'lucide-react'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { Avatar } from '@/ui/composants/commun/Avatar'
+import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
+import { LIBELLE_VAINQUEUR } from '@/ui/labels'
 
 /**
  * LA FEUILLE DE MATCH, au sens propre : les **joueurs en colonnes**, les
@@ -76,7 +77,7 @@ export const TableauJoueurs = <T,>({ libelle, colonnes, joueurs, lignes }: Props
               <span className="flex items-center gap-1">
                 <Avatar nom={colonne.nom} couleur={colonne.couleur} taille="xs" />
                 {colonne.vainqueur && (
-                  <Crown aria-hidden="true" className="size-3.5 shrink-0 text-accent-mode" />
+                  <Pictogramme nom="victoire" taille={20} className="shrink-0 text-laiton-clair" />
                 )}
               </span>
               <span
@@ -85,6 +86,8 @@ export const TableauJoueurs = <T,>({ libelle, colonnes, joueurs, lignes }: Props
                 }`}
               >
                 {colonne.nom}
+                {/* Après le nom : l'en-tête s'annonce « Kevin, vainqueur ». */}
+                {colonne.vainqueur && <span className="sr-only">, {LIBELLE_VAINQUEUR}</span>}
               </span>
             </span>
           </th>

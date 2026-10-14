@@ -448,6 +448,14 @@ export const LIBELLE_EN_COURS = 'En cours'
 /** Non terminée, et pas la plus récente des non terminées : reprenable d'un tap. */
 export const LIBELLE_ABANDONNEE = 'Abandonnée'
 export const LIBELLE_MATCH_NUL = 'Match nul'
+/**
+ * Lu par les lecteurs d'écran à côté de la couronne (décorative) d'une ligne de
+ * score. Posée après le nom, elle se lit « Kevin, vainqueur » : c'est la virgule
+ * de tête (`, {LIBELLE_VAINQUEUR}`) qui fait le nom accessible, d'où la minuscule
+ * d'une fin de phrase. « Vainqueur » capitalisé reste le libellé du tableau
+ * d'honneur du résumé, un autre élément.
+ */
+export const LIBELLE_VAINQUEUR = 'vainqueur'
 export const LIBELLE_TERMINEE = 'Terminée'
 export const LIBELLE_AUCUNE_PARTIE_SEMAINE = 'Pas de partie cette semaine'
 export const LIBELLE_CREER_JOUEUR = 'Créer un joueur'

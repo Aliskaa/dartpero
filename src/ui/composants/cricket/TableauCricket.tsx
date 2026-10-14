@@ -1,8 +1,9 @@
-import { Crown } from 'lucide-react'
 import type { Segment } from '@/core/domain/value-objects/Dart'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { Avatar } from '@/ui/composants/commun/Avatar'
+import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import { couleurJoueur } from '@/ui/couleurs'
+import { LIBELLE_VAINQUEUR } from '@/ui/labels'
 
 /** Sur un tableau de pub, la bulle s'écrit « B » : la colonne doit rester étroite. */
 export const libelleColonne = (cible: Segment): string => (cible === 'BULL' ? 'B' : String(cible))
@@ -148,7 +149,14 @@ export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat }: Props) =>
                       {joueur.nom}
                     </span>
                     {joueur.vainqueur && (
-                      <Crown aria-hidden="true" className="size-3.5 shrink-0 text-accent-mode" />
+                      <>
+                        <Pictogramme
+                          nom="victoire"
+                          taille={20}
+                          className="shrink-0 text-laiton-clair"
+                        />
+                        <span className="sr-only">, {LIBELLE_VAINQUEUR}</span>
+                      </>
                     )}
                   </span>
                 </span>

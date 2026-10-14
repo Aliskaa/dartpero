@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { Target } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { cheminNouvellePartie } from '@/ui/chemins'
 import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { Panneau } from '@/ui/composants/commun/Panneau'
+import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import { TableauHonneur } from '@/ui/composants/commun/TableauHonneur'
 import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { useServices } from '@/ui/providers/ServicesProvider'
@@ -86,7 +86,7 @@ export const ResumeEntrainementEcran = () => {
                 key={round.cle}
                 className="flex items-center gap-1.5 border border-vert-cible/50 bg-vert-cible/12 px-3 py-1.5"
               >
-                <Target aria-hidden="true" className="size-3.5 shrink-0 text-vert-cible" />
+                <Pictogramme nom="sortie" taille={20} className="shrink-0 text-vert-cible" />
                 <span className="chiffres text-base font-bold text-craie-vive">{round.target}</span>
                 <span className="chiffres text-xs text-craie-3">en {round.darts.length} fl.</span>
               </li>

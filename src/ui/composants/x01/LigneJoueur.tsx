@@ -1,10 +1,15 @@
-import { Crown } from 'lucide-react'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { Batons } from '@/ui/composants/commun/Batons'
+import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import { couleurJoueur } from '@/ui/couleurs'
-import { etiquetteManchesGagnees, moyenne as formatMoyenne, LIBELLE_MANCHES } from '@/ui/labels'
+import {
+  etiquetteManchesGagnees,
+  moyenne as formatMoyenne,
+  LIBELLE_MANCHES,
+  LIBELLE_VAINQUEUR,
+} from '@/ui/labels'
 
 /**
  * La volée montrée sur la ligne : celle **en cours** pour le joueur actif,
@@ -139,7 +144,12 @@ export const LigneJoueur = ({
           >
             {nom}
           </span>
-          {vainqueur && <Crown aria-hidden="true" className="size-4 shrink-0 text-accent-mode" />}
+          {vainqueur && (
+            <>
+              <Pictogramme nom="victoire" taille={20} className="shrink-0 text-laiton-clair" />
+              <span className="sr-only">, {LIBELLE_VAINQUEUR}</span>
+            </>
+          )}
         </p>
 
         {/* Les trois fléchettes, écrites sur leur ligne comme au stylo.

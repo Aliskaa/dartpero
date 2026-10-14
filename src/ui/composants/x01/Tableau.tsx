@@ -1,9 +1,10 @@
-import { CircleOff, Target } from 'lucide-react'
+import { CircleOff } from 'lucide-react'
 import type { Player } from '@/core/domain/entities/Player'
 import type { Visit } from '@/core/domain/entities/Visit'
 import type { X01State } from '@/core/domain/games/x01/rules'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
+import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import { LIBELLE_MANCHES, nomJoueur } from '@/ui/labels'
 import { type Echelle, GRILLE_LIGNE, LigneJoueur, type VoleeAffichee } from './LigneJoueur'
 
@@ -50,7 +51,7 @@ const RubanSortie = ({
   if (cibles) {
     return (
       <div className="flex animate-monter items-center gap-3 border-t-2 border-vert-cible bg-vert-cible/12 px-3 py-2">
-        <Target aria-hidden="true" className="size-4 shrink-0 text-vert-cible" />
+        <Pictogramme nom="sortie" taille={20} className="shrink-0 text-vert-cible" />
         <span className="entete-colonne text-vert-cible">Sortie</span>
         <span className="flex flex-1 items-center justify-end gap-2">
           {cibles.map((cible) => (

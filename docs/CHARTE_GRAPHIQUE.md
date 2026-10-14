@@ -60,7 +60,8 @@ remettre un rayon dans le `@theme` rallumerait tout d'un coup.
 | Nom affiché | **Dartpéro** (fléchettes + apéro) |
 | Slug technique | `dartpero` |
 | Icône PWA | Générée par `npm run icons` depuis `scripts/icon.svg` (cible stylisée, triple 20 en laiton, une fléchette plantée) |
-| Icônes UI | **lucide-react**, toujours en `aria-hidden` — elles n'entrent jamais dans le nom accessible. En v1, `Home` s'appelle **`House`**. |
+| Pictogrammes maison | Douze, dans un seul composant (`Pictogramme`) : quatre **modes** (`x01`, `cricket`, `tour-du-monde`, `entrainement`) et huit **moments** (`180`, `bust`, `sortie`, `victoire`, `moyenne`, `grosses-volees`, `meilleure-manche`, `nul`) ; le mode se reconnaît à sa forme, plus seulement à sa couleur. Dessin : grille 24, trait de 2 px, extrémités et jonctions vives (`square` / `miter`), couleur du texte (`currentColor`) — jamais une couleur en dur. Toujours `aria-hidden`. Couleurs d'emploi : un mode a la couleur de son jeu, `victoire` est en `laiton-clair` dans tous les jeux, `sortie` en `vert-cible`, `nul` en `craie`. **Un pictogramme dit quelque chose, il ne le dit pas seul** : un texte voisin (ou réservé aux lecteurs d'écran) porte toujours le sens. Tailles permises : 20, 24, 32, 40 et 64 px (`TaillePictogramme`), **jamais moins de 20 px**. |
+| Icônes d'action | **lucide-react**, toujours en `aria-hidden` — elles n'entrent jamais dans le nom accessible. Réservées aux actions (retour, annuler, corbeille, navigation…) et aux cas sans équivalent maison (`CircleOff`, `Flag`). En v1, `Home` s'appelle **`House`**. |
 
 ---
 
@@ -479,5 +480,6 @@ elle sert un jour en grand**.
 | `src/ui/couleurs.ts` | Palette joueurs → pixels |
 | `src/ui/labels.ts` | Tout le français, annonces vocales comprises |
 | `src/ui/composants/commun/` | Design system React |
+| `src/ui/composants/commun/Pictogramme.tsx` | Les douze pictogrammes maison (tracés fixes, grille 24) |
 | `scripts/icon.svg` | Source de l'icône PWA |
 | `../CLAUDE.md` | Résumé opérationnel + décisions structurantes |

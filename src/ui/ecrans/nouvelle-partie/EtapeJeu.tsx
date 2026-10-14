@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronsDown, Globe2, Grid3x3, Target } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useId } from 'react'
 import { Link } from 'react-router'
 import type { GameModeId } from '@/core/domain/games'
@@ -6,6 +6,7 @@ import { DEFAUT as DEFAUT_ENTRAINEMENT } from '@/core/domain/games/checkout-prac
 import { MATCH_NAME_MAX_LENGTH } from '@/core/domain/value-objects/MatchName'
 import { ACCENTS_MODE } from '@/ui/accents'
 import { cheminNouvellePartie, ETAT_PARCOURS } from '@/ui/chemins'
+import { type NomPictogramme, Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import type { NomPartieSaisi } from '@/ui/hooks/useNouvellePartie'
 import {
   LIBELLE_MODE,
@@ -24,15 +25,14 @@ import { EnTeteEtape } from './EnTeteEtape'
  */
 const JEUX: readonly GameModeId[] = ['X01', 'CRICKET', 'TOUR_DU_MONDE', 'CHECKOUT_PRACTICE']
 
-const ICONES: Record<GameModeId, typeof Target> = {
-  X01: ChevronsDown,
-  CRICKET: Grid3x3,
-  TOUR_DU_MONDE: Globe2,
-  CHECKOUT_PRACTICE: Target,
+const ICONES: Record<GameModeId, NomPictogramme> = {
+  X01: 'x01',
+  CRICKET: 'cricket',
+  TOUR_DU_MONDE: 'tour-du-monde',
+  CHECKOUT_PRACTICE: 'entrainement',
 }
 
 const CarteJeu = ({ mode }: { readonly mode: GameModeId }) => {
-  const Icone = ICONES[mode]
   const accent = ACCENTS_MODE[mode]
   const [premiere, seconde] = reglesCarteJeu(mode, {
     min: DEFAUT_ENTRAINEMENT.minTarget,
@@ -51,7 +51,9 @@ const CarteJeu = ({ mode }: { readonly mode: GameModeId }) => {
           'transition-colors duration-150 active:bg-chene/30',
         ].join(' ')}
       >
-        <Icone aria-hidden="true" className="size-6 shrink-0" style={{ color: accent.clair }} />
+        <span className="shrink-0" style={{ color: accent.clair }}>
+          <Pictogramme nom={ICONES[mode]} taille={40} />
+        </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="font-score text-lg font-bold uppercase tracking-wide text-craie-vive">
             {LIBELLE_MODE[mode]}
