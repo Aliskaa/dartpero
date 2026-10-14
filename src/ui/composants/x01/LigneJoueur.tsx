@@ -26,16 +26,22 @@ export type VoleeAffichee = {
 /** Plus il y a de joueurs, moins chaque ligne a de hauteur — le chiffre suit. */
 export type Echelle = 'large' | 'moyen' | 'compact'
 
+/**
+ * Le reste est plus grand en portrait (lecture à 3 m) qu'en paysage, où la
+ * hauteur manque : les tailles d'avant restent celles du paysage.
+ */
 const RESTE: Record<Echelle, string> = {
-  large: 'text-score-xl leading-[0.84]',
-  moyen: 'text-score-l leading-[0.88]',
-  compact: 'text-score-m leading-[0.9]',
+  large: 'text-score-xl-portrait paysage:text-score-xl leading-[0.84]',
+  moyen: 'text-score-l-portrait paysage:text-score-l leading-[0.88]',
+  compact: 'text-score-m-portrait paysage:text-score-m leading-[0.9]',
 }
 
 const HAUTEUR: Record<Echelle, string> = {
-  large: 'py-5',
-  moyen: 'py-3.5',
-  compact: 'py-2.5',
+  large: 'py-5 paysage:py-2',
+  moyen: 'py-3.5 paysage:py-2',
+  // Quatre joueurs en paysage : 408 px de page pour 390 avec `py-2` (mesuré), donc
+  // un cran de moins ici — jamais sur les touches, au plancher de 48 px.
+  compact: 'py-2.5 paysage:py-1',
 }
 
 /**
@@ -45,17 +51,23 @@ const HAUTEUR: Record<Echelle, string> = {
  *
  * ⚠️ **La largeur est la contrainte la plus serrée de l'écran, et une colonne
  * de plus ne rentre pas.** En portrait 390 px il ne reste que 360 px une fois
- * retirés le `p-3` de la disposition et le filet de 3 px de la feuille ; les
- * trois colonnes fixes en prennent 212, donc JOUEUR vit sur ~148 px — juste ce
- * qu'il faut pour trois cases de fléchettes à `text-sm`, « BULL » compris.
- * Quand « Legs » est devenu « Manches », les 12 px qu'il fallait à l'en-tête
- * ont été pris sur VOLÉE (72 → 60 px, MANCHES 32 → 44 px) : la somme reste
- * 212 px et JOUEUR ne perd rien.
+ * retirés le `p-3` de la disposition et le filet de 3 px de la feuille.
+ * RESTE y prend 8,25 rem (132 px) : un reste de trois chiffres larges
+ * (« 600 », « 688 ») à 4,5 rem doit avoir de l'air des deux côtés, sans toucher
+ * les filets (ce que l'utilisateur ne trouvait « vraiment pas joli »). VOLÉE
+ * (60 px) et MANCHES (44 px) ne bougent pas ; JOUEUR cède la différence.
+ * Pour que trois cases de fléchettes à `text-sm` y tiennent encore, « BULL »
+ * compris, l'écart entre cases est de `gap-1` (il n'est pas lu à 3 m).
+ * En paysage la feuille est plus large : JOUEUR vit sur ~262 px (mesuré), il
+ * n'a rien à céder. RESTE garde 6,75 rem (variante `paysage:`) parce que le
+ * reste y garde la taille d'avant le lot.
  * Une cinquième colonne a été essayée puis retirée : elle ramenait JOUEUR à
  * 108 px en portrait et à **81 px en paysage**, où les pseudos se tronquaient
  * en « MAÏ… ». Ce qu'on gagne en colonnes se paie sur ces trois cases-là.
+ * ⚠️ Littéral complet : Tailwind ne scanne que le texte écrit.
  */
-export const GRILLE_LIGNE = 'grid grid-cols-[minmax(0,1fr)_3.75rem_2.75rem_6.75rem]'
+export const GRILLE_LIGNE =
+  'grid grid-cols-[minmax(0,1fr)_3.75rem_2.75rem_8.25rem] paysage:grid-cols-[minmax(0,1fr)_3.75rem_2.75rem_6.75rem]'
 
 type Props = {
   readonly nom: string
@@ -125,7 +137,6 @@ export const LigneJoueur = ({
         GRILLE_LIGNE,
         HAUTEUR[echelle],
         bust ? 'animate-secousse' : '',
-        actif ? 'au-lancer' : '',
       ].join(' ')}
     >
       {/* COLONNE 1 — qui joue, et ce qu'il vient d'écrire. */}
@@ -161,13 +172,14 @@ export const LigneJoueur = ({
             - sans le plancher à 0 (les `min-w-[2.75rem]` d'avant), elles
               refusent de rétrécir et débordent sur la colonne d'à côté dès que
               la place manque — ce qu'elles faisaient en paysage.
-            ⚠️ En paysage la colonne perd 26 px : sans le resserrage ci-dessous,
-            « BULL » (29,4 px) se faisait rogner par une case de 29,0 px. */}
+            ⚠️ Colonne étroite (paysage, ou portrait depuis que RESTE s'est
+            élargi) : sans le `gap-1` ci-dessous, « BULL » (29,4 px) se faisait
+            rogner par une case de 29,0 px. */}
         <output
           aria-label={enSaisie ? 'Volée en cours' : `Dernière volée de ${nom}`}
           className={[
             'grid grid-cols-[repeat(3,minmax(0,2.75rem))] justify-start',
-            'items-end gap-1.5 paysage:gap-1',
+            'items-end gap-1',
           ].join(' ')}
         >
           {[0, 1, 2].map((rang) => {
@@ -228,11 +240,16 @@ export const LigneJoueur = ({
       </output>
 
       {/* COLONNE 4 — le reste, et RIEN d'autre. C'est LE chiffre qu'on lit
-          depuis l'oche : il n'a plus à porter deux notes de bas de page. */}
+          depuis l'oche : il n'a plus à porter deux notes de bas de page.
+          Seul celui du joueur qui LANCE est en craie vive (et souffle) ; les
+          autres sont en craie : l'œil va au repère, pas à toute la colonne.
+          Le vainqueur garde la craie vive : sa ligne perd son repère à la fin. */}
       <div className="filet-colonne flex flex-col items-center justify-center px-1">
         <output
           aria-label={`Score restant de ${nom}`}
-          className={`chiffres ${actif ? 'trace-craie' : ''} block font-bold text-craie-vive ${RESTE[echelle]}`}
+          className={`chiffres block font-bold ${
+            actif ? 'trace-craie text-craie-vive' : vainqueur ? 'text-craie-vive' : 'text-craie'
+          } ${RESTE[echelle]}`}
         >
           {/* La `key` fait rejouer le « pop » à chaque changement de valeur. */}
           <span key={reste} className="inline-block animate-pop-score">

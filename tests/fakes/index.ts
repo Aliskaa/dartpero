@@ -159,6 +159,33 @@ export class FakeAppInstallation implements AppInstallation {
   }
 }
 
+/**
+ * Un dépôt de parties dont l'écriture peut être suspendue : un fake, pas un mock.
+ * `suspendre()` bloque les `save` suivants jusqu'à `liberer()` ; `ecritures`
+ * compte les appels (suspendus compris).
+ */
+export class DepotSuspendu extends InMemoryMatchRepository {
+  ecritures = 0
+  private porte: Promise<void> | null = null
+  private ouvrir: (() => void) | null = null
+
+  suspendre(): void {
+    this.porte = new Promise<void>((resolve) => {
+      this.ouvrir = resolve
+    })
+  }
+
+  liberer(): void {
+    this.ouvrir?.()
+    this.porte = null
+  }
+
+  override async save(record: Parameters<InMemoryMatchRepository['save']>[0]): Promise<void> {
+    this.ecritures += 1
+    if (this.porte) await this.porte
+    await super.save(record)
+  }
+}
 export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Dependencies => ({
   matches: new InMemoryMatchRepository(),
   players: new InMemoryPlayerRepository(),

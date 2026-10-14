@@ -8,7 +8,6 @@ type Props = {
   readonly peutAnnuler: boolean
   /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
   readonly annulation?: Annulation
-  readonly desactive: boolean
 }
 
 /**
@@ -27,15 +26,13 @@ export const PaveCibles = ({
   onAnnuler,
   peutAnnuler,
   annulation = ANNULATION_NEUTRE,
-  desactive,
 }: Props) => (
-  <section aria-label="Saisie des cibles touchées" className="flex flex-col gap-1.5">
-    <div className="grid grid-cols-5 gap-1.5">
+  <section aria-label="Saisie des cibles touchées" className="flex flex-col gap-1.5 paysage:gap-1">
+    <div className="grid grid-cols-5 gap-1.5 paysage:gap-1">
       {SEGMENT_NUMBERS.map((numero) => (
         <button
           key={numero}
           type="button"
-          disabled={desactive}
           onClick={() => onFlechette(Dart.single(numero))}
           className="touche chiffres min-h-[3.25rem] text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
         >
@@ -47,7 +44,6 @@ export const PaveCibles = ({
     <div className="flex gap-1.5">
       <button
         type="button"
-        disabled={desactive}
         onClick={() => onFlechette(Dart.bull())}
         className={[
           'touche min-h-[3.25rem] flex-1 border-rouge-cible/70 bg-rouge-cible/25',
@@ -60,7 +56,6 @@ export const PaveCibles = ({
 
       <button
         type="button"
-        disabled={desactive}
         onClick={() => onFlechette(Dart.miss())}
         className="touche min-h-[3.25rem] shrink-0 px-4 font-score text-base font-bold uppercase tracking-wider text-craie-3 paysage:min-h-12"
       >
@@ -69,7 +64,7 @@ export const PaveCibles = ({
 
       <button
         type="button"
-        disabled={desactive || !peutAnnuler}
+        disabled={!peutAnnuler}
         onClick={onAnnuler}
         aria-label={annulation.complet}
         className="touche flex min-h-[3.25rem] shrink-0 items-center gap-1.5 px-3 font-score text-xs font-bold uppercase tracking-wider text-craie paysage:min-h-12"

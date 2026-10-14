@@ -85,6 +85,9 @@ const RubanSortie = ({
  * Une ligne par joueur, toujours : la disposition ne change pas avec le nombre
  * de joueurs, seule l'échelle du score suit.
  *
+ * Le moment célébré n'est PAS rendu ici : l'écran le superpose au bas de
+ * ce tableau, hors du flux (`MomentCelebratif`).
+ *
  * Il n'y a **pas** de bandeau « ce qui vient de se passer » : chaque ligne porte
  * déjà sa dernière volée et son total. Seul le bust garde un signal fort — sa
  * ligne passe au rouge, ses fléchettes sont barrées et elle encaisse la
@@ -117,7 +120,28 @@ export const Tableau = ({
         <span className="entete-colonne px-1 text-center text-feutre/70">Reste</span>
       </div>
 
-      <div className="flex flex-col">
+      {/* Les lignes ont une hauteur STRICTEMENT égale (`1fr`, donc celle de la
+          plus haute) : c'est ce qui permet au repère de se placer par un simple
+          `translateY(index * 100%)`, sans rien mesurer. */}
+      <div
+        className="relative grid"
+        style={{ gridTemplateRows: `repeat(${state.players.length}, 1fr)` }}
+      >
+        {/* Le repère de celui qui lance : UN seul élément, qui GLISSE d'une ligne
+            à l'autre quand la main passe. Il est le premier enfant, donc sous les
+            lignes (positionnées, peintes après lui). `aria-current` reste l'état
+            accessible ; celui-ci est décoratif. */}
+        {state.winnerId === null && (
+          <span
+            aria-hidden="true"
+            style={{
+              height: `${100 / state.players.length}%`,
+              transform: `translateY(${state.currentPlayerIndex * 100}%)`,
+            }}
+            className="repere-lancer pointer-events-none absolute inset-x-0 top-0"
+          />
+        )}
+
         {state.players.map((joueur, index) => {
           const actif = index === state.currentPlayerIndex && state.winnerId === null
           const profil = profils.get(joueur.playerId)

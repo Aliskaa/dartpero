@@ -11,7 +11,8 @@ type Props = {
  * C'est le geste du pub, celui dont on compte les tournées, et il se lit mieux
  * à trois mètres qu'une rangée de losanges : l'œil reconnaît un paquet de cinq
  * sans compter. Les traits acquis sont en craie pleine, ceux qui restent à
- * gagner en pointillé — on voit d'un coup ce qu'il manque.
+ * gagner en tirets de craie à 55 % (2 px) — on voit d'un coup ce qu'il manque,
+ * et le tireté se lit là où un trait à 25 % disparaissait à 3 m.
  */
 export const Batons = ({ gagnes, requis, libelle }: Props) => {
   const total = Math.max(requis, gagnes)
@@ -34,15 +35,17 @@ export const Batons = ({ gagnes, requis, libelle }: Props) => {
           // n'occupe donc aucune largeur propre.
           <span key={trait.cle} className="relative w-0">
             <span
-              className={`absolute bottom-0 right-0 h-[2px] w-[26px] origin-right -rotate-[24deg] ${
-                trait.acquis ? 'bg-craie' : 'bg-craie/25'
+              className={`absolute bottom-0 right-0 w-[26px] origin-right -rotate-[24deg] ${
+                trait.acquis ? 'h-[2px] bg-craie' : 'h-0 border-t-2 border-dashed border-craie/55'
               }`}
             />
           </span>
         ) : (
           <span
             key={trait.cle}
-            className={`h-4 w-[2px] ${trait.acquis ? 'bg-craie' : 'bg-craie/25'}`}
+            className={`h-4 ${
+              trait.acquis ? 'w-[2px] bg-craie' : 'w-0 border-l-2 border-dashed border-craie/55'
+            }`}
           />
         ),
       )}

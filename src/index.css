@@ -74,6 +74,18 @@
   --text-score-l: 3.25rem;
   --text-score-m: 2.5rem;
   --text-score-solo: 4.5rem;
+  /* Le reste X01 en portrait : agrandi pour la lecture à 3 m. Le paysage garde
+     les tailles ci-dessus (`paysage:text-score-*`).
+     ⚠️ xl : 4,5 rem et non les 5,1 de la maquette. Oswald 700 met les chiffres
+     larges (« 600 » ≈ 136 px à 5,1 rem) au-delà des 123 px utiles de la colonne
+     RESTE portrait de 132 px (8,25 rem, `GRILLE_LIGNE`) : rogné. À 4,5 rem
+     « 600 » tombe à ≈ 120 px et respire entre les filets. Mesures : CHARTE § Écran de
+     match. En paysage la colonne reste à 108 px. */
+  --text-score-xl-portrait: 4.5rem;
+  --text-score-l-portrait: 4.05rem;
+  --text-score-m-portrait: 3.1rem;
+  /* La valeur réelle dans le coin d'une touche armée (Double, Triple). */
+  --text-multiplicateur: 0.8rem;
 
   /* Mouvement : court, sec, sans rebond. Tout est neutralisé plus bas si
      l'utilisateur a demandé moins d'animations. */
@@ -141,6 +153,10 @@
   --voile-trace: rgb(242 232 213 / 0.22);
   --eclat-balai: rgb(242 232 213 / 0.09);
 
+  /* Le fond d'une touche en Triple : du laiton teinté, posé sur le feutre.
+     craie-vive dessus : 12,1:1 (contrôlé, voir CHARTE § Écran de match). */
+  --teinte-triple: color-mix(in srgb, var(--color-laiton) 22%, transparent);
+
   /* L'accent de chaque mode. Il vit ici plutôt que dans `accents.ts` parce
      qu'il part dans un `style=` inline : un hex y serait figé, un `var()` s'y
      résout dans le thème du moment. Teintes alignées sur la palette joueurs
@@ -204,6 +220,9 @@ html[data-theme="clair"] {
   --voile-cible: 0.07;
   --voile-trace: transparent;
   --eclat-balai: rgb(31 45 36 / 0.1);
+  /* Laiton foncé sur papier : une teinte plus légère suffit (et garde le
+     laiton-clair de l'exposant à 4,5:1). craie-vive dessus : 11,4:1. */
+  --teinte-triple: color-mix(in srgb, var(--color-laiton) 14%, transparent);
 
   /* Les quatre accents assombris : même logique que le laiton, « clair » vaut
      « plus lisible sur le fond », donc plus foncé. */
@@ -407,6 +426,15 @@ html[data-theme="clair"] {
     box-shadow: inset 5px 0 0 var(--color-accent-mode);
   }
 
+  /* Le même repère, mais porté par UN élément qui glisse d'une ligne à l'autre
+     (X01) : le mouvement dit « la main passe » mieux qu'un filet qui s'éteint
+     ici et s'allume là. Hauteur et position viennent de `Tableau`. */
+  .repere-lancer {
+    background-color: color-mix(in srgb, var(--color-accent-mode) 12%, transparent);
+    box-shadow: inset 5px 0 0 var(--color-accent-mode);
+    transition: transform var(--duration-lent) var(--ease-sec);
+  }
+
   /* Séparateur de colonnes : plus discret que le filet de ligne, sinon la
      grille devient un quadrillage et on ne lit plus rien. */
   .filet-colonne {
@@ -478,6 +506,52 @@ html[data-theme="clair"] {
     box-shadow: none;
   }
 
+  /* Le multiplicateur ARMÉ, lisible du coin de l'œil : tant que Double ou
+     Triple est pressé, les touches de score (1-20 et 25 — ni « 0 » ni
+     « Annuler », qui ignorent la bascule) prennent un filet de laiton de 2 px
+     et une tranche foncée. L'état vit sur la <section> du pavé
+     (`data-multiplicateur`), jamais dans les touches.
+     Le 2ᵉ pixel du filet n'est pas un `border-width` (non animable, il décalerait
+     la touche d'un pixel) : la bordure reste à 1 px et un anneau intérieur
+     (`inset 0 0 0 1px`) fait l'épaisseur. Au repos, le même anneau existe déjà,
+     transparent, EN PREMIÈRE COUCHE : deux listes de même forme, donc
+     `box-shadow` fond au lieu de basculer.
+     Seuls le filet (`border-color`, `box-shadow`) et le fond Triple prennent la
+     durée du fondu ; l'inversion de l'appui reste à 90 ms (`:active` d'abord :
+     c'est l'état d'ARRIVÉE qui choisit la durée, donc l'appui est vif et seul
+     le retour à Simple est lent). */
+  .touche-armee {
+    box-shadow:
+      inset 0 0 0 1px transparent,
+      0 2px 0 color-mix(in srgb, var(--color-craie) 18%, transparent);
+    transition:
+      transform 90ms ease-out,
+      color 90ms ease-out,
+      background-color 90ms ease-out,
+      border-color var(--duration-normal) var(--ease-sec),
+      box-shadow var(--duration-normal) var(--ease-sec);
+  }
+
+  .touche-armee:not(:active) {
+    transition:
+      transform 90ms ease-out,
+      color var(--duration-normal) var(--ease-sec),
+      background-color var(--duration-normal) var(--ease-sec),
+      border-color var(--duration-normal) var(--ease-sec),
+      box-shadow var(--duration-normal) var(--ease-sec);
+  }
+
+  section[data-multiplicateur="double"] .touche-armee:not(:disabled):not(:active),
+  section[data-multiplicateur="triple"] .touche-armee:not(:disabled):not(:active) {
+    border-color: var(--color-laiton);
+    box-shadow:
+      inset 0 0 0 1px var(--color-laiton),
+      0 2px 0 var(--color-laiton-sombre);
+  }
+
+  section[data-multiplicateur="triple"] .touche-armee:not(:disabled):not(:active) {
+    background-color: var(--teinte-triple);
+  }
   /* ---------------------------------------------------------------
      TYPOGRAPHIE DE LA FEUILLE
      --------------------------------------------------------------- */

@@ -18,7 +18,6 @@ type Props = {
   readonly peutAnnuler: boolean
   /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
   readonly annulation?: Annulation
-  readonly desactive: boolean
 }
 
 /**
@@ -39,6 +38,16 @@ type Props = {
  * Il n'y a **pas** de touche « Bull » : le bullseye, c'est le double du 25 —
  * ce que dit la règle. En triple, le 25 se grise plutôt que de refuser le coup
  * après l'avoir accepté : il n'existe pas de triple bull sur une cible.
+ *
+ * ⚠️ **Le pavé ne se grise jamais pendant l'écriture d'une volée.** Il le
+ * faisait (`desactive={occupe}`) et clignotait à la 3ᵉ fléchette. La garde
+ * reste dans `useX01` (`if (occupe) return`) : un appui pendant l'écriture
+ * n'enregistre rien. Les seules touches éteintes sont le 25 en Triple et
+ * « Annuler » sans rien à annuler — des règles, pas un état de chargement.
+ *
+ * Le multiplicateur armé se lit sur la `<section>` (`data-multiplicateur`) ;
+ * la classe `touche-armee` désigne les touches qui s'en parent : 1-20 et 25,
+ * ni « 0 » ni « Annuler » (voir `index.css`).
  */
 export const PaveFlechettes = ({
   multiplicateur,
@@ -47,29 +56,31 @@ export const PaveFlechettes = ({
   onAnnuler,
   peutAnnuler,
   annulation = ANNULATION_NEUTRE,
-  desactive,
 }: Props) => {
   const rang = MULTIPLICATEURS.findIndex((option) => option.valeur === multiplicateur)
   const facteur = FACTEUR[multiplicateur]
   const bullInterdit = multiplicateur === 'TRIPLE'
 
   return (
-    <section aria-label="Saisie fléchette par fléchette" className="flex flex-col gap-1.5">
-      <div className="grid grid-cols-5 gap-1.5">
+    <section
+      aria-label="Saisie fléchette par fléchette"
+      data-multiplicateur={multiplicateur.toLowerCase()}
+      className="flex flex-col gap-1.5 paysage:gap-1"
+    >
+      <div className="grid grid-cols-5 gap-1.5 paysage:gap-1">
         {SEGMENT_NUMBERS.map((numero) => (
           <button
             key={numero}
             type="button"
-            disabled={desactive}
             onClick={() => onFlechette(Dart.of(numero, multiplicateur))}
-            className="touche chiffres relative min-h-[3.25rem] text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
+            className="touche touche-armee chiffres relative min-h-[3.25rem] text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
           >
             {/* La valeur réelle n'apparaît que si elle diffère du numéro : en
                 simple elle serait du bruit, en triple elle évite la faute. */}
             {facteur > 1 && (
               <span
                 aria-hidden="true"
-                className="absolute right-1.5 top-1 text-etiquette font-bold leading-none text-laiton"
+                className="absolute right-1.5 top-1 text-multiplicateur font-bold leading-none text-laiton-clair"
               >
                 {numero * facteur}
               </span>
@@ -79,18 +90,18 @@ export const PaveFlechettes = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-4 gap-1.5 paysage:gap-1">
         <button
           type="button"
-          disabled={desactive || bullInterdit}
+          disabled={bullInterdit}
           onClick={() => onFlechette(Dart.of('BULL', multiplicateur))}
           title={bullInterdit ? 'Il n’existe pas de triple bull' : undefined}
-          className="touche chiffres relative min-h-[3.25rem] text-lg font-bold text-craie-vive paysage:min-h-12"
+          className="touche touche-armee chiffres relative min-h-[3.25rem] text-lg font-bold text-craie-vive paysage:min-h-12"
         >
           {multiplicateur === 'DOUBLE' && (
             <span
               aria-hidden="true"
-              className="absolute right-1.5 top-1 text-etiquette font-bold leading-none text-laiton"
+              className="absolute right-1.5 top-1 text-multiplicateur font-bold leading-none text-laiton-clair"
             >
               50
             </span>
@@ -100,7 +111,6 @@ export const PaveFlechettes = ({
 
         <button
           type="button"
-          disabled={desactive}
           /* Une fléchette manquée n'a ni double ni triple : elle ignore la bascule. */
           onClick={() => onFlechette(Dart.miss())}
           className="touche chiffres min-h-[3.25rem] text-lg font-bold text-craie-3 paysage:min-h-12"
@@ -110,7 +120,7 @@ export const PaveFlechettes = ({
 
         <button
           type="button"
-          disabled={desactive || !peutAnnuler}
+          disabled={!peutAnnuler}
           onClick={onAnnuler}
           aria-label={annulation.complet}
           className={[
@@ -126,15 +136,16 @@ export const PaveFlechettes = ({
 
       {/* La rangée du pouce : ce qu'on actionne le plus, là où on l'atteint le mieux. */}
       <div className="flex gap-1.5">
-        <div className="relative grid flex-1 grid-cols-3 border border-chene/60 bg-feutre/70 p-1">
-          {/* Le curseur glisse : on voit le changement même du coin de l'œil. */}
+        <div className="relative grid flex-1 grid-cols-3 border border-chene/60 bg-feutre/70 p-[var(--rail-p)] [--rail-p:0.25rem] paysage:[--rail-p:0.125rem]">
+          {/* Le curseur glisse : on voit le changement même du coin de l'œil.
+              Son retrait suit le padding du rail (`--rail-p`), resserré en paysage. */}
           <span
             aria-hidden="true"
             style={{
-              width: 'calc((100% - 0.5rem) / 3)',
+              width: 'calc((100% - 2 * var(--rail-p)) / 3)',
               transform: `translateX(${rang * 100}%)`,
             }}
-            className="laiton-plat absolute inset-y-1 left-1 transition-transform duration-200 ease-out"
+            className="laiton-plat absolute inset-y-[var(--rail-p)] left-[var(--rail-p)] transition-transform duration-200 ease-out"
           />
           {MULTIPLICATEURS.map(({ valeur, libelle }) => {
             const actif = valeur === multiplicateur

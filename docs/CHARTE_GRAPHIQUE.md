@@ -203,7 +203,9 @@ aucune taille arbitraire `text-[…rem]` dans `src/ui` (garde `typographieBounda
 | Classe | Taille | Usage |
 | ------ | ------ | ----- |
 | `text-etiquette` | 0,75 rem | Le plancher : légendes, badges, en-têtes de colonnes, exposants du pavé |
-| `text-score-xl` / `-l` / `-m` | 4,25 / 3,25 / 2,5 rem | Le reste X01 selon le nombre de joueurs |
+| `text-score-xl` / `-l` / `-m` | 4,25 / 3,25 / 2,5 rem | Le reste X01 selon le nombre de joueurs, **en paysage** |
+| `text-score-xl-portrait` / `-l-portrait` / `-m-portrait` | **4,5** / 4,05 / 3,1 rem | Le reste X01 selon le nombre de joueurs, **en portrait** (lot `match-x01`) |
+| `text-multiplicateur` | 0,8 rem | La valeur réelle dans le coin d'une touche armée (Double, Triple) |
 | `text-score-solo` | 4,5 rem | Le reste de l'entraînement (`Cartouche`, résumé) |
 
 **Interlettrage** : large (jusqu'à `0.42em`) là où la place existe ; **resserré à 0,06 em au
@@ -233,7 +235,9 @@ SVG inline.
 | **`.bandeau-bas`** | La barre de navigation | `NavigationBasse` |
 | **`.entete-colonne`** | Libellé de colonne | Ligne d'en-têtes |
 | `.ligne-tableau` | Une ligne : un filet, rien d'autre | Lignes de score |
-| **`.au-lancer`** | Filet de laiton **dans** la marge + voile | Le joueur dont c'est le tour |
+| **`.au-lancer`** | Filet de laiton **dans** la marge + voile | Le joueur dont c'est le tour (Cricket, Tour du monde) |
+| **`.repere-lancer`** | Le même filet + voile, porté par **un seul élément qui glisse** d'une ligne à l'autre | Le joueur dont c'est le tour, au X01 (`Tableau`) |
+| **`.touche-armee`** | Désigne les touches (1-20 et 25) qui prennent le filet de laiton quand Double ou Triple est armé ; le fondu au retour à Simple | Pavé X01 |
 | **`.filet-colonne`** | Séparateur vertical | Entre deux colonnes |
 | **`.ligne-saisie`** | La ligne sur laquelle une fléchette est « écrite » | Volée en cours |
 | `.cadre-bois` | Encadrement plat | Chrome rare |
@@ -263,7 +267,12 @@ repaint par image sur un vieux téléphone. Le joueur au lancer se signale par `
 Hors saisie uniquement — jamais pendant qu'on tape une volée :
 
 - **`MomentCelebratif`** : bandeau vert éphémère (manche / set / sortie / tour bouclé / cible
-  fermée), `pointer-events-none`, ~2,2 s.
+  fermée), `pointer-events-none`, ~2,2 s. ⚠️ **Hors du flux** (lot `match-x01`) : il est `absolute`
+  au bas de son ancêtre `relative` — l'écran enveloppe son tableau et le moment dans un
+  `div.relative`, le moment en dernier enfant. Il recouvre le bas de la feuille (au X01, le ruban
+  de sortie, et selon la hauteur de la feuille un peu de la dernière ligne), ne décale rien, ne
+  touche jamais le pavé. Fond **opaque** (`bg-ardoise`) sous la teinte verte : sans lui le ruban
+  transparaîtrait.
 - **`TableauHonneur`** : le podium des résumés (avatar, couronne, phrase d'ambiance), à l'accent
   du mode. Phrase tirée de `phraseVictoire(matchId)` — **déterministe**, pas de `Math.random`.
   Le **nom de la partie** s'affiche en tête (prop obligatoire `nomPartie`), dans un `<p>` —
@@ -338,6 +347,13 @@ le bruit. Durées : `--duration-vif` 100 ms, `--duration-normal` 180 ms, `--dura
 | `trace-filet` | 360 ms | Fin de manche / de partie : un filet de 2 px se trace de gauche à droite (`clip-path`), `vert-cible` partout (`MomentCelebratif` et `TableauHonneur`) — ni dégradé ni halo |
 | `defiler` | 1,4 s ∞ | Balayage de chargement (état d'attente) |
 
+Deux mouvements ne sont pas des `@keyframes` mais des **transitions** (lot `match-x01`) :
+
+| Transition | Durée | Rôle |
+| ---------- | ----- | ---- |
+| **Repère qui glisse** (`.repere-lancer`) | `--duration-lent`, `--ease-sec` | Au X01, quand la main passe, le filet de laiton **glisse** d'une ligne à l'autre (`translateY(index × 100 %)`) au lieu de s'éteindre ici et de s'allumer là. Un seul élément `aria-hidden` ; `aria-current` reste l'état accessible. Exige des lignes de **hauteur strictement égale** : la grille `1fr` de `Tableau` le garantit |
+| **Fondu du filet** (`.touche-armee`) | `--duration-normal`, `--ease-sec` | Au retour à Simple, le filet de laiton et le fond Triple s'effacent en fondu (`border-color`, `box-shadow`, `background-color`). La bordure reste à **1 px** (jamais de `border-width`, non animable, qui décalerait la touche) : le 2ᵉ pixel est un anneau `inset 0 0 0 1px` en première couche de `box-shadow`, transparent au repos, pour que l'ombre fonde au lieu de basculer. **L'inversion de l'appui reste à 90 ms** : c'est l'état d'arrivée qui choisit la durée (`:active` → 90 ms, retour → `--duration-normal`). Le curseur du rail garde son glissement |
+
 Supprimées : `eclat` (remplacé par `trace-filet`), `tourner-lent` (boucle de 120 s) et
 `respirer` (le badge du Tour du monde est fixe).
 
@@ -354,8 +370,9 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 
 ```
 ┌──────────────────────────────────┐
-│ ← MANCHE 2 | 501 · PREMIER À 2 DO│  bandeau de match
-│     Dimanche soir                │  nom de la partie : ligne à part, tronquée
+│ ← ◔ X01                MANCHE 2  │  bandeau de match X01 : pictogramme, titre,
+│     501 · PREMIER À 2 MANCHES    │  sous-titre, DI / DO dessous ; manche (et set) à droite
+│     Dimanche soir                │  nom de la partie : ligne à part, tronquée (masquée en paysage)
 ├──────────────────────────────────┤
 │ JOUEUR          │ VOLÉE │  RESTE │  en-têtes EN INVERSION (craie pleine)
 │▌■ KEVIN         │  140  │    361 │  ZONE LECTURE — une ligne par joueur
@@ -376,14 +393,48 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 ### Règles de layout
 
 - **Une ligne par joueur, toujours** — pas de grille, pas de disposition alternative. Seule
-  l'**échelle** du reste suit le nombre de joueurs : 2 → `text-score-xl` (4,25 rem),
-  3 → `text-score-l` (3,25 rem), 4 → `text-score-m` (2,5 rem).
-- Les deux dernières colonnes sont à **largeur fixe** : `GRILLE_LIGNE` est exportée par
+  l'**échelle** du reste suit le nombre de joueurs, et elle dépend de l'orientation :
+
+  | Joueurs | Portrait | Paysage |
+  | ------- | -------- | ------- |
+  | 1-2 | `text-score-xl-portrait` (**4,5 rem**) | `text-score-xl` (4,25 rem) |
+  | 3 | `text-score-l-portrait` (4,05 rem) | `text-score-l` (3,25 rem) |
+  | 4 | `text-score-m-portrait` (3,1 rem) | `text-score-m` (2,5 rem) |
+
+  ⚠️ **4,5 rem et non 5,1 rem au premier palier** (la maquette l'agrandissait de 25 %, mais ne
+  montrait que trois joueurs). Oswald 700 met « 301 » à **120,7 px à 5,1 rem**. **La colonne RESTE
+  fait 132 px en portrait (`8.25rem`) et 108 px en paysage** (`GRILLE_LIGNE`, variante `paysage:`) :
+  à 108 px, « 600 », « 606 », « 666 » et « 688 » étaient rognés de 1,5 à 3,6 px par le bord de la
+  feuille. Les 24 px pris à JOUEUR (148 → 124 px en portrait) ne coûtent rien : les cases de
+  fléchettes passent en `gap-1` (« BULL » tient, 30,7 px de case pour 29,4) et « JULIEN » reste
+  entier, y compris sur la ligne du vainqueur avec son pictogramme. Mesuré au navigateur, 4,5 rem :
+  « 600 » 120,1 px, « 606 » 119,2, « 666 » 118,4, « 206 » 117,5, « 688 » 115,9, « 501 » 106,1,
+  « 701 » 101,1 — au moins **5,4 px d'air** de chaque côté entre les filets. Les paliers 4,05 et
+  3,1 rem tiennent sans souci. En paysage, JOUEUR vit déjà large : la colonne n'a pas bougé.
+- **Le reste du joueur qui ne lance pas est en `craie`**, celui du joueur actif en `craie-vive`
+  (avec `trace-craie`) : l'œil va au repère, pas à toute la colonne. Le vainqueur garde la
+  `craie-vive`.
+- **Le repère de celui qui lance glisse** (`.repere-lancer`, voir § Mouvement) : un seul élément
+  derrière les lignes, qui prend leur hauteur égale (`1fr`).
+- **La zone de lecture est collée en haut** (plus de `justify-center` dans `DispositionPartie`),
+  pour les quatre modes : le vide éventuel tombe entre la feuille et le pavé.
+- Les trois dernières colonnes sont à **largeur fixe** : `GRILLE_LIGNE` est exportée par
   `LigneJoueur` et consommée par la ligne d'en-têtes — **une seule définition de colonnes**,
   donc aucun désalignement possible. C'est en alignant les chiffres d'une ligne à l'autre qu'on
   les compare, et il faut pour ça que les colonnes existent vraiment.
 - **Les manches se comptent en bâtons** (`Batons`) : à trois mètres l'œil reconnaît un paquet de
-  cinq sans compter, là où il devait dénombrer des losanges.
+  cinq sans compter, là où il devait dénombrer des losanges. Les bâtons **acquis** sont pleins ;
+  ceux qui **restent** sont en **tirets** de craie à 55 % (`border-dashed border-craie/55`, 2 px —
+  le trait barré compris) : l'ancien trait à 25 % disparaissait à 3 m.
+- **Le bandeau X01** (`EnTeteManche`) : flèche de retour · pictogramme `x01` (**24 px**,
+  `text-accent-mode-clair`, `aria-hidden`) · titre « X01 » (Oswald gras, majuscules) · sous-titre
+  « 501 · premier à 2 manches » (`text-etiquette`, `text-craie-2`) · DI / DO **sous le
+  sous-titre** · à droite « Manche N », et « Set M » dessous quand il y a des sets, en **craie**
+  (`text-craie-2`, petites capitales) : le laiton ne reste qu'au repère et au rail. En **paysage**
+  le bloc central tient sur **une rangée** (pictogramme, titre, sous-titre, DI, DO) et « Manche N
+  · Set M » à droite sur la même hauteur. Mesuré (Chrome, 390 × 844 / 844 × 390, hors zone de
+  sécurité) : **portrait 73 → 87 px**, **paysage 65 → 49 px** (la ligne du nom y disparaît). Les
+  quatre autres écrans de partie gardent leur bandeau (lot 6).
 - **Les fléchettes sont écrites sur une ligne** (`.ligne-saisie`), comme au stylo — et non dans
   des pastilles. Les trois emplacements restent **toujours présents** : c'est ce qui garde
   l'alignement d'une ligne à l'autre.
@@ -392,7 +443,8 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 - **Portrait** par défaut. **Paysage** (téléphone couché) : lecture à gauche, pavé à droite —
   porté par `DispositionPartie` pour les quatre modes.
 - **Le nom de la partie** (lot `nom-de-partie`) occupe sa propre ligne sous la rangée du bandeau,
-  dans le même `<header>` (`h-4 truncate pl-12 text-craie-3`, hauteur réservée même vide, prop obligatoire `nomPartie` de `DispositionPartie`) :
+  dans le même `<header>` (`h-4 truncate pl-12 text-craie-3`, hauteur réservée même vide, prop obligatoire `nomPartie` de `DispositionPartie`) —
+  **masquée en paysage** (`paysage:hidden`, lot `match-x01`) :
   lu à 30 cm, il ne prend rien à la zone de lecture et ne pousse pas le bandeau. Forme
   **à confirmer à la relecture à l'écran** (D5), cas le plus serré : X01 en sets, double in et
   double out, téléphone peu haut.
@@ -401,7 +453,12 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   c'est la hauteur, pas la largeur : une tablette et un navigateur de bureau gardent la
   disposition normale.
 - Les pavés se **compactent** en paysage (`paysage:` sur les hauteurs et les tailles), mais les
-  cibles restent **≥ 48 px** : c'est un plancher, pas une variable d'ajustement.
+  cibles restent **≥ 48 px** : c'est un plancher, pas une variable d'ajustement. Ce qui cède :
+  la ligne du nom, les espacements des pavés (`gap-1`), le padding du rail S/D/T (`--rail-p`,
+  0,125 rem : le curseur en suit la valeur) et le padding vertical des lignes du tableau
+  (`py-2`, `py-1` à quatre joueurs). Mesuré en 844 × 390 : plus aucun défilement à 2, 3 ou 4
+  joueurs au X01 (409 → 390 px de page à deux ; 440 → 390 à quatre), au Cricket, à l'entraînement
+  et au Tour du monde à quatre (501 → 390).
 - Barre de navigation basse : **absente** pendant une partie et sur toutes les étapes de Nouvelle
   partie (jeu, joueurs et réglages, ordre de jeu, sélection de joueurs).
 
@@ -415,7 +472,20 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   l'avoir accepté.
 - Touche `0` : ignore le multiplicateur (un miss n'a ni double ni triple).
 - Valeur réelle en exposant hors simple (le « 20 » porte un « 60 » en mode triple) — badge
-  `aria-hidden`, le nom accessible du bouton reste « 20 ».
+  `aria-hidden` en `text-multiplicateur` (0,8 rem, `text-laiton-clair`), le nom accessible du
+  bouton reste « 20 ».
+- **Le multiplicateur armé est gradué** (X01) : la `<section>` du pavé porte
+  `data-multiplicateur="simple|double|triple"` et les touches 1-20 et 25 (classe `touche-armee`,
+  ni « 0 » ni « Annuler ») changent d'état. **Double** : filet de laiton de 2 px (bordure 1 px + anneau intérieur 1 px) et tranche de
+  `laiton-sombre`. **Triple** : le même, **plus** un fond teinté par le token `--teinte-triple`
+  (laiton 22 % en sombre, 14 % en clair, valeur claire sous `html[data-theme="clair"]`).
+  Contraste de `craie-vive` sur le fond composé du Triple : **12,1:1 en sombre, 11,4:1 en clair**
+  (≥ 4,5:1) ; l'exposant `laiton-clair` y tient 8,9:1 / 4,5:1. Au retour à Simple, le filet
+  **fond** (voir § Mouvement). Le 25 grisé en Triple garde son `opacity` : c'est une règle.
+- ⚠️ **Le pavé ne se grise jamais pendant l'écriture d'une volée** (il clignotait à la 3ᵉ
+  fléchette). La garde reste dans les hooks (`if (occupe) return`) : un appui pendant l'écriture
+  n'enregistre rien. Seules désactivations visuelles : le 25 en Triple, « Annuler » sans rien à
+  annuler.
 - Le pavé du **Cricket** n'a que les sept cibles ; celui du **Tour du monde** n'a pas de bascule
   S/D/T (elle ne changerait rien, et un contrôle sans effet induit en erreur).
 - ⚠️ **Le bouton « Annuler » a deux étiquettes** : `libelleAnnulation` rend un

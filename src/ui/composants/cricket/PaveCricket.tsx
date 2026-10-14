@@ -19,7 +19,6 @@ type Props = {
   readonly peutAnnuler: boolean
   /** Ce que l'annulation va défaire, écrit sur la touche. Voir `libelleAnnulation`. */
   readonly annulation?: Annulation
-  readonly desactive: boolean
 }
 
 /**
@@ -42,7 +41,6 @@ export const PaveCricket = ({
   onAnnuler,
   peutAnnuler,
   annulation = ANNULATION_NEUTRE,
-  desactive,
 }: Props) => {
   const rang = MULTIPLICATEURS.findIndex((option) => option.valeur === multiplicateur)
   const marques = MARQUES[multiplicateur]
@@ -51,15 +49,18 @@ export const PaveCricket = ({
   const bullInterdit = multiplicateur === 'TRIPLE'
 
   return (
-    <section aria-label="Saisie des cibles touchées" className="flex flex-col gap-1.5">
-      <div className="grid grid-cols-4 gap-1.5">
+    <section
+      aria-label="Saisie des cibles touchées"
+      className="flex flex-col gap-1.5 paysage:gap-1"
+    >
+      <div className="grid grid-cols-4 gap-1.5 paysage:gap-1">
         {cibles.map((cible) => {
           const bulle = cible === 'BULL'
           return (
             <button
               key={String(cible)}
               type="button"
-              disabled={desactive || (bulle && bullInterdit)}
+              disabled={bulle && bullInterdit}
               onClick={() => onFlechette(Dart.of(cible, multiplicateur))}
               title={bulle && bullInterdit ? 'Il n’existe pas de triple bull' : undefined}
               className={[
@@ -83,7 +84,6 @@ export const PaveCricket = ({
 
         <button
           type="button"
-          disabled={desactive}
           /* Une fléchette hors des sept cibles ne vaut rien : elle ignore la bascule. */
           onClick={() => onFlechette(Dart.miss())}
           className="touche min-h-14 font-score text-base font-bold uppercase tracking-wider text-craie-3 paysage:min-h-12"
@@ -94,14 +94,14 @@ export const PaveCricket = ({
 
       {/* La rangée du pouce, identique à celle du X01. */}
       <div className="flex gap-1.5">
-        <div className="relative grid flex-1 grid-cols-3 border border-chene/45 bg-feutre/70 p-1">
+        <div className="relative grid flex-1 grid-cols-3 border border-chene/45 bg-feutre/70 p-[var(--rail-p)] [--rail-p:0.25rem] paysage:[--rail-p:0.125rem]">
           <span
             aria-hidden="true"
             style={{
-              width: 'calc((100% - 0.5rem) / 3)',
+              width: 'calc((100% - 2 * var(--rail-p)) / 3)',
               transform: `translateX(${rang * 100}%)`,
             }}
-            className="laiton-plat absolute inset-y-1 left-1 transition-transform duration-200 ease-out"
+            className="laiton-plat absolute inset-y-[var(--rail-p)] left-[var(--rail-p)] transition-transform duration-200 ease-out"
           />
           {MULTIPLICATEURS.map(({ valeur, libelle }) => {
             const actif = valeur === multiplicateur
@@ -125,7 +125,7 @@ export const PaveCricket = ({
 
         <button
           type="button"
-          disabled={desactive || !peutAnnuler}
+          disabled={!peutAnnuler}
           onClick={onAnnuler}
           aria-label={annulation.complet}
           className="touche flex min-h-12 shrink-0 items-center gap-1.5 px-3 font-score text-xs font-bold uppercase tracking-wider text-craie"

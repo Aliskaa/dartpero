@@ -12,14 +12,13 @@ import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { InMemoryMatchRepository } from '@/infrastructure/memory/InMemoryMatchRepository'
 import { useCheckoutPractice } from '@/ui/hooks/useCheckoutPractice'
 import { useCricket } from '@/ui/hooks/useCricket'
 import { PAUSE_ANNULATION_MS } from '@/ui/hooks/usePauseAnnulation'
 import { useTourDuMonde } from '@/ui/hooks/useTourDuMonde'
 import { useX01 } from '@/ui/hooks/useX01'
 import { ServicesProvider } from '@/ui/providers/ServicesProvider'
-import { fakeServices, SettableClock } from '../fakes'
+import { DepotSuspendu, fakeServices, SettableClock } from '../fakes'
 import { flechette } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
@@ -234,30 +233,6 @@ describe('Annuler, double appui — X01, manche gagnée', () => {
     expect(apres.legNumber).toBe(0)
   }, 10_000)
 })
-
-/** Un dépôt dont l'écriture peut être suspendue : un fake, pas un mock. */
-class DepotSuspendu extends InMemoryMatchRepository {
-  ecritures = 0
-  private porte: Promise<void> | null = null
-  private ouvrir: (() => void) | null = null
-
-  suspendre(): void {
-    this.porte = new Promise<void>((resolve) => {
-      this.ouvrir = resolve
-    })
-  }
-
-  liberer(): void {
-    this.ouvrir?.()
-    this.porte = null
-  }
-
-  override async save(record: Parameters<InMemoryMatchRepository['save']>[0]): Promise<void> {
-    this.ecritures += 1
-    if (this.porte) await this.porte
-    await super.save(record)
-  }
-}
 
 const enveloppe = (services: Services) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

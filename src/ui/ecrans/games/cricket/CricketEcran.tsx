@@ -141,35 +141,34 @@ export const CricketEcran = () => {
             onAnnuler={() => void partie.annuler()}
             peutAnnuler={partie.peutAnnuler}
             annulation={partie.annulation}
-            desactive={partie.occupe}
           />
         </>
       }
     >
-      <section
-        aria-label="Tableau des scores"
-        className="flex min-h-0 flex-1 flex-col justify-center"
-      >
-        <TableauCricket
-          cibles={state.config.targets}
-          mortes={mortes}
-          cutThroat={cutThroat}
-          joueurs={affiche.players.map((joueur, index) => {
-            const profil = profils.get(joueur.playerId)
-            return {
-              playerId: joueur.playerId,
-              nom: nomJoueur(profil?.name ?? null),
-              couleur: profil?.color ?? null,
-              marks: joueur.marks,
-              score: joueur.score,
-              actif: index === state.currentPlayerIndex && !state.finished,
-              vainqueur: state.winnerId === joueur.playerId,
-            }
-          })}
-        />
-      </section>
+      {/* Le moment est superposé au bas du tableau, hors du flux. */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <section aria-label="Tableau des scores" className="flex min-h-0 flex-col">
+          <TableauCricket
+            cibles={state.config.targets}
+            mortes={mortes}
+            cutThroat={cutThroat}
+            joueurs={affiche.players.map((joueur, index) => {
+              const profil = profils.get(joueur.playerId)
+              return {
+                playerId: joueur.playerId,
+                nom: nomJoueur(profil?.name ?? null),
+                couleur: profil?.color ?? null,
+                marks: joueur.marks,
+                score: joueur.score,
+                actif: index === state.currentPlayerIndex && !state.finished,
+                vainqueur: state.winnerId === joueur.playerId,
+              }
+            })}
+          />
+        </section>
 
-      <MomentCelebratif moment={moment} />
+        <MomentCelebratif moment={moment} />
+      </div>
 
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
     </DispositionPartie>

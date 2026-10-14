@@ -88,7 +88,6 @@ export const EntrainementEcran = () => {
           onFlechette={session.ajouterFlechette}
           onAnnuler={() => void session.annuler()}
           peutAnnuler={session.peutAnnuler}
-          desactive={session.occupe}
         />
       }
     >

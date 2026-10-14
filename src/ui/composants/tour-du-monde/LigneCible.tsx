@@ -53,7 +53,9 @@ export const LigneCible = ({
       aria-current={actif ? 'true' : undefined}
       className={[
         'ligne-tableau relative flex items-center gap-3 overflow-hidden pl-4 pr-3',
-        compact ? 'py-2.5' : 'py-3.5',
+        // Paysage : la hauteur manque, et trois ou quatre joueurs ne tenaient pas
+        // dans 390 px (mesuré : 485 px de page à quatre). Une ligne plus ramassée.
+        compact ? 'py-2.5 paysage:py-1' : 'py-3.5 paysage:py-2',
         actif ? 'au-lancer' : '',
       ].join(' ')}
     >
@@ -71,7 +73,7 @@ export const LigneCible = ({
             'chiffres block font-bold leading-none',
             actif ? 'trace-craie' : '',
             boucle ? 'text-vert-cible' : 'text-craie-vive',
-            compact ? 'text-5xl' : 'text-6xl',
+            compact ? 'text-5xl paysage:text-4xl' : 'text-6xl paysage:text-5xl',
           ].join(' ')}
         >
           <span key={String(cible)} className="inline-block animate-pop-score">
@@ -79,7 +81,7 @@ export const LigneCible = ({
           </span>
         </output>
 
-        <p className="mt-1.5 flex min-w-0 max-w-full items-center gap-1.5">
+        <p className="mt-1.5 flex min-w-0 max-w-full items-center gap-1.5 paysage:mt-0.5">
           <Avatar nom={nom} couleur={couleur} taille={compact ? 'xs' : 'sm'} />
           <span
             className={`truncate font-score font-bold uppercase tracking-wider ${
@@ -97,7 +99,7 @@ export const LigneCible = ({
         </p>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 paysage:gap-1">
         <div className="flex items-baseline justify-between gap-2">
           <span className="font-score text-etiquette uppercase tracking-[0.2em] text-craie-3">
             Parcours

@@ -121,40 +121,39 @@ export const TourDuMondeEcran = () => {
             onAnnuler={() => void partie.annuler()}
             peutAnnuler={partie.peutAnnuler}
             annulation={partie.annulation}
-            desactive={partie.occupe}
           />
         </>
       }
     >
-      <section
-        aria-label="Tableau des scores"
-        className="flex min-h-0 flex-1 flex-col justify-center gap-2"
-      >
-        {affiche.players.map((joueur, index) => {
-          // Le tableau affiché intègre la volée en cours ; la main, elle, se lit
-          // sur l'état réel — c'est encore au même joueur de jouer.
-          const actif = index === state.currentPlayerIndex && !state.finished
-          const profil = profils.get(joueur.playerId)
-          const nom = nomJoueur(profil?.name ?? null)
+      {/* Le moment est superposé au bas du tableau, hors du flux. */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <section aria-label="Tableau des scores" className="flex min-h-0 flex-col gap-2">
+          {affiche.players.map((joueur, index) => {
+            // Le tableau affiché intègre la volée en cours ; la main, elle, se lit
+            // sur l'état réel — c'est encore au même joueur de jouer.
+            const actif = index === state.currentPlayerIndex && !state.finished
+            const profil = profils.get(joueur.playerId)
+            const nom = nomJoueur(profil?.name ?? null)
 
-          return (
-            <LigneCible
-              key={joueur.playerId}
-              nom={nom}
-              couleur={profil?.color ?? null}
-              cible={state.config.targets[joueur.targetIndex] ?? null}
-              validees={joueur.targetIndex}
-              total={total}
-              flechettes={joueur.dartsThrown}
-              actif={actif}
-              vainqueur={state.winnerId === joueur.playerId}
-              compact={compact}
-            />
-          )
-        })}
-      </section>
+            return (
+              <LigneCible
+                key={joueur.playerId}
+                nom={nom}
+                couleur={profil?.color ?? null}
+                cible={state.config.targets[joueur.targetIndex] ?? null}
+                validees={joueur.targetIndex}
+                total={total}
+                flechettes={joueur.dartsThrown}
+                actif={actif}
+                vainqueur={state.winnerId === joueur.playerId}
+                compact={compact}
+              />
+            )
+          })}
+        </section>
 
-      <MomentCelebratif moment={moment} />
+        <MomentCelebratif moment={moment} />
+      </div>
 
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
     </DispositionPartie>

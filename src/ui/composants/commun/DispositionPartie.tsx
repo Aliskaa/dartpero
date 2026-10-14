@@ -41,11 +41,17 @@ type Props = {
  * ne sont pas décoratives, sans elles une touche finit sous l'arrondi de
  * l'écran.
  *
+ * **La zone de lecture est collée en haut** (plus de `justify-center`) : la
+ * feuille commence sous le bandeau, et le vide éventuel tombe entre elle et le
+ * pavé, pas au-dessus.
+ *
  * **Le nom de la partie** a sa propre ligne, sous la rangée du bandeau, en
- * portrait comme en paysage : le loger dans la rangée la ferait passer à la
- * ligne en X01 avec sets, DI et DO. Sa hauteur est **réservée** (`h-4`) même
- * pendant le chargement, pour que la zone de lecture ne saute pas quand le nom
- * arrive ; un nom long est tronqué (« … »), jamais renvoyé à la ligne.
+ * portrait : le loger dans la rangée la ferait passer à la ligne en X01 avec
+ * sets, DI et DO. Sa hauteur est **réservée** (`h-4`) même pendant le
+ * chargement, pour que la zone de lecture ne saute pas quand le nom arrive ; un
+ * nom long est tronqué (« … »), jamais renvoyé à la ligne. **En paysage elle
+ * disparaît** (`paysage:hidden`) : la hauteur est ce qui manque, et le pavé est
+ * déjà au plancher de 48 px.
  */
 export const DispositionPartie = ({ mode, enTete, nomPartie, children, saisie }: Props) => (
   <div className="feutre-tapis flex min-h-dvh flex-col" style={variablesAccent(mode)}>
@@ -57,7 +63,7 @@ export const DispositionPartie = ({ mode, enTete, nomPartie, children, saisie }:
     >
       <div className="flex items-center gap-3">{enTete}</div>
       {/* Aligné sur le texte de la rangée, après la flèche de retour (3rem). */}
-      <p className="grave h-4 truncate pl-12 font-score text-etiquette leading-4 tracking-wide text-craie-3">
+      <p className="grave h-4 truncate pl-12 font-score text-etiquette leading-4 tracking-wide text-craie-3 paysage:hidden">
         {nomPartie}
       </p>
     </header>
@@ -70,7 +76,7 @@ export const DispositionPartie = ({ mode, enTete, nomPartie, children, saisie }:
         'paysage:pr-[max(0.5rem,env(safe-area-inset-right))]',
       ].join(' ')}
     >
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col gap-3">{children}</div>
 
       <div
         className={[

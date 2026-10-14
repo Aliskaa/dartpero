@@ -572,6 +572,20 @@ export const libelleFormat = (legsToWin: number, setsToWin: number): string =>
 /** Le bandeau de match : « Manche 3 ». Numérotée sur la partie. */
 export const libelleMancheEnCours = (numero: number): string => `Manche ${numero}`
 
+/** Le bandeau de match, sous « Manche 3 » quand la partie se joue en sets. */
+export const libelleSetEnCours = (numero: number): string => `Set ${numero}`
+
+/** Le titre du bandeau X01 : le jeu se dit par son nom, en grand. */
+export const TITRE_BANDEAU_X01 = 'X01'
+
+/**
+ * Le sous-titre du bandeau X01 : « 501 · premier à 2 manches ». Le numéro de la
+ * manche n'est plus juste avant (il est passé à droite du bandeau), donc le mot
+ * « manches » reprend sa place ici.
+ */
+export const sousTitreBandeauX01 = (scoreDepart: number, legsToWin: number): string =>
+  `${scoreDepart} · ${libelleLegs(legsToWin)}`
+
 /** Le moment célébré quand une manche tombe (le checkout qui la gagne). */
 export const TITRE_MOMENT_MANCHE = 'Manche !'
 
