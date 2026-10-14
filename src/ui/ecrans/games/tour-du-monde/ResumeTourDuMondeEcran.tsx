@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { variablesAccent } from '@/ui/accents'
 import { cheminNouvellePartie } from '@/ui/chemins'
 import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { Avatar } from '@/ui/composants/commun/Avatar'
@@ -59,13 +58,9 @@ export const ResumeTourDuMondeEcran = () => {
   })
 
   return (
-    <main
-      style={variablesAccent('TOUR_DU_MONDE')}
-      className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]"
-    >
+    <main className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
       <TableauHonneur
         nomPartie={nomPartie}
-        mode="TOUR_DU_MONDE"
         surtitre="Tour du monde terminé"
         vainqueur={
           vainqueur
@@ -98,7 +93,7 @@ export const ResumeTourDuMondeEcran = () => {
               <li key={joueur.playerId} className="flex items-center gap-3">
                 <span
                   className={`chiffres w-4 shrink-0 text-sm font-bold ${
-                    rang === 0 ? 'text-accent-mode' : 'text-craie-3'
+                    rang === 0 ? 'text-laiton-clair' : 'text-craie-3'
                   }`}
                 >
                   {rang + 1}

@@ -60,7 +60,6 @@ export const EntrainementEcran = () => {
   return (
     <DispositionPartie
       nomPartie={nomPartie}
-      mode="CHECKOUT_PRACTICE"
       enTete={
         <BandeauMatch
           pictogramme="entrainement"

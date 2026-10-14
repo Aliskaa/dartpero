@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import type { X01PlayerStats } from '@/core/domain/games/x01/stats'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { variablesAccent } from '@/ui/accents'
 import { cheminNouvellePartie } from '@/ui/chemins'
 import { ActionsFinDePartie } from '@/ui/composants/commun/ActionsFinDePartie'
 import { EcranErreur, Spinner } from '@/ui/composants/commun/Etats'
@@ -112,13 +111,9 @@ export const ResumeX01Ecran = () => {
     : undefined
 
   return (
-    <main
-      style={variablesAccent('X01')}
-      className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]"
-    >
+    <main className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
       <TableauHonneur
         nomPartie={nomPartie}
-        mode="X01"
         surtitre="Partie terminée"
         vainqueur={
           vainqueur && nomVainqueur
@@ -146,7 +141,7 @@ export const ResumeX01Ecran = () => {
                   <span
                     title={nomJoueur(profils.get(joueur.playerId)?.name ?? null)}
                     className={
-                      joueur.playerId === stats.data.winnerId ? 'text-accent-mode' : 'text-craie-3'
+                      joueur.playerId === stats.data.winnerId ? 'text-laiton' : 'text-craie-3'
                     }
                   >
                     {joueur.legsWon}

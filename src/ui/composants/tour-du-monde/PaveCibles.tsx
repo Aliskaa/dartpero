@@ -1,6 +1,6 @@
-import { Undo2 } from 'lucide-react'
-import { Dart, SEGMENT_NUMBERS } from '@/core/domain/value-objects/Dart'
-import { ANNULATION_NEUTRE, type Annulation } from '@/ui/labels'
+import { type Dart, SEGMENT_NUMBERS } from '@/core/domain/value-objects/Dart'
+import { PaveSaisie } from '@/ui/composants/commun/PaveSaisie'
+import { ANNULATION_NEUTRE, type Annulation, LIBELLE_SAISIE_CIBLES } from '@/ui/labels'
 
 type Props = {
   readonly onFlechette: (dart: Dart) => void
@@ -11,15 +11,16 @@ type Props = {
 }
 
 /**
- * ZONE SAISIE du Tour du monde — **sans bascule S/D/T**.
+ * ZONE SAISIE du Tour du monde — le pavé commun (`PaveSaisie`), **sans bascule
+ * S/D/T** : pas de rail, pas de touche armée.
  *
  * Au Tour du monde, seul le secteur compte : un triple 20 vaut exactement ce
  * que vaut un simple 20, c'est-à-dire « touché ». Afficher un sélecteur de
- * multiplicateur qui ne change rien induirait en erreur, et rallongerait la
- * saisie sans raison. Les fléchettes enregistrées sont donc des simples.
+ * multiplicateur qui ne changerait rien induirait en erreur. Les fléchettes
+ * enregistrées sont donc des simples (la Bulle : `Dart.bull()`).
  *
- * On gagne une rangée par rapport au pavé X01, ce qui laisse la place aux
- * grandes cibles de la zone de lecture.
+ * La rangée Bulle · Hors · Annuler est la dernière : Annuler y est un rail
+ * (64 px) plus bas qu'aux autres jeux, ce qui est accepté.
  */
 export const PaveCibles = ({
   onFlechette,
@@ -27,51 +28,13 @@ export const PaveCibles = ({
   peutAnnuler,
   annulation = ANNULATION_NEUTRE,
 }: Props) => (
-  <section aria-label="Saisie des cibles touchées" className="flex flex-col gap-1.5 paysage:gap-1">
-    <div className="grid grid-cols-5 gap-1.5 paysage:gap-1">
-      {SEGMENT_NUMBERS.map((numero) => (
-        <button
-          key={numero}
-          type="button"
-          onClick={() => onFlechette(Dart.single(numero))}
-          className="touche chiffres min-h-[3.25rem] text-xl font-bold text-craie-vive paysage:min-h-12 paysage:text-lg"
-        >
-          {numero}
-        </button>
-      ))}
-    </div>
-
-    <div className="flex gap-1.5">
-      <button
-        type="button"
-        onClick={() => onFlechette(Dart.bull())}
-        className={[
-          'touche min-h-[3.25rem] flex-1 border-rouge-cible/70 bg-rouge-cible/25',
-          'font-score text-base font-bold uppercase tracking-widest text-craie-vive',
-          'paysage:min-h-12',
-        ].join(' ')}
-      >
-        Bulle
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onFlechette(Dart.miss())}
-        className="touche min-h-[3.25rem] shrink-0 px-4 font-score text-base font-bold uppercase tracking-wider text-craie-3 paysage:min-h-12"
-      >
-        Hors
-      </button>
-
-      <button
-        type="button"
-        disabled={!peutAnnuler}
-        onClick={onAnnuler}
-        aria-label={annulation.complet}
-        className="touche flex min-h-[3.25rem] shrink-0 items-center gap-1.5 px-3 font-score text-xs font-bold uppercase tracking-wider text-craie paysage:min-h-12"
-      >
-        <Undo2 aria-hidden="true" className="size-4 shrink-0" />
-        {annulation.court}
-      </button>
-    </div>
-  </section>
+  <PaveSaisie
+    libelleSection={LIBELLE_SAISIE_CIBLES}
+    cibles={SEGMENT_NUMBERS}
+    colonnes={5}
+    onFlechette={onFlechette}
+    onAnnuler={onAnnuler}
+    peutAnnuler={peutAnnuler}
+    annulation={annulation}
+  />
 )

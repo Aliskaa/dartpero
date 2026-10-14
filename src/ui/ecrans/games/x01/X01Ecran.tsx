@@ -128,7 +128,6 @@ export const X01Ecran = () => {
   return (
     <DispositionPartie
       nomPartie={nomPartie}
-      mode="X01"
       enTete={
         <EnTeteManche
           config={state.config}

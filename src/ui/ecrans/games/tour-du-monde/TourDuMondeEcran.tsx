@@ -79,7 +79,6 @@ export const TourDuMondeEcran = () => {
   return (
     <DispositionPartie
       nomPartie={nomPartie}
-      mode="TOUR_DU_MONDE"
       enTete={
         <BandeauMatch
           pictogramme="tour-du-monde"

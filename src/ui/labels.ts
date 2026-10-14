@@ -3,6 +3,7 @@ import type { StorageProtection } from '@/core/application/ports/driven/Persiste
 import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import type { GameModeId } from '@/core/domain/games'
+import { Dart } from '@/core/domain/value-objects/Dart'
 import type { Theme } from '@/ui/theme'
 
 /** Le cœur reste en anglais ; tout le français de l'app vit ici. */
@@ -606,6 +607,32 @@ export const LIBELLE_PARCOURS = 'Parcours'
 export const LIBELLE_CIBLE = 'Cible'
 /** La bulle comme cible du Tour du monde, sous son glyphe (majuscules par style). */
 export const LIBELLE_BULLE = 'Bulle'
+/** Le mot de la touche « manqué » du pavé (la fléchette enregistrée est `MISS`). */
+export const LIBELLE_HORS = 'Hors'
+
+/** Les noms accessibles de la section du pavé de saisie. */
+export const LIBELLE_SAISIE_FLECHETTE = 'Saisie fléchette par fléchette'
+export const LIBELLE_SAISIE_CIBLES = 'Saisie des cibles touchées'
+/** Pourquoi la Bulle est grisée en Triple. */
+export const LIBELLE_PAS_DE_TRIPLE_BULLE = 'Il n’existe pas de triple bull'
+
+/** Les trois positions de la bascule du pavé. */
+export const LIBELLE_MULTIPLICATEUR: Record<'SIMPLE' | 'DOUBLE' | 'TRIPLE', string> = {
+  SIMPLE: 'Simple',
+  DOUBLE: 'Double',
+  TRIPLE: 'Triple',
+}
+
+/**
+ * Une fléchette du Tour du monde, sans le « S » : seul le secteur compte (un
+ * simple 17 s'écrit « 17 », pas « S17 »). Un libellé d'AFFICHAGE propre à ce
+ * mode : `Dart.label` reste intact (« S17 »), les autres jeux l'utilisent
+ * toujours. Un manqué reste « 0 », la bulle son libellé habituel.
+ */
+export const libelleFlechetteTourDuMonde = (dart: Dart): string =>
+  dart.multiplier === 'SIMPLE' && typeof dart.segment === 'number'
+    ? String(dart.segment)
+    : Dart.label(dart)
 
 export const TITRE_BANDEAU_CRICKET = 'Cricket'
 

@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react'
-import type { GameModeId } from '@/core/domain/games'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
-import { variablesAccent } from '@/ui/accents'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Cible } from '@/ui/composants/commun/Cible'
 import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
@@ -18,7 +16,6 @@ type ExAequo = {
 }
 
 type Props = {
-  readonly mode: GameModeId
   /**
    * Le nom de la partie, en tête (« Finale des potes », « Dimanche soir ») ;
    * `null` tant qu'il charge. Obligatoire : un résumé qui l'oublierait ne
@@ -36,10 +33,9 @@ type Props = {
 
 /**
  * Le tableau d'honneur commun aux résumés : on lit le vainqueur avant tout.
- * Accent du mode + filet vert qui se trace — célébration hors saisie, jamais pendant une volée.
+ * Laiton unique + filet vert qui se trace — célébration hors saisie, jamais pendant une volée.
  */
 export const TableauHonneur = ({
-  mode,
   nomPartie,
   surtitre,
   vainqueur,
@@ -47,10 +43,7 @@ export const TableauHonneur = ({
   children,
   phrase,
 }: Props) => (
-  <section
-    style={variablesAccent(mode)}
-    className="feuille relative animate-monter overflow-hidden px-6 py-7 text-center"
-  >
+  <section className="feuille relative animate-monter overflow-hidden px-6 py-7 text-center">
     <span
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 animate-trace-filet border-2 border-vert-cible"
@@ -101,7 +94,7 @@ export const TableauHonneur = ({
           <p className="mt-1 max-w-xs text-sm text-craie-3">{exAequo.detail}</p>
         </>
       ) : children ? null : (
-        <h1 className="mt-4 font-display text-3xl text-accent-mode">Partie en cours</h1>
+        <h1 className="mt-4 font-display text-3xl text-laiton">Partie en cours</h1>
       )}
 
       {children}

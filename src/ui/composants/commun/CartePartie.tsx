@@ -5,7 +5,6 @@ import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary
 import type { MatchStatus } from '@/core/application/use-cases/summarize'
 import type { Player } from '@/core/domain/entities/Player'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
-import { ACCENTS_MODE } from '@/ui/accents'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import {
   LIBELLE_ABANDONNEE,
@@ -103,7 +102,7 @@ type Props = {
 }
 
 /**
- * La carte d'une partie : liseré à l'accent du mode, nom en titre, règles et
+ * La carte d'une partie : liseré de laiton, nom en titre, règles et
  * heure dessous, avatars, statut. **Toute la carte est une seule cible** (un
  * lien, ≥ 48 px) : le résumé d'une partie terminée, la reprise sinon. Le
  * « Reprendre » de la partie en cours en est le visuel, pas un second élément
@@ -120,14 +119,12 @@ export const CartePartie = ({
 }: Props) => {
   const Titre = niveauTitre === 3 ? 'h3' : 'h2'
   const texte = texteDeStatut(partie, statut)
-  const accent = ACCENTS_MODE[partie.mode]
 
   return (
     <li className="flex border border-chene/40 bg-ardoise">
       <Link
         to={partie.finished ? `/partie/${partie.id}/resume` : `/partie/${partie.id}`}
-        style={{ borderLeftColor: accent.fond }}
-        className="flex min-h-16 min-w-0 flex-1 flex-col gap-2 border-l-4 p-3 text-left"
+        className="flex min-h-16 min-w-0 flex-1 flex-col gap-2 border-l-4 border-laiton p-3 text-left"
       >
         <Titre className="break-words font-score text-base font-bold tracking-wide text-craie-vive">
           {nomDePartie(partie)}

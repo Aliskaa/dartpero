@@ -63,7 +63,7 @@ describe('Pavé X01 — le multiplicateur armé', () => {
   )
 
   it.each(MULTIPLICATEURS)(
-    '%s armé : touche-armee sur les 21 touches de score, jamais sur « 0 » ni « Annuler »',
+    '%s armé : touche-armee sur les 21 touches de score, jamais sur « Hors » ni « Annuler »',
     async (bouton) => {
       const utilisateur = userEvent.setup()
       await afficher()
@@ -72,12 +72,12 @@ describe('Pavé X01 — le multiplicateur armé', () => {
       const touches = within(pave()).getAllByRole('button')
       const armees = touches.filter((touche) => touche.classList.contains('touche-armee'))
 
-      // 1 à 20 et le 25 : vingt et une touches, quel que soit le multiplicateur.
+      // 1 à 20 et la Bulle : vingt et une touches, quel que soit le multiplicateur.
       expect(armees).toHaveLength(21)
-      for (const numero of [...Array.from({ length: 20 }, (_, rang) => rang + 1), 25]) {
-        expect(screen.getByRole('button', { name: String(numero) })).toHaveClass('touche-armee')
+      for (const nom of [...Array.from({ length: 20 }, (_, rang) => String(rang + 1)), 'Bulle']) {
+        expect(screen.getByRole('button', { name: nom })).toHaveClass('touche-armee')
       }
-      expect(screen.getByRole('button', { name: '0' })).not.toHaveClass('touche-armee')
+      expect(screen.getByRole('button', { name: 'Hors' })).not.toHaveClass('touche-armee')
       expect(screen.getByRole('button', { name: 'Annuler' })).not.toHaveClass('touche-armee')
       // Ni le rail Simple / Double / Triple.
       expect(screen.getByRole('button', { name: bouton })).not.toHaveClass('touche-armee')
@@ -93,16 +93,16 @@ describe('Pavé X01 — le multiplicateur armé', () => {
     expect(pave()).toHaveAttribute('data-multiplicateur', 'simple')
   })
 
-  it('le 25 reste désactivé en Triple : une règle, pas un état de chargement', async () => {
+  it('la Bulle reste désactivée en Triple : une règle, pas un état de chargement', async () => {
     const utilisateur = userEvent.setup()
     await afficher()
 
     await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
 
-    expect(screen.getByRole('button', { name: '25' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Bulle' })).toBeDisabled()
   })
 
-  it('l’exposant annonce la valeur réelle : rien en Simple, 2× en Double, 3× en Triple, 50 sur le 25', async () => {
+  it('l’exposant annonce la valeur réelle : rien en Simple, 2× en Double, 3× en Triple, 25 puis 50 sur la Bulle', async () => {
     const utilisateur = userEvent.setup()
     await afficher()
     // L'exposant est `aria-hidden` : on le lit dans la touche, pas par son nom accessible.
@@ -110,18 +110,25 @@ describe('Pavé X01 — le multiplicateur armé', () => {
       screen.getByRole('button', { name: nom }).querySelector('[aria-hidden="true"]')?.textContent
 
     expect(exposant('20')).toBeUndefined()
-    expect(exposant('25')).toBeUndefined()
+    // En Simple, la Bulle dit sa valeur en neutre (« 25 », craie-3), pas en laiton.
+    expect(exposant('Bulle')).toBe('25')
+    expect(screen.getByRole('button', { name: 'Bulle' }).querySelector('span')).toHaveClass(
+      'exposant-touche-neutre',
+    )
 
     await utilisateur.click(screen.getByRole('button', { name: 'Double' }))
     expect(exposant('20')).toBe('40')
     expect(exposant('1')).toBe('2')
-    expect(exposant('25')).toBe('50')
+    expect(exposant('Bulle')).toBe('50')
+    expect(screen.getByRole('button', { name: 'Bulle' }).querySelector('span')).toHaveClass(
+      'exposant-touche',
+    )
 
     await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
     expect(exposant('20')).toBe('60')
     expect(exposant('1')).toBe('3')
-    // Pas de triple bull : le 25 est éteint et n'annonce rien.
-    expect(exposant('25')).toBeUndefined()
+    // Pas de triple bull : la Bulle est éteinte et n'annonce rien.
+    expect(exposant('Bulle')).toBeUndefined()
 
     await utilisateur.click(screen.getByRole('button', { name: 'Simple' }))
     expect(exposant('20')).toBeUndefined()
@@ -244,7 +251,7 @@ describe('Bandeau X01', () => {
 
     const manche = screen.getByText('Manche 1')
     expect(manche.parentElement).toHaveClass('text-craie-2')
-    expect(manche.parentElement).not.toHaveClass('text-accent-mode-clair')
+    expect(manche.parentElement).not.toHaveClass('text-laiton-clair')
   })
 
   it('les libellés viennent de labels.ts', () => {
@@ -325,7 +332,7 @@ describe('Ligne X01 — le reste', () => {
 describe('Disposition commune — lecture en haut, nom masqué en paysage', () => {
   it('ne centre plus la zone de lecture, et masque la ligne du nom en paysage', () => {
     render(
-      <DispositionPartie mode="X01" enTete={<span>bandeau</span>} nomPartie="Finale" saisie={null}>
+      <DispositionPartie enTete={<span>bandeau</span>} nomPartie="Finale" saisie={null}>
         <p>lecture</p>
       </DispositionPartie>,
     )
@@ -397,7 +404,7 @@ const MODES_CIBLES: readonly ModeCible[] = [
     titreMoment: 'Bouclé !',
     touche: '1',
     // Le 20 boucle le parcours : la volée s'arrête là, les deux autres cases restent vides.
-    voleeEcrite: { etiquette: 'Dernière volée de Kevin', texte: 'S20——' },
+    voleeEcrite: { etiquette: 'Dernière volée de Kevin', texte: '20——' },
   },
 ]
 

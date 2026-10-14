@@ -1,10 +1,6 @@
 import type { ReactNode } from 'react'
-import type { GameModeId } from '@/core/domain/games'
-import { variablesAccent } from '@/ui/accents'
 
 type Props = {
-  /** Pose l'accent du mode (titre, filets) sans toucher aux chiffres. */
-  readonly mode: GameModeId
   /** Le bandeau de chêne : où on en est, et par quelles règles on joue. */
   readonly enTete: ReactNode
   /**
@@ -41,6 +37,9 @@ type Props = {
  * ne sont pas décoratives, sans elles une touche finit sous l'arrondi de
  * l'écran.
  *
+ * **Le pavé est calé en bas** en paysage (`self-end`) : Annuler garde sa place
+ * d'un jeu à l'autre, que la feuille soit haute (X01) ou basse (Cricket).
+ *
  * **La zone de lecture est collée en haut** (plus de `justify-center`) : la
  * feuille commence sous le bandeau, et le vide éventuel tombe entre elle et le
  * pavé, pas au-dessus.
@@ -53,8 +52,8 @@ type Props = {
  * disparaît** (`paysage:hidden`) : la hauteur est ce qui manque, et le pavé est
  * déjà au plancher de 48 px.
  */
-export const DispositionPartie = ({ mode, enTete, nomPartie, children, saisie }: Props) => (
-  <div className="feutre-tapis flex min-h-dvh flex-col" style={variablesAccent(mode)}>
+export const DispositionPartie = ({ enTete, nomPartie, children, saisie }: Props) => (
+  <div className="feutre-tapis flex min-h-dvh flex-col">
     <header
       className={[
         'bandeau-match flex flex-col px-3 pb-1.5 pt-[max(0.5rem,env(safe-area-inset-top))]',
@@ -82,7 +81,7 @@ export const DispositionPartie = ({ mode, enTete, nomPartie, children, saisie }:
         className={[
           'mt-auto pt-2',
           'paysage:mt-0 paysage:w-[46%] paysage:max-w-[21rem] paysage:shrink-0',
-          'paysage:self-center paysage:pt-0',
+          'paysage:self-end paysage:pt-0',
         ].join(' ')}
       >
         {saisie}

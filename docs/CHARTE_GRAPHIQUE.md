@@ -60,7 +60,7 @@ remettre un rayon dans le `@theme` rallumerait tout d'un coup.
 | Nom affiché | **Dartpéro** (fléchettes + apéro) |
 | Slug technique | `dartpero` |
 | Icône PWA | Générée par `npm run icons` depuis `scripts/icon.svg` (cible stylisée, triple 20 en laiton, une fléchette plantée) |
-| Pictogrammes maison | Douze, dans un seul composant (`Pictogramme`) : quatre **modes** (`x01`, `cricket`, `tour-du-monde`, `entrainement`) et huit **moments** (`180`, `bust`, `sortie`, `victoire`, `moyenne`, `grosses-volees`, `meilleure-manche`, `nul`) ; le mode se reconnaît à sa forme, plus seulement à sa couleur. Dessin : grille 24, trait de 2 px, extrémités et jonctions vives (`square` / `miter`), couleur du texte (`currentColor`) — jamais une couleur en dur. Toujours `aria-hidden`. Couleurs d'emploi : un mode a la couleur de son jeu, `victoire` est en `laiton-clair` dans tous les jeux, `sortie` en `vert-cible`, `nul` en `craie`. **Un pictogramme dit quelque chose, il ne le dit pas seul** : un texte voisin (ou réservé aux lecteurs d'écran) porte toujours le sens. Tailles permises : 20, 24, 32, 40 et 64 px (`TaillePictogramme`), **jamais moins de 20 px**. |
+| Pictogrammes maison | Douze, dans un seul composant (`Pictogramme`) : quatre **modes** (`x01`, `cricket`, `tour-du-monde`, `entrainement`) et huit **moments** (`180`, `bust`, `sortie`, `victoire`, `moyenne`, `grosses-volees`, `meilleure-manche`, `nul`) ; le mode se reconnaît à sa forme, plus seulement à sa couleur. Dessin : grille 24, trait de 2 px, extrémités et jonctions vives (`square` / `miter`), couleur du texte (`currentColor`) — jamais une couleur en dur. Toujours `aria-hidden`. Couleurs d'emploi : un mode est en laiton (§ Un seul accent : le laiton), `victoire` est en `laiton-clair` dans tous les jeux, `sortie` en `vert-cible`, `nul` en `craie`. **Un pictogramme dit quelque chose, il ne le dit pas seul** : un texte voisin (ou réservé aux lecteurs d'écran) porte toujours le sens. Tailles permises : 20, 24, 32, 40 et 64 px (`TaillePictogramme`), **jamais moins de 20 px**. |
 | Icônes d'action | **lucide-react**, toujours en `aria-hidden` — elles n'entrent jamais dans le nom accessible. Réservées aux actions (retour, annuler, corbeille, navigation…) et aux cas sans équivalent maison (`CircleOff`, `Flag`). En v1, `Home` s'appelle **`House`**. |
 
 ---
@@ -106,8 +106,14 @@ Nuances (`feutre-nuit`, `ardoise-claire`, `chene-clair`, `chene-sombre`, `laiton
 ⚠️ **Le point critique du thème clair, c'est le laiton.** Le laiton vif fait **1,84:1** sur du
 papier : le filet de `.repere-lancer`, qui dit **qui est en train de lancer**, y deviendrait
 invisible — l'information la plus lue de l'app. Il passe donc en laiton foncé (4,4:1), et
-`laiton-clair` y veut dire « plus lisible sur le fond », donc **plus foncé** (6,6:1). C'est le
+`laiton-clair` y veut dire « plus lisible sur le fond », donc **plus foncé**. C'est le
 **rôle** qui s'inverse, pas la teinte.
+
+⚠️ **`laiton-clair` en clair vaut `#614a08`** (lot `pave-unifie`), et non plus `#6b5209` : le titre
+du bandeau (`feutre-nuit` `#d1c3a4`) ne tenait que **4,25:1**. Calculé : **6,01:1** sur `feutre`,
+**4,84:1** sur `feutre-nuit`, **7,55:1** sur `ardoise`, **8,28:1** sur `ardoise-claire` (et 5,18:1
+sur le fond du Triple) — ≥ 4,5:1 sur les quatre surfaces. Aucun nouveau token : c'est le même,
+plus foncé.
 
 **Le texte secondaire est en couleur pleine, jamais en alpha.** `text-craie/60` posait de l'encre
 transparente sur le papier : en clair, le rapport tombait sous 4,5:1. Désormais `craie-2`
@@ -164,24 +170,21 @@ sélecteur libre, deux joueurs choisissent deux bleus voisins qu'on ne distingue
 Profil supprimé (parties encore visibles) : teinte bois `#5A3E24` / `#8B6238` / `#F2E8D5`.
 Sans couleur choisie à la création : **première libre** en tourniquet — zéro friction.
 
-### Accent par mode
+### Un seul accent : le laiton (lot `pave-unifie`)
 
-Le laiton reste la couleur de l'**app**. Chaque mode pose une teinte secondaire sur la ligne du
-joueur actif, le titre du bandeau, les pastilles de sélection et le liseré des cartes de partie
-(`CartePartie`) — jamais derrière un chiffre.
+**Il n'y a plus d'accent par mode.** Le laiton est la seule teinte de l'app : le repère du joueur
+actif, le titre et le pictogramme du bandeau, les badges, les marques fermées du Cricket, la barre
+de parcours du Tour du monde, les résumés et le tableau d'honneur, le liseré de `CartePartie` et
+des cartes du choix du jeu (`EtapeJeu`). **Le jeu se dit par son pictogramme et son titre**, pas par
+une couleur. Les quatre teintes d'avant (laiton, lagon, cuivre, prune) se confondaient avec les
+couleurs d'un profil — le lagon et la prune sont des couleurs de joueur — et le cuivre avec le
+laiton à 3 m.
 
-| Mode | Accent | Sombre | Clair |
-| ---- | ------ | ------ | ----- |
-| X01 | Laiton | `#C9A227` | `#8A6D12` |
-| Tour du monde | Lagon | `#2C6E9B` | `#245A80` |
-| Cricket | Cuivre | `#C1720F` | `#9A5A0B` |
-| Entraînement | Prune | `#8A4FA8` | `#6E3C87` |
-
-⚠️ **Les teintes ne vivent pas dans `accents.ts` mais dans `index.css`**, en `--accent-*`.
-`accents.ts` n'en distribue que des `var()`, parce que ces valeurs partent dans un `style=`
-inline **qu'aucune règle CSS ne peut retourner** : codées en dur, le jaune du X01 rendrait le
-filet « c'est ton tour » invisible en thème clair. Un `var()` se résout au rendu, donc dans le
-bon thème.
+`accents.ts`, `--accent-*` et `--color-accent-mode*` sont **supprimés** ; `DispositionPartie` et
+`TableauHonneur` n'ont plus de prop `mode`. Le texte laiton s'écrit `text-laiton` /
+`text-laiton-clair`, le filet `border-laiton/50`, le fond `bg-laiton`. Garde :
+`tests/architecture/accentBoundary.test.ts` (aucun `accent-mode`, `--accent-`, `ACCENTS_MODE`,
+`variablesAccent` dans `src/`). Ne pas en ressusciter un par jeu sans trancher à nouveau.
 
 ---
 
@@ -235,15 +238,17 @@ SVG inline.
 | **`.bandeau-bas`** | La barre de navigation | `NavigationBasse` |
 | **`.entete-colonne`** | Libellé de colonne | Ligne d'en-têtes |
 | `.ligne-tableau` | Une ligne : un filet, rien d'autre | Lignes de score |
-| **`.repere-lancer`** | Filet d'accent **dans** la marge + voile de 12 %, porté par **un seul élément qui glisse** d'une ligne à l'autre | Le joueur dont c'est le tour, **dans les trois jeux** (`FeuilleMatch`). `.au-lancer`, qui le posait ligne par ligne au Cricket et au Tour du monde, a disparu (lot `feuille-commune`) |
-| **`.touche-armee`** | Désigne les touches (1-20 et 25) qui prennent le filet de laiton quand Double ou Triple est armé ; le fondu au retour à Simple | Pavé X01 |
+| **`.repere-lancer`** | Filet de laiton **dans** la marge + voile de 12 %, porté par **un seul élément qui glisse** d'une ligne à l'autre | Le joueur dont c'est le tour, **dans les trois jeux** (`FeuilleMatch`). `.au-lancer`, qui le posait ligne par ligne au Cricket et au Tour du monde, a disparu (lot `feuille-commune`) |
+| **`.touche-armee`** | Désigne les touches (cibles et Bulle) qui prennent le filet de laiton quand Double ou Triple est armé ; le fondu au retour à Simple | `PaveSaisie` (X01, entraînement, Cricket ; pas au Tour du monde) |
+| **`.touche-bulle`** | Le rouge de la Bulle (fond `rouge-cible` 25 %, bordure 70 %), en couche `components` pour que l'appui puisse l'inverser | `PaveSaisie` |
+| **`.exposant-touche`** / `-neutre` | La petite valeur dans le coin d'une touche : `laiton-clair` (« 50 », « ×2 ») ou `craie-3` (le « 25 » de la Bulle en Simple) ; à l'appui, elle **hérite** du texte | `PaveSaisie` |
 | **`.filet-colonne`** | Séparateur vertical (`.filet-colonne-entete` : le même, dans l'en-tête inversé) | Entre deux colonnes |
 | **`.ligne-saisie`** | La ligne sur laquelle une fléchette est « écrite » | Volée en cours |
 | `.cadre-bois` | Encadrement plat | Chrome rare |
 | `.ardoise-craie` | Panneau | Surfaces secondaires |
 | `.laiton-poli` | Laiton **plein et plat**, tranche franche de 4 px | CTA primaire |
 | `.laiton-plat` | Laiton sans tranche | Curseurs, pastilles, S/D/T |
-| `.touche` | Filet de craie, tranche de 2 px, **s'inverse à l'appui** | Pavé de saisie |
+| `.touche` | Filet de craie, tranche de 2 px, **s'inverse à l'appui** (fond **et** texte). ⚠️ La couleur de repos est portée par `.touche` (`color: var(--texte-touche, craie-vive)`) : un bouton ne pose **jamais** `text-craie*` / `text-laiton*`, il pose la variable (`[--texte-touche:var(--color-craie-3)]`). Un utilitaire (couche `utilities`) bat `.touche:active` (couche `components`) : c'était P1. Garde `appuiBoundary` | Pavé de saisie, `JoueursEcran` |
 | `.filet-laiton` | Séparateur horizontal discret | Entre zones |
 | `.chargement-balai` | Lueur qui balaie — **seule exception au zéro dégradé** | Skeletons |
 
@@ -277,8 +282,8 @@ Hors saisie uniquement — jamais pendant qu'on tape une volée :
   41 px sur 80) ; en **portrait** le moment se pose donc **sous** la feuille, sur le vide qui la
   sépare du pavé (108 px à quatre joueurs), et en **paysage** — où ce vide n'existe pas (30 px) —
   il recouvre le bas de la feuille pendant ses 2,2 s.
-- **`TableauHonneur`** : le podium des résumés (avatar, couronne, phrase d'ambiance), à l'accent
-  du mode. Phrase tirée de `phraseVictoire(matchId)` — **déterministe**, pas de `Math.random`.
+- **`TableauHonneur`** : le podium des résumés (avatar, couronne, phrase d'ambiance), en laiton.
+  Phrase tirée de `phraseVictoire(matchId)` — **déterministe**, pas de `Math.random`.
   Le **nom de la partie** s'affiche en tête (prop obligatoire `nomPartie`), dans un `<p>` —
   **jamais un second `<h1>`** : l'écran en porte déjà un.
 
@@ -302,9 +307,10 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `TableauJoueurs` | La feuille **transposée** : joueurs en colonnes, statistiques en lignes |
 | `CarteImpacts` / `PanneauImpacts` | La carte de chaleur du plateau, et les cartes côte à côte |
 | `TableauHonneur` / `MomentCelebratif` | Podium de résumé · bandeau de célébration |
-| `CartePartie` | La carte d'une partie, à l'Accueil et dans Parties (a remplacé `ApercuPartie`) : liseré `border-l-4` à l'accent du mode, nom en titre, règles et heure, avatars, badge « Abandonnée », statut (« X gagne · N manches » au X01 terminé) et ✓ `text-laiton`. **Une seule cible** (lien `min-h-16`) ; « Reprendre », sur la partie en cours seulement, n'en est que le visuel ; `actions` hors du lien. **Le seul endroit** de l'UI qui ouvre l'union `MatchSummary` |
+| `CartePartie` | La carte d'une partie, à l'Accueil et dans Parties (a remplacé `ApercuPartie`) : liseré `border-l-4 border-laiton`, nom en titre, règles et heure, avatars, badge « Abandonnée », statut (« X gagne · N manches » au X01 terminé) et ✓ `text-laiton`. **Une seule cible** (lien `min-h-16`) ; « Reprendre », sur la partie en cours seulement, n'en est que le visuel ; `actions` hors du lien. **Le seul endroit** de l'UI qui ouvre l'union `MatchSummary` |
 | `ActionsFinDePartie` | « On remet ça » / « Changer les règles » / « Accueil » — les 4 résumés |
-| `DispositionPartie` | Ossature portrait / paysage des écrans de jeu, et l'accent du mode |
+| `DispositionPartie` | Ossature portrait / paysage des écrans de jeu ; en paysage le pavé est **calé en bas** (`self-end`) |
+| `PaveSaisie` | **Le** pavé de saisie des quatre jeux (`PaveFlechettes`, `PaveCricket`, `PaveCibles` n'en sont que de fins enrobages) : grille de cibles, rangée **Bulle · Hors · Annuler** (2 · 1 · 2 sur 5 colonnes), rail S/D/T en pleine largeur sauf au Tour du monde |
 | `LayoutPrincipal` / `NavigationBasse` | Coquille des écrans hors partie. Onglet actif en `craie-vive` souligné du trait `bg-laiton`. La barre a une hauteur **fixe** (`--hauteur-nav-basse`, 3,5 rem, filet du haut compris, plus la safe-area), jamais une hauteur minimale ; le bouton « Nouvelle partie » de l'Accueil se cale en `sticky` sur **le même `calc`** (un test le vérifie). ⚠️ Compromis : avec une police système très agrandie, un libellé d'onglet serait **rogné** plutôt que de faire grandir la barre — à vérifier sur appareil réel ; repli possible : un conteneur `sticky` unique dans `LayoutPrincipal` pour la barre et le bouton |
 | `Etats` | `EmptyState` · `Skeleton` · `Spinner` / `SpinnerLigne` · `MessageErreur` · `EcranErreur` |
 | `CarteJoueur` (`composants/match/`) | Score géant, jetons de manches, volée en cours |
@@ -355,7 +361,7 @@ Deux mouvements ne sont pas des `@keyframes` mais des **transitions** (lot `matc
 
 | Transition | Durée | Rôle |
 | ---------- | ----- | ---- |
-| **Repère qui glisse** (`.repere-lancer`) | `--duration-lent`, `--ease-sec` | Dans les trois jeux, quand la main passe, le filet d'accent **glisse** d'une ligne à l'autre (`translateY(index × 100 %)`) au lieu de s'éteindre ici et de s'allumer là. Un seul élément `aria-hidden` ; `aria-current` reste l'état accessible. Exige des lignes de **hauteur strictement égale** : la grille `1fr` de `FeuilleMatch` le garantit, et chaque jeu fixe la même hauteur minimale à toutes ses lignes |
+| **Repère qui glisse** (`.repere-lancer`) | `--duration-lent`, `--ease-sec` | Dans les trois jeux, quand la main passe, le filet de laiton **glisse** d'une ligne à l'autre (`translateY(index × 100 %)`) au lieu de s'éteindre ici et de s'allumer là. Un seul élément `aria-hidden` ; `aria-current` reste l'état accessible. Exige des lignes de **hauteur strictement égale** : la grille `1fr` de `FeuilleMatch` le garantit, et chaque jeu fixe la même hauteur minimale à toutes ses lignes |
 | **Fondu du filet** (`.touche-armee`) | `--duration-normal`, `--ease-sec` | Au retour à Simple, le filet de laiton et le fond Triple s'effacent en fondu (`border-color`, `box-shadow`, `background-color`). La bordure reste à **1 px** (jamais de `border-width`, non animable, qui décalerait la touche) : le 2ᵉ pixel est un anneau `inset 0 0 0 1px` en première couche de `box-shadow`, transparent au repos, pour que l'ombre fonde au lieu de basculer. **L'inversion de l'appui reste à 90 ms** : c'est l'état d'arrivée qui choisit la durée (`:active` → 90 ms, retour → `--duration-normal`). Le curseur du rail garde son glissement |
 
 Supprimées : `eclat` (remplacé par `trace-filet`), `tourner-lent` (boucle de 120 s) et
@@ -389,9 +395,9 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 │   6  7  8  9 10                  │  cibles ≥ 48 px
 │  11 12 13 14 15                  │  valeur réelle en exposant hors simple
 │  16 17 18 19 20                  │
-│  [25] [0] [   ↶ Annuler   ]      │  pas de touche BULL : c'est DOUBLE + 25
-│  [SIMPLE][DOUBLE][TRIPLE]        │  rangée du pouce ; retombe sur SIMPLE
-└──────────────────────────────────┘             après chaque fléchette
+│  [ BULLE ²⁵ ][HORS][↶ ANNULER]   │  rangée commune aux 4 jeux : 2 · 1 · 2 colonnes
+│  [SIMPLE][DOUBLE][TRIPLE]        │  rail pleine largeur ; retombe sur SIMPLE
+└──────────────────────────────────┘             après chaque fléchette (absent au Tour du monde)
 ```
 
 ### Règles de layout
@@ -431,7 +437,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   ceux qui **restent** sont en **tirets** de craie à 55 % (`border-dashed border-craie/55`, 2 px —
   le trait barré compris) : l'ancien trait à 25 % disparaissait à 3 m.
 - **Le bandeau X01** (`EnTeteManche`) : flèche de retour · pictogramme `x01` (**24 px**,
-  `text-accent-mode-clair`, `aria-hidden`) · titre « X01 » (Oswald gras, majuscules) · sous-titre
+  `text-laiton-clair`, `aria-hidden`) · titre « X01 » (Oswald gras, majuscules) · sous-titre
   « 501 · premier à 2 manches » (`text-etiquette`, `text-craie-2`) · DI / DO **sous le
   sous-titre** · à droite « Manche N », et « Set M » dessous quand il y a des sets, en **craie**
   (`text-craie-2`, petites capitales) : le laiton ne reste qu'au repère et au rail. En **paysage**
@@ -480,7 +486,7 @@ couleur du profil — jamais le liseré de la maquette —, nom en Oswald gras, 
   3 joueurs (`text-nom-serre`) ; au Cricket toujours 15 px pour que « MAXENCE » tienne.
 - **Cricket** : colonnes JOUEUR (6,25 rem, 7,5 en paysage) · sept cibles · PTS (4 rem, 4,5 en
   paysage), `--nb-cibles` venu de la config ; un filet de colonne **seulement** avant la première
-  cible et avant PTS. Marques à **28 px** (26 à quatre joueurs), cible fermée en `accent-mode`,
+  cible et avant PTS. Marques à **28 px** (26 à quatre joueurs), cible fermée en `laiton`,
   en cours en `craie-vive`, **morte** (fermée par tous) en `craie-decor` sur une colonne à 30 %
   d'opacité, en-tête barré. PTS 36 px (30 à 4 joueurs et en paysage). En-tête « Pts ↓ » en
   cut-throat. **Dernière ligne « VOLÉE · NOM »** (hors de la grille des lignes) : la volée en
@@ -488,7 +494,7 @@ couleur du profil — jamais le liseré de la maquette —, nom en Oswald gras, 
   44 px de haut (40 en paysage). Bandeau : « Standard · 7 cibles » ; à droite « Ferme + mène » ou
   « Le plus bas / gagne » (deux lignes), **sans cadre**.
 - **Tour du monde** : JOUEUR (nom + volée sous le nom) · PARCOURS 6,5 rem (« 20/21 », barre de
-  8 px en accent puis `vert-cible` une fois bouclé, « N fléchettes » en `craie-3`) · CIBLE 7 rem, le
+  8 px en laiton puis `vert-cible` une fois bouclé, « N fléchettes » en `craie-3`) · CIBLE 7 rem, le
   chiffre à droite comme le RESTE du X01 : 4,5 rem jusqu'à 2 joueurs, 4,05 rem à 3 et 4, 3,25 rem
   en paysage ; la bulle en glyphe plein + « BULLE ». « Dernier tour » : badge sans fond, au style de
   DI / DO.
@@ -501,27 +507,51 @@ couleur du profil — jamais le liseré de la maquette —, nom en Oswald gras, 
 - Bascule S/D/T **momentanée** : elle retombe sur Simple après chaque fléchette. Un
   multiplicateur resté armé sans qu'on le voie compte trois T20 là où il y avait trois simples —
   un clic de plus par triple coûte moins cher qu'un score faux.
-- Touche `25` = segment `BULL` ; **pas de touche « Bull » séparée** (le bullseye, c'est
-  `DOUBLE` + `25`). En `TRIPLE`, la touche 25 se **grise** plutôt que de refuser le coup après
-  l'avoir accepté.
-- Touche `0` : ignore le multiplicateur (un miss n'a ni double ni triple).
+- **Un seul pavé, `PaveSaisie`, pour les quatre jeux** (lot `pave-unifie`) : mêmes mots, mêmes
+  tailles, Annuler au même endroit — la mémoire musculaire ne change pas d'un jeu à l'autre.
+  De haut en bas : la grille des cibles (5 × 4 au X01, à l'entraînement et au Tour du monde ; 3 × 2
+  au Cricket, dans l'ordre de la feuille), la rangée **Bulle · Hors · Annuler** (`grid-cols-5` :
+  2 · 1 · 2 colonnes — les x et largeurs viennent de ce seul conteneur, identiques par construction),
+  puis le rail Simple / Double / Triple en **pleine largeur** (segments ≈ 118 px, même dessin).
+  Au Tour du monde, sans rail, la rangée est la dernière : Annuler y est **64 px plus bas**
+  qu'ailleurs, accepté.
+- **Tailles** : touches `min-h-[3.25rem]` (52 px), `paysage:min-h-12` (48) ; chiffres 20 px
+  (`text-xl`, 18 px en paysage) ; **mots** (Bulle, Hors) en 16 px majuscules, interlettrage 0,1 em ;
+  **Annuler en 12 px** (`text-etiquette`) majuscules, icône 16 px, `craie`. Écarts de 6 px (4 en
+  paysage). La Bulle garde son rouge ; « Hors » est en `craie-3`.
+- **Bulle** (plus de touche « 25 », plus de touche « Bull » séparée) : `BULL_SIMPLE` en Simple,
+  `BULL_DOUBLE` en Double, **grisée** en Triple (opacité des `disabled`, sans trait) plutôt que de
+  refuser le coup après l'avoir accepté. Exposant : « 25 » en `craie-3` en Simple (X01,
+  entraînement), « 50 » en laiton en Double ; au Cricket « ×2 » en laiton, rien en Simple.
+- **Hors** : `MISS`, ignore le multiplicateur (un miss n'a ni double ni triple), ni filet ni exposant ;
+  Annuler non plus.
+- **L'appui s'inverse lisiblement** (fond `craie`, texte et exposant `feutre`) sur toutes les
+  touches, Bulle, Hors et Annuler comprises : 14,7:1 en sombre, 10,25:1 en clair. Seule la couleur
+  change, l'enfoncement (2 px) et sa durée (90 ms) sont ceux d'avant. Voir `.touche` plus haut.
+- **En paysage le pavé est calé en bas** (`paysage:self-end`) : Annuler garde sa place d'un jeu à
+  l'autre, que la feuille soit haute ou basse.
+- **Tour du monde, sans « S »** : les cases de volée écrivent « 17 · 16 » et Annuler « Annuler 16 »
+  (`libelleFlechetteTourDuMonde`, `labels.ts`, via le prop `libelle` de `CasesVolee`). C'est un
+  libellé d'affichage de ce mode : `Dart.label` reste « S17 » et les autres jeux l'emploient.
 - Valeur réelle en exposant hors simple (le « 20 » porte un « 60 » en mode triple) — badge
-  `aria-hidden` en `text-multiplicateur` (0,8 rem, `text-laiton-clair`), le nom accessible du
+  `aria-hidden` en `text-multiplicateur` (0,8 rem, `exposant-touche`), le nom accessible du
   bouton reste « 20 ».
-- **Le multiplicateur armé est gradué** (X01) : la `<section>` du pavé porte
-  `data-multiplicateur="simple|double|triple"` et les touches 1-20 et 25 (classe `touche-armee`,
-  ni « 0 » ni « Annuler ») changent d'état. **Double** : filet de laiton de 2 px (bordure 1 px + anneau intérieur 1 px) et tranche de
+- **Le multiplicateur armé est gradué** (X01, entraînement **et Cricket**) : la `<section>` du pavé
+  porte `data-multiplicateur="simple|double|triple"` (absent au Tour du monde) et les cibles et la
+  Bulle (classe `touche-armee`, ni « Hors » ni « Annuler ») changent d'état. **Double** : filet de laiton de 2 px (bordure 1 px + anneau intérieur 1 px) et tranche de
   `laiton-sombre`. **Triple** : le même, **plus** un fond teinté par le token `--teinte-triple`
   (laiton 22 % en sombre, 14 % en clair, valeur claire sous `html[data-theme="clair"]`).
   Contraste de `craie-vive` sur le fond composé du Triple : **12,1:1 en sombre, 11,4:1 en clair**
   (≥ 4,5:1) ; l'exposant `laiton-clair` y tient 8,9:1 / 4,5:1. Au retour à Simple, le filet
-  **fond** (voir § Mouvement). Le 25 grisé en Triple garde son `opacity` : c'est une règle.
+  **fond** (voir § Mouvement). La Bulle grisée en Triple garde son `opacity` : c'est une règle. Le
+  filet de laiton de l'état armé se pose **sur** le fond rouge de la Bulle.
 - ⚠️ **Le pavé ne se grise jamais pendant l'écriture d'une volée** (il clignotait à la 3ᵉ
   fléchette). La garde reste dans les hooks (`if (occupe) return`) : un appui pendant l'écriture
-  n'enregistre rien. Seules désactivations visuelles : le 25 en Triple, « Annuler » sans rien à
+  n'enregistre rien. Seules désactivations visuelles : la Bulle en Triple, « Annuler » sans rien à
   annuler.
-- Le pavé du **Cricket** n'a que les sept cibles ; celui du **Tour du monde** n'a pas de bascule
-  S/D/T (elle ne changerait rien, et un contrôle sans effet induit en erreur).
+- Le pavé du **Cricket** n'a que les sept cibles (six numéros + la Bulle) ; celui du **Tour du
+  monde** n'a pas de bascule S/D/T (elle ne changerait rien, et un contrôle sans effet induit en
+  erreur).
 - ⚠️ **Le bouton « Annuler » a deux étiquettes** : `libelleAnnulation` rend un
   `{ court, complet }` — le court s'affiche (« Annuler T20 »), le complet est le nom accessible
   (« Annuler la volée de Julien »). Le court étant contenu mot pour mot dans le complet, la
@@ -543,8 +573,9 @@ couleur du profil — jamais le liseré de la maquette —, nom en Oswald gras, 
 ## Ce qu'il ne faut pas faire
 
 1. Poser du bois / laiton / grain **derrière un chiffre de score**.
-2. Utiliser un hex hors `index.css` / `couleurs.ts` — **et en particulier une teinte d'accent
-   dans un `style=` inline** : elle ne suivrait pas le thème.
+2. Utiliser un hex hors `index.css` / `couleurs.ts` — **et en particulier une teinte dans un
+   `style=` inline** : elle ne suivrait pas le thème. Ni une teinte « par jeu » : le laiton est le
+   seul accent.
 3. Descendre sous `craie-3` pour du texte utile, ou écrire un texte en alpha (`text-craie/NN`).
 4. Remettre un rayon dans les tokens `--radius-*` (ou une classe `rounded-*` dans `src/ui`).
 5. Créer une variante de bouton / panneau ad hoc hors des composants communs.
@@ -580,7 +611,6 @@ elle sert un jour en grand**.
 | ------- | ------- |
 | `src/index.css` | Tokens, thème clair, matières, animations, `prefers-reduced-motion` |
 | `src/ui/theme.ts` | `sombre` / `clair` / `systeme` — le seul écrivain de `data-theme` |
-| `src/ui/accents.ts` | L'accent de chaque mode, en `var()` |
 | `src/ui/couleurs.ts` | Palette joueurs → pixels |
 | `src/ui/labels.ts` | Tout le français, annonces vocales comprises |
 | `src/ui/composants/commun/` | Design system React |

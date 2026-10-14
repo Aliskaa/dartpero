@@ -111,7 +111,7 @@ describe('Frontière des thèmes', () => {
       const debut = css.indexOf(depuis)
       expect(debut).toBeGreaterThan(-1)
       const fin = css.indexOf('\n}', debut)
-      return [...css.slice(debut, fin).matchAll(/--(color-[a-z0-9-]+|accent-[a-z0-9-]+):/g)].map(
+      return [...css.slice(debut, fin).matchAll(/--(color-[a-z0-9-]+):/g)].map(
         (correspondance) => correspondance[1] ?? '',
       )
     }
@@ -119,10 +119,7 @@ describe('Frontière des thèmes', () => {
     const sombre = bloc('@theme {')
     const clair = bloc('html[data-theme="clair"] {')
 
-    // Les accents vivent hors de `@theme` : ils partent dans un `style=`.
-    const accentsSombre = bloc(':root {').filter((token) => token.startsWith('accent-'))
-
     expect(sombre.length).toBeGreaterThan(10)
-    expect([...sombre, ...accentsSombre].filter((token) => !clair.includes(token))).toEqual([])
+    expect(sombre.filter((token) => !clair.includes(token))).toEqual([])
   })
 })

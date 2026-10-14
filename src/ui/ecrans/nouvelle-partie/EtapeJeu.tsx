@@ -4,7 +4,6 @@ import { Link } from 'react-router'
 import type { GameModeId } from '@/core/domain/games'
 import { DEFAUT as DEFAUT_ENTRAINEMENT } from '@/core/domain/games/checkout-practice/config'
 import { MATCH_NAME_MAX_LENGTH } from '@/core/domain/value-objects/MatchName'
-import { ACCENTS_MODE } from '@/ui/accents'
 import { cheminNouvellePartie, ETAT_PARCOURS } from '@/ui/chemins'
 import { type NomPictogramme, Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import type { NomPartieSaisi } from '@/ui/hooks/useNouvellePartie'
@@ -33,7 +32,6 @@ const ICONES: Record<GameModeId, NomPictogramme> = {
 }
 
 const CarteJeu = ({ mode }: { readonly mode: GameModeId }) => {
-  const accent = ACCENTS_MODE[mode]
   const [premiere, seconde] = reglesCarteJeu(mode, {
     min: DEFAUT_ENTRAINEMENT.minTarget,
     max: DEFAUT_ENTRAINEMENT.maxTarget,
@@ -44,14 +42,13 @@ const CarteJeu = ({ mode }: { readonly mode: GameModeId }) => {
       <Link
         to={cheminNouvellePartie(mode)}
         state={ETAT_PARCOURS}
-        // Le liseré du mode : une teinte par jeu, résolue dans le bon thème.
-        style={{ borderLeftColor: accent.fond }}
+        // Le liseré : le laiton, pour tous les jeux (le jeu se dit par son pictogramme).
         className={[
-          'flex min-h-20 items-center gap-4 border border-l-4 border-chene/45 bg-feutre/60 px-4 py-3',
+          'flex min-h-20 items-center gap-4 border border-l-4 border-chene/45 border-l-laiton bg-feutre/60 px-4 py-3',
           'transition-colors duration-150 active:bg-chene/30',
         ].join(' ')}
       >
-        <span className="shrink-0" style={{ color: accent.clair }}>
+        <span className="shrink-0 text-laiton-clair">
           <Pictogramme nom={ICONES[mode]} taille={40} />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1">

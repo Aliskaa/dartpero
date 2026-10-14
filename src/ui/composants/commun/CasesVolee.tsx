@@ -12,6 +12,11 @@ type Props = {
    * `text-base` (la ligne « VOLÉE » du Cricket).
    */
   readonly variante?: 'ligne' | 'ruban'
+  /**
+   * Comment s'écrit une fléchette dans sa case. Par défaut `Dart.label` ; le Tour
+   * du monde passe un libellé sans « S » (`libelleFlechetteTourDuMonde`).
+   */
+  readonly libelle?: (dart: Dart) => string
 }
 
 /**
@@ -31,6 +36,7 @@ export const CasesVolee = ({
   darts,
   bust = false,
   variante = 'ligne',
+  libelle = DartVO.label,
   'aria-label': ariaLabel,
 }: Props) => {
   const ruban = variante === 'ruban'
@@ -55,7 +61,7 @@ export const CasesVolee = ({
               dart ? (bust ? 'text-rouge-cible line-through' : 'text-craie-vive') : 'text-craie-3',
             ].join(' ')}
           >
-            {dart ? DartVO.label(dart) : '—'}
+            {dart ? libelle(dart) : '—'}
           </span>
         )
       })}

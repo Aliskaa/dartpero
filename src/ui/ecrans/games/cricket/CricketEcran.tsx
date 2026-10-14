@@ -91,7 +91,6 @@ export const CricketEcran = () => {
   return (
     <DispositionPartie
       nomPartie={nomPartie}
-      mode="CRICKET"
       enTete={
         <BandeauMatch
           pictogramme="cricket"

@@ -1,9 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { TourDuMondeVisitResult } from '@/core/application/ports/driving/PlayTourDuMonde'
-import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
+import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { annonceFinDeVolee, libelleAnnulation, nomJoueur } from '@/ui/labels'
+import {
+  annonceFinDeVolee,
+  libelleAnnulation,
+  libelleFlechetteTourDuMonde,
+  nomJoueur,
+} from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
 import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
@@ -153,7 +158,8 @@ export const useTourDuMonde = (matchId: MatchId) => {
   /** Ce que le bouton va défaire, écrit dessus — voir `libelleAnnulation`. */
   const annulation = useMemo(() => {
     const derniereFlechette = dartsEnCours.at(-1)
-    if (derniereFlechette) return libelleAnnulation(DartVO.label(derniereFlechette), null)
+    if (derniereFlechette)
+      return libelleAnnulation(libelleFlechetteTourDuMonde(derniereFlechette), null)
 
     const volee = state?.history.at(-1)
     if (!volee) return libelleAnnulation(null, null)

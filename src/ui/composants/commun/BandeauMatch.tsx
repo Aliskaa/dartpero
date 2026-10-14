@@ -4,11 +4,11 @@ import { Link } from 'react-router'
 import { type NomPictogramme, Pictogramme } from '@/ui/composants/commun/Pictogramme'
 
 /**
- * Une étiquette cerclée du bandeau (DI, DO, « Dernier tour ») : bordure d'accent
- * à demi-teinte, **sans fond**, texte d'accent clair.
+ * Une étiquette cerclée du bandeau (DI, DO, « Dernier tour ») : bordure de laiton
+ * à demi-teinte, **sans fond**, texte en laiton clair.
  */
 export const BadgeBandeau = ({ children }: { readonly children: ReactNode }) => (
-  <span className="grave border border-accent-mode/50 px-1.5 font-score text-etiquette uppercase leading-4 tracking-wider text-accent-mode-clair">
+  <span className="grave border border-laiton/50 px-1.5 font-score text-etiquette uppercase leading-4 tracking-wider text-laiton-clair">
     {children}
   </span>
 )
@@ -47,10 +47,10 @@ export const BandeauMatch = ({ pictogramme, titre, sousTitre, complement, droite
     </Link>
 
     <div className="flex min-w-0 flex-1 items-center gap-2">
-      <Pictogramme nom={pictogramme} taille={24} className="shrink-0 text-accent-mode-clair" />
+      <Pictogramme nom={pictogramme} taille={24} className="shrink-0 text-laiton-clair" />
 
       <div className="flex min-w-0 flex-col paysage:flex-row paysage:items-center paysage:gap-x-3">
-        <p className="grave font-score text-lg font-bold uppercase leading-none tracking-[0.12em] text-accent-mode-clair">
+        <p className="grave font-score text-lg font-bold uppercase leading-none tracking-[0.12em] text-laiton-clair">
           {titre}
         </p>
 

@@ -43,11 +43,6 @@
      un `#1a1206` illisible dans l'un des deux. */
   --color-sur-laiton: #1a1206;
 
-  /* Accent du mode en cours — surchargé par DispositionPartie via style=.
-     Défaut = laiton (X01). Jamais derrière un chiffre de score. */
-  --color-accent-mode: #c9a227;
-  --color-accent-mode-clair: #f2dd93;
-
   /* ANGLE VIF PARTOUT - decision de charte, pas un oubli.
      Aucun objet du decor n'a de coin rond : ni l'ardoise, ni la plaque de
      laiton, ni la feuille de match punaisee derriere le bar. Les tokens de
@@ -159,19 +154,6 @@
   /* Le fond d'une touche en Triple : du laiton teinté, posé sur le feutre.
      craie-vive dessus : 12,1:1 (contrôlé, voir CHARTE § Écran de match). */
   --teinte-triple: color-mix(in srgb, var(--color-laiton) 22%, transparent);
-
-  /* L'accent de chaque mode. Il vit ici plutôt que dans `accents.ts` parce
-     qu'il part dans un `style=` inline : un hex y serait figé, un `var()` s'y
-     résout dans le thème du moment. Teintes alignées sur la palette joueurs
-     (lagon / cuivre / prune) pour ne pas inventer une deuxième charte. */
-  --accent-x01: #c9a227;
-  --accent-x01-clair: #f2dd93;
-  --accent-tour-du-monde: #2c6e9b;
-  --accent-tour-du-monde-clair: #5fa6d1;
-  --accent-cricket: #c1720f;
-  --accent-cricket-clair: #e7a248;
-  --accent-checkout-practice: #8a4fa8;
-  --accent-checkout-practice-clair: #b683ce;
 }
 
 html[data-theme="clair"] {
@@ -196,7 +178,7 @@ html[data-theme="clair"] {
      foncé (4,4:1), et « clair » y veut dire « plus lisible sur le fond »,
      donc PLUS FONCÉ (6,6:1) : c'est le rôle qui est inversé, pas la teinte. */
   --color-laiton: #8a6d12;
-  --color-laiton-clair: #6b5209;
+  --color-laiton-clair: #614a08;
   --color-laiton-sombre: #4a3a06;
 
   /* L'encre. Le plancher « aucun texte sous craie-3 » tient : craie-2 et
@@ -213,8 +195,6 @@ html[data-theme="clair"] {
   --color-vert-cible: #1f6b41;
 
   --color-sur-laiton: #fbf7ec;
-  --color-accent-mode: #8a6d12;
-  --color-accent-mode-clair: #6b5209;
 
   --teinte-relief: rgb(255 255 255 / 0.85);
   --ombre-plaque: rgb(90 62 36 / 0.3);
@@ -224,19 +204,9 @@ html[data-theme="clair"] {
   --voile-trace: transparent;
   --eclat-balai: rgb(31 45 36 / 0.1);
   /* Laiton foncé sur papier : une teinte plus légère suffit (et garde le
-     laiton-clair de l'exposant à 4,5:1). craie-vive dessus : 11,4:1. */
+     laiton-clair de l'exposant à 4,5:1 : voir `--color-laiton-clair` plus haut,
+     assombri à #614a08 au lot `pave-unifie`). craie-vive dessus : 11,4:1. */
   --teinte-triple: color-mix(in srgb, var(--color-laiton) 14%, transparent);
-
-  /* Les quatre accents assombris : même logique que le laiton, « clair » vaut
-     « plus lisible sur le fond », donc plus foncé. */
-  --accent-x01: #8a6d12;
-  --accent-x01-clair: #6b5209;
-  --accent-tour-du-monde: #245a80;
-  --accent-tour-du-monde-clair: #1b4460;
-  --accent-cricket: #9a5a0b;
-  --accent-cricket-clair: #7a4708;
-  --accent-checkout-practice: #6e3c87;
-  --accent-checkout-practice-clair: #562e6b;
 }
 
 /* Le score qui change doit se voir depuis l'oche, pas seulement de près :
@@ -422,14 +392,14 @@ html[data-theme="clair"] {
     border-bottom: 1px solid color-mix(in srgb, var(--color-craie) 28%, transparent);
   }
 
-  /* Le repère de celui qui lance : un filet d'accent DANS la marge, et un voile
+  /* Le repère de celui qui lance : un filet de laiton DANS la marge, et un voile
      de 12 %. Pas de halo qui déborde — une fiche ne rayonne pas. Il est porté
      par UN élément qui glisse d'une ligne à l'autre (les trois jeux) : le
      mouvement dit « la main passe » mieux qu'un filet qui s'éteint ici et
      s'allume là. Hauteur et position viennent de `FeuilleMatch`. */
   .repere-lancer {
-    background-color: color-mix(in srgb, var(--color-accent-mode) 12%, transparent);
-    box-shadow: inset 5px 0 0 var(--color-accent-mode);
+    background-color: color-mix(in srgb, var(--color-laiton) 12%, transparent);
+    box-shadow: inset 5px 0 0 var(--color-laiton);
     transition: transform var(--duration-lent) var(--ease-sec);
   }
 
@@ -486,6 +456,13 @@ html[data-theme="clair"] {
      une épaisseur — c'est le seul retour dont dispose celui qui tape sans
      regarder — mais plus aucun dégradé. */
   .touche {
+    /* ⚠️ La couleur de repos est PORTÉE ICI, par `--texte-touche`, et non par un
+       utilitaire `text-craie*` sur le bouton : un utilitaire (couche `utilities`)
+       bat `.touche:active` (couche `components`) et le texte ne s'inversait plus
+       à l'appui (P1). Une variable n'est pas une propriété `color` : elle ne
+       bat rien. Hors, Annuler, JoueursEcran posent seulement la variable
+       (`[--texte-touche:var(--color-craie-3)]`). Garde : `appuiBoundary`. */
+    color: var(--texte-touche, var(--color-craie-vive));
     background-color: transparent;
     border: 1px solid color-mix(in srgb, var(--color-craie) 34%, transparent);
     box-shadow: 0 2px 0 color-mix(in srgb, var(--color-craie) 18%, transparent);
@@ -507,6 +484,30 @@ html[data-theme="clair"] {
   .touche:disabled {
     opacity: 0.3;
     box-shadow: none;
+  }
+
+  /* La petite valeur dans le coin d'une touche (« 50 », « ×2 »). Laiton clair au
+     repos ; à l'appui, elle suit le texte (feutre sur craie) — sans cette règle
+     le laiton clair resterait sur le fond craie, illisible. */
+  .exposant-touche {
+    color: var(--color-laiton-clair);
+  }
+
+  .exposant-touche-neutre {
+    color: var(--color-craie-3);
+  }
+
+  .touche:active:not(:disabled) .exposant-touche,
+  .touche:active:not(:disabled) .exposant-touche-neutre {
+    color: inherit;
+  }
+
+  /* La Bulle garde son rouge. Dans la couche `components` (et non en utilitaires
+     `bg-rouge-cible/25`) pour que l'inversion de l'appui puisse le remplacer ;
+     le filet de laiton de l'état armé, plus spécifique, se pose par-dessus. */
+  .touche-bulle {
+    background-color: color-mix(in srgb, var(--color-rouge-cible) 25%, transparent);
+    border-color: color-mix(in srgb, var(--color-rouge-cible) 70%, transparent);
   }
 
   /* Le multiplicateur ARMÉ, lisible du coin de l'œil : tant que Double ou

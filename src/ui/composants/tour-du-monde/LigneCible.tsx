@@ -3,13 +3,18 @@ import type { Dart, Segment } from '@/core/domain/value-objects/Dart'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { CasesVolee } from '@/ui/composants/commun/CasesVolee'
 import { NomJoueurFeuille } from '@/ui/composants/commun/NomJoueurFeuille'
-import { LIBELLE_BULLE, motFlechettes } from '@/ui/labels'
+import {
+  LIBELLE_BULLE,
+  LIBELLE_HORS,
+  libelleFlechetteTourDuMonde,
+  motFlechettes,
+} from '@/ui/labels'
 
 /** « BULL » est le nom de la cible dans le domaine ; à l'écran on dit « bulle ». */
 export const libelleCible = (cible: Segment | null): string => {
   if (cible === null) return '—'
   if (cible === 'BULL') return LIBELLE_BULLE
-  if (cible === 'MISS') return 'Hors'
+  if (cible === 'MISS') return LIBELLE_HORS
   return String(cible)
 }
 
@@ -122,7 +127,11 @@ export const LigneCible = ({
           serre={nbJoueurs > 2}
         />
         <div className="pl-[1.125rem]">
-          <CasesVolee aria-label={etiquetteVolee} darts={volee} />
+          <CasesVolee
+            aria-label={etiquetteVolee}
+            darts={volee}
+            libelle={libelleFlechetteTourDuMonde}
+          />
         </div>
       </div>
 
@@ -132,14 +141,14 @@ export const LigneCible = ({
           <span className="text-xl font-bold text-craie">{validees}</span>/{total}
         </span>
 
-        {/* La barre : on voit qui mène sans lire un chiffre. Accent du mode, puis
+        {/* La barre : on voit qui mène sans lire un chiffre. Laiton, puis
             vert une fois le parcours bouclé. */}
         <div className="h-2 border border-craie/30 bg-feutre/70">
           <div
             aria-hidden="true"
             style={{ width: `${pourcentage}%` }}
             className={`h-full transition-[width] duration-300 ${
-              boucle ? 'bg-vert-cible' : 'bg-accent-mode'
+              boucle ? 'bg-vert-cible' : 'bg-laiton'
             }`}
           />
         </div>

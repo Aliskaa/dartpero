@@ -245,7 +245,7 @@ describe('Nom de la partie — à l’écran', () => {
    */
   it('le bandeau réserve la ligne du nom pendant le chargement', () => {
     render(
-      <DispositionPartie mode="X01" enTete={<span>Manche 1</span>} nomPartie={null} saisie={null}>
+      <DispositionPartie enTete={<span>Manche 1</span>} nomPartie={null} saisie={null}>
         <p>Zone de lecture</p>
       </DispositionPartie>,
     )

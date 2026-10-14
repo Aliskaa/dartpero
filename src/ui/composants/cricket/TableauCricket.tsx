@@ -31,7 +31,7 @@ const etatLisible = (marques: number, morte: boolean): string => {
  * précharger. Traits épais : lisibles à 3 mètres. 28 px (`size-7`), comme la
  * planche : au-delà, sept colonnes ne tiennent plus à quatre joueurs.
  *
- * Couleurs : fermée en accent du mode, en cours en craie vive, morte (fermée
+ * Couleurs : fermée en laiton, en cours en craie vive, morte (fermée
  * par tout le monde) en `craie-decor` — la colonne entière est déjà à 30 %.
  */
 const Marques = ({
@@ -49,7 +49,7 @@ const Marques = ({
     aria-hidden="true"
     className={[
       petite ? 'size-6.5' : 'size-7',
-      morte ? 'text-craie-decor' : marques >= 3 ? 'text-accent-mode' : 'text-craie-vive',
+      morte ? 'text-craie-decor' : marques >= 3 ? 'text-laiton' : 'text-craie-vive',
     ].join(' ')}
     fill="none"
     stroke="currentColor"

@@ -13,7 +13,6 @@ import { Dart } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { InMemoryMatchRepository } from '@/infrastructure/memory/InMemoryMatchRepository'
 import { InMemoryPlayerRepository } from '@/infrastructure/memory/InMemoryPlayerRepository'
-import { ACCENTS_MODE } from '@/ui/accents'
 import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { CLE_JOUEURS } from '@/ui/hooks/useJoueurs'
 import {
@@ -303,21 +302,21 @@ describe('Accueil — la carte : ✓, liseré, vainqueur', () => {
     expect(coche(carte(/Finie/))).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it.each(GAME_MODE_IDS)('%s : le liseré de la carte prend l’accent de son mode', async (mode) => {
-    const { services, enCours } = await base()
-    await enCours(le(OCT, 13, 12, 0), mode, 'Colorée')
+  it.each(GAME_MODE_IDS)(
+    '%s : le liseré de la carte est en laiton, pour tous les jeux',
+    async (mode) => {
+      const { services, enCours } = await base()
+      await enCours(le(OCT, 13, 12, 0), mode, 'Colorée')
 
-    ouvrir(services)
-    const lien = await screen.findByRole('link', { name: /Colorée/ })
+      ouvrir(services)
+      const lien = await screen.findByRole('link', { name: /Colorée/ })
 
-    // Valeur en ligne (`var(--accent-…)`), pas une classe : la relecture à l'écran juge le rendu.
-    expect(lien.getAttribute('style') ?? '').toContain(ACCENTS_MODE[mode].fond)
-  })
-
-  it('les quatre accents sont distincts', () => {
-    const fonds = GAME_MODE_IDS.map((mode) => ACCENTS_MODE[mode].fond)
-    expect(new Set(fonds).size).toBe(GAME_MODE_IDS.length)
-  })
+      // Une classe de token, pas une valeur en ligne : plus aucune teinte par jeu
+      // (la relecture à l'écran juge le rendu).
+      expect(lien).toHaveClass('border-l-4', 'border-laiton')
+      expect(lien.getAttribute('style') ?? '').not.toContain('border-left')
+    },
+  )
 
   it('X01 terminé : « Julien gagne · N manches », pluriel juste', async () => {
     const { services, kevin, julien, a } = await base()

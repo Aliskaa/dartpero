@@ -86,13 +86,13 @@ describe('Écran de match', () => {
     await partie()
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
 
-    await flechette(utilisateur, '25', 'Double') // bullseye → 451
+    await flechette(utilisateur, 'Bulle', 'Double') // bullseye → 451
     expect(scoreDe('Kevin')).toHaveTextContent('451')
 
     // Il n'existe pas de triple bull : la touche se grise plutôt que de refuser
     // le coup une fois qu'il a été porté.
     await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
-    expect(screen.getByRole('button', { name: '25' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Bulle' })).toBeDisabled()
   })
 
   it('annule la volée entière sur un bust et rend la main', async () => {

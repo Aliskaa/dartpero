@@ -82,7 +82,7 @@ export const TableauJoueurs = <T,>({ libelle, colonnes, joueurs, lignes }: Props
               </span>
               <span
                 className={`w-full truncate text-etiquette font-bold uppercase tracking-wide ${
-                  colonne.vainqueur ? 'text-accent-mode-clair' : 'text-craie-3'
+                  colonne.vainqueur ? 'text-laiton-clair' : 'text-craie-3'
                 }`}
               >
                 {colonne.nom}

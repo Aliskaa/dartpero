@@ -314,7 +314,7 @@ résumé. Rien d'autre ne bouge — vérifié trois fois de suite (Tour du monde
 entraînement).
 
 ⚠️ **Depuis le lot « accueil-parties-recentes »**, un mode doit aussi à `CartePartie` : son
-entrée dans `ACCENTS_MODE` (le liseré), son constructeur `regles*` dans `labels.ts` et sa
+constructeur `regles*` dans `labels.ts` et sa
 branche dans les `switch` de la carte (règles courtes, texte de statut). Les `switch` au
 `default` typé `never` et les `it.each(GAME_MODE_IDS)` le signalent ; le **texte** des règles,
 lui, n'est gardé par aucun test (T1, dette d'audit).
@@ -414,7 +414,7 @@ src/
 │  │                      useStockagePersistant (protection des données) ·
 │  │                      useInstallation (invitation à installer)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
-│     theme.ts (clair / sombre / système) · accents.ts ·
+│     theme.ts (clair / sombre / système) ·
 │     chemins.ts (slugs et URL du parcours Nouvelle partie) ·
 │     clesRequetes.ts (clés TanStack Query partagées) ·
 │     jourCalendaire.ts (« Aujourd'hui » / « Cette semaine », bornes locales)

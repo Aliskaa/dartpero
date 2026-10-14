@@ -82,7 +82,7 @@ const CarteProfil = ({
           type="button"
           aria-label={`Modifier ${joueur.name}`}
           onClick={ouvrir}
-          className="touche flex size-11 shrink-0 items-center justify-center text-craie-2"
+          className="touche flex size-11 shrink-0 items-center justify-center [--texte-touche:var(--color-craie-2)]"
         >
           <Pencil aria-hidden="true" className="size-4" />
         </button>

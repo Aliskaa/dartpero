@@ -457,6 +457,22 @@ Reporté au lot 6b par l'utilisateur (fin du lot 6a) : au Tour du monde, les cas
 écrivent « S2 » quand la planche montrait « 2 » — le multiplicateur n'y compte pas, le « S » est à
 retirer avec les libellés du pavé unifié.
 
+Planche du lot 6b (privée) : <https://claude.ai/artifact/PcAQwsEnY122TUjp9GCqgu>. Tranché par
+l'utilisateur (cadrage de `pave-unifie`, 2026-10-14) :
+
+- **Placement b, celui de la maquette X01 validée** : Bulle · Hors · Annuler en fin de grille,
+  rail Simple / Double / Triple en pleine largeur dessous. Au Tour du monde (sans rail), la même
+  rangée est la dernière : Annuler y est 64 px plus bas — accepté.
+- **Accents : piste A, laiton unique** pour les quatre jeux ; le jeu se dit par son pictogramme et
+  son titre. La recherche d'une teinte par jeu loin des 8 profils n'a trouvé qu'une pervenche
+  (ΔE 13 du Lagon) et un anis faible.
+- **Cricket comme la planche** : six cibles en 3 × 2 dans l'ordre de la feuille, Bulle et Hors
+  sortis de la grille comme ailleurs, 20 px, multiplicateur gradué du X01 (exposant « ×2 » /
+  « ×3 » des marques, en laiton). Écart volontaire avec la maquette Cricket B (4 colonnes, 24 px).
+- Le reste comme proposé : pavé calé en bas en paysage ; Bulle 2 colonnes, Hors 1, Annuler 2 ;
+  ordre Bulle · Hors · Annuler ; « 25 » en craie-3 sur la Bulle en Simple ; Bulle grisée (pas
+  barrée) en Triple ; un manqué reste « 0 » sur la feuille ; « Annuler 16 » au Tour du monde.
+
 ## Questions pour l'utilisateur
 
 1. ~~Direction A seule, A puis B, ou envisager C ?~~ **B** (voir § Validé).

@@ -276,7 +276,7 @@ describe('Tour du monde — « Dernier tour » et la volée sur la ligne', () =>
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
 
     const badge = await screen.findByText('Dernier tour')
-    expect(badge).toHaveClass('border', 'border-accent-mode/50', 'text-accent-mode-clair')
+    expect(badge).toHaveClass('border', 'border-laiton/50', 'text-laiton-clair')
     expect(badge.className).not.toMatch(/\bbg-/)
   })
 
@@ -291,11 +291,11 @@ describe('Tour du monde — « Dernier tour » et la volée sur la ligne', () =>
     await services.playTourDuMonde.recordVisit(matchId, [Dart.single(20), Dart.miss(), Dart.miss()])
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
-    expect(await screen.findByLabelText('Dernière volée de Kevin')).toHaveTextContent('S2000')
+    expect(await screen.findByLabelText('Dernière volée de Kevin')).toHaveTextContent('2000')
     expect(screen.getByLabelText('Dernière volée de Julien')).toHaveTextContent('———')
 
     await utilisateur.click(screen.getByRole('button', { name: '20' }))
-    expect(await screen.findByLabelText('Volée en cours')).toHaveTextContent('S20——')
+    expect(await screen.findByLabelText('Volée en cours')).toHaveTextContent('20——')
   })
 
   it.each([
