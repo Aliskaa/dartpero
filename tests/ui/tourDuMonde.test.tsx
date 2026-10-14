@@ -207,9 +207,7 @@ describe('Tour du monde — écran de jeu', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
 
     // 3 au premier tour + celle qui boucle. Jamais 6.
-    await waitFor(() =>
-      expect(within(ligneDe('Kevin')).getByText('4 fléchettes')).toBeInTheDocument(),
-    )
+    await waitFor(() => expect(ligneDe('Kevin')).toHaveTextContent('4 fléchettes'))
 
     // Le chiffre n'est juste que parce que la volée est CLOSE : sans clôture
     // anticipée, il compterait une volée encore en cours et serait un hasard.
@@ -301,7 +299,7 @@ describe('Tour du monde — écran de jeu', () => {
     // Kevin retrouve sa bulle, ses 3 fléchettes, et la main.
     await waitFor(() => expect(cibleDe('Kevin').closest('[aria-current]')).not.toBeNull())
     expect(cibleDe('Kevin')).toHaveTextContent('Bulle')
-    expect(within(ligneDe('Kevin')).getByText('3 fléchettes')).toBeInTheDocument()
+    expect(ligneDe('Kevin')).toHaveTextContent('3 fléchettes')
     expect(screen.queryByText('Dernier tour')).toBeNull()
 
     // Rejeu à froid : on remonte l’écran, tout revient du journal.
@@ -309,7 +307,7 @@ describe('Tour du monde — écran de jeu', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
 
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
-    expect(within(ligneDe('Kevin')).getByText('3 fléchettes')).toBeInTheDocument()
+    expect(ligneDe('Kevin')).toHaveTextContent('3 fléchettes')
     expect(cibleDe('Kevin').closest('[aria-current]')).not.toBeNull()
   })
 })

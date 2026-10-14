@@ -1,9 +1,8 @@
-import { ArrowLeft } from 'lucide-react'
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { MARKS_TO_CLOSE } from '@/core/domain/games/cricket/config'
-import { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
+import { BandeauMatch } from '@/ui/composants/commun/BandeauMatch'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
@@ -13,29 +12,12 @@ import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useCricket } from '@/ui/hooks/useCricket'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
-import { LIBELLE_VARIANTE_CRICKET, nomJoueur } from '@/ui/labels'
-
-/** Les trois encoches de la volée, collées au pavé — « t’as mis quoi, là ? ». */
-const VoleeEnCours = ({ darts }: { readonly darts: readonly Dart[] }) => (
-  <output aria-label="Volée en cours" className="mb-2 flex items-center justify-center gap-1.5">
-    {[0, 1, 2].map((rang) => {
-      const dart = darts[rang]
-      return (
-        <span
-          key={rang}
-          className={[
-            'chiffres flex h-9 min-w-14 items-center justify-center text-sm font-bold',
-            dart
-              ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
-              : 'border border-dashed border-craie/25 text-craie-decor',
-          ].join(' ')}
-        >
-          {dart ? Dart.label(dart) : <span aria-hidden="true">·</span>}
-        </span>
-      )
-    })}
-  </output>
-)
+import {
+  LIBELLE_CONDITION_CRICKET,
+  nomJoueur,
+  sousTitreBandeauCricket,
+  TITRE_BANDEAU_CRICKET,
+} from '@/ui/labels'
 
 export const CricketEcran = () => {
   const { matchId } = useParams()
@@ -95,81 +77,72 @@ export const CricketEcran = () => {
         }
       : null
 
+  // La volée écrite sur la dernière ligne : celle en cours si une fléchette est
+  // déjà plantée, sinon celle du joueur précédent (avec son nom), sinon — au
+  // tout début — les cases vides du joueur qui va lancer. Aucune règle ici : on
+  // lit la liste des fléchettes et l'historique, rien d'autre.
+  const derniere = state.history.at(-1)
+  const proprietaire =
+    partie.dartsEnCours.length === 0 && derniere ? derniere.playerId : partie.joueurCourant.playerId
+  const volee = {
+    nom: nomJoueur(profils.get(proprietaire)?.name ?? null),
+    darts: partie.dartsEnCours.length === 0 && derniere ? derniere.darts : partie.dartsEnCours,
+  }
   return (
     <DispositionPartie
       nomPartie={nomPartie}
       mode="CRICKET"
       enTete={
-        <>
-          <Link
-            to="/"
-            aria-label="Retour à l’accueil"
-            className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie-2 active:bg-craie/15"
-          >
-            <ArrowLeft aria-hidden="true" className="size-5" />
-          </Link>
-
-          <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie-2">
-            <span className="font-bold text-accent-mode-clair">Cricket</span>
-            <span aria-hidden="true" className="text-craie-decor">
-              |
-            </span>
-            <span>{LIBELLE_VARIANTE_CRICKET[state.config.variant]}</span>
-          </p>
-
-          {/* Rappel de la condition de victoire — standard vs cut-throat. */}
-          <span
-            className={[
-              'grave shrink-0 border px-2 py-0.5 font-score text-etiquette uppercase tracking-wider',
-              cutThroat
-                ? 'border-rouge-cible/60 bg-rouge-cible/15 text-craie'
-                : 'border-accent-mode/50 bg-accent-mode/10 text-accent-mode-clair',
-            ].join(' ')}
-          >
-            {cutThroat ? 'Le plus bas gagne' : 'Ferme + mène'}
-          </span>
-        </>
+        <BandeauMatch
+          pictogramme="cricket"
+          titre={TITRE_BANDEAU_CRICKET}
+          sousTitre={sousTitreBandeauCricket(state.config.variant, state.config.targets.length)}
+          droite={LIBELLE_CONDITION_CRICKET[state.config.variant].map((ligne, rang) => (
+            <Fragment key={ligne}>
+              {/* Un espace entre les lignes : invisible (flex), mais le texte se lit
+                  « Le plus bas gagne » d'une traite. */}
+              {rang > 0 && ' '}
+              <span className="whitespace-nowrap">{ligne}</span>
+            </Fragment>
+          ))}
+        />
       }
       saisie={
-        <>
-          <VoleeEnCours darts={partie.dartsEnCours} />
-          <PaveCricket
-            cibles={state.config.targets}
-            multiplicateur={partie.multiplicateur}
-            onMultiplicateur={partie.setMultiplicateur}
-            onFlechette={partie.ajouterFlechette}
-            onAnnuler={() => void partie.annuler()}
-            peutAnnuler={partie.peutAnnuler}
-            annulation={partie.annulation}
-          />
-        </>
+        <PaveCricket
+          cibles={state.config.targets}
+          multiplicateur={partie.multiplicateur}
+          onMultiplicateur={partie.setMultiplicateur}
+          onFlechette={partie.ajouterFlechette}
+          onAnnuler={() => void partie.annuler()}
+          peutAnnuler={partie.peutAnnuler}
+          annulation={partie.annulation}
+        />
       }
     >
-      {/* Le moment est superposé au bas du tableau, hors du flux. */}
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        <section aria-label="Tableau des scores" className="flex min-h-0 flex-col">
-          <TableauCricket
-            cibles={state.config.targets}
-            mortes={mortes}
-            cutThroat={cutThroat}
-            joueurs={affiche.players.map((joueur, index) => {
-              const profil = profils.get(joueur.playerId)
-              return {
-                playerId: joueur.playerId,
-                nom: nomJoueur(profil?.name ?? null),
-                couleur: profil?.color ?? null,
-                marks: joueur.marks,
-                score: joueur.score,
-                actif: index === state.currentPlayerIndex && !state.finished,
-                vainqueur: state.winnerId === joueur.playerId,
-              }
-            })}
-          />
-        </section>
+      {/* Le moment est superposé au bas de la feuille (la ligne de volée), hors du
+          flux : il ne décale rien et ne touche jamais le pavé. */}
+      <div className="relative">
+        <TableauCricket
+          cibles={state.config.targets}
+          mortes={mortes}
+          cutThroat={cutThroat}
+          volee={volee}
+          joueurs={affiche.players.map((joueur, index) => {
+            const profil = profils.get(joueur.playerId)
+            return {
+              playerId: joueur.playerId,
+              nom: nomJoueur(profil?.name ?? null),
+              couleur: profil?.color ?? null,
+              marks: joueur.marks,
+              score: joueur.score,
+              actif: index === state.currentPlayerIndex && !state.finished,
+              vainqueur: state.winnerId === joueur.playerId,
+            }
+          })}
+        />
 
         <MomentCelebratif moment={moment} />
       </div>
-
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
     </DispositionPartie>
   )

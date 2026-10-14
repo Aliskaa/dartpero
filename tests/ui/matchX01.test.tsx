@@ -354,6 +354,8 @@ type ModeCible = {
   readonly titreMoment: string
   /** Une touche qui existe sur le pavé du mode. */
   readonly touche: string
+  /** Où la volée enregistrée s'écrit une fois la main passée, et ce qu'elle y montre. */
+  readonly voleeEcrite: { readonly etiquette: string; readonly texte: string }
 }
 
 const MODES_CIBLES: readonly ModeCible[] = [
@@ -375,6 +377,8 @@ const MODES_CIBLES: readonly ModeCible[] = [
     },
     titreMoment: 'Fermée !',
     touche: '19',
+    // La ligne VOLÉE du Cricket montre la volée du joueur précédent.
+    voleeEcrite: { etiquette: 'Volée de Kevin', texte: 'S20S20S20' },
   },
   {
     nom: 'Tour du monde',
@@ -392,6 +396,8 @@ const MODES_CIBLES: readonly ModeCible[] = [
     },
     titreMoment: 'Bouclé !',
     touche: '1',
+    // Le 20 boucle le parcours : la volée s'arrête là, les deux autres cases restent vides.
+    voleeEcrite: { etiquette: 'Dernière volée de Kevin', texte: 'S20——' },
   },
 ]
 
@@ -431,9 +437,14 @@ describe.each(MODES_CIBLES)('$nom — le pavé ne se grise pas pendant l’écri
     })
     await waitFor(async () => expect(await mode.enregistrees(services, matchId)).toBe(1))
     expect(depot.ecritures).toBe(1)
-    // La fléchette tapée pendant l'écriture n'a été retenue nulle part : la volée
-    // en cours est vide (trois encoches « · »).
-    await waitFor(() => expect(screen.getByLabelText('Volée en cours')).toHaveTextContent(/^···$/))
+    // La fléchette tapée pendant l'écriture n'a été retenue nulle part : aucune volée
+    // n'est en cours, et celle qui s'écrit est exactement la volée enregistrée.
+    await waitFor(() =>
+      expect(screen.getByLabelText(mode.voleeEcrite.etiquette)).toHaveTextContent(
+        mode.voleeEcrite.texte,
+      ),
+    )
+    expect(screen.queryByLabelText('Volée en cours')).toBeNull()
   })
 })
 

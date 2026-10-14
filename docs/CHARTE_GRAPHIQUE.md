@@ -104,7 +104,7 @@ Nuances (`feutre-nuit`, `ardoise-claire`, `chene-clair`, `chene-sombre`, `laiton
 `laiton-sombre`) : elles servent aux tranches et aux fonds d'appui, plus à modeler des reliefs.
 
 ⚠️ **Le point critique du thème clair, c'est le laiton.** Le laiton vif fait **1,84:1** sur du
-papier : le filet de `.au-lancer`, qui dit **qui est en train de lancer**, y deviendrait
+papier : le filet de `.repere-lancer`, qui dit **qui est en train de lancer**, y deviendrait
 invisible — l'information la plus lue de l'app. Il passe donc en laiton foncé (4,4:1), et
 `laiton-clair` y veut dire « plus lisible sur le fond », donc **plus foncé** (6,6:1). C'est le
 **rôle** qui s'inverse, pas la teinte.
@@ -134,7 +134,7 @@ laiton reste portée par le trait `bg-laiton` de 3 px sous l'onglet.
 
 **Lignes de joueurs inactives** : plus d'`opacity-70` (il grisait aussi les chiffres et faisait
 retomber le contraste) ; l'inactif se distingue par le nom en `craie-2` et l'absence de
-`.au-lancer` et de `trace-craie`.
+repère et de `trace-craie`.
 
 ### Ce qui n'est pas une couleur
 
@@ -235,10 +235,9 @@ SVG inline.
 | **`.bandeau-bas`** | La barre de navigation | `NavigationBasse` |
 | **`.entete-colonne`** | Libellé de colonne | Ligne d'en-têtes |
 | `.ligne-tableau` | Une ligne : un filet, rien d'autre | Lignes de score |
-| **`.au-lancer`** | Filet de laiton **dans** la marge + voile | Le joueur dont c'est le tour (Cricket, Tour du monde) |
-| **`.repere-lancer`** | Le même filet + voile, porté par **un seul élément qui glisse** d'une ligne à l'autre | Le joueur dont c'est le tour, au X01 (`Tableau`) |
+| **`.repere-lancer`** | Filet d'accent **dans** la marge + voile de 12 %, porté par **un seul élément qui glisse** d'une ligne à l'autre | Le joueur dont c'est le tour, **dans les trois jeux** (`FeuilleMatch`). `.au-lancer`, qui le posait ligne par ligne au Cricket et au Tour du monde, a disparu (lot `feuille-commune`) |
 | **`.touche-armee`** | Désigne les touches (1-20 et 25) qui prennent le filet de laiton quand Double ou Triple est armé ; le fondu au retour à Simple | Pavé X01 |
-| **`.filet-colonne`** | Séparateur vertical | Entre deux colonnes |
+| **`.filet-colonne`** | Séparateur vertical (`.filet-colonne-entete` : le même, dans l'en-tête inversé) | Entre deux colonnes |
 | **`.ligne-saisie`** | La ligne sur laquelle une fléchette est « écrite » | Volée en cours |
 | `.cadre-bois` | Encadrement plat | Chrome rare |
 | `.ardoise-craie` | Panneau | Surfaces secondaires |
@@ -250,7 +249,7 @@ SVG inline.
 
 ⚠️ **`.bois-veine` et l'animation `halo` ont été supprimées.** Le veinage tirait l'œil vers le
 décor, et **une fiche ne rayonne pas** — un `box-shadow` animé en continu coûtait en plus un
-repaint par image sur un vieux téléphone. Le joueur au lancer se signale par `.au-lancer`.
+repaint par image sur un vieux téléphone. Le joueur au lancer se signale par `.repere-lancer`.
 
 ### Règles d'emploi
 
@@ -269,10 +268,15 @@ Hors saisie uniquement — jamais pendant qu'on tape une volée :
 - **`MomentCelebratif`** : bandeau vert éphémère (manche / set / sortie / tour bouclé / cible
   fermée), `pointer-events-none`, ~2,2 s. ⚠️ **Hors du flux** (lot `match-x01`) : il est `absolute`
   au bas de son ancêtre `relative` — l'écran enveloppe son tableau et le moment dans un
-  `div.relative`, le moment en dernier enfant. Il recouvre le bas de la feuille (au X01, le ruban
-  de sortie, et selon la hauteur de la feuille un peu de la dernière ligne), ne décale rien, ne
-  touche jamais le pavé. Fond **opaque** (`bg-ardoise`) sous la teinte verte : sans lui le ruban
-  transparaîtrait.
+  `div.relative`, le moment en dernier enfant. ⚠️ **Une seule rangée de 44 px** (`h-11`, lot
+  `feuille-commune`), titre puis détail (« FERMÉE ! · 19 »), pour les trois jeux : il recouvre
+  exactement le pied de la feuille (X01 : le ruban de sortie ; Cricket : la ligne de volée), ne
+  décale rien, ne touche jamais le pavé. Fond **opaque** (`bg-ardoise`) sous la teinte verte :
+  sans lui le pied transparaîtrait. **Tour du monde** (prop `ancrage="sous"`) : la feuille n'a pas
+  de pied, 44 px sur la dernière ligne en masquaient la cible et la volée (mesuré à quatre joueurs :
+  41 px sur 80) ; en **portrait** le moment se pose donc **sous** la feuille, sur le vide qui la
+  sépare du pavé (108 px à quatre joueurs), et en **paysage** — où ce vide n'existe pas (30 px) —
+  il recouvre le bas de la feuille pendant ses 2,2 s.
 - **`TableauHonneur`** : le podium des résumés (avatar, couronne, phrase d'ambiance), à l'accent
   du mode. Phrase tirée de `phraseVictoire(matchId)` — **déterministe**, pas de `Math.random`.
   Le **nom de la partie** s'affiche en tête (prop obligatoire `nomPartie`), dans un `<p>` —
@@ -351,7 +355,7 @@ Deux mouvements ne sont pas des `@keyframes` mais des **transitions** (lot `matc
 
 | Transition | Durée | Rôle |
 | ---------- | ----- | ---- |
-| **Repère qui glisse** (`.repere-lancer`) | `--duration-lent`, `--ease-sec` | Au X01, quand la main passe, le filet de laiton **glisse** d'une ligne à l'autre (`translateY(index × 100 %)`) au lieu de s'éteindre ici et de s'allumer là. Un seul élément `aria-hidden` ; `aria-current` reste l'état accessible. Exige des lignes de **hauteur strictement égale** : la grille `1fr` de `Tableau` le garantit |
+| **Repère qui glisse** (`.repere-lancer`) | `--duration-lent`, `--ease-sec` | Dans les trois jeux, quand la main passe, le filet d'accent **glisse** d'une ligne à l'autre (`translateY(index × 100 %)`) au lieu de s'éteindre ici et de s'allumer là. Un seul élément `aria-hidden` ; `aria-current` reste l'état accessible. Exige des lignes de **hauteur strictement égale** : la grille `1fr` de `FeuilleMatch` le garantit, et chaque jeu fixe la même hauteur minimale à toutes ses lignes |
 | **Fondu du filet** (`.touche-armee`) | `--duration-normal`, `--ease-sec` | Au retour à Simple, le filet de laiton et le fond Triple s'effacent en fondu (`border-color`, `box-shadow`, `background-color`). La bordure reste à **1 px** (jamais de `border-width`, non animable, qui décalerait la touche) : le 2ᵉ pixel est un anneau `inset 0 0 0 1px` en première couche de `box-shadow`, transparent au repos, pour que l'ombre fonde au lieu de basculer. **L'inversion de l'appui reste à 90 ms** : c'est l'état d'arrivée qui choisit la durée (`:active` → 90 ms, retour → `--duration-normal`). Le curseur du rail garde son glissement |
 
 Supprimées : `eclat` (remplacé par `trace-filet`), `tourner-lent` (boucle de 120 s) et
@@ -433,8 +437,9 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   (`text-craie-2`, petites capitales) : le laiton ne reste qu'au repère et au rail. En **paysage**
   le bloc central tient sur **une rangée** (pictogramme, titre, sous-titre, DI, DO) et « Manche N
   · Set M » à droite sur la même hauteur. Mesuré (Chrome, 390 × 844 / 844 × 390, hors zone de
-  sécurité) : **portrait 73 → 87 px**, **paysage 65 → 49 px** (la ligne du nom y disparaît). Les
-  quatre autres écrans de partie gardent leur bandeau (lot 6).
+  sécurité) : **portrait 73 → 87 px**, **paysage 65 → 49 px** (la ligne du nom y disparaît). Depuis
+  le lot `feuille-commune`, ce bandeau est un composant commun (`BandeauMatch`) : le Cricket, le
+  Tour du monde et l'entraînement l'adoptent, avec leur pictogramme.
 - **Les fléchettes sont écrites sur une ligne** (`.ligne-saisie`), comme au stylo — et non dans
   des pastilles. Les trois emplacements restent **toujours présents** : c'est ce qui garde
   l'alignement d'une ligne à l'autre.
@@ -461,6 +466,35 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   et au Tour du monde à quatre (501 → 390).
 - Barre de navigation basse : **absente** pendant une partie et sur toutes les étapes de Nouvelle
   partie (jeu, joueurs et réglages, ordre de jeu, sélection de joueurs).
+
+### La feuille commune aux trois jeux (lot `feuille-commune`)
+
+X01, Cricket et Tour du monde se lisent de la même façon : `FeuilleMatch` (cadre de craie, en-têtes
+inversés `aria-hidden`, un filet par ligne, repère unique), `NomJoueurFeuille` (carré de 12 px à la
+couleur du profil — jamais le liseré de la maquette —, nom en Oswald gras, `craie-2` au repos,
+`craie-vive` pour qui lance), `CasesVolee` (les trois fléchettes sur leur ligne, libellé de
+`Dart.label`, **jamais grisées** : une fléchette qui n'avance pas se lit quand même), `BandeauMatch`.
+
+- **Hauteur des lignes** (minimum, la même pour toutes) — Cricket : 88 px à 2 joueurs, 62 à 3, 54
+  à 4, 50 en paysage ; Tour du monde : 104 / 88 / 80 px, 62 en paysage. Nom à 16 px, 15 px dès
+  3 joueurs (`text-nom-serre`) ; au Cricket toujours 15 px pour que « MAXENCE » tienne.
+- **Cricket** : colonnes JOUEUR (6,25 rem, 7,5 en paysage) · sept cibles · PTS (4 rem, 4,5 en
+  paysage), `--nb-cibles` venu de la config ; un filet de colonne **seulement** avant la première
+  cible et avant PTS. Marques à **28 px** (26 à quatre joueurs), cible fermée en `accent-mode`,
+  en cours en `craie-vive`, **morte** (fermée par tous) en `craie-decor` sur une colonne à 30 %
+  d'opacité, en-tête barré. PTS 36 px (30 à 4 joueurs et en paysage). En-tête « Pts ↓ » en
+  cut-throat. **Dernière ligne « VOLÉE · NOM »** (hors de la grille des lignes) : la volée en
+  cours, sinon celle du joueur précédent avec son nom, trois cases de 48 px poussées à droite,
+  44 px de haut (40 en paysage). Bandeau : « Standard · 7 cibles » ; à droite « Ferme + mène » ou
+  « Le plus bas / gagne » (deux lignes), **sans cadre**.
+- **Tour du monde** : JOUEUR (nom + volée sous le nom) · PARCOURS 6,5 rem (« 20/21 », barre de
+  8 px en accent puis `vert-cible` une fois bouclé, « N fléchettes » en `craie-3`) · CIBLE 7 rem, le
+  chiffre à droite comme le RESTE du X01 : 4,5 rem jusqu'à 2 joueurs, 4,05 rem à 3 et 4, 3,25 rem
+  en paysage ; la bulle en glyphe plein + « BULLE ». « Dernier tour » : badge sans fond, au style de
+  DI / DO.
+- **Mesuré** (Chrome, 390 × 844 et 844 × 390, sombre et clair) : plus aucun défilement (page = 844
+  ou 390) à 2, 3 et 4 joueurs dans les trois jeux ; le Tour du monde à quatre joueurs tient
+  (865 → 844 px) ; touches ≥ 48 px ; « MAXENCE » entier, 7 px d'air au plus serré (Cricket).
 
 ### Saisie
 

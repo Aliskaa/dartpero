@@ -4,8 +4,15 @@ import type { Visit } from '@/core/domain/entities/Visit'
 import type { X01State } from '@/core/domain/games/x01/rules'
 import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
+import { FeuilleMatch } from '@/ui/composants/commun/FeuilleMatch'
 import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
-import { LIBELLE_MANCHES, nomJoueur } from '@/ui/labels'
+import {
+  LIBELLE_JOUEUR,
+  LIBELLE_MANCHES,
+  LIBELLE_RESTE,
+  LIBELLE_VOLEE,
+  nomJoueur,
+} from '@/ui/labels'
 import { type Echelle, GRILLE_LIGNE, LigneJoueur, type VoleeAffichee } from './LigneJoueur'
 
 type Props = {
@@ -106,90 +113,71 @@ export const Tableau = ({
   const volees = dernieresVolees(state)
 
   return (
-    <section aria-label="Tableau des scores" className="feuille flex flex-col">
-      {/* Les en-têtes de colonnes, EN INVERSION : rien ne dit « tableau »
-          aussi vite qu'une bande de craie pleine en haut de la fiche. */}
-      <div className={`bandeau-feuille ${GRILLE_LIGNE} py-1`} aria-hidden="true">
-        <span className="entete-colonne px-3 text-feutre/70">Joueur</span>
-        <span className="entete-colonne px-1 text-center text-feutre/70">Volée</span>
-        {/* « Manches » tient dans ses 44 px à 0,75 rem à condition de relâcher
-            tout son interlettrage : la colonne la plus étroite. */}
-        <span className="entete-colonne px-0.5 text-center tracking-normal text-feutre/70">
-          {LIBELLE_MANCHES}
-        </span>
-        <span className="entete-colonne px-1 text-center text-feutre/70">Reste</span>
-      </div>
-
-      {/* Les lignes ont une hauteur STRICTEMENT égale (`1fr`, donc celle de la
-          plus haute) : c'est ce qui permet au repère de se placer par un simple
-          `translateY(index * 100%)`, sans rien mesurer. */}
-      <div
-        className="relative grid"
-        style={{ gridTemplateRows: `repeat(${state.players.length}, 1fr)` }}
-      >
-        {/* Le repère de celui qui lance : UN seul élément, qui GLISSE d'une ligne
-            à l'autre quand la main passe. Il est le premier enfant, donc sous les
-            lignes (positionnées, peintes après lui). `aria-current` reste l'état
-            accessible ; celui-ci est décoratif. */}
-        {state.winnerId === null && (
-          <span
-            aria-hidden="true"
-            style={{
-              height: `${100 / state.players.length}%`,
-              transform: `translateY(${state.currentPlayerIndex * 100}%)`,
-            }}
-            className="repere-lancer pointer-events-none absolute inset-x-0 top-0"
+    <FeuilleMatch
+      grille={GRILLE_LIGNE}
+      nbLignes={state.players.length}
+      indexActif={state.winnerId === null ? state.currentPlayerIndex : null}
+      entetes={
+        <>
+          <span className="entete-colonne px-3 text-feutre/70">{LIBELLE_JOUEUR}</span>
+          <span className="entete-colonne px-1 text-center text-feutre/70">{LIBELLE_VOLEE}</span>
+          {/* « Manches » tient dans ses 44 px à 0,75 rem à condition de relâcher
+              tout son interlettrage : la colonne la plus étroite. */}
+          <span className="entete-colonne px-0.5 text-center tracking-normal text-feutre/70">
+            {LIBELLE_MANCHES}
+          </span>
+          <span className="entete-colonne px-1 text-center text-feutre/70">{LIBELLE_RESTE}</span>
+        </>
+      }
+      pied={
+        <div className="min-h-11">
+          <RubanSortie
+            suggestion={suggestion}
+            aucunFinish={state.winnerId === null && resteAffiche > 1 && resteAffiche <= 170}
           />
-        )}
+        </div>
+      }
+    >
+      {state.players.map((joueur, index) => {
+        const actif = index === state.currentPlayerIndex && state.winnerId === null
+        const profil = profils.get(joueur.playerId)
+        const nom = nomJoueur(profil?.name ?? null)
+        const derniere = volees.get(joueur.playerId)
 
-        {state.players.map((joueur, index) => {
-          const actif = index === state.currentPlayerIndex && state.winnerId === null
-          const profil = profils.get(joueur.playerId)
-          const nom = nomJoueur(profil?.name ?? null)
-          const derniere = volees.get(joueur.playerId)
+        // Tant que le joueur actif n'a pas planté sa première fléchette, sa
+        // ligne continue d'afficher sa volée précédente — sans quoi un bust
+        // en solo ne serait jamais annoncé, la main ne passant à personne.
+        // Le total de la volée en cours se déduit du reste projeté : aucune
+        // règle de calcul n'est réimplémentée ici.
+        const volee: VoleeAffichee | null =
+          actif && dartsEnCours.length > 0
+            ? { darts: dartsEnCours, total: joueur.remaining - resteAffiche, outcome: null }
+            : derniere
+              ? {
+                  darts: derniere.visit.darts,
+                  total: derniere.visit.scored,
+                  outcome: derniere.visit.outcome,
+                }
+              : null
 
-          // Tant que le joueur actif n'a pas planté sa première fléchette, sa
-          // ligne continue d'afficher sa volée précédente — sans quoi un bust
-          // en solo ne serait jamais annoncé, la main ne passant à personne.
-          // Le total de la volée en cours se déduit du reste projeté : aucune
-          // règle de calcul n'est réimplémentée ici.
-          const volee: VoleeAffichee | null =
-            actif && dartsEnCours.length > 0
-              ? { darts: dartsEnCours, total: joueur.remaining - resteAffiche, outcome: null }
-              : derniere
-                ? {
-                    darts: derniere.visit.darts,
-                    total: derniere.visit.scored,
-                    outcome: derniere.visit.outcome,
-                  }
-                : null
-
-          return (
-            <LigneJoueur
-              key={`${joueur.playerId}-${derniere?.rang ?? 'debut'}`}
-              nom={nom}
-              couleur={profil?.color ?? null}
-              reste={actif ? resteAffiche : joueur.remaining}
-              actif={actif}
-              vainqueur={state.winnerId === joueur.playerId}
-              volee={volee}
-              legsGagnes={joueur.legsWonInSet}
-              legsRequis={state.config.legsToWin}
-              setsGagnes={joueur.setsWon}
-              setsRequis={state.config.setsToWin}
-              moyenne={moyennes.get(joueur.playerId) ?? 0}
-              echelle={echelle}
-            />
-          )
-        })}
-      </div>
-
-      <div className="min-h-11">
-        <RubanSortie
-          suggestion={suggestion}
-          aucunFinish={state.winnerId === null && resteAffiche > 1 && resteAffiche <= 170}
-        />
-      </div>
-    </section>
+        return (
+          <LigneJoueur
+            key={`${joueur.playerId}-${derniere?.rang ?? 'debut'}`}
+            nom={nom}
+            couleur={profil?.color ?? null}
+            reste={actif ? resteAffiche : joueur.remaining}
+            actif={actif}
+            vainqueur={state.winnerId === joueur.playerId}
+            volee={volee}
+            legsGagnes={joueur.legsWonInSet}
+            legsRequis={state.config.legsToWin}
+            setsGagnes={joueur.setsWon}
+            setsRequis={state.config.setsToWin}
+            moyenne={moyennes.get(joueur.playerId) ?? 0}
+            echelle={echelle}
+          />
+        )
+      })}
+    </FeuilleMatch>
   )
 }

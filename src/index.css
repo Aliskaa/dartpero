@@ -86,6 +86,9 @@
   --text-score-m-portrait: 3.1rem;
   /* La valeur réelle dans le coin d'une touche armée (Double, Triple). */
   --text-multiplicateur: 0.8rem;
+  /* Le nom d'un joueur sur la feuille dès trois joueurs (planche : 15 px au lieu
+     de 16) : « MAXENCE » doit tenir en entier dans la colonne JOUEUR. */
+  --text-nom-serre: 0.9375rem;
 
   /* Mouvement : court, sec, sans rebond. Tout est neutralisé plus bas si
      l'utilisateur a demandé moins d'animations. */
@@ -188,7 +191,7 @@ html[data-theme="clair"] {
   --color-chene-sombre: #2f1e10;
 
   /* ⚠️ LE POINT CRITIQUE. Le laiton vif (#c9a227) fait 1,84:1 sur du papier :
-     le filet de `.au-lancer`, qui dit QUI EST EN TRAIN DE LANCER, deviendrait
+     le filet de `.repere-lancer`, qui dit QUI EST EN TRAIN DE LANCER, deviendrait
      invisible — l'information la plus lue de l'app. Il passe donc en laiton
      foncé (4,4:1), et « clair » y veut dire « plus lisible sur le fond »,
      donc PLUS FONCÉ (6,6:1) : c'est le rôle qui est inversé, pas la teinte. */
@@ -419,16 +422,11 @@ html[data-theme="clair"] {
     border-bottom: 1px solid color-mix(in srgb, var(--color-craie) 28%, transparent);
   }
 
-  /* La ligne de celui qui lance : un filet de laiton DANS la marge, et un
-     voile. Pas de halo qui déborde — une fiche ne rayonne pas. */
-  .au-lancer {
-    background-color: color-mix(in srgb, var(--color-accent-mode) 12%, transparent);
-    box-shadow: inset 5px 0 0 var(--color-accent-mode);
-  }
-
-  /* Le même repère, mais porté par UN élément qui glisse d'une ligne à l'autre
-     (X01) : le mouvement dit « la main passe » mieux qu'un filet qui s'éteint
-     ici et s'allume là. Hauteur et position viennent de `Tableau`. */
+  /* Le repère de celui qui lance : un filet d'accent DANS la marge, et un voile
+     de 12 %. Pas de halo qui déborde — une fiche ne rayonne pas. Il est porté
+     par UN élément qui glisse d'une ligne à l'autre (les trois jeux) : le
+     mouvement dit « la main passe » mieux qu'un filet qui s'éteint ici et
+     s'allume là. Hauteur et position viennent de `FeuilleMatch`. */
   .repere-lancer {
     background-color: color-mix(in srgb, var(--color-accent-mode) 12%, transparent);
     box-shadow: inset 5px 0 0 var(--color-accent-mode);
@@ -439,6 +437,11 @@ html[data-theme="clair"] {
      grille devient un quadrillage et on ne lit plus rien. */
   .filet-colonne {
     border-left: 1px solid color-mix(in srgb, var(--color-craie) 18%, transparent);
+  }
+
+  /* Le même séparateur, dans l'en-tête inversé : un filet d'encre sur la craie. */
+  .filet-colonne-entete {
+    box-shadow: inset 1px 0 0 color-mix(in srgb, var(--color-feutre) 25%, transparent);
   }
 
   /* La ligne sur laquelle une fléchette est « écrite », comme au stylo. */

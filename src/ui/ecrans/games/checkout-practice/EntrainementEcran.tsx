@@ -1,14 +1,15 @@
-import { ArrowLeft } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { Cartouche } from '@/ui/composants/checkout-practice/Cartouche'
+import { BandeauMatch } from '@/ui/composants/commun/BandeauMatch'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useCheckoutPractice } from '@/ui/hooks/useCheckoutPractice'
 import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
+import { libelleMancheSurTotal, recapEntrainement, TITRE_BANDEAU_ENTRAINEMENT } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 export const EntrainementEcran = () => {
@@ -61,23 +62,23 @@ export const EntrainementEcran = () => {
       nomPartie={nomPartie}
       mode="CHECKOUT_PRACTICE"
       enTete={
-        <>
-          <Link
-            to="/"
-            aria-label="Retour à l’accueil"
-            className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie-2 active:bg-craie/15"
-          >
-            <ArrowLeft aria-hidden="true" className="size-5" />
-          </Link>
-
-          <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie-2">
-            <span className="font-bold text-accent-mode-clair">Entraînement</span>
-            <span aria-hidden="true" className="text-craie-decor">
-              |
+        <BandeauMatch
+          pictogramme="entrainement"
+          titre={TITRE_BANDEAU_ENTRAINEMENT}
+          sousTitre={recapEntrainement(
+            state.config.rounds,
+            state.config.minTarget,
+            state.config.maxTarget,
+          )}
+          droite={
+            <span className="whitespace-nowrap">
+              {libelleMancheSurTotal(
+                Math.min(state.roundsPlayed + 1, state.config.rounds),
+                state.config.rounds,
+              )}
             </span>
-            <span>Checkout</span>
-          </p>
-        </>
+          }
+        />
       }
       saisie={
         /* Le même pavé qu'au X01 : on s'entraîne à sortir, donc on saisit

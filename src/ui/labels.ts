@@ -586,6 +586,75 @@ export const TITRE_BANDEAU_X01 = 'X01'
 export const sousTitreBandeauX01 = (scoreDepart: number, legsToWin: number): string =>
   `${scoreDepart} · ${libelleLegs(legsToWin)}`
 
+/* ------------------------------------------------------------------------
+   La FEUILLE COMMUNE aux trois jeux (lot `feuille-commune`) : bandeau, en-têtes
+   de colonnes, ligne de volée. Le titre dit le jeu, le sous-titre ses règles,
+   la droite « où l'on en est ».
+   ------------------------------------------------------------------------ */
+
+/** Le nom accessible de la feuille de match, quel que soit le jeu. */
+export const LIBELLE_TABLEAU_SCORES = 'Tableau des scores'
+
+/** Les en-têtes de colonnes (en inversion, `aria-hidden`). */
+export const LIBELLE_JOUEUR = 'Joueur'
+export const LIBELLE_VOLEE = 'Volée'
+export const LIBELLE_RESTE = 'Reste'
+export const LIBELLE_PTS = 'Pts'
+/** En cut-throat l'en-tête garde la flèche : le plus petit total gagne. */
+export const LIBELLE_PTS_CUT_THROAT = 'Pts ↓'
+export const LIBELLE_PARCOURS = 'Parcours'
+export const LIBELLE_CIBLE = 'Cible'
+/** La bulle comme cible du Tour du monde, sous son glyphe (majuscules par style). */
+export const LIBELLE_BULLE = 'Bulle'
+
+export const TITRE_BANDEAU_CRICKET = 'Cricket'
+
+/** « Standard · 7 cibles », « Cut-throat · 7 cibles ». */
+export const sousTitreBandeauCricket = (
+  variante: 'STANDARD' | 'CUT_THROAT',
+  cibles: number,
+): string => `${LIBELLE_VARIANTE_CRICKET[variante]} · ${pluriel(cibles, 'cible')}`
+
+/**
+ * Le rappel de la condition de victoire, à droite du bandeau Cricket. Une liste
+ * de lignes : le cut-throat s'empile (« Le plus bas » / « gagne »), comme
+ * « Manche » / « Set » au X01 ; une rangée en paysage.
+ */
+export const LIBELLE_CONDITION_CRICKET: Record<'STANDARD' | 'CUT_THROAT', readonly string[]> = {
+  STANDARD: ['Ferme + mène'],
+  CUT_THROAT: ['Le plus bas', 'gagne'],
+}
+
+export const TITRE_BANDEAU_TOUR_DU_MONDE = 'Tour du monde'
+
+/** « 21 cibles ». */
+export const sousTitreBandeauTourDuMonde = (cibles: number): string => pluriel(cibles, 'cible')
+
+/** Le dernier tour de table : tout le monde a droit au même nombre de volées. */
+export const LIBELLE_DERNIER_TOUR = 'Dernier tour'
+
+export const TITRE_BANDEAU_ENTRAINEMENT = 'Entraînement'
+
+/** « Manche 3/10 » : l'avancement de l'entraînement, à droite du bandeau. */
+export const libelleMancheSurTotal = (numero: number, total: number): string =>
+  `Manche ${numero}/${total}`
+
+/** Le mot, accordé : « 1 fléchette », « 4 fléchettes » (le nombre se met à part). */
+export const motFlechettes = (nombre: number): string => (nombre > 1 ? 'fléchettes' : 'fléchette')
+
+/** Le nom accessible de la volée écrite sur la dernière ligne du Cricket. */
+export const etiquetteVoleeDe = (nom: string): string => `Volée de ${nom}`
+
+/** Le nom accessible de la volée d'une ligne de feuille en cours de saisie. */
+export const ETIQUETTE_VOLEE_EN_COURS = 'Volée en cours'
+
+/** Celui de la dernière volée enregistrée d'un joueur qui ne lance pas. */
+export const etiquetteDerniereVoleeDe = (nom: string): string => `Dernière volée de ${nom}`
+
+/** Le nom accessible de la volée d'une ligne : en cours de saisie, ou la dernière du joueur. */
+export const etiquetteVoleeLigne = (enSaisie: boolean, nom: string): string =>
+  enSaisie ? ETIQUETTE_VOLEE_EN_COURS : etiquetteDerniereVoleeDe(nom)
+
 /** Le moment célébré quand une manche tombe (le checkout qui la gagne). */
 export const TITRE_MOMENT_MANCHE = 'Manche !'
 

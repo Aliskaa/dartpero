@@ -1,14 +1,14 @@
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
-import { type Dart, Dart as DartVO } from '@/core/domain/value-objects/Dart'
+import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 import { Batons } from '@/ui/composants/commun/Batons'
-import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
-import { couleurJoueur } from '@/ui/couleurs'
+import { CasesVolee } from '@/ui/composants/commun/CasesVolee'
+import { NomJoueurFeuille } from '@/ui/composants/commun/NomJoueurFeuille'
 import {
   etiquetteManchesGagnees,
+  etiquetteVoleeLigne,
   moyenne as formatMoyenne,
   LIBELLE_MANCHES,
-  LIBELLE_VAINQUEUR,
 } from '@/ui/labels'
 
 /**
@@ -123,7 +123,6 @@ export const LigneJoueur = ({
   moyenne,
   echelle,
 }: Props) => {
-  const teinte = couleurJoueur(couleur)
   const bust = volee?.outcome === 'BUSTED'
   const sortie = volee?.outcome === 'CHECKOUT'
   /** Une issue absente signe une volée encore en train d'être saisie. */
@@ -141,67 +140,21 @@ export const LigneJoueur = ({
     >
       {/* COLONNE 1 — qui joue, et ce qu'il vient d'écrire. */}
       <div className="flex min-w-0 flex-col justify-center gap-2 px-3 paysage:px-2">
-        <p className="flex min-w-0 items-center gap-2">
-          {/* La couleur du profil : un carré de repère, pas une pastille. */}
-          <span
-            aria-hidden="true"
-            style={{ backgroundColor: bust ? undefined : teinte.fond }}
-            className={`size-3 shrink-0 ${bust ? 'bg-rouge-cible' : ''}`}
-          />
-          <span
-            className={`truncate font-score text-base font-bold uppercase tracking-[0.08em] ${
-              actif ? 'text-craie-vive' : 'text-craie-2'
-            }`}
-          >
-            {nom}
-          </span>
-          {vainqueur && (
-            <>
-              <Pictogramme nom="victoire" taille={20} className="shrink-0 text-laiton-clair" />
-              <span className="sr-only">, {LIBELLE_VAINQUEUR}</span>
-            </>
-          )}
-        </p>
+        {/* La couleur du profil : un carré de repère (le même dans les trois jeux). */}
+        <NomJoueurFeuille
+          nom={nom}
+          couleur={couleur}
+          actif={actif}
+          vainqueur={vainqueur}
+          alerte={bust}
+        />
 
-        {/* Les trois fléchettes, écrites sur leur ligne comme au stylo.
-            Trois cases de grille `minmax(0, 2.75rem)` : une largeur de case à
-            fléchette, PLAFONNÉE — et qui se resserre d'elle-même si la colonne
-            maigrit. Les deux bornes comptent autant l'une que l'autre :
-            - sans le plafond, les cases se partagent toute la colonne, et sur
-              un écran large « S2 » s'étale sous un filet de 400 px ;
-            - sans le plancher à 0 (les `min-w-[2.75rem]` d'avant), elles
-              refusent de rétrécir et débordent sur la colonne d'à côté dès que
-              la place manque — ce qu'elles faisaient en paysage.
-            ⚠️ Colonne étroite (paysage, ou portrait depuis que RESTE s'est
-            élargi) : sans le `gap-1` ci-dessous, « BULL » (29,4 px) se faisait
-            rogner par une case de 29,0 px. */}
-        <output
-          aria-label={enSaisie ? 'Volée en cours' : `Dernière volée de ${nom}`}
-          className={[
-            'grid grid-cols-[repeat(3,minmax(0,2.75rem))] justify-start',
-            'items-end gap-1',
-          ].join(' ')}
-        >
-          {[0, 1, 2].map((rang) => {
-            const dart = volee?.darts[rang]
-            return (
-              <span
-                key={rang}
-                className={[
-                  'ligne-saisie chiffres min-w-0 overflow-hidden pb-0.5 text-center',
-                  'text-sm font-bold leading-none',
-                  dart
-                    ? bust
-                      ? 'text-rouge-cible line-through'
-                      : 'text-craie-vive'
-                    : 'text-craie-3',
-                ].join(' ')}
-              >
-                {dart ? DartVO.label(dart) : '—'}
-              </span>
-            )
-          })}
-        </output>
+        {/* Les trois fléchettes, écrites sur leur ligne comme au stylo. */}
+        <CasesVolee
+          aria-label={etiquetteVoleeLigne(enSaisie, nom)}
+          darts={volee?.darts ?? []}
+          bust={bust}
+        />
       </div>
 
       {/* COLONNE 2 — la volée : son total, ou ce qui l'a annulée. */}

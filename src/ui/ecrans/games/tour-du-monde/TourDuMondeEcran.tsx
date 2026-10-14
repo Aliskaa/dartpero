@@ -1,40 +1,29 @@
-import { ArrowLeft } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { Dart } from '@/core/domain/value-objects/Dart'
-import type { MatchId } from '@/core/domain/value-objects/ids'
+import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import { BadgeBandeau, BandeauMatch } from '@/ui/composants/commun/BandeauMatch'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
+import { FeuilleMatch } from '@/ui/composants/commun/FeuilleMatch'
 import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
-import { LigneCible, libelleCible } from '@/ui/composants/tour-du-monde/LigneCible'
+import { GRILLE_TOUR_DU_MONDE, LigneCible } from '@/ui/composants/tour-du-monde/LigneCible'
 import { PaveCibles } from '@/ui/composants/tour-du-monde/PaveCibles'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { useTourDuMonde } from '@/ui/hooks/useTourDuMonde'
-import { nomJoueur, pluriel } from '@/ui/labels'
-
-/** Les trois encoches de la volée, collées au pavé — « t’as mis quoi, là ? ». */
-const VoleeEnCours = ({ darts }: { readonly darts: readonly Dart[] }) => (
-  <output aria-label="Volée en cours" className="mb-2 flex items-center justify-center gap-1.5">
-    {[0, 1, 2].map((rang) => {
-      const dart = darts[rang]
-      return (
-        <span
-          key={rang}
-          className={[
-            'chiffres flex h-9 min-w-14 items-center justify-center text-sm font-bold',
-            dart
-              ? 'border border-accent-mode/60 bg-accent-mode/20 text-craie-vive'
-              : 'border border-dashed border-craie/25 text-craie-decor',
-          ].join(' ')}
-        >
-          {dart ? libelleCible(dart.segment) : <span aria-hidden="true">·</span>}
-        </span>
-      )
-    })}
-  </output>
-)
+import {
+  etiquetteVoleeLigne,
+  LIBELLE_CIBLE,
+  LIBELLE_DERNIER_TOUR,
+  LIBELLE_JOUEUR,
+  LIBELLE_PARCOURS,
+  nomJoueur,
+  pluriel,
+  sousTitreBandeauTourDuMonde,
+  TITRE_BANDEAU_TOUR_DU_MONDE,
+} from '@/ui/labels'
 
 export const TourDuMondeEcran = () => {
   const { matchId } = useParams()
@@ -71,7 +60,11 @@ export const TourDuMondeEcran = () => {
   }
 
   const total = state.config.targets.length
-  const compact = state.players.length > 2
+  // La dernière volée de chaque joueur : ce qu'il a écrit la dernière fois qu'il a lancé.
+  const dernieres = state.history.reduce(
+    (acc, volee) => acc.set(volee.playerId, volee.darts),
+    new Map<PlayerId, readonly Dart[]>(),
+  )
 
   const tour = partie.derniereVolee?.milestones.find((m) => m.type === 'TourCompleted')
   const moment =
@@ -88,52 +81,47 @@ export const TourDuMondeEcran = () => {
       nomPartie={nomPartie}
       mode="TOUR_DU_MONDE"
       enTete={
-        <>
-          <Link
-            to="/"
-            aria-label="Retour à l’accueil"
-            className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie-2 active:bg-craie/15"
-          >
-            <ArrowLeft aria-hidden="true" className="size-5" />
-          </Link>
-
-          <p className="grave flex min-w-0 flex-1 items-center gap-2 font-score text-xs uppercase tracking-[0.2em] text-craie-2">
-            <span className="font-bold text-accent-mode-clair">Tour du monde</span>
-            <span aria-hidden="true" className="text-craie-decor">
-              |
-            </span>
-            <span className="chiffres">{total} cibles</span>
-          </p>
-
-          {/* Le dernier tour de table : tout le monde a droit au même nombre de volées. */}
-          {state.lastRound && (
-            <span className="grave shrink-0 border border-accent-mode/60 bg-accent-mode/15 px-2 py-0.5 font-score text-etiquette uppercase tracking-wider text-accent-mode-clair">
-              Dernier tour
-            </span>
-          )}
-        </>
+        <BandeauMatch
+          pictogramme="tour-du-monde"
+          titre={TITRE_BANDEAU_TOUR_DU_MONDE}
+          sousTitre={sousTitreBandeauTourDuMonde(total)}
+          droite={state.lastRound && <BadgeBandeau>{LIBELLE_DERNIER_TOUR}</BadgeBandeau>}
+        />
       }
       saisie={
-        <>
-          <VoleeEnCours darts={partie.dartsEnCours} />
-          <PaveCibles
-            onFlechette={partie.ajouterFlechette}
-            onAnnuler={() => void partie.annuler()}
-            peutAnnuler={partie.peutAnnuler}
-            annulation={partie.annulation}
-          />
-        </>
+        <PaveCibles
+          onFlechette={partie.ajouterFlechette}
+          onAnnuler={() => void partie.annuler()}
+          peutAnnuler={partie.peutAnnuler}
+          annulation={partie.annulation}
+        />
       }
     >
-      {/* Le moment est superposé au bas du tableau, hors du flux. */}
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        <section aria-label="Tableau des scores" className="flex min-h-0 flex-col gap-2">
+      {/* Le moment est superposé au bas de la feuille, hors du flux. */}
+      <div className="relative">
+        <FeuilleMatch
+          grille={GRILLE_TOUR_DU_MONDE}
+          nbLignes={affiche.players.length}
+          indexActif={state.finished ? null : state.currentPlayerIndex}
+          entetes={
+            <>
+              <span className="entete-colonne px-3 text-feutre/70">{LIBELLE_JOUEUR}</span>
+              <span className="entete-colonne filet-colonne-entete px-1 text-center text-feutre/70">
+                {LIBELLE_PARCOURS}
+              </span>
+              <span className="entete-colonne filet-colonne-entete px-1 text-center text-feutre/70">
+                {LIBELLE_CIBLE}
+              </span>
+            </>
+          }
+        >
           {affiche.players.map((joueur, index) => {
             // Le tableau affiché intègre la volée en cours ; la main, elle, se lit
             // sur l'état réel — c'est encore au même joueur de jouer.
             const actif = index === state.currentPlayerIndex && !state.finished
             const profil = profils.get(joueur.playerId)
             const nom = nomJoueur(profil?.name ?? null)
+            const enSaisie = actif && partie.dartsEnCours.length > 0
 
             return (
               <LigneCible
@@ -146,16 +134,19 @@ export const TourDuMondeEcran = () => {
                 flechettes={joueur.dartsThrown}
                 actif={actif}
                 vainqueur={state.winnerId === joueur.playerId}
-                compact={compact}
+                nbJoueurs={affiche.players.length}
+                volee={enSaisie ? partie.dartsEnCours : (dernieres.get(joueur.playerId) ?? [])}
+                etiquetteVolee={etiquetteVoleeLigne(enSaisie, nom)}
               />
             )
           })}
-        </section>
+        </FeuilleMatch>
 
-        <MomentCelebratif moment={moment} />
+        {/* Sous la feuille en portrait : 44 px sur la dernière ligne en masqueraient
+            la cible et la volée (mesuré à quatre joueurs : 41 px sur 80). */}
+        <MomentCelebratif moment={moment} ancrage="sous" />
       </div>
-
-      {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
+      {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}{' '}
     </DispositionPartie>
   )
 }

@@ -137,7 +137,7 @@ describe('Cricket — écran de jeu', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await waitFor(() => expect(pointsDe('Kevin')).toHaveTextContent('0'))
 
-    expect(screen.getByText('Le plus bas gagne')).toBeInTheDocument()
+    expect(screen.getByText('Le plus bas').parentElement).toHaveTextContent('Le plus bas gagne')
 
     await flechette(utilisateur, '20', 'Triple')
     await flechette(utilisateur, '20', 'Triple')

@@ -160,7 +160,7 @@ lu ; le lot `high` à part.
 | 3 | `charte-typo-mouvement` | Échelle typographique en tokens (minimum 0,7 rem) ; tokens de mouvement ; le tableau du mouvement validé (`pop-score` court sans rebond, `eclat` retiré, logo un seul tour, badge fixe…). Trancher au cadrage : halos, dégradé d'enseigne, texture du tapis. Charte § Typographie et § Mouvement. | 2 | light |
 | 4 | `pictogrammes` | Composant commun des pictogrammes validés (4 modes, 8 moments) en `currentColor`, `aria-hidden` ; remplace les icônes génériques de l'étape 1 et la couronne. Charte § Identité. | 3 | light |
 | 5 | `match-x01` | Écran de match X01 : paysage réparé, place rendue au reste, multiplicateur armé gradué (Double : filet ; Triple : filet + fond), bâtons en pointillé, `MomentCelebratif` hors du flux, plus de clignotement `occupe`, pictogramme au bandeau. | 3, 4 | light |
-| 6 | `feuille-commune` | Cricket et Tour du monde sur la feuille du X01, pavé unifié, accents de mode désalignés des couleurs de profil. | 5 | light (gros lot, relecture écran lourde) |
+| 6 | `feuille-commune` | Cricket et Tour du monde sur la feuille du X01, pavé unifié, accents de mode désalignés des couleurs de profil. **Coupé en deux le 2026-10-14** (voir § Validé, « Lot 6 ») : 6a `feuille-commune` (la feuille), 6b `pave-unifie` (pavé et accents). | 5 | light (gros lot, relecture écran lourde) |
 | 7 | `cartes-partie` | Mélange 1 + 2 : partie en cours en mini tableau, autres parties en lignes de feuille, grille 2 × 2 à 4 joueurs, unité dans la colonne du mode, badges de moments. Accueil et Parties. | 4, 6 | light |
 | 8 | `statistiques-podium` | Cible en tête (dernier joueur consulté, mémorisé ; le sélecteur ne change que la cible), cartes du podium en barres, bâtons de craie, pictogrammes en tête de carte. | 4 | light |
 | 9 | `nouvelle-partie-parcours` | Barre d'étapes, tuiles 2 × 2, nom de partie à l'étape 2, fiche de réglages par jeu (X01 « Plus de réglages », Cricket en deux cartes, Tour du monde résumé, entraînement), ordre en feuille numérotée, bouton « Tirer au sort ». Les routes restent les mêmes. | 4 | light |
@@ -423,6 +423,39 @@ gênait l'utilisateur en tant que voyant, pas l'information elle-même :
   n'est pas une sauvegarde (obligatoire dans les trois états, décision gravée).
 - Écartés : « Hors ligne prêt » (toujours vrai après la première ouverture, un port de plus),
   voix disponible, écran maintenu allumé.
+
+### Lot 6 — découpage et pavé (2026-10-14, cadrage de `feuille-commune`)
+
+Tranché par l'utilisateur :
+
+- **Maquettes d'abord** : le Tour du monde sur la feuille, le pavé unifié et les accents n'avaient
+  jamais été dessinés ; la demande s'écrit d'après la planche retenue.
+- **Deux lots** : 6a `feuille-commune` (Cricket et Tour du monde sur la feuille du X01, avec les
+  acquis du lot 5 : repère qui glisse, bandeau, moment superposé), puis 6b `pave-unifie` (pavé
+  commun aux quatre jeux, accents désalignés des couleurs de profil).
+- **Pavé unifié : « Bulle » et « Hors » partout**, X01 compris (le X01 perd « 25 » / « 0 » sur
+  ses touches). Contraire à la proposition de l'étude (« 25 » / « 0 ») : choix de l'utilisateur.
+- **L'inversion à l'appui inopérante** (relevée au lot 5 : `text-craie-vive`, couche
+  `utilities`, bat `.touche:active`, chiffre ≈ 1,2:1 tant que la touche est enfoncée,
+  préexistant) **se corrige avec le pavé**, au lot 6b.
+
+Planche du lot 6a (privée) : <https://claude.ai/artifact/2vma9boCLRDEjzdJMNu4fZ>. Sa section
+« À trancher », tranchée par l'utilisateur (demande `docs/request/feuille-commune.md`) :
+
+- **Couleur du joueur : le carré de 12 px du X01**, pas le liseré de la maquette Cricket validée
+  (écart volontaire, cohérence des trois jeux).
+- **Volée du Cricket sur une dernière ligne « VOLÉE · NOM »** de la feuille, à la place des
+  encoches au-dessus du pavé.
+- **Moment célébré sur une seule rangée de 44 px**, X01 compris, pour ne plus masquer la ligne du
+  joueur qui lance.
+- Le reste comme proposé : Tour du monde en JOUEUR · PARCOURS (« N fléchettes ») · CIBLE géante
+  à droite (4,5 / 4,05 / 3,25 rem), bulle en glyphe + « BULLE », fléchettes perdues non grisées ;
+  bandeau Cricket « Ferme + mène » / « Le plus bas gagne » sans cadre ; Tour du monde « Dernier
+  tour » seulement.
+
+Reporté au lot 6b par l'utilisateur (fin du lot 6a) : au Tour du monde, les cases de volée
+écrivent « S2 » quand la planche montrait « 2 » — le multiplicateur n'y compte pas, le « S » est à
+retirer avec les libellés du pavé unifié.
 
 ## Questions pour l'utilisateur
 

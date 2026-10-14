@@ -35,13 +35,16 @@ const LIGNE_CIBLE = {
   total: 21,
   flechettes: 30,
   actif: false,
-  compact: false,
+  nbJoueurs: 2,
+  volee: [],
+  etiquetteVolee: 'Dernière volée de Kevin',
 } as const
 
 const cricket = (vainqueur: boolean) => ({
   cibles: [20, 19, 18, 17, 16, 15, 'BULL'] as const,
   mortes: [false, false, false, false, false, false, false],
   cutThroat: false,
+  volee: { nom: 'Kevin', darts: [] },
   joueurs: [
     {
       playerId: 'p1',
@@ -73,7 +76,7 @@ describe('Couronne du vainqueur — le sens passe par un texte pour les lecteurs
   it.each([true, false])('Cricket, TableauCricket (vainqueur : %s)', (vainqueur) => {
     renderWithServices(<TableauCricket {...cricket(vainqueur)} />, { services })
     if (vainqueur) {
-      expect(screen.getByRole('rowheader', { name: /Kevin, vainqueur/ })).toBeTruthy()
+      expect(screen.getByText(MENTION)).toBeTruthy()
     } else {
       expect(screen.queryByText(MENTION)).toBeNull()
     }

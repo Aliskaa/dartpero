@@ -1,13 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import { BadgeBandeau, BandeauMatch } from '@/ui/composants/commun/BandeauMatch'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
-import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import { momentDepuisVoleeX01 } from '@/ui/composants/x01/momentVolee'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
 import { Tableau } from '@/ui/composants/x01/Tableau'
@@ -25,13 +24,8 @@ import {
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /**
- * Le bandeau de chêne en trois zones : le retour, le jeu (pictogramme, titre,
- * règles) et où l'on en est (« Manche N », « Set M »).
- *
- * Portrait : le bloc central s'empile (titre, sous-titre, puis DI / DO sous le
- * sous-titre). **Paysage** : il tient en UNE rangée (pictogramme, titre,
- * sous-titre, DI, DO), « Manche N » et « Set M » côte à côte à droite — la
- * hauteur est ce qui manque, le pavé est déjà au plancher de 48 px.
+ * Le bandeau du X01 : DI / DO en complément du sous-titre, « Manche N » et
+ * « Set M » à droite (le set seulement quand la partie en compte).
  */
 const EnTeteManche = ({
   config,
@@ -42,55 +36,28 @@ const EnTeteManche = ({
   readonly legNumber: number
   readonly setNumber: number
 }) => (
-  <>
-    <Link
-      to="/"
-      aria-label="Retour à l’accueil"
-      className="grave -ml-1 flex size-10 shrink-0 items-center justify-center text-craie-2 active:bg-craie/15"
-    >
-      <ArrowLeft aria-hidden="true" className="size-5" />
-    </Link>
-
-    <div className="flex min-w-0 flex-1 items-center gap-2">
-      <Pictogramme nom="x01" taille={24} className="shrink-0 text-accent-mode-clair" />
-
-      <div className="flex min-w-0 flex-col paysage:flex-row paysage:items-center paysage:gap-x-3">
-        <p className="grave font-score text-lg font-bold uppercase leading-none tracking-[0.12em] text-accent-mode-clair">
-          {TITRE_BANDEAU_X01}
-        </p>
-
-        <p className="grave chiffres truncate text-etiquette font-semibold uppercase leading-4 tracking-[0.08em] text-craie-2">
-          {sousTitreBandeauX01(config.startingScore, config.legsToWin)}
-        </p>
-
-        {(config.doubleIn || config.doubleOut) && (
-          <span className="mt-0.5 flex gap-1 paysage:mt-0">
-            {config.doubleIn && (
-              <span className="grave border border-accent-mode/50 px-1.5 font-score text-etiquette uppercase leading-4 tracking-wider text-accent-mode-clair">
-                DI
-              </span>
-            )}
-            {config.doubleOut && (
-              <span className="grave border border-accent-mode/50 px-1.5 font-score text-etiquette uppercase leading-4 tracking-wider text-accent-mode-clair">
-                DO
-              </span>
-            )}
-          </span>
+  <BandeauMatch
+    pictogramme="x01"
+    titre={TITRE_BANDEAU_X01}
+    sousTitre={sousTitreBandeauX01(config.startingScore, config.legsToWin)}
+    complement={
+      (config.doubleIn || config.doubleOut) && (
+        <>
+          {config.doubleIn && <BadgeBandeau>DI</BadgeBandeau>}
+          {config.doubleOut && <BadgeBandeau>DO</BadgeBandeau>}
+        </>
+      )
+    }
+    droite={
+      <>
+        <span className="whitespace-nowrap">{libelleMancheEnCours(legNumber + 1)}</span>
+        {config.setsToWin > 1 && (
+          <span className="whitespace-nowrap">{libelleSetEnCours(setNumber + 1)}</span>
         )}
-      </div>
-    </div>
-
-    {/* Où l'on en est : en craie, comme la planche. Le laiton reste au repère
-        du joueur qui lance et au rail du pavé. */}
-    <div className="grave flex shrink-0 flex-col items-end font-score text-etiquette font-semibold uppercase leading-4 tracking-[0.14em] text-craie-2 paysage:flex-row paysage:gap-x-3">
-      <span className="whitespace-nowrap">{libelleMancheEnCours(legNumber + 1)}</span>
-      {config.setsToWin > 1 && (
-        <span className="whitespace-nowrap">{libelleSetEnCours(setNumber + 1)}</span>
-      )}
-    </div>
-  </>
+      </>
+    }
+  />
 )
-
 export const X01Ecran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId
