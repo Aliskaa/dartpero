@@ -3,12 +3,15 @@ import { Download } from 'lucide-react'
 import { Link } from 'react-router'
 import type { MatchSummary } from '@/core/application/ports/driving/MatchSummary'
 import { matchStatus } from '@/core/application/use-cases/summarize'
+import { quandCarte } from '@/ui/cartesPartie'
 import { cheminNouvellePartie, ETAT_PARCOURS } from '@/ui/chemins'
 import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { Button, classesBouton } from '@/ui/composants/commun/Button'
 import { CartePartie } from '@/ui/composants/commun/CartePartie'
 import { MessageErreur, Skeleton } from '@/ui/composants/commun/Etats'
+import { FeuillePartie } from '@/ui/composants/commun/FeuillePartie'
 import { LogoHero } from '@/ui/composants/commun/Logo'
+import { MiniTableauPartie } from '@/ui/composants/commun/MiniTableauPartie'
 import { usePreference } from '@/ui/hooks/useAppareil'
 import {
   CLE_INSTALLATION_ECARTEE,
@@ -18,7 +21,6 @@ import {
 import { useJoueurs, useProfils } from '@/ui/hooks/useJoueurs'
 import { groupeDeJour } from '@/ui/jourCalendaire'
 import {
-  dateHeure,
   LIBELLE_AUCUNE_PARTIE_ENCORE,
   LIBELLE_AUCUNE_PARTIE_SEMAINE,
   LIBELLE_CHARGEMENT_PARTIES,
@@ -27,7 +29,7 @@ import {
   LIBELLE_INSTALLER,
   LIBELLE_PLUS_TARD,
   LIBELLE_TOUTES_LES_PARTIES,
-  libelleQuand,
+  libelleJourDuGroupe,
   TEXTE_INVITATION_INSTALLATION,
   TITRE_AUJOURDHUI,
   TITRE_CETTE_SEMAINE,
@@ -127,22 +129,14 @@ export const AccueilEcran = () => {
     if (groupe) parGroupe[groupe].push(partie)
   }
 
-  const quand = (partie: MatchSummary): string => {
-    const groupe = groupeDeJour(partie.createdAt, maintenant)
-    return groupe
-      ? libelleQuand(partie.createdAt, groupe === 'AUJOURDHUI')
-      : dateHeure(partie.createdAt)
-  }
-
-  const carte = (partie: MatchSummary, reprise = false) => (
+  const carte = (partie: MatchSummary) => (
     <CartePartie
       key={partie.id}
       partie={partie}
       statut={matchStatus(partie, enCoursId)}
       profils={profils}
-      quand={quand(partie)}
+      quand={quandCarte(partie.createdAt, maintenant, 'accueil')}
       niveauTitre={3}
-      reprise={reprise}
     />
   )
 
@@ -212,15 +206,31 @@ export const AccueilEcran = () => {
               <>
                 {/* Les cartes sont des `h3` : sans ce titre, la page sauterait de `h1` à `h3`. */}
                 <h2 className="sr-only">{TITRE_PARTIE_EN_COURS}</h2>
-                <ul className="flex flex-col gap-3">{carte(enCours, true)}</ul>
+                <ul>
+                  <MiniTableauPartie
+                    partie={enCours}
+                    profils={profils}
+                    quand={quandCarte(enCours.createdAt, maintenant, 'accueil')}
+                    niveauTitre={3}
+                  />
+                </ul>
               </>
             )}
             {groupes.map(({ cle, titre, parties }) => (
               <section key={cle} aria-labelledby={`accueil-${cle}`} className="flex flex-col gap-3">
-                <h2 id={`accueil-${cle}`} className="entete-colonne text-craie-3">
+                <h2
+                  id={`accueil-${cle}`}
+                  className="flex items-baseline gap-2 font-score text-etiquette font-bold uppercase tracking-[0.2em] text-craie-3"
+                >
                   {titre}
+                  {/* Le jour seul : « Aujourd'hui » le dit déjà aux lecteurs d'écran. */}
+                  {cle === 'AUJOURDHUI' && (
+                    <span aria-hidden="true" className="font-medium tracking-[0.1em]">
+                      {libelleJourDuGroupe(maintenant)}
+                    </span>
+                  )}
                 </h2>
-                <ul className="flex flex-col gap-3">{parties.map((partie) => carte(partie))}</ul>
+                <FeuillePartie>{parties.map((partie) => carte(partie))}</FeuillePartie>
               </section>
             ))}
             {lienToutesLesParties && <div>{lienParties}</div>}

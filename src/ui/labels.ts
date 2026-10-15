@@ -362,15 +362,6 @@ export const dateCourte = (horodatage: number): string =>
     year: 'numeric',
   })
 
-/** Une partie se repère à sa soirée : la date seule ne suffit pas à distinguer. */
-export const dateHeure = (horodatage: number): string =>
-  new Date(horodatage).toLocaleString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-
 /* ------------------------------------------------------------------------
  * Le nom d'une partie (lot `nom-de-partie`).
  * ---------------------------------------------------------------------- */
@@ -485,41 +476,117 @@ export const TITRE_PARTIE_EN_COURS = 'Partie en cours'
 
 export const libelleGagne = (nom: string): string => `${nom} gagne`
 
-/* Les règles d'une carte de partie, par mode : des primitives, jamais un `MatchSummary`. */
+/* ------------------------------------------------------------------------
+ * Les cartes de partie (lot `cartes-partie`) : la ligne de feuille et le mini
+ * tableau. Des primitives, jamais un `MatchSummary` : c'est `cartesPartie.ts`
+ * qui ouvre l'union et appelle ces fonctions.
+ * ---------------------------------------------------------------------- */
 
-export const reglesTourDuMonde = (premiereCible: number | string): string =>
-  `Tour du monde · ${premiereCible} → bulle`
+/**
+ * Les règles d'une carte, **sans le nom du jeu** (la colonne de gauche le dit
+ * déjà par son pictogramme). Ni double out ni double in : le titre reste court.
+ */
+export const reglesCarteX01 = (score: number, legsToWin: number, setsToWin: number): string =>
+  setsToWin > 1
+    ? `${score} · ${setsToWin} sets · ${libelleLegs(legsToWin)}`
+    : `${score} · ${libelleLegs(legsToWin)}`
 
-export const reglesCricket = (variante: 'STANDARD' | 'CUT_THROAT', cibles: number): string =>
-  `Cricket ${LIBELLE_VARIANTE_CRICKET[variante]} · ${cibles} cibles`
+/** X01 fini : « Kevin gagne en 3 manches » (« en 1 manche » au singulier). */
+export const parleGagneEnManches = (nom: string, manches: number): string =>
+  `${libelleGagne(nom)} en ${pluriel(manches, 'manche')}`
 
-export const reglesEntrainement = (sorties: number, min: number, max: number): string =>
-  `Entraînement · ${sorties} sorties · ${min} à ${max}`
+export const reglesCarteTourDuMonde = (
+  premiere: number | 'BULL',
+  derniere: number | 'BULL',
+): string =>
+  `${premiere === 'BULL' ? 'bulle' : premiere} → ${derniere === 'BULL' ? 'bulle' : derniere}`
 
-export const reglesX01 = (options: {
-  readonly score: number
-  readonly legsToWin: number
-  readonly setsToWin: number
-  readonly doubleOut: boolean
-  readonly doubleIn: boolean
-}): string =>
-  [
-    `X01 · ${options.score}`,
-    libelleFormat(options.legsToWin, options.setsToWin),
-    ...(options.doubleOut ? ['double out'] : []),
-    ...(options.doubleIn ? ['double in'] : []),
-  ].join(' · ')
+export const reglesCarteEntrainement = (sorties: number, min: number, max: number): string =>
+  `${pluriel(sorties, 'sortie')} · ${min} à ${max}`
 
-/** X01 : tous sets confondus. « 0 manche jouée » au départ. */
-export const libelleManchesDePartie = (nombre: number): string =>
-  pluriel(nombre, 'manche jouée', 'manches jouées')
+/** Le détail de la colonne de gauche : « 501 », « STD » / « CT », « 20→B », « 41-170 ». */
+export const detailCarteX01 = (score: number): string => String(score)
 
-/** X01 terminé : le vainqueur, puis les manches jouées (« Julien gagne · 5 manches »). */
-export const libelleGagneEnManches = (nom: string, manches: number): string =>
-  `${libelleGagne(nom)} · ${pluriel(manches, 'manche', 'manches')}`
+export const DETAIL_CARTE_CRICKET: Record<'STANDARD' | 'CUT_THROAT', string> = {
+  STANDARD: 'STD',
+  CUT_THROAT: 'CT',
+}
 
-export const libelleSorties = (reussies: number, jouees: number): string =>
-  `${reussies} / ${jouees} sorties`
+export const detailCarteTourDuMonde = (
+  premiere: number | 'BULL',
+  derniere: number | 'BULL',
+): string => `${premiere === 'BULL' ? 'B' : premiere}→${derniere === 'BULL' ? 'B' : derniere}`
+
+export const detailCarteEntrainement = (min: number, max: number): string => `${min}-${max}`
+
+/** L'unité du jeu, sous le détail : les chiffres de la ligne ne la répètent pas. */
+export const UNITE_CARTE: Record<GameModeId, string> = {
+  X01: 'reste',
+  CRICKET: 'pts',
+  TOUR_DU_MONDE: 'fl.',
+  CHECKOUT_PRACTICE: 'sorties',
+}
+
+/** Le petit suffixe du chiffre d'un mini tableau, au Tour du monde une fois bouclé. */
+export const SUFFIXE_FLECHETTES = ' fl.'
+
+/** « Manche 3 », « Set 2 · manche 4 » : toujours sur toute la partie, tous sets confondus. */
+export const libelleEtatX01 = (mancheEnCours: number, setEnCours: number | null): string =>
+  setEnCours === null
+    ? libelleMancheEnCours(mancheEnCours)
+    : `${libelleSetEnCours(setEnCours)} · ${libelleMancheEnCours(mancheEnCours).toLowerCase()}`
+
+/** Tour du monde : quelqu'un a bouclé, les autres jouent leur dernière volée. */
+export const LIBELLE_ETAT_DERNIER_TOUR = 'Dernier tour'
+
+export const libelleEtatEntrainement = (sortieEnCours: number): string => `Sortie ${sortieEnCours}`
+
+/** Au-delà de ce nombre, les carrés de manches (ou de sets) laissent place à « 3/10 ». */
+export const SEUIL_CARRES_JAUGE = 5
+
+/** « 3/10 » : la jauge en chiffres quand les carrés ne tiennent plus. */
+export const libelleFraction = (numerateur: number, denominateur: number): string =>
+  `${numerateur}/${denominateur}`
+
+/* Les phrases des lecteurs d'écran : « Sarah gagne, 86 points ; Kevin 61 ; Julien 22 ». */
+
+/** L'unité n'est dite qu'à la première occurrence d'une suite de même unité. */
+export const parleReste = (reste: number, avecUnite: boolean): string =>
+  avecUnite ? `reste ${reste}` : String(reste)
+
+export const parlePoints = (points: number, avecUnite: boolean): string =>
+  avecUnite ? pluriel(points, 'point') : String(points)
+
+export const parleFlechettes = (flechettes: number, avecUnite: boolean): string =>
+  avecUnite ? pluriel(flechettes, 'fléchette') : String(flechettes)
+
+export const parleCibles = (validees: number, total: number, avecUnite: boolean): string =>
+  avecUnite ? `${pluriel(validees, 'cible')} sur ${total}` : `${validees} sur ${total}`
+
+/** Un ratio sans occasion s'affiche « — », jamais « 0/0 ». */
+export const VALEUR_ABSENTE = '—'
+
+/** Entraînement sans sortie jouée : « Kevin, aucune sortie jouée ». */
+export const parleAucuneSortie = (): string => ', aucune sortie jouée'
+
+export const parleSorties = (reussies: number, jouees: number): string =>
+  `${pluriel(reussies, 'sortie réussie', 'sorties réussies')} sur ${jouees}`
+
+/** Une partie finie sans vainqueur, dite en tête de phrase (« Match nul, Julien 48 fléchettes ; … »). */
+export const parleSansVainqueur = (mode: GameModeId): string =>
+  mode === 'TOUR_DU_MONDE' ? LIBELLE_MATCH_NUL : LIBELLE_TERMINEE
+
+export const parleGagne = (nom: string, valeur: string | null): string =>
+  valeur === null ? libelleGagne(nom) : `${libelleGagne(nom)}, ${valeur}`
+
+/** Une valeur qui s'ouvre sur une virgule (« , aucune sortie jouée ») se colle au nom. */
+export const parleJoueur = (nom: string, valeur: string): string =>
+  valeur.startsWith(',') ? `${nom}${valeur}` : `${nom} ${valeur}`
+
+export const parlePhrase = (tete: string | null, joueurs: readonly string[]): string => {
+  const liste = joueurs.join(' ; ')
+  return tete === null ? liste : `${tete}, ${liste}`
+}
 
 /** « 21 h 04 » — l'heure **locale**, deux chiffres aux minutes. */
 export const heureCourte = (horodatage: number): string => {
@@ -527,11 +594,28 @@ export const heureCourte = (horodatage: number): string => {
   return `${date.getHours()} h ${String(date.getMinutes()).padStart(2, '0')}`
 }
 
-/** « 21 h 04 » aujourd'hui, « mardi 21 h 10 » dans la semaine. */
-export const libelleQuand = (horodatage: number, aujourdhui: boolean): string =>
-  aujourdhui
-    ? heureCourte(horodatage)
-    : `${(JOURS[new Date(horodatage).getDay()] ?? '').toLowerCase()} ${heureCourte(horodatage)}`
+/** Les jours abrégés, indexés par `getDay()` : 0 = dim. */
+export const JOURS_COURTS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'] as const
+
+/** « dim. 18 h 10 » : le jour de la semaine, puis l'heure. */
+export const libelleJourEtHeure = (horodatage: number): string =>
+  `${JOURS_COURTS[new Date(horodatage).getDay()] ?? ''} ${heureCourte(horodatage)}`
+
+/** « · mardi » : le jour seul, à côté de « Aujourd'hui » (une journée peut mêler après-midi et soir). */
+export const libelleJourDuGroupe = (maintenant: number): string =>
+  `· ${(JOURS[new Date(maintenant).getDay()] ?? '').toLowerCase()}`
+
+/**
+ * « 3 oct. 22 h 15 » ; quand l'année diffère de celle de `maintenant`,
+ * « 3 oct. 2025 » (l'heure tombe). `Date` ne sert que de calendrier sur un
+ * horodatage donné : l'heure courante vient de `services.clock`.
+ */
+export const libelleDateDeCarte = (horodatage: number, maintenant: number): string => {
+  const date = new Date(horodatage)
+  if (date.getFullYear() !== new Date(maintenant).getFullYear()) return dateCourte(horodatage)
+  const jourMois = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  return `${jourMois} ${heureCourte(horodatage)}`
+}
 
 /** « 3 parties », « 1 partie » — l'accord au singulier revient partout. */
 export const pluriel = (nombre: number, singulier: string, pluriel = `${singulier}s`): string =>

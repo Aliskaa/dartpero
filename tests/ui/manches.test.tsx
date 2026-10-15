@@ -93,7 +93,7 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
 
     renderWithServices(<App />, { services, route: '/' })
     await screen.findByRole('link', { name: /Reprendre/ })
-    expect(screen.getByText('1 manche jouée')).toBeInTheDocument()
+    expect(screen.getByText(/manche 2/)).toBeInTheDocument()
     sansLeg()
   })
 
@@ -102,7 +102,10 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     await partieASets(services)
 
     renderWithServices(<App />, { services, route: '/historique' })
-    await screen.findAllByRole('listitem')
+    const lignes = await screen.findAllByRole('listitem')
+    // Seule partie, non finie : c'est la partie en cours, et sa ligne le dit.
+    expect(lignes).toHaveLength(1)
+    expect(lignes[0]).toHaveTextContent('En cours')
     sansLeg()
   })
 

@@ -4,13 +4,15 @@ import { useState } from 'react'
 import { matchStatus } from '@/core/application/use-cases/summarize'
 import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import type { MatchId } from '@/core/domain/value-objects/ids'
+import { quandCarte } from '@/ui/cartesPartie'
 import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { CartePartie } from '@/ui/composants/commun/CartePartie'
 import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { EmptyState, MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
+import { FeuillePartie } from '@/ui/composants/commun/FeuillePartie'
 import { useProfils } from '@/ui/hooks/useJoueurs'
-import { dateHeure, LIBELLE_MODE, LIBELLE_MODE_COURT, pluriel } from '@/ui/labels'
+import { LIBELLE_MODE, LIBELLE_MODE_COURT, pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
 /**
@@ -44,15 +46,16 @@ const BoutonSupprimer = ({ onSupprimer }: { readonly onSupprimer: () => Promise<
         await onSupprimer()
       }}
       className={[
-        'flex min-h-12 min-w-12 shrink-0 items-center justify-center gap-2 border-l-2 px-3',
-        'font-score text-sm font-bold uppercase tracking-widest transition-colors',
+        // 48 px de large, toujours : l'état « à confirmer » ne se distingue que par le fond et
+        // l'icône, il ne comprime jamais la ligne.
+        'flex min-h-12 w-12 min-w-12 shrink-0 items-center justify-center border-l-2',
+        'transition-colors',
         confirme
           ? 'border-rouge-cible bg-rouge-cible/30 text-craie-vive'
           : 'border-rouge-cible/50 bg-rouge-cible/10 text-craie-2',
       ].join(' ')}
     >
       <Trash2 aria-hidden="true" className="size-4" />
-      {confirme && 'Sûr ?'}
     </button>
   )
 }
@@ -92,6 +95,8 @@ export const HistoriqueEcran = () => {
   }
 
   const parties = historique.data ?? []
+  // L'heure par l'horloge injectée, jamais `Date.now()`.
+  const maintenant = services.clock.now()
 
   return (
     <main className="flex flex-1 flex-col gap-4 pb-4">
@@ -133,18 +138,19 @@ export const HistoriqueEcran = () => {
             />
           )
         ) : (
-          <ul className="flex flex-col gap-3">
+          <FeuillePartie>
             {parties.map((partie) => (
               <CartePartie
                 key={partie.id}
                 partie={partie}
                 statut={matchStatus(partie, enCoursId)}
                 profils={profils}
-                quand={dateHeure(partie.createdAt)}
+                quand={quandCarte(partie.createdAt, maintenant, 'parties')}
+                marquerEnCours
                 actions={<BoutonSupprimer onSupprimer={() => supprimer(partie.id)} />}
               />
             ))}
-          </ul>
+          </FeuillePartie>
         )}
       </div>
     </main>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { quandCarte } from '@/ui/cartesPartie'
 import { groupeDeJour } from '@/ui/jourCalendaire'
-import { heureCourte, libelleQuand } from '@/ui/labels'
+import { heureCourte, libelleJourDuGroupe } from '@/ui/labels'
 
 /** Un instant en heure **locale** (mois 0-indexé, comme `Date`). */
 const le = (mois: number, jour: number, heure = 0, minute = 0): number =>
@@ -93,9 +94,27 @@ describe('heure et jour affichés', () => {
     expect(heureCourte(le(OCT, 13, 0, 5))).toBe('0 h 05')
   })
 
-  it('aujourd’hui : l’heure seule ; dans la semaine : le jour, en minuscules', () => {
-    expect(libelleQuand(le(OCT, 13, 21, 4), true)).toBe('21 h 04')
-    expect(libelleQuand(le(OCT, 12, 21, 10), false)).toBe('lundi 21 h 10')
-    expect(libelleQuand(le(OCT, 7, 20, 10), false)).toBe('mercredi 20 h 10')
+  it('l’Accueil : l’heure seule aujourd’hui ; dans la semaine, le jour abrégé', () => {
+    expect(quandCarte(le(OCT, 13, 21, 4), MAINTENANT, 'accueil')).toBe('21 h 04')
+    expect(quandCarte(le(OCT, 12, 21, 10), MAINTENANT, 'accueil')).toBe('lun. 21 h 10')
+    expect(quandCarte(le(OCT, 7, 20, 10), MAINTENANT, 'accueil')).toBe('mer. 20 h 10')
+  })
+
+  it('Parties : le jour abrégé dès aujourd’hui, la date au-delà de la semaine', () => {
+    expect(quandCarte(le(OCT, 13, 21, 4), MAINTENANT, 'parties')).toBe('mar. 21 h 04')
+    expect(quandCarte(le(OCT, 3, 22, 15), MAINTENANT, 'parties')).toBe('3 oct. 22 h 15')
+  })
+
+  it('une autre année : l’année s’ajoute et l’heure tombe', () => {
+    expect(quandCarte(new Date(2025, 9, 3, 22, 15).getTime(), MAINTENANT, 'parties')).toBe(
+      '3 oct. 2025',
+    )
+    expect(quandCarte(new Date(2025, 9, 3, 22, 15).getTime(), MAINTENANT, 'accueil')).toBe(
+      '3 oct. 2025',
+    )
+  })
+
+  it('le jour du groupe « Aujourd’hui » : « · mardi »', () => {
+    expect(libelleJourDuGroupe(MAINTENANT)).toBe('· mardi')
   })
 })

@@ -84,6 +84,7 @@ describe('Parcours complet', () => {
 
     const carte = await screen.findByRole('link', { name: /Reprendre/ })
     expect(carte).toHaveAttribute('href', expect.stringMatching(/^\/partie\/[^/]+$/))
-    expect(carte).toHaveTextContent('X01 · 501')
+    expect(carte).toHaveTextContent('X01')
+    expect(carte).toHaveTextContent('501 · premier à 2 manches')
   })
 })

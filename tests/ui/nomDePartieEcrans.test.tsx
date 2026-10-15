@@ -256,8 +256,11 @@ describe('Nom de la partie — à l’écran', () => {
     expect(lignes[0]).toHaveClass('h-4')
   })
 
-  /** Critères 4 et 7 : l'historique titre chaque carte de son nom. */
-  it('l’historique titre les cartes : nom tapé, défaut, partie d’avant le lot', async () => {
+  /**
+   * Critères 4 et 7, puis `cartes-partie` : seul un nom TAPÉ titre une ligne ; sans
+   * nom (défaut ou partie d'avant le lot), le titre est la règle du jeu, jamais « Dimanche soir ».
+   */
+  it('l’historique titre les lignes du nom tapé seulement, jamais du nom par défaut', async () => {
     const { services, dependencies, joueurs } = await base()
     await lancer(services, 'CRICKET', joueurs('CRICKET'), 'Finale des potes')
     await lancer(services, 'X01', joueurs('X01'))
@@ -284,9 +287,9 @@ describe('Nom de la partie — à l’écran', () => {
     const titres = (await screen.findAllByRole('heading', { level: 2 })).map(
       (titre) => titre.textContent,
     )
-    expect(titres).toEqual(
-      expect.arrayContaining(['Finale des potes', 'Dimanche soir', 'Samedi après-midi']),
-    )
+    expect(titres).toHaveLength(3)
+    expect(titres).toContain('Finale des potes')
+    expect(titres.join(' ')).not.toMatch(/soir|après-midi|matin|nuit/i)
   })
 
   /** Critère 9, de bout en bout : « On remet ça » garde le nom tapé. */

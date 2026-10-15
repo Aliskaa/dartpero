@@ -19,7 +19,6 @@ import {
   JOUEUR_SUPPRIME,
   LIBELLE_CHARGEMENT_PARTIES,
   LIBELLE_ERREUR_ACCUEIL,
-  libelleGagneEnManches,
   TITRE_PARTIE_EN_COURS,
 } from '@/ui/labels'
 import { fakeServices, SettableClock } from '../fakes'
@@ -94,7 +93,7 @@ describe('Accueil — parties récentes, groupées par jour', () => {
 
     const semaine = screen.getByRole('region', { name: 'Cette semaine' })
     expect(within(semaine).getByRole('heading', { name: 'Mercredi dernier' })).toBeVisible()
-    expect(within(semaine).getByText(/mercredi 20 h 10/)).toBeInTheDocument()
+    expect(within(semaine).getByText(/mer\. 20 h 10/)).toBeInTheDocument()
 
     expect(screen.queryByText('Trop vieille')).not.toBeInTheDocument()
   })
@@ -241,8 +240,14 @@ describe('Accueil — la partie en cours', () => {
 
       // Le badge parle à la place du statut : jamais « En cours » à côté.
       expect(carte(/Ancienne/)).not.toHaveTextContent('En cours')
-      // La dernière dit son avancement : « En cours », ou les manches au X01.
-      expect(carte(/Dernière/)).toHaveTextContent(mode === 'X01' ? '0 manche jouée' : 'En cours')
+      // La dernière, épinglée en mini tableau, dit son avancement par mode.
+      const ETAT = {
+        X01: 'Manche 1',
+        CRICKET: 'En cours',
+        TOUR_DU_MONDE: 'En cours',
+        CHECKOUT_PRACTICE: 'Sortie 1',
+      } as const
+      expect(carte(/Dernière/)).toHaveTextContent(ETAT[mode])
     },
   )
 
@@ -303,22 +308,25 @@ describe('Accueil — la carte : ✓, liseré, vainqueur', () => {
   })
 
   it.each(GAME_MODE_IDS)(
-    '%s : le liseré de la carte est en laiton, pour tous les jeux',
+    '%s : le mode se dit par son pictogramme en laiton-clair, pour tous les jeux',
     async (mode) => {
       const { services, enCours } = await base()
-      await enCours(le(OCT, 13, 12, 0), mode, 'Colorée')
+      await enCours(le(OCT, 13, 11, 0), mode, 'Colorée')
+      await enCours(le(OCT, 13, 12, 0), mode, 'Épinglée')
 
       ouvrir(services)
-      const lien = await screen.findByRole('link', { name: /Colorée/ })
+      const ligne = await screen.findByRole('link', { name: /Colorée/ })
+      const epinglee = screen.getByRole('link', { name: /Épinglée/ })
 
       // Une classe de token, pas une valeur en ligne : plus aucune teinte par jeu
       // (la relecture à l'écran juge le rendu).
-      expect(lien).toHaveClass('border-l-4', 'border-laiton')
-      expect(lien.getAttribute('style') ?? '').not.toContain('border-left')
+      expect(ligne.querySelector('svg.text-laiton-clair')).not.toBeNull()
+      expect(epinglee.querySelector('svg.text-laiton-clair')).not.toBeNull()
+      expect(ligne.getAttribute('style') ?? '').toBe('')
     },
   )
 
-  it('X01 terminé : « Julien gagne · N manches », pluriel juste', async () => {
+  it('X01 terminé : « Kevin gagne en 3 manches », pluriel juste', async () => {
     const { services, kevin, julien, a } = await base()
     const id = await a(le(OCT, 13, 20, 0), () =>
       services.startMatch.execute({
@@ -337,13 +345,10 @@ describe('Accueil — la carte : ✓, liseré, vainqueur', () => {
     ouvrir(services)
     await screen.findByRole('region', { name: 'Aujourd’hui' })
 
-    expect(carte(/Duel/)).toHaveTextContent('Kevin gagne · 3 manches')
+    // Le texte de statut a quitté l'écran (décision E) : le premier, en laiton avec
+    // son « ✓ », le dit ; les lecteurs d'écran gardent la phrase complète.
+    expect(carte(/Duel/)).toHaveTextContent('Kevin gagne en 3 manches')
     expect(carte(/Duel/)).not.toHaveTextContent('jouée')
-  })
-
-  it('le libellé s’accorde : 1 manche, 5 manches', () => {
-    expect(libelleGagneEnManches('Julien', 1)).toBe('Julien gagne · 1 manche')
-    expect(libelleGagneEnManches('Julien', 5)).toBe('Julien gagne · 5 manches')
   })
 
   it('X01 terminé dont le vainqueur est supprimé : le nom neutre, comme au Cricket', async () => {
@@ -354,13 +359,13 @@ describe('Accueil — la carte : ✓, liseré, vainqueur', () => {
     ouvrir(services)
     await screen.findByRole('heading', { name: 'Orpheline' })
 
-    expect(carte(/Orpheline/)).toHaveTextContent(libelleGagneEnManches(JOUEUR_SUPPRIME, 1))
+    expect(carte(/Orpheline/)).toHaveTextContent(`${JOUEUR_SUPPRIME} gagne`)
   })
 })
 
 describe('Accueil — les statuts par mode', () => {
   /** Critères 3 et 4. */
-  it('X01 : « N manches jouées », tous sets confondus', async () => {
+  it('X01 : « Set S · manche N » dans le mini tableau, tous sets confondus', async () => {
     const { services, kevin, a } = await base()
     const id = await a(le(OCT, 13, 20, 0), () =>
       services.startMatch.execute({
@@ -372,14 +377,15 @@ describe('Accueil — les statuts par mode', () => {
     const sortir = () => services.recordVisit.execute({ matchId: id, darts: [Dart.double(20)] })
 
     const { unmount } = ouvrir(services)
-    expect(await screen.findByText('0 manche jouée')).toBeInTheDocument()
+    expect(await screen.findByText('Set 1 · manche 1')).toBeInTheDocument()
     unmount()
 
+    // Deux manches font un set ; la troisième ouvre le set 2 : 3 manches jouées.
     await sortir()
     await sortir()
     await sortir()
     ouvrir(services)
-    expect(await screen.findByText('3 manches jouées')).toBeInTheDocument()
+    expect(await screen.findByText('Set 2 · manche 4')).toBeInTheDocument()
   })
 
   it('Tour du monde, Cricket et entraînement : « En cours », puis le résultat', async () => {
@@ -440,7 +446,7 @@ describe('Accueil — les statuts par mode', () => {
     expect(carte(/TdM gagné/)).toHaveTextContent('Kevin gagne')
     expect(carte(/TdM nul/)).toHaveTextContent('Match nul')
     expect(carte(/Cricket gagné/)).toHaveTextContent('Kevin gagne')
-    expect(carte(/Exercice fini/)).toHaveTextContent('0 / 1 sorties')
+    expect(carte(/Exercice fini/)).toHaveTextContent('0/1')
     expect(carte(/TdM en cours/)).toHaveTextContent('En cours')
 
     // Terminées : le résumé. Sinon : la partie.
@@ -1107,7 +1113,35 @@ describe('Historique — le même statut qu’à l’Accueil, même filtré par 
     const titre = await screen.findByRole('heading', { name: 'Finale', level: 2 })
     const li = titre.closest('li') as HTMLElement
     expect(within(li).getByRole('link')).toHaveAttribute('href', `/partie/${id}/resume`)
-    expect(li).toHaveTextContent('Kevin gagne · 1 manche')
-    expect(within(li).getByRole('button', { name: 'Supprimer la partie' })).toBeInTheDocument()
+    expect(li).toHaveTextContent('Kevin gagne')
+    const corbeille = within(li).getByRole('button', { name: 'Supprimer la partie' })
+    expect(corbeille).toBeInTheDocument()
+    // Sa propre cible, ≥ 48 px, sœur du lien et non son enfant.
+    expect(corbeille).toHaveClass('min-h-12', 'min-w-12')
+    expect(within(li).getByRole('link')).not.toContainElement(corbeille)
+  })
+
+  it('la confirmation garde 48 px de large, sans texte « Sûr ? », en deux temps', async () => {
+    const utilisateur = userEvent.setup()
+    const { services, x01Termine } = await base()
+    await x01Termine(le(OCT, 13, 20, 0), 'Finale')
+
+    ouvrir(services, '/historique')
+    const li = (await screen.findByRole('heading', { name: 'Finale', level: 2 })).closest(
+      'li',
+    ) as HTMLElement
+
+    await utilisateur.click(within(li).getByRole('button', { name: 'Supprimer la partie' }))
+    const confirmer = within(li).getByRole('button', {
+      name: 'Confirmer la suppression de la partie',
+    })
+    // Premier temps : rien n'est supprimé, aucun texte n'élargit le bouton.
+    expect(within(li).queryByText('Sûr ?')).not.toBeInTheDocument()
+    expect(confirmer).toHaveClass('w-12', 'min-w-12', 'min-h-12', 'bg-rouge-cible/30')
+    expect(confirmer).toHaveTextContent('')
+    expect(await services.getMatchHistory.execute()).toHaveLength(1)
+
+    await utilisateur.click(confirmer)
+    expect(await screen.findByText(/rien au tableau/i)).toBeInTheDocument()
   })
 })

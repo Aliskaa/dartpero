@@ -142,9 +142,10 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `src/`.
 - `organizeImports` de Biome trie à l'enregistrement / au `lint:fix` — ne pas trier à la main.
 - **Ce que l'UI importe du cœur** : des types, des constantes (`GAME_MODE_IDS`, `STATS_PERIODS`)
-  et des **fonctions pures** (`X01Config.create`, `matchStatus`). `matchStatus`
-  (`use-cases/summarize.ts`, lot `accueil-parties-recentes`) est la seule fonction de
-  `use-cases/` importée hors du composition root. **Jamais** une classe `*UseCase` ni un port
+  et des **fonctions pures** (`X01Config.create`, `matchStatus`, `rankPlayers`). `matchStatus`
+  (`use-cases/summarize.ts`, lot `accueil-parties-recentes`) et `rankPlayers` / `leadingPlayers`
+  (`use-cases/rankPlayers.ts`, lot `cartes-partie`) sont les seules fonctions de
+  `use-cases/` importées hors du composition root. **Jamais** une classe `*UseCase` ni un port
   driven : toute I/O passe par `useServices()`.
 
 ## 9 · Composants UI
@@ -171,8 +172,9 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   L'appelant choisit le niveau du titre (`niveauTitre`) pour qu'il n'y ait **aucun saut** de
   niveau — au besoin un `h2` `sr-only` (le titre invisible de la partie épinglée à l'Accueil).
 - **Le français d'un composant qui ouvre une union** (les règles courtes d'une carte) vit dans
-  `labels.ts` sous forme de **constructeurs sur primitives** (`reglesX01`, `reglesCricket`…) ;
-  le `switch` exhaustif reste dans le composant, seul endroit qui ouvre l'union.
+  `labels.ts` sous forme de **constructeurs sur primitives** (`reglesCarteX01`,
+  `reglesCarteTourDuMonde`, `detailCarte*`, `parle*`…) ; le `switch` exhaustif vit dans
+  `src/ui/cartesPartie.ts` (`vueCarte`), seul endroit qui ouvre l'union pour une carte.
 
 ## 10 · Hooks (`ui/hooks/use<Mode>.ts`)
 
@@ -293,9 +295,10 @@ test le vérifie explicitement.
 - **`VisitRecorded` est partagé par tous les modes** : une volée, c'est 1 à 3 fléchettes, que
 l'on décompte un 501 ou que l'on remonte le plateau. Seule l'interprétation change.
 - **`MatchSummary` est une union discriminée**, pas un type mou : un Tour du monde n'a pas de
-score restant, un X01 n'a pas de cible courante. `CartePartie` (qui a remplacé `ApercuPartie`
-au lot `accueil-parties-recentes`) est le **seul** endroit de l'UI qui ouvre cette union, pour
-ne pas la disperser entre l'accueil et l'historique.
+score restant, un X01 n'a pas de cible courante. `src/ui/cartesPartie.ts`
+(`vueCarte`, lot `cartes-partie`) est le **seul** endroit de l'UI qui ouvre cette union pour une
+carte ; `CartePartie` et `MiniTableauPartie` n'affichent que sa vue, pour ne pas la disperser
+entre l'accueil et l'historique.
 - **Une seule URL par partie** (`/partie/:id`) : `PartieEcran` lit le mode et rend l'écran
 correspondant. Un lien d'historique reste valable quel que soit le jeu, et l'utilisateur n'a
 pas à savoir dans quel mode il reprend. Chaque mode a son **propre** écran plutôt qu'un écran
@@ -313,11 +316,11 @@ aiguillage de `games/index.ts`, un dossier `ui/composants/<mode>/`, un écran de
 résumé. Rien d'autre ne bouge — vérifié trois fois de suite (Tour du monde, Cricket,
 entraînement).
 
-⚠️ **Depuis le lot « accueil-parties-recentes »**, un mode doit aussi à `CartePartie` : son
-constructeur `regles*` dans `labels.ts` et sa
-branche dans les `switch` de la carte (règles courtes, texte de statut). Les `switch` au
-`default` typé `never` et les `it.each(GAME_MODE_IDS)` le signalent ; le **texte** des règles,
-lui, n'est gardé par aucun test (T1, dette d'audit).
+⚠️ **Depuis le lot « cartes-partie »**, un mode doit aussi aux cartes : ses constructeurs
+`reglesCarte*` / `detailCarte*` / `parle*` dans `labels.ts`, sa branche dans `vueCarte`
+(`src/ui/cartesPartie.ts` : détail, unité, règles, jauge, chiffre, phrase) et dans
+`rankPlayers` (le classement). Les `switch` au `default` typé `never` et les
+`it.each(GAME_MODE_IDS)` le signalent ; les textes sont testés dans `tests/ui/cartesPartie.test.tsx`.
 
 ⚠️ **Depuis le lot « bundle-par-route »** : un mode ajoute aussi son écran de jeu et son écran
 de résumé à la liste des `lazy()` de `src/ui/ecrans/games/PartieEcran.tsx` — sinon il revient
@@ -388,14 +391,15 @@ src/
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
 │     │                   PersistentStorage, AppInstallation
 │     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
-│                         + summarize.ts (summarize, nameIndex, matchStatus — seule
-│                           fonction de use-cases/ importée par l'UI)
+│                         + summarize.ts (summarize, nameIndex, matchStatus — fonction
+│                           pure de use-cases/ importée par l'UI)
+│                         + rankPlayers.ts (rankPlayers, leadingPlayers — idem : le
+│                           classement des joueurs d'une carte, jamais recalculé dans l'UI)
 │                         + nameField.ts (`{}` ou `{ name }` : jamais `name: undefined`)
 ├─ infrastructure/        dexie/ · device/ · memory/ · system/
 ├─ composition/           container.ts   ← seul point de câblage
 ├─ ui/
-│  ├─ composants/         commun/ (dont CartePartie, la carte de l'Accueil et de
-│  │                      Parties, qui ouvre l'union des modes, et DispositionPartie,
+│  ├─ composants/         commun/ (dont CartePartie, la ligne de feuille, MiniTableauPartie, FeuillePartie ; `ui/cartesPartie.ts` ouvre l'union ; et DispositionPartie,
 │  │                      l'ossature portrait/paysage)
 │  │                      x01/ · tour-du-monde/ · cricket/ · checkout-practice/
 │  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE

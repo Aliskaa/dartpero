@@ -284,6 +284,16 @@ résultat est petit et en bas.
   tirés de `MatchSummary` (`remaining`, `closedTargets` / `score`, `targetIndex` /
   `finishedInDarts`, `roundsWon`), sans toucher au cœur.
 
+**Cadrage du lot 7 `cartes-partie` (2026-10-15)** — planche à jour validée :
+<https://claude.ai/artifact/XH8i1UvuqNNSgC4cexEGMd>. Choix de l'utilisateur :
+- badges de moments **reportés** (pas de maquette, `MatchSummary` à étendre) ;
+- joueurs en **classement complet**, calculé hors de l'UI selon `CLAUDE.md` (cut-throat : le plus
+  petit score devant) ;
+- colonne du mode en **pictogramme + détail + unité** (au lieu du code texte) ;
+- laiton unique (lot 6b) ; en-tête de groupe au jour seul ; X01 à sets en carrés de manches et
+  traits de sets ; entraînement abandonné en « 4/7 » + « Abandonnée » ; texte de statut retiré de
+  l'écran, phrase complète gardée pour les lecteurs d'écran.
+
 ### Pictogrammes — validés
 
 Validés tels que dessinés sur la planche (« j'aime beaucoup ») ; trait et proportions

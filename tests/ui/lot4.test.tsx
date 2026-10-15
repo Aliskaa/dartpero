@@ -133,9 +133,10 @@ describe('Écran Parties', () => {
 
     renderWithServices(<App />, { services, route: '/historique' })
 
-    // Un X01 non terminé : ses manches jouées (le statut « En cours » est
-    // propre aux autres modes) ; la carte commune n'affiche plus les scores.
-    expect(await screen.findByText('0 manche jouée')).toBeInTheDocument()
+    // Un X01 non terminé, seul : c'est la partie en cours, marquée « En cours »
+    // (sans « Reprendre » : toute la ligne y mène déjà).
+    expect(await screen.findByText('En cours')).toBeInTheDocument()
+    expect(screen.queryByText('Reprendre')).not.toBeInTheDocument()
     expect(screen.queryByText(/abandonnée/i)).not.toBeInTheDocument()
 
     await utilisateur.click(screen.getByRole('button', { name: 'Supprimer la partie' }))

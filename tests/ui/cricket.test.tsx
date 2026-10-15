@@ -187,7 +187,13 @@ describe('Cricket — création et historique', () => {
     const parties = await screen.findAllByRole('listitem')
     const libelles = parties.map((partie) => partie.textContent ?? '')
 
-    expect(libelles.some((texte) => texte.includes('Cricket Standard'))).toBe(true)
+    // Le nom du jeu est dans la colonne de gauche (pictogramme) : la ligne ne garde que les règles.
+    expect(libelles.some((texte) => texte.includes('Standard · '))).toBe(true)
+    expect(libelles.some((texte) => texte.includes('STD'))).toBe(true)
+    // La ligne du Cricket (colonne « STD ») est celle qui porte « En cours ».
+    const ligne = libelles.find((texte) => texte.includes('STD'))
+    expect(ligne).toContain('Standard · ')
+    expect(ligne).toContain('En cours')
     // La carte commune dit l'avancement, plus le détail par joueur (le résumé le garde).
     expect(libelles.some((texte) => texte.includes('En cours'))).toBe(true)
   })

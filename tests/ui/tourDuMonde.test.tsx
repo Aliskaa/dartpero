@@ -356,11 +356,19 @@ describe('Couture GameMode — côté écrans', () => {
     const parties = await screen.findAllByRole('listitem')
     const libelles = parties.map((partie) => partie.textContent ?? '')
 
-    expect(libelles.some((texte) => texte.includes('Tour du monde'))).toBe(true)
-    expect(libelles.some((texte) => texte.includes('X01'))).toBe(true)
-    // Le X01 montre ses manches jouées, le Tour du monde « En cours ».
-    expect(libelles.some((texte) => texte.includes('0 manche jouée'))).toBe(true)
+    // Le mode se lit dans la colonne de gauche : son détail (« 20→B », « 501 »).
+    expect(libelles.some((texte) => texte.includes('20→B'))).toBe(true)
+    expect(libelles.some((texte) => texte.includes('501'))).toBe(true)
+    // Le Tour du monde, lancé en dernier, est la partie en cours ; le X01 est abandonné.
     expect(libelles.some((texte) => texte.includes('En cours'))).toBe(true)
+    expect(libelles.some((texte) => texte.includes('Abandonnée'))).toBe(true)
+    // Et chaque statut sur la bonne ligne.
+    const ligneMonde = libelles.find((texte) => texte.includes('20→B'))
+    const ligneX01 = libelles.find((texte) => texte.includes('501'))
+    expect(ligneMonde).toContain('En cours')
+    expect(ligneMonde).not.toContain('Abandonnée')
+    expect(ligneX01).toContain('Abandonnée')
+    expect(ligneX01).not.toContain('En cours')
   })
 
   it('laisse les statistiques de carrière au X01', async () => {
