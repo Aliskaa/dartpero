@@ -264,9 +264,9 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | Route | Écran | Lot |
 | --- | --- | --- |
 | `/` | Accueil — les parties récentes en cartes (« Aujourd'hui », « Cette semaine », 30 au plus), la partie en cours épinglée en tête avec *Reprendre*, *Nouvelle partie* fixé au-dessus de la barre ; invitation à installer, écartable (*Plus tard*) | 3 ✅ · cartes : `accueil-parties-recentes` ✅ |
-| `/nouvelle-partie` | Étape 1 : le jeu (X01, Cricket, Tour du monde, Entraînement) et le **nom de la partie** (prérempli « Dimanche soir », 30 caractères au plus) | `nouvelle-partie-en-etapes` ✅ · nom : `nom-de-partie` ✅ |
-| `/nouvelle-partie/:jeu` | Étape 2 : joueurs (rangée, menu « + ») et réglages du jeu (manches, sets, double in/out…) | `nouvelle-partie-en-etapes` ✅ |
-| `/nouvelle-partie/:jeu/ordre` | Étape 3 : ordre de jeu (glisser-déposer, ordre aléatoire), dès 2 joueurs | `nouvelle-partie-en-etapes` ✅ |
+| `/nouvelle-partie` | Étape 1 : le jeu en tuiles 2 × 2 (X01, Cricket, Tour du monde, Entraînement), barre d'étapes | `nouvelle-partie-en-etapes` ✅ · habillage : `nouvelle-partie-parcours` ✅ |
+| `/nouvelle-partie/:jeu` | Étape 2 : joueurs (rangée compacte, menu « + »), fiche de réglages du jeu (récap en grand, « Plus de réglages » replié au X01, « Les règles en entier ») et **nom de la partie** facultatif (prérempli « Dimanche soir », 30 caractères au plus) | `nouvelle-partie-en-etapes` ✅ · nom : `nom-de-partie` ✅ · fiche : `nouvelle-partie-parcours` ✅ |
+| `/nouvelle-partie/:jeu/ordre` | Étape 3 : ordre de jeu (feuille numérotée, glisser-déposer, « Tirer au sort » = mélange visible), dès 2 joueurs | `nouvelle-partie-en-etapes` ✅ · `nouvelle-partie-parcours` ✅ |
 | `/nouvelle-partie/:jeu/joueurs` | Sélectionner un joueur existant | `nouvelle-partie-en-etapes` ✅ |
 | `/partie/:id` | **Écran de partie** — le cœur de l'app | 3 ✅ |
 | `/partie/:id/resume` | Résumé de fin : vainqueur, stats du match, rejouer | 3 ✅ |
@@ -694,6 +694,15 @@ dans l'historique, en tête des résumés et sous le bandeau de jeu ; « Rejouer
 est dérivée, la même à l'Accueil et dans Parties, qui passe à la même carte. Le X01 gagne
 « manches jouées » ; un X01 terminé affiche « Kevin gagne · 3 manches ». Détail § 6 ;
 relecture sur appareil en § 0.
+
+### Lot « nouvelle-partie-parcours »
+
+✅ **Fait — 1091 tests verts** (+26). Barre d'étapes (non interactive), étape 1 en tuiles 2 × 2
+(le nom de la partie descend à l'étape 2), fiche de réglages par jeu (récap en grand, « Plus de
+réglages » replié au X01, « Les règles en entier »), feuille d'ordre numérotée et « Tirer au
+sort » en mélange visible (`ShuffleOrder`). Dettes : le flag `shuffle` des commandes de lancement
+n'a plus d'appelant UI ; la clé `partie:ordre-aleatoire` reste orpheline dans `localStorage`.
+Détail § 6.
 
 ---
 
@@ -1900,3 +1909,19 @@ source : `docs/prospective/2026-10-13-NEW-revision-charte-graphique.md`, maquett
   chacune faite (casser, voir rouge, restaurer). Tests : **805 → 815** (+10, tous de la garde).
 - ⚠️ **Angle mort** : troncatures à 0,75 rem (colonne « Manches », barre du bas, `Avatar` xs,
   `LigneCible`) et rendu du filet : à juger à l'écran, portrait et paysage, sombre et clair.
+
+
+### Lot `nouvelle-partie-parcours`
+
+- **Tirage** : port driving `ShuffleOrder` + `ShuffleOrderUseCase(random)` (réutilise `shufflePlayers`,
+  Fisher-Yates), câblé dans `container.ts`. Vrai hasard, aucune relance si l'ordre est identique ; la
+  feuille rejoue `animate-monter` à chaque tirage (`key` du `<ol>`), coupé sous `prefers-reduced-motion`.
+  L'ordre s'écrit dans `partie:joueurs` ; annonce vocale dans un `<output>`.
+- **Dettes** : flag `shuffle` de `StartMatch` / `PlayCricket` / `PlayTourDuMonde` sans appelant UI ;
+  clé `partie:ordre-aleatoire` orpheline (aucun nettoyage).
+- **Laiton unique** : aucune couleur par mode (écart à la planche, lot `pave-unifie`) ; × conservé ;
+  barre à un joueur avec Ordre grisé (un cran plus pâle).
+- `Bascule.tsx` supprimé (plus d'interrupteur). `aideSets`, `reglesCarteJeu`, `LIBELLE_DOUBLE_*` retirés.
+- ⚠️ Texte « Les règles en entier » du X01 : aucun paragraphe n'existait, écrit d'après `CLAUDE.md` ;
+  à valider (lot `regles-du-jeu`).
+- Rendu à relire sur appareil : barre et pseudos tronqués à police max sur 360 px.

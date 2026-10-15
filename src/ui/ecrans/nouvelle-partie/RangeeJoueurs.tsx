@@ -9,6 +9,7 @@ import { Button, classesBouton } from '@/ui/composants/commun/Button'
 import {
   AUCUN_JOUEUR_PARTIE,
   LEGENDE_JOUEURS_PARTIE,
+  LIBELLE_AJOUTER_COURT,
   LIBELLE_AJOUTER_JOUEUR,
   LIBELLE_NOUVEAU_JOUEUR,
   LIBELLE_SELECTIONNER_EXISTANT,
@@ -47,25 +48,28 @@ export const RangeeJoueurs = ({ joueurs, max, onRetirer, onNouveau, versExistant
 
   return (
     <div className="flex flex-col gap-3">
-      <ul aria-label={LEGENDE_JOUEURS_PARTIE} className="flex flex-wrap gap-x-4 gap-y-3">
+      <ul aria-label={LEGENDE_JOUEURS_PARTIE} className="flex flex-wrap gap-x-3 gap-y-3 pt-3">
         {joueurs.map((joueur) => (
           <li key={joueur.id} className="flex w-16 flex-col items-center gap-1">
+            {/* Rangée compacte : une pastille de 40 px, le pseudo dessous sur une
+                seule ligne. Tronqué « … » à la largeur de la pastille ; le nom
+                complet est dans le libellé du ×. */}
             <span className="relative">
-              <Avatar nom={joueur.name} couleur={joueur.color} taille="lg" />
+              <Avatar nom={joueur.name} couleur={joueur.color} taille="md" />
               {/* Une cible de 48 px autour d'une pastille visible plus petite :
-                  le doigt n'a pas à viser le dessin. */}
+                  le doigt n'a pas à viser le dessin. Le × est à cheval sur le coin. */}
               <button
                 type="button"
                 aria-label={retirerDeLaPartie(joueur.name)}
                 onClick={() => onRetirer(joueur.id)}
-                className="group absolute -right-5 -top-5 flex size-12 items-center justify-center"
+                className="group absolute -right-6 -top-6 flex size-12 items-center justify-center"
               >
                 <span className="flex size-6 items-center justify-center border border-craie/55 bg-ardoise text-craie group-active:bg-craie group-active:text-feutre">
                   <X aria-hidden="true" className="size-3.5" />
                 </span>
               </button>
             </span>
-            <span className="w-full truncate text-center font-score text-xs uppercase tracking-wide text-craie">
+            <span className="block h-4 w-full truncate text-center font-score text-etiquette uppercase leading-4 tracking-wide text-craie">
               {joueur.name}
             </span>
           </li>
@@ -81,14 +85,24 @@ export const RangeeJoueurs = ({ joueurs, max, onRetirer, onNouveau, versExistant
               aria-controls={idMenu}
               onClick={() => setMenuOuvert(!menuOuvert)}
               onKeyDown={fermerAuClavier}
-              className={[
-                'flex size-14 items-center justify-center border-2 border-dashed',
-                menuOuvert
-                  ? 'border-laiton bg-laiton/10 text-laiton-clair'
-                  : 'border-craie/55 text-craie',
-              ].join(' ')}
+              className="flex w-full flex-col items-center gap-1"
             >
-              <Plus aria-hidden="true" className="size-6" />
+              <span
+                className={[
+                  'flex size-10 items-center justify-center border border-dashed',
+                  menuOuvert
+                    ? 'border-laiton bg-laiton/10 text-laiton-clair'
+                    : 'border-craie/55 text-craie',
+                ].join(' ')}
+              >
+                <Plus aria-hidden="true" className="size-5" />
+              </span>
+              <span
+                aria-hidden="true"
+                className="block h-4 truncate font-score text-etiquette uppercase leading-4 tracking-wide text-craie"
+              >
+                {LIBELLE_AJOUTER_COURT}
+              </span>
             </button>
           </li>
         )}

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { GameModeId } from '@/core/domain/games'
 
 /**
  * Les douze pictogrammes maison : quatre modes, huit moments. Le mode se
@@ -21,6 +22,14 @@ export const PICTOGRAMMES = [
 ] as const
 
 export type NomPictogramme = (typeof PICTOGRAMMES)[number]
+
+/** Quel pictogramme pour quel jeu : exporté pour que le test d'association le vérifie. */
+export const PICTOGRAMME_PAR_MODE: Record<GameModeId, NomPictogramme> = {
+  X01: 'x01',
+  CRICKET: 'cricket',
+  TOUR_DU_MONDE: 'tour-du-monde',
+  CHECKOUT_PRACTICE: 'entrainement',
+}
 
 /**
  * Le plancher de 20 px est dans le type : une taille hors liste ne compile pas.

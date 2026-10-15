@@ -158,14 +158,14 @@ describe('Cricket — création et historique', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Nouveau joueur' }))
     await utilisateur.type(screen.getByLabelText('Pseudo'), 'Kevin')
     await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
-    await waitFor(() => expect(screen.getByText('1/4')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('1 / 4')).toBeInTheDocument())
 
-    const regles = screen.getByRole('region', { name: 'Réglages' })
-    expect(within(regles).getByRole('button', { name: 'Cut-throat' })).toBeInTheDocument()
+    const regles = screen.getByRole('region', { name: 'Réglages du jeu' })
+    expect(within(regles).getByRole('button', { name: /^Cut-throat/ })).toBeInTheDocument()
     // Les réglages X01 n'ont rien à faire ici.
     expect(within(regles).queryByRole('button', { name: '501' })).toBeNull()
 
-    await utilisateur.click(within(regles).getByRole('button', { name: 'Cut-throat' }))
+    await utilisateur.click(within(regles).getByRole('button', { name: /^Cut-throat/ }))
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 
     expect(await screen.findByLabelText('Points de Kevin')).toBeInTheDocument()

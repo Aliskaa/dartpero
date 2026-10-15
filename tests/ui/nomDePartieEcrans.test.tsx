@@ -48,7 +48,9 @@ const base = async () => {
   ecrites.length = 0
   const joueurs = (mode: GameModeId): readonly PlayerId[] =>
     mode === 'CHECKOUT_PRACTICE' ? [kevin] : [kevin, julien]
-  return { services, dependencies, ecrites, joueurs, clock }
+  /** Kevin et Julien retenus : « Continuer » mène alors à l'étape Ordre. */
+  const deuxJoueurs = () => preferences.write('partie:joueurs', [kevin, julien])
+  return { services, dependencies, ecrites, joueurs, clock, deuxJoueurs }
 }
 
 /**
@@ -61,7 +63,7 @@ const MARDI_MATIN = new Date(2026, 9, 13, 9, 0).getTime()
 const ouvrir = (services: Services, route = '/nouvelle-partie') =>
   renderWithServices(<App />, { services, route })
 
-const champNom = () => screen.getByLabelText('Nom de la partie')
+const champNom = () => screen.getByLabelText(/^Nom de la partie/)
 
 const CARTE: Record<GameModeId, RegExp> = {
   X01: /^X01/,
@@ -78,12 +80,23 @@ const derniere = async (services: Services) => {
 }
 
 describe('Nom de la partie — étape 1', () => {
-  /** Critère 1. */
-  it('propose « Dimanche soir » un dimanche à 21 h, sans prendre le focus', async () => {
+  /** Critère 4 : le champ a quitté l'étape 1. */
+  it('n’a plus de champ nom à l’étape 1', async () => {
     const { services } = await base()
     ouvrir(services)
 
-    const champ = await screen.findByLabelText('Nom de la partie')
+    await screen.findByRole('link', { name: /^X01/ })
+    expect(screen.queryByLabelText(/^Nom de la partie/)).toBeNull()
+  })
+})
+
+describe('Nom de la partie — étape 2', () => {
+  /** Critère 1 : à l'étape 2, marqué facultatif. */
+  it('propose « Dimanche soir » un dimanche à 21 h, facultatif, sans prendre le focus', async () => {
+    const { services } = await base()
+    ouvrir(services, '/nouvelle-partie/x01')
+
+    const champ = await screen.findByLabelText('Nom de la partie · facultatif')
     expect(champ).toHaveValue('Dimanche soir')
     expect(champ).not.toHaveFocus()
     expect(champ).not.toBeRequired()
@@ -92,34 +105,36 @@ describe('Nom de la partie — étape 1', () => {
   /** Critère 6, côté écran : 31 caractères ne peuvent pas être saisis. */
   it('limite la saisie à 30 caractères', async () => {
     const { services } = await base()
-    ouvrir(services)
+    ouvrir(services, '/nouvelle-partie/x01')
 
-    expect(await screen.findByLabelText('Nom de la partie')).toHaveAttribute('maxLength', '30')
+    expect(await screen.findByLabelText(/^Nom de la partie/)).toHaveAttribute('maxLength', '30')
   })
 
   it('montre la proposition en filigrane quand on vide le champ', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base()
-    ouvrir(services)
+    ouvrir(services, '/nouvelle-partie/x01')
 
-    await utilisateur.clear(await screen.findByLabelText('Nom de la partie'))
+    await utilisateur.clear(await screen.findByLabelText(/^Nom de la partie/))
     expect(champNom()).toHaveValue('')
     expect(champNom()).toHaveAttribute('placeholder', 'Dimanche soir')
   })
 
   /** Critère 10. */
-  it('garde le nom tapé au retour du téléphone depuis l’étape 2', async () => {
+  it('garde le nom tapé au retour du téléphone depuis l’étape 3', async () => {
     const utilisateur = userEvent.setup()
-    const { services } = await base()
-    ouvrir(services)
+    const { services, deuxJoueurs } = await base()
+    deuxJoueurs()
+    ouvrir(services, '/nouvelle-partie')
 
-    await utilisateur.clear(await screen.findByLabelText('Nom de la partie'))
+    await utilisateur.click(await screen.findByRole('link', { name: /^X01/ }))
+    await utilisateur.clear(await screen.findByLabelText(/^Nom de la partie/))
     await utilisateur.type(champNom(), 'Finale des potes')
-    await utilisateur.click(screen.getByRole('link', { name: /^X01/ }))
-    await screen.findByRole('heading', { level: 1, name: 'X01' })
+    await utilisateur.click(screen.getByRole('button', { name: 'Continuer' }))
+    await screen.findByRole('heading', { level: 1, name: 'Ordre de jeu' })
 
     await retourTelephone()
-    expect(await screen.findByLabelText('Nom de la partie')).toHaveValue('Finale des potes')
+    expect(await screen.findByLabelText(/^Nom de la partie/)).toHaveValue('Finale des potes')
   })
 
   it('garde le nom tapé avec le bouton retour de l’écran', async () => {
@@ -127,12 +142,13 @@ describe('Nom de la partie — étape 1', () => {
     const { services } = await base()
     ouvrir(services)
 
-    await utilisateur.clear(await screen.findByLabelText('Nom de la partie'))
+    await utilisateur.click(await screen.findByRole('link', { name: /^Cricket/ }))
+    await utilisateur.clear(await screen.findByLabelText(/^Nom de la partie/))
     await utilisateur.type(champNom(), 'Finale des potes')
-    await utilisateur.click(screen.getByRole('link', { name: /^Cricket/ }))
-    await utilisateur.click(await screen.findByRole('button', { name: 'Étape précédente' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Étape précédente' }))
+    await utilisateur.click(await screen.findByRole('link', { name: /^Cricket/ }))
 
-    expect(await screen.findByLabelText('Nom de la partie')).toHaveValue('Finale des potes')
+    expect(await screen.findByLabelText(/^Nom de la partie/)).toHaveValue('Finale des potes')
   })
 
   it('repart de la proposition après être sorti du parcours, sans rien mémoriser', async () => {
@@ -141,12 +157,15 @@ describe('Nom de la partie — étape 1', () => {
     ouvrir(services, '/')
 
     await utilisateur.click(await screen.findByRole('link', { name: 'Nouvelle partie' }))
-    await utilisateur.clear(await screen.findByLabelText('Nom de la partie'))
+    await utilisateur.click(await screen.findByRole('link', { name: /^X01/ }))
+    await utilisateur.clear(await screen.findByLabelText(/^Nom de la partie/))
     await utilisateur.type(champNom(), 'Finale des potes')
-    await utilisateur.click(screen.getByRole('button', { name: 'Retour à l’accueil' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Étape précédente' }))
+    await utilisateur.click(await screen.findByRole('button', { name: 'Retour à l’accueil' }))
     await utilisateur.click(await screen.findByRole('link', { name: 'Nouvelle partie' }))
+    await utilisateur.click(await screen.findByRole('link', { name: /^X01/ }))
 
-    expect(await screen.findByLabelText('Nom de la partie')).toHaveValue('Dimanche soir')
+    expect(await screen.findByLabelText(/^Nom de la partie/)).toHaveValue('Dimanche soir')
     expect(ecrites.some((valeur) => JSON.stringify(valeur).includes('Finale'))).toBe(false)
   })
 })
@@ -158,9 +177,9 @@ describe('Nom de la partie — lancement, les quatre jeux', () => {
     const { services, dependencies } = await base()
     ouvrir(services)
 
-    await utilisateur.clear(await screen.findByLabelText('Nom de la partie'))
+    await utilisateur.click(await screen.findByRole('link', { name: CARTE[mode] }))
+    await utilisateur.clear(await screen.findByLabelText(/^Nom de la partie/))
     await utilisateur.type(champNom(), '  Finale des potes  ')
-    await utilisateur.click(screen.getByRole('link', { name: CARTE[mode] }))
     await utilisateur.click(await screen.findByRole('button', { name: 'Commencer' }))
 
     const partie = await derniere(services)
@@ -179,10 +198,10 @@ describe('Nom de la partie — lancement, les quatre jeux', () => {
     const { services, dependencies } = await base()
     ouvrir(services)
 
-    const champ = await screen.findByLabelText('Nom de la partie')
+    await utilisateur.click(await screen.findByRole('link', { name: CARTE[mode] }))
+    const champ = await screen.findByLabelText(/^Nom de la partie/)
     if (saisie !== 'intact') await utilisateur.clear(champ)
     if (saisie === 'espaces') await utilisateur.type(champ, '    ')
-    await utilisateur.click(screen.getByRole('link', { name: CARTE[mode] }))
     await utilisateur.click(await screen.findByRole('button', { name: 'Commencer' }))
 
     const partie = await derniere(services)

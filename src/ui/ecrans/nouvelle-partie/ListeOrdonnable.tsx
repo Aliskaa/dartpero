@@ -10,13 +10,19 @@ import {
 import type { Player } from '@/core/domain/entities/Player'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { Avatar } from '@/ui/composants/commun/Avatar'
-import { AIDE_POIGNEE, annonceOrdre, deplacerJoueur, LEGENDE_ORDRE, rangOrdre } from '@/ui/labels'
+import {
+  AIDE_POIGNEE,
+  annonceOrdre,
+  deplacerJoueur,
+  LEGENDE_ORDRE,
+  LIBELLE_COMMENCE,
+} from '@/ui/labels'
 import { decalage, rangVise } from './ordre'
 
 type Props = {
   readonly joueurs: readonly Player[]
-  /** Sous tirage au sort : ni poignée ni rang, ils annonceraient un ordre faux. */
-  readonly tirage: boolean
+  /** Combien de fois on a tiré au sort : chaque tirage rejoue le bref mouvement de la feuille. */
+  readonly tirages?: number
   readonly onDeplacer: (de: number, vers: number) => void
 }
 
@@ -42,7 +48,7 @@ type Geste = { readonly de: number; readonly dy: number; readonly vers: number }
  * réordonnancement n'a lieu qu'au relâcher, par le même `deplacer` que le
  * clavier. Un tap sans mouvement ne fait rien.
  */
-export const ListeOrdonnable = ({ joueurs, tirage, onDeplacer }: Props) => {
+export const ListeOrdonnable = ({ joueurs, tirages = 0, onDeplacer }: Props) => {
   const idAide = useId()
   const lignes = useRef<(HTMLLIElement | null)[]>([])
   const poignees = useRef(new Map<PlayerId, HTMLButtonElement>())
@@ -147,9 +153,17 @@ export const ListeOrdonnable = ({ joueurs, tirage, onDeplacer }: Props) => {
 
   return (
     <>
-      <ol aria-label={LEGENDE_ORDRE} className="flex flex-col gap-2">
+      {/* Chaque tirage remonte la feuille (`key`) : le bref mouvement dit que le
+          sort a joué, même s'il redonne le même ordre. Coupé sous
+          `prefers-reduced-motion` par la feuille de styles. */}
+      <ol
+        key={tirages}
+        aria-label={LEGENDE_ORDRE}
+        className={`border-t-[3px] border-craie bg-ardoise ${tirages > 0 ? 'animate-monter' : ''}`}
+      >
         {joueurs.map((joueur, rang) => {
           const tenue = geste?.de === rang
+          const premier = rang === 0
           return (
             <li
               key={joueur.id}
@@ -158,11 +172,11 @@ export const ListeOrdonnable = ({ joueurs, tirage, onDeplacer }: Props) => {
               }}
               style={{ transform: transformation(rang) }}
               className={[
-                'relative flex min-h-14 items-center gap-3 border bg-feutre/80 pl-3',
-                tirage ? 'pr-3' : '',
+                'relative flex min-h-14 items-center gap-3 border-b border-l-4 border-b-craie/25 pl-3 last:border-b-0',
+                premier ? 'border-l-laiton bg-laiton/10' : 'border-l-transparent',
                 tenue
-                  ? 'z-10 border-laiton/60 shadow-[0_8px_24px_-8px_var(--color-feutre-nuit)]'
-                  : 'border-chene/55',
+                  ? 'z-10 bg-ardoise shadow-[0_8px_24px_-8px_var(--color-feutre-nuit)] outline outline-1 -outline-offset-1 outline-laiton/60'
+                  : '',
                 // ⚠️ La transition seulement **pendant** le geste : au relâcher, les
                 // lignes enjambées changent de place dans le DOM et perdent leur
                 // décalage dans le même rendu — animé, ce retour les ferait sauter.
@@ -171,37 +185,44 @@ export const ListeOrdonnable = ({ joueurs, tirage, onDeplacer }: Props) => {
                   : '',
               ].join(' ')}
             >
-              {!tirage && (
-                <span className="chiffres w-8 shrink-0 text-sm font-bold text-laiton-clair">
-                  {rangOrdre(rang + 1)}
-                </span>
-              )}
-              <Avatar nom={joueur.name} couleur={joueur.color} />
-              <span className="min-w-0 flex-1 truncate font-score text-base uppercase tracking-wide text-craie-vive">
-                {joueur.name}
+              <span
+                className={`chiffres w-8 shrink-0 text-2xl font-bold ${
+                  premier ? 'text-laiton-clair' : 'text-craie-2'
+                }`}
+              >
+                {rang + 1}
               </span>
-              {!tirage && (
-                <button
-                  type="button"
-                  ref={(poignee) => {
-                    if (poignee) poignees.current.set(joueur.id, poignee)
-                    else poignees.current.delete(joueur.id)
-                  }}
-                  aria-label={deplacerJoueur(joueur.name)}
-                  aria-describedby={idAide}
-                  onKeyDown={(evenement) => auClavier(evenement, rang)}
-                  onPointerDown={(evenement) => saisir(evenement, rang)}
-                  onPointerMove={suivre}
-                  onPointerUp={relacher}
-                  onPointerCancel={abandonner}
-                  className={[
-                    'flex size-12 shrink-0 cursor-grab items-center justify-center text-craie-2',
-                    'touch-none select-none [-webkit-touch-callout:none] active:cursor-grabbing',
-                  ].join(' ')}
-                >
-                  <GripVertical aria-hidden="true" className="size-5" />
-                </button>
-              )}
+              <Avatar nom={joueur.name} couleur={joueur.color} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-score text-base font-bold uppercase tracking-wide text-craie-vive">
+                  {joueur.name}
+                </span>
+                {premier && (
+                  <span className="block font-score text-etiquette uppercase tracking-[0.14em] text-laiton-clair">
+                    {LIBELLE_COMMENCE}
+                  </span>
+                )}
+              </span>
+              <button
+                type="button"
+                ref={(poignee) => {
+                  if (poignee) poignees.current.set(joueur.id, poignee)
+                  else poignees.current.delete(joueur.id)
+                }}
+                aria-label={deplacerJoueur(joueur.name)}
+                aria-describedby={idAide}
+                onKeyDown={(evenement) => auClavier(evenement, rang)}
+                onPointerDown={(evenement) => saisir(evenement, rang)}
+                onPointerMove={suivre}
+                onPointerUp={relacher}
+                onPointerCancel={abandonner}
+                className={[
+                  'flex size-12 shrink-0 cursor-grab items-center justify-center text-craie-2',
+                  'touch-none select-none [-webkit-touch-callout:none] active:cursor-grabbing',
+                ].join(' ')}
+              >
+                <GripVertical aria-hidden="true" className="size-5" />
+              </button>
             </li>
           )
         })}

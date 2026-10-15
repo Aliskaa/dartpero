@@ -406,7 +406,10 @@ src/
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
 │  │                        cricket/ · checkout-practice/
 │  │                      nouvelle-partie/ ← le parcours en étapes (une route par
-│  │                        étape : EtapeJeu, EtapeJoueurs, EtapeOrdre,
+│  │                        étape : EtapeJeu (tuiles), EtapeJoueurs (rangée, fiche
+│  │                        ReglagesJeu, ChampNom), EtapeOrdre (feuille, « Tirer au
+│  │                        sort » via le port ShuffleOrder / ShuffleOrderUseCase),
+│  │                        BarreEtapes (non interactive, posée par EnTeteEtape),
 │  │                        ChoixJoueursExistants… et ordre.ts, pur)
 │  │                      + les écrans transverses : Accueil, Joueurs,
 │  │                        Historique, Statistiques, Réglages, Confidentialité

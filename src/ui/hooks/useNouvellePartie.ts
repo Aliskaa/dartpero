@@ -42,7 +42,9 @@ const CLE_SETS = 'partie:sets'
 const CLE_DOUBLE_OUT = 'partie:double-out'
 const CLE_DOUBLE_IN = 'partie:double-in'
 const CLE_SELECTION = 'partie:joueurs'
-const CLE_ORDRE_ALEATOIRE = 'partie:ordre-aleatoire'
+// ⚠️ `partie:ordre-aleatoire` (l'ancien interrupteur) est **abandonnée** : plus lue
+// ni écrite, jamais réutilisée. « Tirer au sort » mélange l'ordre sur l'écran et
+// l'écrit dans `partie:joueurs`, comme un réordonnancement à la main.
 /** Un joueur à part pour l'entraînement : il se joue seul, la sélection de groupe reste intacte. */
 const CLE_ENTRAINEMENT_JOUEUR = 'entrainement:joueur'
 const CLE_ENTRAINEMENT_SORTIES = 'entrainement:sorties'
@@ -103,7 +105,6 @@ export const useNouvellePartie = () => {
   // activé : c'est voulu (`x01/config.ts`). La valeur est toujours passée.
   const [doubleOutBrut, setDoubleOut] = usePreference(CLE_DOUBLE_OUT, false)
   const [doubleInBrut, setDoubleIn] = usePreference(CLE_DOUBLE_IN, false)
-  const [ordreAleatoireBrut, setOrdreAleatoire] = usePreference(CLE_ORDRE_ALEATOIRE, false)
   const [sortiesBrutes, setSorties] = usePreference<(typeof SORTIES)[number]>(
     CLE_ENTRAINEMENT_SORTIES,
     DEFAUT_ENTRAINEMENT.rounds as (typeof SORTIES)[number],
@@ -115,7 +116,6 @@ export const useNouvellePartie = () => {
   const sets = dansLaListe(SETS, setsBruts, 1)
   const doubleOut = booleen(doubleOutBrut, false)
   const doubleIn = booleen(doubleInBrut, false)
-  const ordreAleatoire = booleen(ordreAleatoireBrut, false)
   const sorties = dansLaListe(
     SORTIES,
     sortiesBrutes,
@@ -126,7 +126,7 @@ export const useNouvellePartie = () => {
    * Le nom proposé (« Dimanche soir »), calculé **une seule fois** par passage
    * dans le parcours : l'horloge est lue dans un initialiseur paresseux, jamais
    * à chaque rendu. Le nom tapé vit ici, à la racine du parcours, pour suivre
-   * aux étapes 2 et 3 et survivre au retour du téléphone — jamais dans une
+   * de l'étape 2 à l'étape 3 et survivre au retour du téléphone — jamais dans une
    * préférence : il ne se mémorise pas d'une partie à l'autre.
    */
   const [proposition] = useState(() => nomParDefaut(services.clock.now()))
@@ -201,15 +201,23 @@ export const useNouvellePartie = () => {
   }
 
   /**
-   * ⚠️ Le tirage ne s'applique qu'à partir de deux joueurs. Le réglage, lui,
-   * reste coché : le décocher tout seul ferait perdre une préférence.
+   * « Tirer au sort » : l'aléa passe par le use case, jamais par `Math.random`.
+   * L'ordre obtenu s'écrit comme un réordonnancement à la main — il peut être
+   * l'ordre d'avant, c'est un vrai tirage. Rend le nouvel ordre, pour l'annoncer.
+   *
+   * ⚠️ À appeler depuis un geste, jamais depuis un effet ni un rendu : le
+   * `StrictMode` le jouerait deux fois.
    */
-  const tirageActif = (mode: GameModeId) => ordreAleatoire && selection(mode).length > 1
+  const tirerAuSort = (mode: GameModeId): readonly PlayerId[] => {
+    const ordre = services.shuffleOrder.execute(selection(mode))
+    reordonner(ordre)
+    return ordre
+  }
 
   /** Un mode, un use case : l'aiguillage de la couture `GameMode`, côté départ. */
   const lancer = (mode: GameModeId): Promise<MatchId> => {
+    // L'ordre part tel quel dans le journal : le tirage a déjà eu lieu à l'écran.
     const playerIds = selection(mode)
-    const shuffle = tirageActif(mode)
     const name = nomTape(saisieNom, proposition)
     switch (mode) {
       case 'X01':
@@ -222,21 +230,18 @@ export const useNouvellePartie = () => {
             doubleOut,
             doubleIn,
           }),
-          shuffle,
           ...name,
         })
       case 'CRICKET':
         return services.playCricket.start({
           playerIds,
           config: CricketConfig.create({ variant: variante }),
-          shuffle,
           ...name,
         })
       case 'TOUR_DU_MONDE':
         return services.playTourDuMonde.start({
           playerIds,
           config: TourDuMondeConfig.create(),
-          shuffle,
           ...name,
         })
       case 'CHECKOUT_PRACTICE': {
@@ -281,7 +286,7 @@ export const useNouvellePartie = () => {
     basculer,
     reordonner,
     creerJoueur,
-    tirageActif,
+    tirerAuSort,
     demarrer,
     erreur,
     occupe,
@@ -299,8 +304,6 @@ export const useNouvellePartie = () => {
       setDoubleIn,
       variante,
       setVariante,
-      ordreAleatoire,
-      setOrdreAleatoire,
       sorties,
       setSorties,
     },

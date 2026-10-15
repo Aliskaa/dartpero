@@ -2,8 +2,10 @@ import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import App from '@/App'
 import type { Services } from '@/composition/container'
+import { GAME_MODE_IDS } from '@/core/domain/games'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
+import { PICTOGRAMME_PAR_MODE } from '@/ui/composants/commun/Pictogramme'
 import { fakeServices } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 import { TRACES_ATTENDUS } from './tracesPictogrammes'
@@ -46,6 +48,31 @@ describe('Pictogrammes — leurs emplacements', () => {
         TRACES_ATTENDUS.entrainement,
       ].sort(),
     )
+  })
+
+  /**
+   * Dette P3-1 du lot `pictogrammes` : la liste triée ci-dessus ne dit pas QUELLE
+   * tuile porte QUEL tracé. L'association est écrite en dur, d'après la planche,
+   * jamais dérivée de la table du code (ce serait un test qui se répond à lui-même).
+   */
+  it.each([
+    ['X01', /^X01/, 'x01'],
+    ['CRICKET', /^Cricket/, 'cricket'],
+    ['TOUR_DU_MONDE', /^Tour du monde/, 'tour-du-monde'],
+    ['CHECKOUT_PRACTICE', /^Entraînement/, 'entrainement'],
+  ] as const)('étape 1 : la tuile %s porte le pictogramme %s', async (mode, nom, pictogramme) => {
+    const { services } = fakeServices()
+    renderWithServices(<App />, { services, route: '/nouvelle-partie' })
+
+    const tuile = await screen.findByRole('link', { name: nom })
+    const [svg] = svgsDe(40, tuile)
+    expect(svg?.innerHTML).toBe(TRACES_ATTENDUS[pictogramme])
+    expect(PICTOGRAMME_PAR_MODE[mode]).toBe(pictogramme)
+  })
+
+  it('associe un pictogramme distinct à chaque jeu', () => {
+    const noms = GAME_MODE_IDS.map((mode) => PICTOGRAMME_PAR_MODE[mode])
+    expect(new Set(noms).size).toBe(GAME_MODE_IDS.length)
   })
 
   it('résumé avec vainqueur : la couronne fait 32 px et reste décorative', async () => {

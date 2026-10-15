@@ -22,14 +22,22 @@ const texteAffiche = (): string => {
   const attributs = [...document.body.querySelectorAll('[aria-label], [title]')].flatMap(
     (element) => [element.getAttribute('aria-label') ?? '', element.getAttribute('title') ?? ''],
   )
-  return [document.body.textContent ?? '', ...attributs].join(' ')
+  // Un nœud de texte après l'autre, séparés d'une espace : `textContent` colle les éléments
+  // voisins (« legCommencer ») et `\b` ne verrait plus la fin du mot.
+  const noeuds: string[] = []
+  const parcours = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+  for (let noeud = parcours.nextNode(); noeud; noeud = parcours.nextNode()) {
+    noeuds.push(noeud.textContent ?? '')
+  }
+  return [...noeuds, ...attributs].join(' ')
 }
 
 /** Témoin positif d'abord : un test d'absence doit pouvoir échouer. */
-const sansLeg = () => {
+const sansLeg = (temoin: RegExp = /manche/i) => {
   const texte = texteAffiche()
-  expect(texte).toMatch(/manche/i)
+  expect(texte).toMatch(temoin)
   expect(texte).not.toMatch(LEG)
+  expect(texte).not.toMatch(/best of/i)
 }
 
 const avecVoix = () => {
@@ -67,6 +75,49 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
 
     await screen.findByRole('group', { name: 'Manches à gagner' })
     sansLeg()
+  })
+
+  /** Chaque page de « Nouvelle partie », tout déplié : ni « leg » ni « best of », à l'œil comme au lecteur d'écran. */
+  it('à l’étape 1 de Nouvelle partie', async () => {
+    const { services } = fakeServices()
+    renderWithServices(<App />, { services, route: '/nouvelle-partie' })
+
+    await screen.findAllByRole('link')
+    // Témoin positif : les tuiles sont bien là (le X01 se dit « zéro pile »).
+    sansLeg(/zéro pile/i)
+  })
+
+  it.each([
+    ['x01', /manche/i],
+    ['cricket', /Cut-throat/],
+    ['tour-du-monde', /21 cibles/],
+    ['entrainement', /sorties/i],
+  ] as const)('à l’étape 2, tout déplié, pour %s', async (slug, temoin) => {
+    const utilisateur = userEvent.setup()
+    const { services } = fakeServices()
+    renderWithServices(<App />, { services, route: `/nouvelle-partie/${slug}` })
+
+    await screen.findByRole('region', { name: 'Réglages du jeu' })
+    const plus = screen.queryByRole('button', { name: /plus de réglages/i })
+    if (plus) await utilisateur.click(plus)
+    await utilisateur.click(screen.getByRole('button', { name: 'Les règles en entier' }))
+    // Rien ne reste replié : la preuve que le dépliage a eu lieu.
+    for (const pli of screen.getAllByRole('button', { expanded: false })) {
+      expect(pli).not.toHaveAccessibleName(/plus de réglages|les règles en entier/i)
+    }
+    sansLeg(temoin)
+  })
+
+  it('à l’étape Ordre de jeu', async () => {
+    const { services, dependencies } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+    const julien = await services.managePlayers.create('Julien')
+    dependencies.devices.preferences.write('partie:joueurs', [kevin.id, julien.id])
+    renderWithServices(<App />, { services, route: '/nouvelle-partie/x01/ordre' })
+
+    await screen.findByRole('list', { name: 'Ordre de passage' })
+    // Témoin positif : la feuille d'ordre est affichée (« Tirer au sort »).
+    sansLeg(/tirer au sort/i)
   })
 
   it('en partie à sets, après une manche gagnée — à l’écran comme à la voix', async () => {

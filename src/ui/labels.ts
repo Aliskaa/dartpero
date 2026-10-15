@@ -367,7 +367,7 @@ export const dateCourte = (horodatage: number): string =>
  * ---------------------------------------------------------------------- */
 
 /** Le libellé visible du champ de l'étape 1. */
-export const LIBELLE_NOM_PARTIE = 'Nom de la partie'
+export const LIBELLE_NOM_PARTIE = 'Nom de la partie · facultatif'
 
 /**
  * Les jours, indexés par `Date.prototype.getDay()` : 0 = dimanche.
@@ -784,54 +784,35 @@ export const etiquetteManchesGagnees = (nom: string, gagnees: number, requises: 
  * ---------------------------------------------------------------------- */
 
 export const TITRE_NOUVELLE_PARTIE = 'Nouvelle partie'
-export const SOUS_TITRE_ETAPE_JEU = 'Choisissez le jeu'
 export const TITRE_ETAPE_ORDRE = 'Ordre de jeu'
+
+/** La barre d'étapes : « 1 · JEU » (la capitale vient du style, pas du texte). */
+export const LEGENDE_ETAPES = 'Étapes de la partie'
+export const ETAPE_JEU = 'Jeu'
+export const ETAPE_JOUEURS = 'Joueurs'
+export const ETAPE_ORDRE = 'Ordre'
+export const ETAPE_REGLAGES = 'Réglages'
+export const libelleEtape = (numero: number, nom: string): string => `${numero} · ${nom}`
 export const TITRE_JOUEURS_EXISTANTS = 'Joueurs existants'
 export const SOUS_TITRE_JOUEURS_EXISTANTS = 'Cochez ceux qui jouent'
 
 export const RETOUR_ACCUEIL = 'Retour à l’accueil'
 export const RETOUR_ETAPE_PRECEDENTE = 'Étape précédente'
 
-/**
- * Les deux lignes de règles de chaque carte de l'étape 1 — fidèles à
- * `CLAUDE.md` § Règles du jeu. Les bornes de l'entraînement sont passées par
- * l'appelant (lues sur `DEFAUT` du domaine), jamais recopiées ici.
- */
-export const reglesCarteJeu = (
-  mode: GameModeId,
-  entrainement: { readonly min: number; readonly max: number },
-): readonly [string, string] => {
-  switch (mode) {
-    case 'X01':
-      return [
-        'Décompter 301, 501 ou 701 jusqu’à zéro pile.',
-        'En manches, éventuellement en sets ; double out au choix.',
-      ]
-    case 'CRICKET':
-      return [
-        'Fermer le 20 au 15 et la bulle, trois marques chacun.',
-        'Le surplus marque tant qu’un adversaire n’a pas fermé.',
-      ]
-    case 'TOUR_DU_MONDE':
-      return [
-        'Du 20 au 1, puis la bulle : toucher le secteur suffit.',
-        'On finit le tour de table ; le moins de fléchettes gagne.',
-      ]
-    case 'CHECKOUT_PRACTICE':
-      return [
-        `Seul : un reste tiré entre ${entrainement.min} et ${entrainement.max}.`,
-        'Trois fléchettes pour le sortir sur un double.',
-      ]
-    default: {
-      const jamais: never = mode
-      return jamais
-    }
-  }
+/** La phrase unique de chaque tuile de l'étape 1 (planche `np1`, mot pour mot). */
+export const PHRASE_TUILE: Record<GameModeId, string> = {
+  X01: 'Décompter 301, 501 ou 701 jusqu’à zéro pile.',
+  CRICKET: 'Fermer du 20 au 15 et la bulle avant les autres.',
+  TOUR_DU_MONDE: 'Du 20 au 1, puis la bulle.',
+  CHECKOUT_PRACTICE: 'Seul : sortir un reste tiré au sort.',
 }
 
 export const LEGENDE_JOUEURS_PARTIE = 'Joueurs de la partie'
 export const TITRE_PANNEAU_JOUEURS = 'Joueurs'
-export const TITRE_PANNEAU_REGLAGES = 'Réglages'
+export const TITRE_QUI_S_ENTRAINE = 'Qui s’entraîne'
+/** Le compteur de la rangée : « 2 / 4 ». */
+export const compteurJoueurs = (n: number, max: number): string => `${n} / ${max}`
+export const LIBELLE_AJOUTER_COURT = 'Ajouter'
 export const AUCUN_JOUEUR_PARTIE = 'Aucun joueur pour l’instant : touchez + pour en ajouter.'
 export const LIBELLE_AJOUTER_JOUEUR = 'Ajouter un joueur'
 export const LIBELLE_NOUVEAU_JOUEUR = 'Nouveau joueur'
@@ -866,12 +847,52 @@ export const LEGENDE_MANCHES_A_GAGNER = 'Manches à gagner'
 export const LEGENDE_SETS_A_GAGNER = 'Sets à gagner'
 export const LEGENDE_COMPTAGE = 'Comptage'
 export const LEGENDE_NOMBRE_SORTIES = 'Nombre de sorties'
-export const LIBELLE_DOUBLE_OUT = 'Double out'
-export const AIDE_DOUBLE_OUT = 'Finir obligatoirement sur un double'
-export const LIBELLE_DOUBLE_IN = 'Double in'
-export const AIDE_DOUBLE_IN = 'Ne décompter qu’après un premier double'
-export const LIBELLE_ORDRE_ALEATOIRE = 'Ordre aléatoire'
-export const AIDE_ORDRE_ALEATOIRE = 'Le sort décide qui commence'
+export const LEGENDE_PLAGE_RESTES = 'Plage des restes'
+export const LIBELLE_NON_REGLABLE = 'non réglable'
+export const LEGENDE_SORTIE = 'Sortie'
+export const LEGENDE_ENTREE = 'Entrée'
+
+/** Sortie et entrée X01 : « Libre » ou « Sur un double » (double out / double in du code). */
+export type ChoixEntreeSortie = 'LIBRE' | 'DOUBLE'
+export const CHOIX_ENTREE_SORTIE: readonly ChoixEntreeSortie[] = ['LIBRE', 'DOUBLE']
+export const LIBELLE_CHOIX_ENTREE_SORTIE: Record<ChoixEntreeSortie, string> = {
+  LIBRE: 'Libre',
+  DOUBLE: 'Sur un double',
+}
+export const LIBELLE_SANS_SETS = 'Sans'
+
+/** L'effet de la sortie choisie, en une ligne (planche, puis l'aide actuelle du double out). */
+export const AIDE_SORTIE: Record<ChoixEntreeSortie, string> = {
+  LIBRE: 'Toute fléchette qui amène pile à zéro gagne la manche.',
+  DOUBLE: 'Finir obligatoirement sur un double',
+}
+
+/** L'effet du nombre de sorties, à l'entraînement. */
+export const aideSorties = (sorties: number): string =>
+  `${sorties} restes à sortir, une volée chacun.`
+
+/* La fiche de réglages : le pli « Plus de réglages » et « Les règles en entier ». */
+export const LIBELLE_PLUS_DE_REGLAGES = 'Plus de réglages · sortie, entrée, sets'
+export const LIBELLE_REGLES_EN_ENTIER = 'Les règles en entier'
+export const LEGENDE_RECAP_REGLAGES = 'Réglages choisis'
+export const TITRE_FICHE_REGLAGES = 'Réglages du jeu'
+export const LEGENDE_CIBLES_CRICKET = 'Les sept cibles'
+export const LEGENDE_PARCOURS = 'Le parcours en 21 cases'
+
+/** Cricket : les deux cartes de comptage (planche `reglages-jeux`, mot pour mot). */
+export const CARTES_CRICKET: Record<
+  'STANDARD' | 'CUT_THROAT',
+  { readonly points: readonly Segment[]; readonly gagne: string }
+> = {
+  STANDARD: {
+    points: ['Les points sont pour ', { fort: 'soi' }, '.'],
+    gagne: 'Tout fermer, sans être derrière',
+  },
+  CUT_THROAT: {
+    points: ['Les points vont aux ', { fort: 'adversaires' }, '.'],
+    gagne: 'Tout fermer, le plus petit score',
+  },
+}
 
 /**
  * Ce que « premier à N manches » veut dire ce soir-là, en clair.
@@ -894,12 +915,6 @@ export const aideManches = (legs: number, sets: number, joueurs: number): string
     ? `${base} — à ${joueurs} joueurs, ${parSet ? 'un set' : 'la partie'} peut en durer davantage.`
     : `${base}.`
 }
-
-/** Un set se gagne au premier à N manches, la partie au premier à S sets. */
-export const aideSets = (sets: number, legs: number): string =>
-  sets <= 1
-    ? 'Sans sets : la partie se joue en manches.'
-    : `Un set se gagne ${legs === 1 ? 'à la première manche' : `au premier à ${legs} manches`}, la partie au premier à ${sets} sets.`
 
 /**
  * Un paragraphe de règles, avec ses mots en gras. Le texte reste ici ; l'écran
@@ -934,7 +949,50 @@ export const paragrapheEntrainement = (min: number, max: number): readonly Segme
   ', et vous avez trois fléchettes pour le sortir sur un double. Jamais de reste impossible : les bogey numbers sont écartés du tirage.',
 ]
 
-/** La ligne récapitulative au-dessus du bouton de l'étape 2. */
+/**
+ * Les règles X01 « en entier » de la fiche, tirées de `CLAUDE.md` § Règles du
+ * jeu X01. ⚠️ Aucun paragraphe X01 n'existait avant ce lot : le texte reste à
+ * valider (lot `regles-du-jeu` pour la version complète).
+ */
+export const PARAGRAPHE_X01: readonly Segment[] = [
+  'On décompte le score de départ jusqu’à ',
+  { fort: 'zéro pile' },
+  '. Une volée qui passe sous zéro est annulée (bust) : le score revient à sa valeur d’avant la volée. ',
+  'Avec la sortie sur un double, il faut finir sur un ',
+  { fort: 'double' },
+  ' (la bulle à 50 compte) et un reste de 1 est impossible ; avec l’entrée sur un double, le score ne décompte qu’à partir du premier double.',
+]
+
+/** La ligne de règles de chaque fiche (planche `reglages-jeux`, mot pour mot). */
+export const REGLE_X01: readonly Segment[] = [
+  'Décompter jusqu’à ',
+  { fort: 'zéro pile' },
+  ' ; trop haut, la volée est annulée (bust).',
+]
+export const regleCricket = (cutThroat: boolean): readonly Segment[] => [
+  'Gagne celui qui a ',
+  { fort: 'tout fermé' },
+  cutThroat ? ' avec le plus petit score.' : ' sans être derrière au score.',
+]
+export const REGLE_TOUR_DU_MONDE: readonly Segment[] = [
+  'Simple, double ou triple : ',
+  { fort: 'peu importe' },
+  '. Quand quelqu’un boucle, ',
+  { fort: 'on finit le tour de table' },
+  ' ; le moins de fléchettes gagne.',
+]
+export const REGLE_ENTRAINEMENT: readonly Segment[] = [
+  'Trois fléchettes pour sortir le reste ',
+  { fort: 'sur un double' },
+  ' ; jamais de reste impossible.',
+]
+
+/**
+ * L'en-tête de la fiche : le réglage principal en grand, le reste en dessous.
+ * Mis à jour à chaque appui ; le X01 dit **toujours** sortie, entrée et sets.
+ */
+export type RecapReglages = { readonly principal: string; readonly secondaire: string }
+
 export const recapX01 = ({
   score,
   legs,
@@ -947,18 +1005,33 @@ export const recapX01 = ({
   readonly sets: number
   readonly doubleOut: boolean
   readonly doubleIn: boolean
-}): string =>
-  [
-    String(score),
-    libelleFormat(legs, sets),
-    doubleOut ? 'double out' : 'sortie libre',
-    ...(doubleIn ? ['double in'] : []),
-  ].join(' · ')
+}): RecapReglages => ({
+  principal: `${score} · ${libelleLegs(legs)}`,
+  secondaire: [
+    doubleOut ? 'Sortie sur un double' : 'Sortie libre',
+    doubleIn ? 'Entrée sur un double' : 'Entrée libre',
+    sets <= 1 ? 'Sans sets' : `Premier à ${sets} sets`,
+  ].join(' · '),
+})
 
-export const recapCricket = (variante: 'STANDARD' | 'CUT_THROAT'): string =>
-  `Cricket ${LIBELLE_VARIANTE_CRICKET[variante]} · 20 → 15 · bulle`
+export const recapCricket = (variante: 'STANDARD' | 'CUT_THROAT'): RecapReglages => ({
+  principal: `Cricket ${LIBELLE_VARIANTE_CRICKET[variante].toLowerCase()}`,
+  secondaire: '7 cibles · 20 à 15 et la bulle',
+})
 
-export const RECAP_TOUR_DU_MONDE = 'Tour du monde · 20 → bulle'
+export const RECAP_TOUR_DU_MONDE: RecapReglages = {
+  principal: '20 → 1, puis la bulle',
+  secondaire: '21 cibles · rien à régler',
+}
+
+export const recapEntrainementFiche = (
+  sorties: number,
+  min: number,
+  max: number,
+): RecapReglages => ({
+  principal: pluriel(sorties, 'sortie'),
+  secondaire: `Restes tirés entre ${min} et ${max}`,
+})
 
 export const recapEntrainement = (sorties: number, min: number, max: number): string =>
   `${pluriel(sorties, 'sortie')} · ${min} à ${max}`
@@ -967,11 +1040,33 @@ export const recapEntrainement = (sorties: number, min: number, max: number): st
 export const LEGENDE_ORDRE = 'Ordre de passage'
 export const AIDE_POIGNEE = 'Glissez, ou flèches haut et bas'
 export const deplacerJoueur = (nom: string): string => `Déplacer ${nom}`
-export const rangOrdre = (rang: number): string => `n°${rang}`
 export const annonceOrdre = (nom: string, position: number, total: number): string =>
   `${nom} : position ${position} sur ${total}`
-export const quiCommence = (nom: string): string => `${nom} commence`
-export const ORDRE_TIRE_AU_SORT = 'Tiré au sort au lancement'
+export const LIBELLE_COMMENCE = 'Commence'
+export const LIBELLE_TIRER_AU_SORT = 'Tirer au sort'
+/** Dite à voix haute après un tirage : le nouvel ordre, et qui commence. */
+export const annonceTirage = (noms: readonly string[]): string =>
+  `Ordre tiré au sort : ${noms.join(', ')}. ${noms[0] ?? ''} commence.`
+
+/** Le sous-titre de l'étape Ordre : le jeu et son réglage principal. */
+export const sousTitreOrdre = (
+  mode: GameModeId,
+  reglages: { readonly score: number; readonly variante: 'STANDARD' | 'CUT_THROAT' },
+): string => {
+  switch (mode) {
+    case 'X01':
+      return `${LIBELLE_MODE.X01} · ${reglages.score}`
+    case 'CRICKET':
+      return `${LIBELLE_MODE.CRICKET} · ${LIBELLE_VARIANTE_CRICKET[reglages.variante]}`
+    case 'TOUR_DU_MONDE':
+    case 'CHECKOUT_PRACTICE':
+      return LIBELLE_MODE[mode]
+    default: {
+      const jamais: never = mode
+      return jamais
+    }
+  }
+}
 
 /* Réglages → Joueurs. */
 export const SOUS_TITRE_REGLAGES = 'Joueurs, affichage, sauvegarde et informations'

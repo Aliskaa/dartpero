@@ -1,8 +1,7 @@
-import { ArrowRight, Check, Play } from 'lucide-react'
+import { ArrowRight, Play } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { GameModeId } from '@/core/domain/games'
-import { DEFAUT as DEFAUT_ENTRAINEMENT } from '@/core/domain/games/checkout-practice/config'
 import {
   cheminJoueursExistants,
   cheminNouvellePartie,
@@ -11,53 +10,35 @@ import {
 } from '@/ui/chemins'
 import { Button } from '@/ui/composants/commun/Button'
 import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
-import { Panneau } from '@/ui/composants/commun/Panneau'
 import type { NouvellePartie } from '@/ui/hooks/useNouvellePartie'
 import {
   CHARGEMENT_PROFILS,
+  compteurJoueurs,
+  ETAPE_JEU,
+  ETAPE_JOUEURS,
+  ETAPE_ORDRE,
+  ETAPE_REGLAGES,
   LIBELLE_COMMENCER,
   LIBELLE_CONTINUER,
   LIBELLE_MODE,
-  RECAP_TOUR_DU_MONDE,
   RETOUR_ETAPE_PRECEDENTE,
-  recapCricket,
-  recapEntrainement,
-  recapX01,
   TITRE_PANNEAU_JOUEURS,
-  TITRE_PANNEAU_REGLAGES,
+  TITRE_QUI_S_ENTRAINE,
 } from '@/ui/labels'
+import { BarreEtapes } from './BarreEtapes'
+import { ChampNom } from './ChampNom'
 import { DialogueNouveauJoueur } from './DialogueNouveauJoueur'
 import { EnTeteEtape } from './EnTeteEtape'
 import { RangeeJoueurs } from './RangeeJoueurs'
 import { ReglagesJeu } from './ReglagesJeu'
 
-const recapitulatif = (mode: GameModeId, partie: NouvellePartie): string => {
-  const { reglages } = partie
-  switch (mode) {
-    case 'X01':
-      return recapX01(reglages)
-    case 'CRICKET':
-      return recapCricket(reglages.variante)
-    case 'TOUR_DU_MONDE':
-      return RECAP_TOUR_DU_MONDE
-    case 'CHECKOUT_PRACTICE':
-      return recapEntrainement(
-        reglages.sorties,
-        DEFAUT_ENTRAINEMENT.minTarget,
-        DEFAUT_ENTRAINEMENT.maxTarget,
-      )
-    default: {
-      const jamais: never = mode
-      return jamais
-    }
-  }
-}
-
 /**
- * Étape 2 — les joueurs, puis les réglages du jeu choisi.
+ * Étape 2 — les joueurs, la fiche de réglages du jeu choisi, puis le nom de la
+ * partie (facultatif).
  *
  * Seul en piste (ou à l'entraînement), on commence d'ici : il n'y a pas
- * d'ordre à régler. À deux et plus, « Continuer » mène à l'ordre de jeu.
+ * d'ordre à régler, et la barre le grise. À deux et plus, « Continuer » mène à
+ * l'ordre de jeu.
  */
 export const EtapeJoueurs = ({
   mode,
@@ -70,7 +51,8 @@ export const EtapeJoueurs = ({
   const [dialogue, setDialogue] = useState(false)
   const retenus = partie.joueursRetenus(mode)
   const n = retenus.length
-  const versOrdre = mode !== 'CHECKOUT_PRACTICE' && n >= 2
+  const entrainement = mode === 'CHECKOUT_PRACTICE'
+  const versOrdre = !entrainement && n >= 2
 
   return (
     <>
@@ -78,18 +60,28 @@ export const EtapeJoueurs = ({
         titre={LIBELLE_MODE[mode]}
         cheminPrecedent={cheminNouvellePartie()}
         libelleRetour={RETOUR_ETAPE_PRECEDENTE}
+        barre={
+          entrainement ? (
+            <BarreEtapes etapes={[ETAPE_JEU, ETAPE_REGLAGES]} courante={1} />
+          ) : (
+            <BarreEtapes
+              etapes={[ETAPE_JEU, ETAPE_JOUEURS, ETAPE_ORDRE]}
+              courante={1}
+              grisees={n < 2 ? 1 : 0}
+            />
+          )
+        }
       />
 
-      <Panneau
-        aria-label={TITRE_PANNEAU_JOUEURS}
-        titre={TITRE_PANNEAU_JOUEURS}
-        action={
+      <section className="flex flex-col gap-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-score text-etiquette font-bold uppercase tracking-[0.2em] text-laiton-clair">
+            {entrainement ? TITRE_QUI_S_ENTRAINE : TITRE_PANNEAU_JOUEURS}
+          </h2>
           <span className="chiffres text-xs text-craie-3">
-            {n}/{partie.max(mode)}
+            {compteurJoueurs(n, partie.max(mode))}
           </span>
-        }
-        contenuClassName="p-4 pt-5"
-      >
+        </div>
         {partie.chargement ? (
           <SpinnerLigne label={CHARGEMENT_PROFILS} />
         ) : (
@@ -101,24 +93,15 @@ export const EtapeJoueurs = ({
             versExistants={cheminJoueursExistants(mode)}
           />
         )}
-      </Panneau>
+      </section>
 
-      <Panneau
-        aria-label={TITRE_PANNEAU_REGLAGES}
-        titre={TITRE_PANNEAU_REGLAGES}
-        contenuClassName="flex flex-col gap-4 p-3"
-      >
-        <ReglagesJeu mode={mode} reglages={partie.reglages} joueurs={n} />
-      </Panneau>
+      <ReglagesJeu mode={mode} reglages={partie.reglages} joueurs={n} />
+
+      <ChampNom nom={partie.nom} />
 
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
 
       <div className="mt-auto flex flex-col gap-2 pt-1">
-        <p className="flex items-center justify-center gap-2 text-center font-score text-etiquette uppercase tracking-[0.2em] text-craie-3">
-          <Check aria-hidden="true" className="size-3.5 shrink-0" />
-          {recapitulatif(mode, partie)}
-        </p>
-
         {versOrdre ? (
           <Button
             taille="lg"

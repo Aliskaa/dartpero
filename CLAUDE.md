@@ -137,6 +137,17 @@ du jour du calendrier : dimanche 1 h → « Dimanche nuit ») est un **libellé 
 l'affichage** depuis `createdAt` (`labels.ts`) : ne jamais l'écrire, ni « compléter » les
 anciennes parties. L'UI lit l'heure par `services.clock` (même exception que `devices`),
 jamais par `Date.now()` — garde `tests/architecture/horlogeBoundary.test.ts`.
+⚠️ **Le champ du nom est à l'étape 2** (« Nom de la partie · facultatif », sous la fiche de
+réglages), plus à l'étape 1 (lot `nouvelle-partie-parcours`) ; la règle ci-dessus est inchangée.
+- **Parcours Nouvelle partie, habillage** (lot `nouvelle-partie-parcours`) : une **barre d'étapes**
+(`BarreEtapes`, `1 · JEU`, `2 · JOUEURS`, `3 · ORDRE` ; deux segments à l'entraînement ; Ordre
+grisé seul en piste) en tête de chaque étape, **non interactive** (on revient par le retour) ;
+étape 1 en tuiles 2 × 2 ; étape 2 en fiche de réglages par jeu. ⚠️ **« Tirer au sort » est un
+mélange visible** à l'étape Ordre : port driving `ShuffleOrder` (`ShuffleOrderUseCase`, même
+`RandomSource` que les lancements), vrai hasard (le tirage peut redonner l'ordre d'avant, aucune
+relance), bref mouvement de la feuille, ordre écrit dans `partie:joueurs` comme un déplacement à
+la main. L'interrupteur « Ordre aléatoire » n'existe plus ; le flag `shuffle` des commandes de
+lancement reste, sans appelant UI (dette), et la clé `partie:ordre-aleatoire` reste orpheline.
 - **Accueil en parties récentes** (lot `accueil-parties-recentes`) : cartes « Aujourd'hui » puis
 « Cette semaine » ; la partie en cours, épinglée en tête, est seule à porter « Reprendre ».
 ⚠️ **« Abandonnée » est dérivée, jamais écrite** : `matchStatus`, et lui seul, la calcule contre

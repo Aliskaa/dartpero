@@ -28,6 +28,7 @@ import type { PreviewTourDuMondeVisit } from '@/core/application/ports/driving/P
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
 import type { RestartMatch } from '@/core/application/ports/driving/RestartMatch'
+import type { ShuffleOrder } from '@/core/application/ports/driving/ShuffleOrder'
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
 import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVisit'
 import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseCase'
@@ -49,6 +50,7 @@ import { PreviewTourDuMondeVisitUseCase } from '@/core/application/use-cases/Pre
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
 import { RestartMatchUseCase } from '@/core/application/use-cases/RestartMatchUseCase'
+import { ShuffleOrderUseCase } from '@/core/application/use-cases/ShuffleOrderUseCase'
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
 import { UndoLastVisitUseCase } from '@/core/application/use-cases/UndoLastVisitUseCase'
 import { BrowserAppInstallation } from '@/infrastructure/device/BrowserAppInstallation'
@@ -129,6 +131,8 @@ export type Services = {
   readonly playCricket: PlayCricket
   /** L'entraînement solo au checkout (lot 5b). */
   readonly playCheckoutPractice: PlayCheckoutPractice
+  /** « Tirer au sort » (étape Ordre) : mélange visible, avant le lancement. */
+  readonly shuffleOrder: ShuffleOrder
   readonly previewVisit: PreviewVisit
   readonly previewTourDuMondeVisit: PreviewTourDuMondeVisit
   readonly previewCricketVisit: PreviewCricketVisit
@@ -187,6 +191,7 @@ export const createServices = ({
     playTourDuMonde,
     playCricket,
     playCheckoutPractice,
+    shuffleOrder: new ShuffleOrderUseCase(random),
     previewVisit: new PreviewVisitUseCase(),
     previewTourDuMondeVisit: new PreviewTourDuMondeVisitUseCase(),
     previewCricketVisit: new PreviewCricketVisitUseCase(),

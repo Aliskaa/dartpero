@@ -323,6 +323,23 @@ superposer.**
 ⚠️ Un `<h2>` de panneau ne doit **jamais** reprendre un nom déjà porté par un `<h1>` : utiliser
 `enTete=` (contenu libre) plutôt que `titre=`, sinon `getByRole('heading')` trouve deux éléments.
 
+### Le parcours Nouvelle partie (lot `nouvelle-partie-parcours`)
+
+Laiton unique : **aucune couleur par mode** (la planche en proposait quatre ; seul écart assumé).
+
+- **Barre d'étapes** (`BarreEtapes`) : un trait de 3 px par étape, `1 · JEU`, `2 · JOUEURS`,
+  `3 · ORDRE`. Faite : craie ; courante : laiton, `aria-current="step"` ; à venir : `craie-3` (un
+  cran plus pâle de trait quand l'étape n'aura pas lieu : Ordre seul en piste). **Non interactive.**
+- **Tuile de jeu** : `<ul>` 2 colonnes, un seul lien par tuile (pictogramme 40, titre, une phrase),
+  `min-h` 150 px, liseré haut laiton, fond `ardoise`.
+- **Fiche de réglages** (`ReglagesJeu`) : filet haut craie 3 px sur `ardoise` ; tête = pictogramme 32 +
+  récap en grand (principal en `font-score`, secondaire en capitales) dans un `<output>` ; réglages en
+  `ChoixSegmente` (cartes à `aria-pressed` pour le comptage du Cricket) ; ligne de règles ; dépliants
+  (`aria-expanded`, repliés à chaque ouverture) « Plus de réglages » et « Les règles en entier ».
+- **Feuille d'ordre numérotée** : grand rang, pastille, nom, poignée ≥ 48 px ; le premier en
+  `bg-laiton/10` avec liseré gauche laiton et « COMMENCE ». « Tirer au sort » : bouton secondaire ;
+  la feuille rejoue `animate-monter` (court, sans rebond), coupé sous `prefers-reduced-motion`.
+
 ### La carte des impacts
 
 ⚠️ **Ce n'est pas la `Cible` décorative avec un calque par-dessus.** Sur un plateau déjà rouge,

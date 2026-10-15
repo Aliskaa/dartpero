@@ -394,10 +394,13 @@ describe('Création de partie', () => {
     renderWithServices(<App />, { services, route: '/nouvelle-partie/tour-du-monde' })
 
     // Score de départ et double out n'ont aucun sens ici : ils n'y sont pas.
-    const regles = await screen.findByRole('region', { name: 'Réglages' })
+    const regles = await screen.findByRole('region', { name: 'Réglages du jeu' })
     expect(within(regles).queryByRole('button', { name: '501' })).toBeNull()
-    expect(within(regles).queryByRole('button', { name: /double out/i })).toBeNull()
-    expect(within(regles).getByText(/on part du/i)).toBeInTheDocument()
+    // Ni sortie ni « Plus de réglages » : ces réglages sont ceux du X01.
+    expect(within(regles).queryByRole('button', { name: /plus de réglages/i })).toBeNull()
+    expect(within(regles).queryByText(/sur un double/i)).toBeNull()
+    expect(within(regles).queryByRole('group', { name: 'Sortie' })).toBeNull()
+    expect(within(regles).getByText('21 cibles · rien à régler')).toBeInTheDocument()
   })
 
   it('démarre une partie dans le mode choisi', async () => {
@@ -410,7 +413,7 @@ describe('Création de partie', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Nouveau joueur' }))
     await utilisateur.type(screen.getByLabelText('Pseudo'), 'Kevin')
     await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
-    await waitFor(() => expect(screen.getByText('1/4')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('1 / 4')).toBeInTheDocument())
 
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 
