@@ -15,3 +15,5 @@ coverage/
 .env.production.local
 # Captures de références externes : utiles pour la conception, hors du dépôt.
 docs/exemples/
+# Planches et captures de conception (lourdes) : gardées sur le poste, hors du dépôt.
+docs/maquettes/

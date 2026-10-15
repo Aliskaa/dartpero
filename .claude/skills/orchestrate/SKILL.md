@@ -157,9 +157,69 @@ servir dans `/orchestrate`.
      rien remiser ni écraser sans accord.
    - Noter la branche dans `00-orchestration.md`.
 
-Pas de worktree : un seul working tree, une branche par lot, un commit
-par lot **après** le go utilisateur (voir § Séquence, étapes Commit et
-Fusion).
+Par défaut, un seul working tree : une branche par lot, un commit par lot
+**après** le go utilisateur (voir § Séquence, étapes Commit et Fusion).
+Pour mener **deux lots en parallèle**, voir § Lots en parallèle
+(worktrees) — seulement à la demande de l'utilisateur.
+
+## Lots en parallèle (worktrees)
+
+Mode **expérimental**, ouvert à la demande de l'utilisateur (2026-10-15).
+Un lot = un worktree = une session Claude. Le dépôt principal
+(`c:\Users\kevin\Documents\Flechettes`) reste sur `main` et sert à la
+fusion.
+
+1. **Création** (depuis le dépôt principal, `main` propre) :
+   `git worktree add ..\Flechettes-<id> -b lot/<id> main`. Puis, dans le
+   worktree : `npm install`, et copier `.claude/settings.local.json`
+   (ignoré par git, donc absent) avec `Copy-Item`. Les skills tiers non
+   suivis (`.claude/skills/impeccable/`, `emil-design-eng/`) y manquent :
+   ne pas les recréer.
+2. **Session** : l'utilisateur ouvre Claude **dans le worktree**, puis
+   `/intake <id>` et `/orchestrate <id> <niveau>`. La branche `lot/<id>`
+   y est déjà active : ne pas faire `git switch` ; vérifier
+   `git branch --show-current`. Noter dans `00-orchestration.md` le
+   chemin du worktree et le **port** réservé aux captures du Dev.
+3. **Ports** : chaque lot réserve un port de serveur temporaire distinct
+   (5201, 5202…), passé au `dev` dans son brief.
+4. **Fichiers partagés**, conflits attendus : `src/ui/labels.ts`,
+   `docs/CHARTE_GRAPHIQUE.md`, l'étude de `docs/prospective/`,
+   `.claude/CONVENTIONS.md`, `.ai/architecture-context.md`. Ne pas les
+   « devancer » : chaque lot les modifie comme s'il était seul.
+5. **Fusion** : depuis le worktree, `git switch main` est impossible
+   (`main` est actif dans le dépôt principal). La fusion se fait dans le
+   dépôt principal : `git -C <dépôt principal> merge --ff-only lot/<id>`,
+   après avoir vérifié que son arbre est propre.
+6. **Second lot à fusionner** (`main` a bougé, `--ff-only` refuse) :
+   **stop**, puis, avec l'accord de l'utilisateur, dans le worktree :
+   `git rebase main`. Résolution :
+   - `labels.ts`, charte, CONVENTIONS, étude : **garder les deux
+     apports** ; jamais en jeter un sans le dire ;
+   - `.ai/architecture-context.md` : prendre la version de `main`, puis
+     **régénérer** l'index (brief `architecture-context`) ;
+   - un conflit de **code** qui demande un choix produit ou technique non
+     évident : stop, demander.
+
+   Puis relancer lint, typecheck, `npx vitest run`, build et le Grep
+   d'encodage ; intégrer la régénération dans le commit du lot
+   (`git commit --amend`, **après accord**), puis fusion `--ff-only`.
+7. **Fin** : après fusion et sur accord, `git worktree remove
+   ..\Flechettes-<id>` ; la branche est gardée.
+8. **Planches** : le scratchpad est propre à chaque session. Les planches
+   validées vivent dans `docs/maquettes/` du **dépôt principal** (ignoré
+   par git, donc absent des worktrees ; voir son `LISEZMOI.md`) : une
+   demande ou un brief cite le chemin absolu
+   `C:\Users\kevin\Documents\Flechettes\docs\maquettes\<dossier>\`,
+   jamais le scratchpad d'une session. Une nouvelle planche y est copiée
+   dès sa validation, même depuis un worktree ; deux lots en parallèle
+   écrivent chacun dans **son** dossier.
+9. **Mémoire** : la mémoire de Claude est rangée par dossier ; une
+   session dans un worktree ne voit pas celle du dépôt principal. Les
+   règles vitales sont dans les fichiers versionnés (`CLAUDE.md`,
+   `.claude/`), pas en mémoire.
+
+Dans `06-echanges.md`, dire que le lot a tourné en parallèle, avec quel
+autre lot, et les conflits résolus au rebase.
 
 ## Reprise
 
@@ -207,7 +267,8 @@ seulement après le gate.
     linéaire, un commit par lot comme avant). Si `main` a bougé et que
     `--ff-only` refuse : **stop**, demander (rebase de la branche ou
     merge commit) — jamais de choix silencieux. Garder la branche après
-    fusion, sauf demande de la supprimer.
+    fusion, sauf demande de la supprimer. En worktree : § Lots en
+    parallèle, points 5 et 6.
 
 Gate check après **chaque** phase, sauf après Revue / Échanges où tu
 demandes le go.
@@ -379,7 +440,8 @@ Claude Code a déjà `/code-review` et `/security-review` : si tu veux une
 passe purement code sur le diff, appelle-les plutôt que de les réécrire
 dans le prompt de `review`.
 
-Une branche `lot/<id>` par lot, pas de worktree. Pas de commit par
+Une branche `lot/<id>` par lot ; un worktree seulement en mode lots en
+parallèle (§ dédié). Pas de commit par
 phase. Un commit par lot, sur sa branche, après le go, comme
 `.claude/rules/commit.md` ; la fusion dans `main` est une étape à part,
 elle aussi soumise à accord.

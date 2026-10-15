@@ -65,6 +65,15 @@ Ne pas écraser une demande existante en silence : la lire, expliquer la
 révision, obtenir confirmation, conserver l'historique dans le même
 fichier.
 
+## Planches
+
+Une planche (maquette) validée pendant l'intake est copiée dans
+`C:\Users\kevin\Documents\Flechettes\docs\maquettes\<dossier>\` — dépôt
+principal, ignoré par git, voir son `LISEZMOI.md` ; c'est la seule
+écriture permise hors `docs/request/<id>.md`, même depuis un worktree — et
+la demande cite **ce** chemin absolu, avec son lien claude.ai s'il existe,
+jamais le scratchpad de la session, propre à chaque session et temporaire.
+
 ## Contrat du fichier
 
 Suivre `docs/request/README.md`. En-tête obligatoire :

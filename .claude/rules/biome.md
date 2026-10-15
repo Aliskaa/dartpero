@@ -12,6 +12,8 @@
   `.agents`, où s'installent des skills tiers (lot `accueil-parties-recentes`).
   ⚠️ L'exclusion couvre aussi **nos** skills (`intake`, `orchestrate`…) : du
   Markdown aujourd'hui, mais un script ajouté là ne serait jamais linté.
+  Exclu aussi : `docs/maquettes` (planches HTML et scripts de capture,
+  archives de conception ignorées par git, pas du code de l'app).
 - ⚠️ **`lint:fix` sur les chemins du lot** (`npx biome check --write src
   tests`), jamais sur tout le dépôt sans avoir lu `git status` : un `lint:fix`
   global a réécrit des scripts d'un skill tiers non suivi par git,

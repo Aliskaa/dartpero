@@ -14,7 +14,8 @@
       "!**/node_modules",
       "!**/public",
       "!**/.claude/skills",
-      "!**/.agents"
+      "!**/.agents",
+      "!**/docs/maquettes"
     ]
   },
   "css": {

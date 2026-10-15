@@ -53,9 +53,11 @@ gravée de `CLAUDE.md`.
 
 ## Ce que ce workflow ne fait pas
 
-- Pas de worktree. En revanche, **une branche par lot** :
-  `lot/<id>`, créée depuis `main` par `/orchestrate` avant
-  l'Architecture, fusionnée en `--ff-only` après accord.
+- **Une branche par lot** : `lot/<id>`, créée depuis `main` par
+  `/orchestrate` avant l'Architecture, fusionnée en `--ff-only` après
+  accord. Pas de worktree par défaut ; deux lots en parallèle se mènent
+  chacun dans son worktree, à la demande de l'utilisateur (mode
+  expérimental, `skills/orchestrate/SKILL.md` § Lots en parallèle).
 - Pas de commit par phase. Un commit par lot, sur sa branche, après le
   go, et après accord explicite (`rules/commit.md`).
 - Pas de pipeline à quatre agents pour régénérer le contexte :
