@@ -118,6 +118,14 @@ Sauter le scout et le designer (démarrer à `archi-authority`)
 **uniquement** si l'Objectif / l'intake annonce déjà une surface gravée.
 Le noter.
 
+**Planche validée** : si la demande en cite une, passe son chemin à chaque
+agent de la chaîne. Un rapport qui ne l'a pas lue, qui s'en écarte sans
+poser la question, ou qui tranche lui-même un point produit (ce qui se voit
+à l'écran et que ni la demande ni la planche ne tranchent) n'est **pas** un
+`PASS` : relance l'agent ou passe au suivant, en notant la raison. Les
+« Questions pour l'utilisateur » du rapport retenu se posent à l'arrêt
+Archi → Dev ; tu ne les tranches jamais toi-même.
+
 `archi` est l'alias d'invocation directe hors chaîne — ne pas s'en
 servir dans `/orchestrate`.
 
@@ -252,8 +260,10 @@ ouvertes. Avant la phase suivante :
    La recopier ne la ferme pas.
 3. S'il en reste une : statut **Bloquée**, section **Blocages ouverts**
    (la question, son origine, qui doit la clore). **Ne pas démarrer la
-   phase suivante.** Trancher toi-même si c'est évident — et le
-   documenter — ou demander à l'utilisateur.
+   phase suivante.** Trancher toi-même si c'est évident **et technique**
+   — et le documenter — ou demander à l'utilisateur. Une question
+   **produit** (visible à l'écran, absente de la demande et de la
+   planche) va toujours à l'utilisateur.
 4. **Faite** seulement quand toutes les questions existant à cet instant
    ont une résolution écrite.
 5. Une phase a le droit d'**ajouter** des questions : elles bloquent

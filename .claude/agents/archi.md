@@ -12,7 +12,9 @@ Tu es invoqué **hors** de la chaîne `/orchestrate` (quelqu'un demande
 un design isolé). Applique le brief de
 [`.claude/agents/archi-authority.md`](archi-authority.md) à l'identique :
 même contrat `PASS`/`FAIL`, même baseline sécu, mêmes entrées
-(`.ai/architecture-context.md` en priorité).
+(`.ai/architecture-context.md` en priorité). Et la même section **« Planche validée et
+décisions produit »** : une planche validée se suit à l'identique, et tout point produit non
+tranché devient une question pour l'utilisateur.
 
 Si `/orchestrate` tourne, ce n'est **pas** toi qu'il doit lancer en
 premier : scout, puis designer, puis authority. Te lancer directement

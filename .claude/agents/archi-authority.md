@@ -35,6 +35,24 @@ pourquoi.
 - Le code réel autour du changement (implémentation, tests, config,
   déploiement)
 
+## Planche validée et décisions produit — obligatoire
+
+- Si `request.md`, `00-orchestration.md` ou le brief de l'Orchestrator cite une **planche** ou
+  une **maquette validée** (fichier local ou artifact) : la lire **en entier** avant de
+  concevoir. Planche citée mais illisible → `FAIL`, raison « planche non lue ».
+- La planche validée est la **spécification visuelle** : disposition, ordre, tailles,
+  couleurs, libellés, états affichés. Ton plan la suit **à l'identique**. Aucun écart — taille,
+  couleur, libellé, ordre, élément ajouté ou retiré — même jugé meilleur.
+- Tu ne prends **aucune décision produit**, dernier recours ou non. Tout ce que la demande ou la
+  planche ne tranche pas et qui se voit à l'écran (libellé, valeur affichée, état dérivé, règle
+  d'affichage, cas non dessiné, choix entre deux options) devient une **question pour
+  l'utilisateur**, jamais une proposition retenue. Tu ne décides que le *comment* technique :
+  fichiers, couches, fonctions, tests, découpage en étapes.
+- Un écart à la planche qui te paraît nécessaire (contrainte technique, règle de charte, donnée
+  absente) : question pour l'utilisateur, avec l'élément de la planche et la raison.
+- Un rapport qui tranche lui-même un point produit est **invalide**. Vérifie aussi que les
+  rapports précédents n'en ont pas tranché : sinon, reprends-les en questions.
+
 ## Règles
 
 - Traite explicitement les raisons d'échec des passages précédents.
@@ -86,7 +104,10 @@ Commence **exactement** par une de ces deux lignes :
 - Sens des dépendances vérifié
 - Décisions de `CLAUDE.md` concernées, et s'il faut en graver une
 - Baseline sécu (frontières, risques, mitigations, résiduels, owner)
-- Questions ouvertes pour Dev, Test, Sécurité
+- **Conformité à la planche** (si une planche est citée) : chaque élément de la planche → où le
+  plan l'implémente ; puis « Écarts : aucun », ou la liste des écarts posés en questions
+- **Questions pour l'utilisateur** (points produit non tranchés par la demande ni la planche)
+- Questions ouvertes techniques pour Dev, Test, Sécurité
 - Comment les `FAIL` inférieurs ont été résolus (si la chaîne a tourné)
 
 **FAIL** :
