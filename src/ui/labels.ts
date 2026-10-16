@@ -271,7 +271,7 @@ export const TITRE_CONFIDENTIALITE = 'Confidentialité'
 export const SOUS_TITRE_CONFIDENTIALITE = 'Politique et mentions légales'
 
 /** Chaîne française littérale : jamais recalculée depuis une date ISO. */
-export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 12 octobre 2026'
+export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 16 octobre 2026'
 
 export const RETOUR_REGLAGES = 'Retour aux réglages'
 
@@ -294,7 +294,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
     titre: 'Sur votre appareil',
     paragraphes: [
       'Vos profils (pseudo, couleur, date de création) et vos parties (le nom que vous leur avez donné, s’il y en a un, et chaque fléchette saisie, avec ses dates) sont enregistrés dans la base de données du navigateur (IndexedDB), sur ce téléphone seulement.',
-      'Les préférences de l’appareil vont dans le stockage local du navigateur (localStorage) : le thème, l’annonce vocale, les réglages de la dernière partie, les derniers joueurs choisis (leurs identifiants internes) et le « Plus tard » de l’invitation à installer. Au démarrage, une valeur de test y est écrite puis effacée aussitôt.',
+      'Les préférences de l’appareil vont dans le stockage local du navigateur (localStorage) : le thème, l’annonce vocale, les réglages de la dernière partie, les derniers joueurs choisis (leurs identifiants internes), le dernier joueur consulté dans Statistiques (son identifiant interne) et le « Plus tard » de l’invitation à installer. Au démarrage, une valeur de test y est écrite puis effacée aussitôt.',
       'Si une mise à jour de l’application ne parvient pas à se charger, un marqueur technique est posé dans le stockage de session (sessionStorage), pour ne recharger la page qu’une seule fois.',
       'Une copie des fichiers de l’application est gardée en cache par le navigateur, pour qu’elle fonctionne hors ligne.',
       'Au démarrage, Dartpéro demande au navigateur de protéger ce stockage, pour qu’il ne l’efface pas de lui-même quand la place vient à manquer. Cette protection n’est pas une sauvegarde.',
@@ -349,8 +349,10 @@ export const moyenne = (valeur: number): string =>
  * cent, ça veut dire « il a tout perdu ». Rien du tout, ça veut dire « on ne
  * sait pas encore » — une manche en cours n'est ni gagnée ni perdue, et un
  * joueur qui n'a jamais eu de double à jouer n'a pas raté ses sorties, il n'en
- * a simplement pas eu. Sert aux trois pourcentages de l'app : matchs, manches,
- * doubles.
+ * a simplement pas eu. Ne sert plus qu'au pourcentage de doubles : résumé X01
+ * et carte Finitions des statistiques. Les pourcentages de matchs et de
+ * manches ont quitté l'écran Statistiques (lot `statistiques-podium`) : chaque
+ * ligne de Victoires dit « 9 / 16 », et les manches n'y figurent plus.
  */
 export const pourcent = (valeur: number, occasions: number): string =>
   occasions === 0 ? '—' : `${Math.round(valeur)} %`
@@ -772,8 +774,148 @@ export const TITRE_MOMENT_MANCHE = 'Manche !'
 /** Les en-têtes et lignes de statistiques qui parlaient de « legs ». */
 export const LIBELLE_MANCHES = 'Manches'
 export const LIBELLE_MEILLEURE_MANCHE = 'Meilleure manche'
-export const LIBELLE_MANCHES_GAGNEES = 'Gagnées'
-export const LIBELLE_MANCHES_JOUEES = 'Jouées'
+
+/* ------------------------------------------------------------------------
+ * L'écran Statistiques en podium (lot `statistiques-podium`) : la cible d'un
+ * joueur en grand, puis quatre cartes qui disent qui mène et de combien.
+ * ---------------------------------------------------------------------- */
+
+export const TITRE_STATISTIQUES = 'Statistiques'
+export const LEGENDE_PERIODE = 'Période'
+export const CHARGEMENT_STATISTIQUES = 'Calcul des statistiques…'
+export const TITRE_STATS_VIDES = 'Aucune partie au compteur'
+export const DESCRIPTION_STATS_VIDES =
+  'Jouez une première partie : moyennes, 180 et checkouts se cumuleront ici, partie après partie.'
+export const TITRE_PERIODE_VIDE = 'Rien sur cette période'
+export const descriptionPeriodeVide = (periode: string): string =>
+  `Aucune partie de X01 ${periode}. Élargissez la fenêtre pour retrouver les précédentes.`
+
+/** Un nombre entier, groupé à la française : « 2 846 » (espace fine insécable U+202F). */
+export const nombre = (valeur: number): string => valeur.toLocaleString('fr-FR')
+
+/** Le sous-titre : « 2 846 fléchettes lancées », « 1 fléchette lancée ». */
+export const flechettesLancees = (total: number): string =>
+  `${nombre(total)} ${total > 1 ? 'fléchettes lancées' : 'fléchette lancée'}`
+
+/** Le nom accessible du sélecteur de joueurs : il ne pilote que la cible. */
+export const LEGENDE_JOUEUR_CIBLE = 'Joueur de la cible'
+
+/**
+ * Une case du plateau, dans la rangée sous la cible : « S20 », « T19 », et la
+ * bulle en toutes lettres (« Bulle 25 », « Bulle 50 »). `Dart.label` reste
+ * intact (« 25 », « BULL ») : le résumé de partie l'emploie toujours.
+ */
+export const libelleZone = (dart: Dart): string =>
+  dart.segment === 'BULL'
+    ? `${LIBELLE_BULLE} ${dart.multiplier === 'DOUBLE' ? 50 : 25}`
+    : Dart.label(dart)
+
+/** « 160 fois » sous une case de la rangée. */
+export const foisTouchee = (fois: number): string => `${nombre(fois)} fois`
+export const LIBELLE_HORS_CIBLE = 'hors cible'
+
+/** Les trois mesures de la carte Moyenne : le titre de la carte suit la bascule. */
+export const MESURES_MOYENNE = ['MOYENNE', 'FIRST_9', 'VOLEE'] as const
+export type MesureMoyenne = (typeof MESURES_MOYENNE)[number]
+
+export const TITRE_CARTE_MOYENNE: Record<MesureMoyenne, string> = {
+  // Abrégé (Q-A) : « Moyenne 3 fléchettes » était tronqué à 360 px à côté des bascules.
+  MOYENNE: 'Moyenne 3 fl.',
+  FIRST_9: 'First 9',
+  VOLEE: 'Meilleure volée',
+}
+
+/**
+ * Le nom accessible de la carte Moyenne et de son dialogue (QO-1) : le titre
+ * visible **puis** le complet quand il est abrégé — « Moyenne 3 fl., Moyenne
+ * 3 fléchettes », la même règle que les bascules (`nomBascule`).
+ */
+export const NOM_CARTE_MOYENNE: Record<MesureMoyenne, string> = {
+  MOYENNE: 'Moyenne 3 fl., Moyenne 3 fléchettes',
+  FIRST_9: 'First 9',
+  VOLEE: 'Meilleure volée',
+}
+
+/**
+ * ⚠️ Libellés de bascule **raccourcis** (arrêt Archi → Dev, U2) : titre et trois
+ * bascules tiennent ainsi sur une seule ligne à 390 px. Le nom complet reste
+ * dans le titre et dans le nom accessible de chaque bascule.
+ */
+export const BASCULE_MOYENNE: Record<
+  MesureMoyenne,
+  { readonly court: string; readonly complet: string }
+> = {
+  MOYENNE: { court: 'Moy.', complet: 'Moyenne' },
+  FIRST_9: { court: 'F9', complet: 'First 9' },
+  VOLEE: { court: 'Volée', complet: 'Meilleure volée' },
+}
+
+/**
+ * Le nom accessible d'une bascule : le libellé court **puis** le complet
+ * (« F9, First 9 »). Le court y figure mot pour mot (WCAG 2.5.3, « label in
+ * name ») : la commande vocale « F9 » le trouve, le lecteur d'écran dit le sens.
+ * Quand les deux se confondent (« 180 »), le court seul.
+ */
+export const nomBascule = (libelle: {
+  readonly court: string
+  readonly complet: string
+}): string =>
+  libelle.court === libelle.complet ? libelle.court : `${libelle.court}, ${libelle.complet}`
+
+export const LEGENDE_BASCULE_MOYENNE = 'Classer la moyenne par'
+
+export const TITRE_CARTE_VICTOIRES = 'Victoires'
+export const TITRE_CARTE_GROSSES_VOLEES = 'Grosses volées'
+export const TITRE_CARTE_FINITIONS = 'Finitions'
+
+/** Les trois mesures de la carte Finitions. Le titre, lui, reste « Finitions ». */
+export const MESURES_FINITIONS = ['DOUBLES', 'PLUS_HAUT', 'MANCHE'] as const
+export type MesureFinitions = (typeof MESURES_FINITIONS)[number]
+
+export const BASCULE_FINITIONS: Record<
+  MesureFinitions,
+  { readonly court: string; readonly complet: string }
+> = {
+  DOUBLES: { court: '% dbl', complet: '% doubles' },
+  PLUS_HAUT: { court: 'Haut', complet: 'Plus haut finish' },
+  MANCHE: { court: 'Manche', complet: 'Manche la plus courte' },
+}
+
+export const LEGENDE_BASCULE_FINITIONS = 'Classer les finitions par'
+
+/** Les trois seuils des grosses volées : les rangées de chaque joueur, et la bascule. */
+export const SEUILS_GROSSES_VOLEES = ['180', '140+', '100+'] as const
+export type SeuilGrossesVolees = (typeof SEUILS_GROSSES_VOLEES)[number]
+
+/** La bascule de Grosses volées (Révision 1) : le court et le complet se confondent. */
+export const BASCULE_GROSSES_VOLEES: Record<
+  SeuilGrossesVolees,
+  { readonly court: string; readonly complet: string }
+> = {
+  '180': { court: '180', complet: '180' },
+  '140+': { court: '140+', complet: '140+' },
+  '100+': { court: '100+', complet: '100+' },
+}
+
+export const LEGENDE_BASCULE_GROSSES_VOLEES = 'Classer les grosses volées par'
+
+/**
+ * Le complément de Victoires : « / 16 », les parties jouées par **ce** joueur,
+ * sur la grande ligne et sur chaque barre (Révision 1, R1-Q7).
+ */
+export const complementVictoires = (jouees: number): string => `/ ${nombre(jouees)}`
+
+/** Le complément du grand chiffre de la bascule Manche : « 15 fl. » (U6). */
+export const COMPLEMENT_MANCHE = 'fl.'
+
+/** Le bouton sous une carte coupée à ses N premiers (Révision 1). */
+export const LIBELLE_TOUT_VOIR = 'Tout voir'
+
+/** Son nom accessible : « Tout voir, Victoires » — le libellé visible en tête (WCAG 2.5.3). */
+export const nomToutVoir = (titre: string): string => `${LIBELLE_TOUT_VOIR}, ${titre}`
+
+/** Le ✕ d'une modale. */
+export const LIBELLE_FERMER = 'Fermer'
 
 /** Le nom accessible de la colonne des bâtons, sur la ligne d'un joueur. */
 export const etiquetteManchesGagnees = (nom: string, gagnees: number, requises: number): string =>

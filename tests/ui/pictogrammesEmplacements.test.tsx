@@ -4,6 +4,7 @@ import App from '@/App'
 import type { Services } from '@/composition/container'
 import { GAME_MODE_IDS } from '@/core/domain/games'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
+import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { PICTOGRAMME_PAR_MODE } from '@/ui/composants/commun/Pictogramme'
 import { fakeServices } from '../fakes'
@@ -73,6 +74,38 @@ describe('Pictogrammes — leurs emplacements', () => {
   it('associe un pictogramme distinct à chaque jeu', () => {
     const noms = GAME_MODE_IDS.map((mode) => PICTOGRAMME_PAR_MODE[mode])
     expect(new Set(noms).size).toBe(GAME_MODE_IDS.length)
+  })
+
+  it('statistiques : un pictogramme de 20 px, décoratif, en tête de chacune des quatre cartes', async () => {
+    const { services } = fakeServices()
+    const kevin = await services.managePlayers.create('Kevin')
+    const matchId = await services.startMatch.execute({
+      playerIds: [kevin.id],
+      config: X01Config.create({ legsToWin: 1 }),
+    })
+    await services.recordVisit.execute({ matchId, darts: [Dart.triple(20), Dart.triple(20)] })
+
+    renderWithServices(<App />, { services, route: '/statistiques' })
+
+    const cartes = [
+      await screen.findByRole('region', { name: 'Moyenne 3 fl., Moyenne 3 fléchettes' }),
+      screen.getByRole('region', { name: 'Victoires' }),
+      screen.getByRole('region', { name: 'Grosses volées' }),
+      screen.getByRole('region', { name: 'Finitions' }),
+    ]
+    const attendus = [
+      TRACES_ATTENDUS.moyenne,
+      TRACES_ATTENDUS.victoire,
+      TRACES_ATTENDUS['grosses-volees'],
+      TRACES_ATTENDUS.sortie,
+    ]
+    expect(svgsDe(20)).toHaveLength(4)
+    cartes.forEach((carte, rang) => {
+      const svgs = svgsDe(20, carte)
+      expect(svgs).toHaveLength(1)
+      expect(svgs[0]?.getAttribute('aria-hidden')).toBe('true')
+      expect(svgs[0]?.innerHTML).toBe(attendus[rang])
+    })
   })
 
   it('résumé avec vainqueur : la couronne fait 32 px et reste décorative', async () => {

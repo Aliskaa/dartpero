@@ -162,7 +162,7 @@ lu ; le lot `high` à part.
 | 5 | `match-x01` | Écran de match X01 : paysage réparé, place rendue au reste, multiplicateur armé gradué (Double : filet ; Triple : filet + fond), bâtons en pointillé, `MomentCelebratif` hors du flux, plus de clignotement `occupe`, pictogramme au bandeau. | 3, 4 | light |
 | 6 | `feuille-commune` | Cricket et Tour du monde sur la feuille du X01, pavé unifié, accents de mode désalignés des couleurs de profil. **Coupé en deux le 2026-10-14** (voir § Validé, « Lot 6 ») : 6a `feuille-commune` (la feuille), 6b `pave-unifie` (pavé et accents). | 5 | light (gros lot, relecture écran lourde) |
 | 7 | `cartes-partie` | Mélange 1 + 2 : partie en cours en mini tableau, autres parties en lignes de feuille, grille 2 × 2 à 4 joueurs, unité dans la colonne du mode, badges de moments. Accueil et Parties. | 4, 6 | light |
-| 8 | `statistiques-podium` | Cible en tête (dernier joueur consulté, mémorisé ; le sélecteur ne change que la cible), cartes du podium en barres, bâtons de craie, pictogrammes en tête de carte. | 4 | light |
+| 8 | `statistiques-podium` | Cible en tête (dernier joueur consulté, mémorisé ; le sélecteur ne change que la cible), cartes du podium en barres, bâtons de craie, pictogrammes en tête de carte. **Fait le 2026-10-16**, élargi en cours de lot (N premiers et « Tout voir » en modale ; voir § Écran Statistiques). | 4 | **high** (politique publique) |
 | 9 | `nouvelle-partie-parcours` | Barre d'étapes, tuiles 2 × 2, nom de partie à l'étape 2, fiche de réglages par jeu (X01 « Plus de réglages », Cricket en deux cartes, Tour du monde résumé, entraînement), ordre en feuille numérotée, bouton « Tirer au sort ». Les routes restent les mêmes. | 4 | light |
 | 10 | `rejouer` | « Rejouer » en tête de l'étape 1 : 3 configurations distinctes les plus récentes, fusionnées avec leur nombre, profil supprimé écarté, ordre de la dernière fois. Lu depuis l'historique par les use cases. | 9 | light |
 | 11 | `regles-du-jeu` | Livre ouvert en haut à droite (étape 2 et bandeau de match), feuille **par-dessus** l'écran, texte par jeu qui suit les réglages de la partie. Précise `CLAUDE.md` § Checkouts (180 en sortie libre). | 4, 9 | light |
@@ -250,6 +250,13 @@ Tranché ensuite par l'utilisateur :
   fléchette sur la période choisie, ou si son profil a été supprimé.
 - **Le sélecteur ne change que la cible.** Les cartes du podium restent identiques quel que soit
   le joueur choisi.
+
+**Livré au lot 8 (`statistiques-podium`, 2026-10-16)**, avec des choix pris en cours de lot qui
+remplacent le détail ci-dessus là où il diffère (`docs/lots/statistiques-podium/`) : Moyenne à
+trois bascules (Moyenne · First 9 · Meilleure volée) ; Victoires en « victoires / parties » sur
+chaque ligne, **manches retirées** de l'écran ; Grosses volées classées par seuil ; Finitions à
+trois bascules, sans ligne de bas ; les N premiers par carte (5 / 5 / 3 / 5) puis « Tout voir »
+dans une modale refermée par le retour du téléphone.
 
 ### Cartes de partie (`CartePartie`) — mélange 1 + 2 retenu
 

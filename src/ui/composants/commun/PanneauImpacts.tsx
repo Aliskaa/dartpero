@@ -6,14 +6,15 @@ import { Panneau } from '@/ui/composants/commun/Panneau'
  * Les cartes d'impacts, côte à côte — la seule chose de l'app qui parle du bras
  * plutôt que du score.
  *
- * Partagée par l'écran Statistiques (cumul de carrière) et le résumé de partie
- * (une soirée). C'est le même geste qu'on regarde ; seule la fenêtre change, et
- * elle est déjà annoncée par l'écran qui pose le panneau.
+ * Posée par le résumé de partie (une soirée).
  *
- * ⚠️ Toujours **plusieurs cartes côte à côte** quand il y a plusieurs joueurs :
- * c'est un écran de comparaison, et une carte isolée derrière un sélecteur de
- * joueur détruirait ce que la juxtaposition donne gratuitement — « lui il vise,
- * moi j'arrose » se voit en une seconde, se démontre difficilement.
+ * ⚠️ Au résumé de partie, toujours **plusieurs cartes côte à côte** quand il y
+ * a plusieurs joueurs : une carte isolée derrière un sélecteur de joueur
+ * détruirait ce que la juxtaposition donne gratuitement — « lui il vise, moi
+ * j'arrose » se voit en une seconde, se démontre difficilement. L'écran
+ * Statistiques, lui, a fait l'autre choix (lot `statistiques-podium`) : une
+ * seule cible en grand, derrière un sélecteur, parce que la comparaison y est
+ * déjà portée par les cartes du podium (`PlateauImpacts`).
  */
 
 export type Impacts = {

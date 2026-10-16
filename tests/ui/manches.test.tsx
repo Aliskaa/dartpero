@@ -179,8 +179,15 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     resume.unmount()
 
     renderWithServices(<App />, { services, route: '/statistiques' })
-    await screen.findByRole('table', { name: 'Manches' })
-    await waitFor(() => expect(screen.getByText('Meilleure manche')).toBeInTheDocument())
+    // Révision 1 : les manches ont quitté Victoires ; la meilleure manche reste
+    // dans la bascule « Manche » de Finitions — le témoin de `sansLeg`.
+    const finitions = await screen.findByRole('region', { name: 'Finitions' })
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Manche, Manche la plus courte' }),
+      ).toBeInTheDocument(),
+    )
+    expect(finitions).toHaveTextContent('Manche')
     sansLeg()
   })
 })

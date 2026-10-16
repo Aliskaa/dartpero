@@ -210,14 +210,20 @@ describe('Écran Statistiques', () => {
 
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    const moyennes = await screen.findByRole('table', { name: 'Moyennes' })
-    const lignes = within(moyennes).getAllByRole('row').slice(1)
+    const moyennes = await screen.findByRole('region', {
+      name: 'Moyenne 3 fl., Moyenne 3 fléchettes',
+    })
+    const lignes = within(moyennes).getAllByRole('listitem')
 
     expect(within(lignes[0] as HTMLElement).getByText('Kevin')).toBeInTheDocument()
     expect(within(lignes[1] as HTMLElement).getByText('Julien')).toBeInTheDocument()
   })
 
-  it('donne aux manches leur dénominateur', async () => {
+  /**
+   * Révision 1 : les manches ont quitté Statistiques. Victoires dit « v / j »
+   * sur chaque ligne, les parties gagnées sur les parties jouées par ce joueur.
+   */
+  it('Victoires donne à chaque joueur son dénominateur, sans manches ni %', async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
     const julien = await services.managePlayers.create('Julien')
@@ -238,34 +244,20 @@ describe('Écran Statistiques', () => {
 
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    const legs = await screen.findByRole('table', { name: 'Manches' })
-    const lignes = within(legs).getAllByRole('row').slice(1)
+    const victoires = await screen.findByRole('region', { name: 'Victoires' })
 
-    // Kevin : 1 gagné sur 1 joué, donc 100 %.
-    const kevinLigne = lignes.find((ligne) => within(ligne).queryByText('Kevin')) as HTMLElement
-    expect(within(kevinLigne).getByText('100 %')).toBeInTheDocument()
-
-    // ⚠️ Julien : 0 sur 1, donc « 0 % » — pas un tiret. Il a bien perdu cette manche.
-    const julienLigne = lignes.find((ligne) => within(ligne).queryByText('Julien')) as HTMLElement
-    expect(within(julienLigne).getByText('0 %')).toBeInTheDocument()
-  })
-
-  it('écrit un tiret, jamais « 0 % », quand aucune manche n’est terminée', async () => {
-    const { services } = fakeServices()
-    const kevin = await services.managePlayers.create('Kevin')
-    const matchId = await services.startMatch.execute({
-      playerIds: [kevin.id],
-      config: X01Config.create({ legsToWin: 1 }),
-    })
-    await services.recordVisit.execute({ matchId, darts: T20 })
-
-    renderWithServices(<App />, { services, route: '/statistiques' })
-
-    // « 0 % » voudrait dire « il a tout perdu » ; rien du tout veut dire
-    // « on ne sait pas encore », et une manche en cours n'est ni gagnée ni perdue.
-    const legs = await screen.findByRole('table', { name: 'Manches' })
-    expect(within(legs).getByText('—')).toBeInTheDocument()
-    expect(within(legs).queryByText('0 %')).not.toBeInTheDocument()
+    // La partie n'est pas finie : 0 victoire sur 1 partie, pour chacun.
+    for (const nom of ['Kevin', 'Julien']) {
+      const ligne = within(victoires)
+        .getAllByRole('listitem')
+        .find((li) => within(li).queryByText(nom)) as HTMLElement
+      expect(within(ligne).getByText('0')).toBeInTheDocument()
+      expect(within(ligne).getByText('/ 1')).toBeInTheDocument()
+    }
+    // Témoin d'abord, absences ensuite : plus de manches, plus de pourcentage.
+    expect(victoires).toHaveTextContent('/ 1')
+    expect(victoires).not.toHaveTextContent(/manche/i)
+    expect(victoires).not.toHaveTextContent('%')
   })
 
   it('invite à jouer quand il n’y a rien à comparer', async () => {
@@ -297,14 +289,15 @@ describe('Écran Statistiques', () => {
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     // « Tout » par défaut : les deux parties sont au compteur.
-    const palmares = await screen.findByRole('table', { name: 'Palmarès' })
-    expect(within(palmares).getByText('2')).toBeInTheDocument()
+    const victoires = await screen.findByRole('region', { name: 'Victoires' })
+    expect(within(victoires).getAllByText('/ 2').length).toBeGreaterThan(0)
 
     await utilisateur.click(screen.getByRole('button', { name: "Aujourd'hui" }))
 
     await waitFor(() => {
-      const cejour = screen.getByRole('table', { name: 'Palmarès' })
-      expect(within(cejour).queryByText('2')).not.toBeInTheDocument()
+      const cejour = screen.getByRole('region', { name: 'Victoires' })
+      expect(within(cejour).queryAllByText('/ 2')).toHaveLength(0)
+      expect(within(cejour).getAllByText('/ 1').length).toBeGreaterThan(0)
     })
   })
 
@@ -323,7 +316,7 @@ describe('Écran Statistiques', () => {
     horloge.regler(new Date(2026, 7, 26, 21).getTime())
 
     renderWithServices(<App />, { services, route: '/statistiques' })
-    await screen.findByRole('table', { name: 'Palmarès' })
+    await screen.findByRole('region', { name: 'Victoires' })
 
     await utilisateur.click(screen.getByRole('button', { name: "Aujourd'hui" }))
 
@@ -351,10 +344,12 @@ describe('Écran Statistiques', () => {
 
     // La couleur ne se teste pas ; le nom accessible, lui, porte la donnée —
     // et c'est aussi ce qu'un lecteur d'écran restitue.
-    expect(
-      await screen.findByRole('img', { name: /Kevin : T20 3 fois, S5 2 fois, sur 6 fléchettes/ }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Hors cible ×1')).toBeInTheDocument()
+    const plateau = await screen.findByRole('img', {
+      name: /Kevin : T20 3 fois, S5 2 fois, sur 6 fléchettes/,
+    })
+    // Sous la cible, la rangée de cases : les zones favorites, puis le hors cible.
+    const cases = within(plateau.closest('figure') as HTMLElement).getAllByRole('listitem')
+    expect(cases.map((c) => c.textContent)).toEqual(['T203 fois', 'S52 fois', '1hors cible'])
   })
 
   it('distingue tiret / pourcentage / « 0 % » pour le % de doubles de la carrière', async () => {
@@ -398,15 +393,21 @@ describe('Écran Statistiques', () => {
 
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    const finitions = await screen.findByRole('table', { name: 'Finitions' })
-    const lignes = within(finitions).getAllByRole('row').slice(1)
-    const ligneDe = (nom: string) =>
-      lignes.find((ligne) => within(ligne).queryByText(nom)) as HTMLElement
-
-    // « % doubles » est la première colonne chiffrée, juste après le nom.
-    expect(within(ligneDe('Kevin')).getAllByRole('cell')[1]).toHaveTextContent('33 %')
-    expect(within(ligneDe('Julien')).getAllByRole('cell')[1]).toHaveTextContent('0 %')
-    expect(within(ligneDe('David')).getAllByRole('cell')[1]).toHaveTextContent('—')
+    // « % doubles » est la bascule par défaut de Finitions ; David, sans
+    // occasion, passe en dernier.
+    const finitions = await screen.findByRole('region', { name: 'Finitions' })
+    const lignes = within(finitions).getAllByRole('listitem')
+    const attendues = [
+      ['Kevin', '33 %'],
+      ['Julien', '0 %'],
+      ['David', '—'],
+    ] as const
+    expect(lignes).toHaveLength(attendues.length)
+    attendues.forEach(([nom, valeur], rang) => {
+      const ligne = within(lignes[rang] as HTMLElement)
+      expect(ligne.getByText(nom)).toBeInTheDocument()
+      expect(ligne.getByText(valeur)).toBeInTheDocument()
+    })
   })
 })
 

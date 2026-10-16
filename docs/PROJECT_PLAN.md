@@ -67,6 +67,23 @@ et `confidentialite-assetlinks` (voir § 6) — vérifications restantes :
   désinstaller pour tester sans exporter d'abord) ; **R6** sur iOS ≥ 16.4, un navigateur tiers
   propose-t-il lui-même « Sur l'écran d'accueil » ? Si oui, seul un libellé change.
 
+Lot `statistiques-podium` livré (lot 8 de la refonte : Statistiques en podium, cible en tête,
+« Tout voir » en modale, voir § 6) — **1233 tests verts** après rebase sur
+`nouvelle-partie-parcours`. Vérifications **acceptées après le
+lot** par l'utilisateur (`docs/lots/statistiques-podium/05-revue.md`), sur son téléphone, au
+plus tard au prochain déploiement :
+- **T19** le retour réel referme la modale sans quitter Statistiques : Chrome Android (chemin
+  `cancel`), Firefox / Samsung Internet (`popstate`), iPhone en onglet (glisser du bord), PWA
+  iPhone (✕ et voile seulement) ; **Q3 de `sec`** une modale restaurée sans entrée d'historique
+  dessous resterait bloquée (✕, Échap, voile sans effet) — repli à écrire si ça se reproduit ;
+- le voile `::backdrop` sur iOS ancien (propriétés personnalisées avant Safari 17.4), `dvh`,
+  `fieldset` en flex et défilement du ruban d'onglets sur iOS ; recadrage du ruban à la rotation
+  ou avec la police agrandie (non prévu) ;
+- **relecture à l'écran** : titre `laiton` des cartes et de la modale en clair (écart U4 accepté,
+  4,40:1), taille de la modale, espacements de la liste, étiquette « 100+ » centrée sur deux
+  rangées de bâtons, Victoires avec « 100 / 120 », police au maximum.
+Dette : `DialogueNouveauJoueur` ne passe pas par l'historique (CONVENTIONS § 9).
+
 Ce qu'il reste, par ordre de ce qui coûterait le plus cher à découvrir tard :
 
 1. **La validation sur vrai matériel** — le seul critère que les tests ne couvrent pas :
@@ -703,6 +720,14 @@ réglages » replié au X01, « Les règles en entier »), feuille d'ordre numé
 sort » en mélange visible (`ShuffleOrder`). Dettes : le flag `shuffle` des commandes de lancement
 n'a plus d'appelant UI ; la clé `partie:ordre-aleatoire` reste orpheline dans `localStorage`.
 Détail § 6.
+
+### Lot « statistiques-podium » (lot 8 de la refonte de la charte)
+
+✅ **Fait — 1233 tests verts** (1194 sur sa branche, 1233 après rebase). Statistiques en « podium, cible en tête » : le joueur consulté
+(mémorisé) en grande cible avec ses trois zones favorites, puis quatre cartes en barres (Moyenne
+/ First 9 / Meilleure volée, Victoires « v / j », Grosses volées en bâtons de craie, Finitions),
+les N premiers puis « Tout voir » dans une modale refermée par le retour du téléphone. Politique
+de confidentialité mise à jour. Détail § 6 ; vérifications sur appareil en § 0.
 
 ---
 
@@ -1925,3 +1950,44 @@ source : `docs/prospective/2026-10-13-NEW-revision-charte-graphique.md`, maquett
 - ⚠️ Texte « Les règles en entier » du X01 : aucun paragraphe n'existait, écrit d'après `CLAUDE.md` ;
   à valider (lot `regles-du-jeu`).
 - Rendu à relire sur appareil : barre et pseudos tronqués à police max sur 360 px.
+
+### Décisions du lot « statistiques-podium » (lot 8 de la refonte de la charte)
+
+Session : `docs/lots/statistiques-podium/` (niveau `high` : la politique publique change), mené
+**en parallèle** de `nouvelle-partie-parcours` dans un worktree. Étude source :
+`docs/prospective/2026-10-13-NEW-revision-charte-graphique.md` § Écran Statistiques ; planche
+`docs/maquettes/stats/stats.html` (écran « Retenue », hors git).
+
+- **UI seulement** : `GetPlayerStats`, `CareerStats` et le domaine inchangés. Logique pure dans
+  `src/ui/podium.ts` (`classerPodium`, `apercuPodium`, `joueurDeLaCible`,
+  `defilementPourMontrer`) ; briques communes `CartePodium` (`GrandeLignePodium`,
+  `BarresPodium`, `BasculesPodium`), `CompteBatons` (distinct de `Batons`), `PlateauImpacts`
+  (extrait de `CarteImpacts`), `Modale`, hook `useModaleAuRetour`.
+- **Joueur de la cible mémorisé** (`statistiques:joueur`, écrit à l'appui seulement ; ⚠️ citée
+  par la politique, ne se renomme pas) ; repli sur le premier de la moyenne si absent de la
+  période, sans fléchette ou supprimé ; le sélecteur ne pilote que la cible. Politique : clause
+  ajoutée, date du 16 octobre 2026.
+- **Teinte en tête** : ex aequo sur le **chiffre affiché** ; **jamais de dorure à zéro**, les
+  « — » ne comptent pas ; joueur seul doré (sauf à 0) ; égalité non nulle : tous dorés ; grand
+  chiffre en `craie-vive` sans vrai premier.
+- **Bascules** : libellés courts (« Moy. · F9 · Volée », « % dbl · Haut · Manche », « 180 · 140+
+  · 100+ ») ; nom accessible « court, complet » ; titre « Moyenne 3 fl. » (tient à 360 px), nommé
+  « Moyenne 3 fl., Moyenne 3 fléchettes ». Bascules dans l'écran, non mémorisées, survivent à la
+  période.
+- **Révision 1 en cours de lot** (choix de l'utilisateur, contre la recommandation d'un lot à
+  part) : N premiers (5 / 5 / 3 / 5), « Tout voir » au-delà de N + 1 ; à la coupure, exactement
+  deux ex aequo → les deux, plus de deux → coupe nette ; Grosses volées classées par seuil ;
+  Victoires « v / j » sur chaque ligne, manches retirées de l'écran ; pieds de carte retirés.
+- **Modale au retour du téléphone** (CONVENTIONS § 9) : entrée d'historique sur la même URL
+  (`location.state`), ouverte **au clic seulement**, fermée **toujours** par `navigate(-1)`,
+  garde `useRef` contre le double recul ; `<dialog>` natif monté en permanence, jamais `flex`
+  dessus, aucun nettoyage d'effet qui le ferme (piège StrictMode). Fermée par retour, Échap, ✕ et
+  appui sur le voile. Largeur écran − 2 × 16 px (`max-w-lg`), hauteur ≤ 90 `dvh`.
+- **Ruban d'onglets** : l'onglet actif est ramené dans la vue (ouverture, appui, période) par le
+  seul `scrollLeft` du ruban, jamais `scrollIntoView`.
+- **Écarts acceptés** par l'utilisateur : titre `laiton` à 4,40:1 en clair (U4, cartes et
+  modale) ; zone d'appui des bascules à 48 px en hauteur seulement (Q3).
+- **Boucles** : 5 tours (plafond atteint sans escalade) — Test → Dev ×2, Révision 1, Revue →
+  Dev ×2. L'agent Test n'avait pas de shell : contre-épreuves exécutées par l'Orchestrator ou le
+  Dev, toutes conformes.
+- **Tests : 1065 → 1194** sur la branche (base `6109013`) ; **1233** après rebase sur `5644892` (`nouvelle-partie-parcours`). Conflits du rebase : charte, PROJECT_PLAN, `pictogrammesEmplacements.test.tsx` — les deux apports gardés.

@@ -164,7 +164,9 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `bg-laiton`…), vérifié par `tests/architecture/themeBoundary.test.ts`.
 - Un ratio dont le dénominateur peut valoir zéro s'affiche via `pourcent(valeur, occasions)`
   (`src/ui/labels.ts`) : sans occasion, un tiret **cadratin** `—` (U+2014), jamais « 0 % » — qui
-  se lit « il a tout raté ». Trois appelants : matchs, manches, doubles. ⚠️ Un pourcentage de
+  se lit « il a tout raté ». Un seul appelant depuis le lot `statistiques-podium` : le
+  pourcentage de doubles (résumé X01, carte Finitions) — les victoires se disent en « 9 / 16 »
+  sur chaque ligne, et les manches ont quitté Statistiques (Révision 1). ⚠️ Un pourcentage de
   **progression** (`LigneCible.tsx`) garde son `0` : là, zéro est un vrai zéro, pas une absence.
 - **Une carte, une seule cible** (`CartePartie`, lot `accueil-parties-recentes`) : toute la
   carte est un lien ; « Reprendre » n'en est que le visuel, jamais un second élément focalisable.
@@ -175,6 +177,14 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `labels.ts` sous forme de **constructeurs sur primitives** (`reglesCarteX01`,
   `reglesCarteTourDuMonde`, `detailCarte*`, `parle*`…) ; le `switch` exhaustif vit dans
   `src/ui/cartesPartie.ts` (`vueCarte`), seul endroit qui ouvre l'union pour une carte.
+- **Une modale se ferme au retour du téléphone** (`Modale` + `useModaleAuRetour`, lot
+  `statistiques-podium`) : l'ouverture empile une entrée d'historique **sur la même URL**
+  (`location.state[cle]`, validé contre une liste fermée), **seulement dans un gestionnaire de
+  clic** ; la fermeture — ✕, Échap, retour, appui sur le voile — recule **toujours** par `navigate(-1)`, jamais par
+  un état local remis à faux (entrée orpheline) ni par `replace`. Garde « en vol » en `useRef`
+  contre les doubles reculs. Jamais `window.history`, jamais `<Link>` vers l'emplacement courant.
+  Le `<dialog>` reste monté, **hors** des branches de chargement de l'écran ; aucun nettoyage
+  d'effet qui ferme (StrictMode). Dette : `DialogueNouveauJoueur` ne suit pas encore ce modèle.
 
 ## 10 · Hooks (`ui/hooks/use<Mode>.ts`)
 
@@ -400,7 +410,8 @@ src/
 ├─ composition/           container.ts   ← seul point de câblage
 ├─ ui/
 │  ├─ composants/         commun/ (dont CartePartie, la ligne de feuille, MiniTableauPartie, FeuillePartie ; `ui/cartesPartie.ts` ouvre l'union ; et DispositionPartie,
-│  │                      l'ossature portrait/paysage)
+│  │                      l'ossature portrait/paysage ; CartePodium, CompteBatons et
+│  │                      Modale, la boîte refermée par le retour du téléphone)
 │  │                      x01/ · tour-du-monde/ · cricket/ · checkout-practice/
 │  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
@@ -419,12 +430,16 @@ src/
 │  │                      useNomDePartie (le nom affiché d'une partie) ·
 │  │                      useAppareil (wake lock, préférences, voix) ·
 │  │                      useStockagePersistant (protection des données) ·
-│  │                      useInstallation (invitation à installer)
+│  │                      useInstallation (invitation à installer) ·
+│  │                      useModaleAuRetour (une modale que le retour ferme)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
 │     theme.ts (clair / sombre / système) ·
 │     chemins.ts (slugs et URL du parcours Nouvelle partie) ·
 │     clesRequetes.ts (clés TanStack Query partagées) ·
-│     jourCalendaire.ts (« Aujourd'hui » / « Cette semaine », bornes locales)
+│     jourCalendaire.ts (« Aujourd'hui » / « Cette semaine », bornes locales) ·
+│     podium.ts (Statistiques : classement d'une carte, largeurs, ex æquo sur le
+│       chiffre affiché, coupure « N premiers » (apercuPodium), joueur de la cible,
+│       recadrage du ruban d'onglets (defilementPourMontrer) — pur, sans React)
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
 ```

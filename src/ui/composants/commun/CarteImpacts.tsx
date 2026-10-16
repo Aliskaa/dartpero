@@ -14,8 +14,8 @@ import { angles, ORDRE, point, R, rangDuSecteur, trace } from './geometrieCible'
  *
  * L'échelle est relative au joueur : la case la plus touchée est toujours à
  * fond. On compare des formes, pas des volumes — « je dérive vers le 5 » se lit
- * du premier coup d'œil, « j'ai lancé plus que Julien » se lit dans le tableau
- * des moyennes, à sa place.
+ * du premier coup d'œil, « j'ai lancé plus que Julien » se lit dans la carte
+ * Moyenne des statistiques, à sa place.
  */
 
 /** Les 20 quartiers, en très faible contraste : ils situent, ils ne parlent pas. */
@@ -64,121 +64,141 @@ const resume = (nom: string, hits: DartboardHits): string => {
   return `${nom} : ${sommet.join(', ')}, sur ${hits.total} fléchettes`
 }
 
+type PropsPlateau = {
+  readonly nom: string
+  readonly hits: DartboardHits
+  readonly className?: string
+}
+
+/**
+ * Le plateau seul, sans légende : une image nommée (`role="img"`), dont le nom
+ * accessible dit les trois cases les plus touchées. `CarteImpacts` l'enrobe
+ * d'une légende pour le résumé de partie ; l'écran Statistiques le pose en
+ * grand, avec sa propre rangée de cases dessous.
+ */
+export const PlateauImpacts = ({ nom, hits, className = 'w-full' }: PropsPlateau) => {
+  const chaudes = hits.zones.filter((zone) => zone.hits > 0)
+
+  return (
+    // ⚠️ La `viewBox` déborde du plateau de 4 unités : les numéros vivent à
+    // 48,6 du centre, donc le haut du « 20 » sort d'un cadre calé à 100 et se
+    // fait rogner. Vu à l'écran, invisible en test — aucune requête par rôle ne
+    // dit qu'un glyphe est coupé.
+    <svg
+      viewBox="-4 -4 108 108"
+      role="img"
+      aria-label={resume(nom, hits)}
+      focusable="false"
+      className={className}
+    >
+      {/* Le plateau réduit à sa structure. */}
+      <circle cx="50" cy="50" r={R.bordExterieur} fill="var(--color-feutre-nuit)" />
+      {QUARTIERS.map((quartier) => (
+        <path
+          key={quartier.numero}
+          d={trace(R.anneau25, R.doubleExterieur, quartier.debut, quartier.fin)}
+          fill="var(--color-craie)"
+          fillOpacity={quartier.sombre ? 0.05 : 0.09}
+        />
+      ))}
+
+      {/* La donnée, et elle seule, porte de la couleur.
+            ⚠️ Chaque case allumée est **cernée du fond**, et pas seulement
+            remplie : chez un joueur qui arrose, quinze secteurs voisins à la
+            même intensité fusionnaient en un disque doré où l'on ne
+            distinguait plus ni les secteurs ni les anneaux. Les fils de craie
+            ne suffisent pas — ils s'effacent sous le laiton. */}
+      {chaudes.map((zone) =>
+        anneaux(zone).map((d) => (
+          <path
+            key={`${Dart.label(zone)}-${d}`}
+            d={d}
+            fill="var(--color-laiton)"
+            fillOpacity={opacite(zone.hits, hits.busiest)}
+            stroke="var(--color-feutre-nuit)"
+            strokeOpacity="0.65"
+            strokeWidth="0.5"
+          />
+        )),
+      )}
+
+      {/* Le centre a son propre fond : les quartiers s'arrêtent à l'anneau
+            à 25, sinon vingt bandes traverseraient la bulle. */}
+      <circle cx="50" cy="50" r={R.anneau25} fill="var(--color-craie)" fillOpacity="0.07" />
+      <circle
+        cx="50"
+        cy="50"
+        r={(R.anneau25 + R.bullseye) / 2}
+        fill="none"
+        stroke="var(--color-laiton)"
+        strokeWidth={R.anneau25 - R.bullseye}
+        strokeOpacity={opacite(
+          chaudes.find((zone) => zone.segment === 'BULL' && zone.multiplier === 'SIMPLE')?.hits ??
+            0,
+          hits.busiest,
+        )}
+      />
+      <circle
+        cx="50"
+        cy="50"
+        r={R.bullseye}
+        fill="var(--color-laiton)"
+        stroke="var(--color-feutre-nuit)"
+        strokeOpacity="0.65"
+        strokeWidth="0.5"
+        fillOpacity={opacite(
+          chaudes.find((zone) => zone.segment === 'BULL' && zone.multiplier === 'DOUBLE')?.hits ??
+            0,
+          hits.busiest,
+        )}
+      />
+
+      {/* Les fils : ce sont eux qui font lire un plateau plutôt qu'un camembert. */}
+      <g stroke="var(--color-craie)" strokeOpacity="0.22" strokeWidth="0.3" fill="none">
+        {QUARTIERS.map((quartier) => {
+          const [x1, y1] = point(R.anneau25, quartier.debut)
+          const [x2, y2] = point(R.doubleExterieur, quartier.debut)
+          return <line key={quartier.numero} x1={x1} y1={y1} x2={x2} y2={y2} />
+        })}
+        <circle cx="50" cy="50" r={R.doubleExterieur} />
+        <circle cx="50" cy="50" r={R.doubleInterieur} />
+        <circle cx="50" cy="50" r={R.tripleExterieur} />
+        <circle cx="50" cy="50" r={R.tripleInterieur} />
+        <circle cx="50" cy="50" r={R.anneau25} />
+      </g>
+
+      {/* Sans les numéros, une carte de chaleur ne dit pas OÙ. */}
+      <g
+        fill="var(--color-craie)"
+        fillOpacity="0.55"
+        fontSize="5"
+        fontFamily="Oswald, sans-serif"
+        fontWeight="700"
+        textAnchor="middle"
+      >
+        {QUARTIERS.map((quartier) => (
+          <text key={quartier.numero} x={quartier.x} y={quartier.y + 1.8}>
+            {quartier.numero}
+          </text>
+        ))}
+      </g>
+    </svg>
+  )
+}
+
 type Props = {
   readonly nom: string
   readonly hits: DartboardHits
   readonly className?: string
 }
 
+/** Le plateau et sa légende (nom, trois cases, hors cible) : le résumé de partie. */
 export const CarteImpacts = ({ nom, hits, className = '' }: Props) => {
-  const chaudes = hits.zones.filter((zone) => zone.hits > 0)
   const sommet = DartboardHits.top(hits, 3)
 
   return (
     <figure className={`flex flex-col gap-2 ${className}`}>
-      {/* ⚠️ La `viewBox` déborde du plateau de 4 unités : les numéros vivent à
-          48,6 du centre, donc le haut du « 20 » sort d'un cadre calé à 100 et
-          se fait rogner. Vu à l'écran, invisible en test — aucune requête par
-          rôle ne dit qu'un glyphe est coupé. */}
-      <svg
-        viewBox="-4 -4 108 108"
-        role="img"
-        aria-label={resume(nom, hits)}
-        focusable="false"
-        className="w-full"
-      >
-        {/* Le plateau réduit à sa structure. */}
-        <circle cx="50" cy="50" r={R.bordExterieur} fill="var(--color-feutre-nuit)" />
-        {QUARTIERS.map((quartier) => (
-          <path
-            key={quartier.numero}
-            d={trace(R.anneau25, R.doubleExterieur, quartier.debut, quartier.fin)}
-            fill="var(--color-craie)"
-            fillOpacity={quartier.sombre ? 0.05 : 0.09}
-          />
-        ))}
-
-        {/* La donnée, et elle seule, porte de la couleur.
-            ⚠️ Chaque case allumée est **cernée du fond**, et pas seulement
-            remplie : chez un joueur qui arrose, quinze secteurs voisins à la
-            même intensité fusionnaient en un disque doré où l'on ne
-            distinguait plus ni les secteurs ni les anneaux. Les fils de craie
-            ne suffisent pas — ils s'effacent sous le laiton. */}
-        {chaudes.map((zone) =>
-          anneaux(zone).map((d) => (
-            <path
-              key={`${Dart.label(zone)}-${d}`}
-              d={d}
-              fill="var(--color-laiton)"
-              fillOpacity={opacite(zone.hits, hits.busiest)}
-              stroke="var(--color-feutre-nuit)"
-              strokeOpacity="0.65"
-              strokeWidth="0.5"
-            />
-          )),
-        )}
-
-        {/* Le centre a son propre fond : les quartiers s'arrêtent à l'anneau
-            à 25, sinon vingt bandes traverseraient la bulle. */}
-        <circle cx="50" cy="50" r={R.anneau25} fill="var(--color-craie)" fillOpacity="0.07" />
-        <circle
-          cx="50"
-          cy="50"
-          r={(R.anneau25 + R.bullseye) / 2}
-          fill="none"
-          stroke="var(--color-laiton)"
-          strokeWidth={R.anneau25 - R.bullseye}
-          strokeOpacity={opacite(
-            chaudes.find((zone) => zone.segment === 'BULL' && zone.multiplier === 'SIMPLE')?.hits ??
-              0,
-            hits.busiest,
-          )}
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r={R.bullseye}
-          fill="var(--color-laiton)"
-          stroke="var(--color-feutre-nuit)"
-          strokeOpacity="0.65"
-          strokeWidth="0.5"
-          fillOpacity={opacite(
-            chaudes.find((zone) => zone.segment === 'BULL' && zone.multiplier === 'DOUBLE')?.hits ??
-              0,
-            hits.busiest,
-          )}
-        />
-
-        {/* Les fils : ce sont eux qui font lire un plateau plutôt qu'un camembert. */}
-        <g stroke="var(--color-craie)" strokeOpacity="0.22" strokeWidth="0.3" fill="none">
-          {QUARTIERS.map((quartier) => {
-            const [x1, y1] = point(R.anneau25, quartier.debut)
-            const [x2, y2] = point(R.doubleExterieur, quartier.debut)
-            return <line key={quartier.numero} x1={x1} y1={y1} x2={x2} y2={y2} />
-          })}
-          <circle cx="50" cy="50" r={R.doubleExterieur} />
-          <circle cx="50" cy="50" r={R.doubleInterieur} />
-          <circle cx="50" cy="50" r={R.tripleExterieur} />
-          <circle cx="50" cy="50" r={R.tripleInterieur} />
-          <circle cx="50" cy="50" r={R.anneau25} />
-        </g>
-
-        {/* Sans les numéros, une carte de chaleur ne dit pas OÙ. */}
-        <g
-          fill="var(--color-craie)"
-          fillOpacity="0.55"
-          fontSize="5"
-          fontFamily="Oswald, sans-serif"
-          fontWeight="700"
-          textAnchor="middle"
-        >
-          {QUARTIERS.map((quartier) => (
-            <text key={quartier.numero} x={quartier.x} y={quartier.y + 1.8}>
-              {quartier.numero}
-            </text>
-          ))}
-        </g>
-      </svg>
+      <PlateauImpacts nom={nom} hits={hits} />
 
       <figcaption className="flex flex-col gap-1">
         <span className="truncate font-score text-xs font-bold uppercase tracking-[0.1em] text-craie-vive">

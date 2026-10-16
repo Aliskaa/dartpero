@@ -82,7 +82,20 @@ describe('Confidentialité — en accès direct', () => {
     ouvrir('/confidentialite')
     await titre()
 
-    expect(screen.getAllByText('Mise à jour le 12 octobre 2026')).toHaveLength(1)
+    expect(screen.getAllByText('Mise à jour le 16 octobre 2026')).toHaveLength(1)
+  })
+
+  it('cite le dernier joueur consulté dans Statistiques, gardé dans le stockage local', async () => {
+    ouvrir('/confidentialite')
+    await titre()
+
+    const section = screen
+      .getByRole('heading', { level: 2, name: 'Sur votre appareil' })
+      .closest('section') as HTMLElement
+    const paragraphe = within(section).getByText(/stockage local du navigateur \(localStorage\)/)
+    expect(paragraphe).toHaveTextContent(
+      'le dernier joueur consulté dans Statistiques (son identifiant interne)',
+    )
   })
 
   it('dit que le nom donné à une partie est enregistré sur l’appareil', async () => {
