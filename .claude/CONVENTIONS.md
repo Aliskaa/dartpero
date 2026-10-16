@@ -177,14 +177,30 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `labels.ts` sous forme de **constructeurs sur primitives** (`reglesCarteX01`,
   `reglesCarteTourDuMonde`, `detailCarte*`, `parle*`…) ; le `switch` exhaustif vit dans
   `src/ui/cartesPartie.ts` (`vueCarte`), seul endroit qui ouvre l'union pour une carte.
-- **Une modale se ferme au retour du téléphone** (`Modale` + `useModaleAuRetour`, lot
-  `statistiques-podium`) : l'ouverture empile une entrée d'historique **sur la même URL**
-  (`location.state[cle]`, validé contre une liste fermée), **seulement dans un gestionnaire de
-  clic** ; la fermeture — ✕, Échap, retour, appui sur le voile — recule **toujours** par `navigate(-1)`, jamais par
-  un état local remis à faux (entrée orpheline) ni par `replace`. Garde « en vol » en `useRef`
-  contre les doubles reculs. Jamais `window.history`, jamais `<Link>` vers l'emplacement courant.
-  Le `<dialog>` reste monté, **hors** des branches de chargement de l'écran ; aucun nettoyage
-  d'effet qui ferme (StrictMode). Dette : `DialogueNouveauJoueur` ne suit pas encore ce modèle.
+  Même patron pour **la feuille de règles** (lot `regles-du-jeu`) : `reglesX01`, `reglesCricket`,
+  `reglesTourDuMonde`, `reglesEntrainement` dans `labels.ts` rendent un `ContenuRegles` en
+  **segments typés** (`{ fort }`, lignes `autre`, blocs discriminés) — jamais de HTML ni de
+  `dangerouslySetInnerHTML` ; `src/ui/reglesDuJeu.ts` (`contenuRegles`) est le seul `switch` sur
+  `ReglesDeLaPartie`, construite depuis la fiche (`reglesDeLaFiche`) ou la config d'une partie
+  (`reglesDeLaConfig*`). Les bornes de sortie passent par le port `GetCheckoutRange`.
+- **Une boîte par-dessus un écran se ferme au retour du téléphone** — `Modale` des
+  Statistiques (lot `statistiques-podium`) et feuille de règles (lot `regles-du-jeu`), un seul
+  mécanisme. **L'état vit dans l'historique** (`useModaleAuRetour`) : l'ouverture empile une
+  entrée **sur la même URL** (`location.state[cle]`, validé contre une liste fermée ; clés en
+  usage `parcours`, `liste`, `regles`), **seulement dans un gestionnaire de clic** (jamais dans
+  un effet, jamais `<Link>` vers l'emplacement courant, qui remplace) ; la fermeture — ✕, Échap,
+  retour, appui à côté — recule **toujours** par `navigate(-1)`, jamais par un état local remis à
+  faux (entrée orpheline) ni par `replace`. Garde « en vol » en `useRef` contre les doubles
+  reculs. Jamais `window.history`. **La boîte suit `useDialogueNatif`** : le `<dialog>` est
+  **monté en permanence** (hors des branches de chargement de l'écran), son contenu seulement
+  ouvert ; un seul effet, **aucun nettoyage qui ferme** (StrictMode) ; `cancel` annulé puis
+  relayé, `close` relayé seulement ouvert ; focus sur ✕, rendu à `retour` (Safari) ou à
+  l'origine ; appui à côté = `pointerdown` et `click` hors de la boîte. **Jamais `flex` ni `grid`
+  sur le `<dialog>`** (il s'afficherait fermé) : la mise en page vit dans un conteneur intérieur.
+  Une tête de boîte est un `<div>`, jamais un `<header>` (le bandeau en est déjà un). Dette :
+  `DialogueNouveauJoueur` ne suit pas encore ce modèle.
+- Les listes que l'étape 2 propose (`SCORES`, `LEGS`, `SETS`, `SORTIES`) vivent dans
+  `src/ui/reglagesPossibles.ts`, module neutre lu par la fiche, le hook du parcours et la feuille.
 
 ## 10 · Hooks (`ui/hooks/use<Mode>.ts`)
 
@@ -238,7 +254,14 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   effet). Ils rendent `<dialog>` et le glisser utilisables en test, ils ne les valident pas.
 - **Le retour du téléphone** se simule par `retourTelephone()` (`tests/ui/gestes.ts`) : un
   `navigate(-1)` (POP d'historique) capturé par `SondeHistorique`, que `renderWithServices`
-  monte à côté de l'écran — jamais en cliquant un bouton de l'écran.
+  monte à côté de l'écran — jamais en cliquant un bouton de l'écran. La même sonde expose
+  `locationCourante()` (URL et état d'historique), et `renderWithServices(…, { historique: [...] })`
+  ouvre plusieurs entrées (la dernière active) pour prouver qu'un retour **ne quitte pas** l'écran
+  (lot `regles-du-jeu`) ; une entrée peut porter un état (`{ pathname, state }`), pour une
+  boîte rouverte au rechargement. Une fermeture native de `<dialog>` se simule par
+  `dialog.close()` ; Échap, par un `cancel` **annulable** (`new Event('cancel', { cancelable:
+  true })`), dont on vérifie `defaultPrevented` ; un appui à côté, par `pointerDown` puis
+  `click` sur le `<dialog>` après avoir posé son `getBoundingClientRect`.
 - **Le fuseau des tests est fixé** à `Europe/Paris` (`test.env.TZ`, § 12). Un test daté
   construit ses bornes en heure **locale** (`new Date(2026, 9, 11, 1, 0)`), et un test qui
   passe un changement d'heure vérifie d'abord sa **précondition** — la durée du jour (23 h ou
@@ -350,6 +373,14 @@ testé en dur dans le hook (`max`, `selection`, mais aussi `ajouter` / `retirer`
 (`NouvellePartieEcran`) et dans `versOrdre` (`EtapeJoueurs`). Un nouveau mode y est traité en jeu
 de groupe — juste pour Killer ou Shanghai, faux pour un deuxième exercice solo.
 
+⚠️ **Depuis le lot « regles-du-jeu »**, un mode doit aussi sa **feuille de règles** : un
+constructeur `regles<Mode>` dans `labels.ts` (même plan : Ce soir, En bref, Marquer, Gagner, Cas
+particuliers, Un exemple, Questions fréquentes, Ce que l'app compte, Les réglages possibles), une
+branche dans `ReglesDeLaPartie`, `contenuRegles`, `reglesDeLaFiche` et un `reglesDeLaConfig<Mode>`
+(`src/ui/reglesDuJeu.ts`), son titre dans `TITRE_REGLES`, et la prop **obligatoire** `regles` de
+`BandeauMatch` sur son écran. TypeScript signale les `switch` et le `Record` ; le texte, lui, ne
+s'écrit que d'après `CLAUDE.md` § Règles du jeu, jamais improvisé.
+
 ⚠️ **Depuis le lot « nom-de-partie »**, l'événement d'ouverture d'un mode porte le champ
 facultatif `name?: MatchName`. TypeScript signale : la branche de `nameOf` (`switch` au
 `default` typé `never`), la prop `nomPartie` de `DispositionPartie` et `TableauHonneur`,
@@ -365,8 +396,9 @@ compléter à la main.
 
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
 invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchangé au lot
-« accueil-parties-recentes » : 21 ports driving
-(hors `MatchSummary.ts`, un type), 11 driven, 10 hooks (plus `tourDeTable.ts`, un utilitaire),
+« accueil-parties-recentes » ; lot « regles-du-jeu » : 23 ports driving (`ShuffleOrder`,
+`GetCheckoutRange`)
+(hors `MatchSummary.ts`, un type), 11 driven, 13 hooks (plus `tourDeTable.ts`, un utilitaire),
 4 modes, 4 services transverses.
 
 ```
@@ -391,12 +423,12 @@ src/
 │  └─ application/
 │     ├─ ports/driving/   StartMatch, RestartMatch, RecordVisit, UndoLastVisit,
 │     │                   PreviewVisit,
-│     │                   GetMatchState, GetCheckoutSuggestion,
+│     │                   GetMatchState, GetCheckoutSuggestion, GetCheckoutRange,
 │     │                   GetMatchStats, GetMatchHistory, GetMatchMode, GetMatchName,
 │     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
 │     │                   ManagePlayers, ManageBackup, PlayTourDuMonde,
 │     │                   PlayCricket, PreviewCricketVisit, PreviewTourDuMondeVisit,
-│     │                   PlayCheckoutPractice
+│     │                   PlayCheckoutPractice, ShuffleOrder
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
 │     │                   PersistentStorage, AppInstallation
@@ -411,7 +443,10 @@ src/
 ├─ ui/
 │  ├─ composants/         commun/ (dont CartePartie, la ligne de feuille, MiniTableauPartie, FeuillePartie ; `ui/cartesPartie.ts` ouvre l'union ; et DispositionPartie,
 │  │                      l'ossature portrait/paysage ; CartePodium, CompteBatons et
-│  │                      Modale, la boîte refermée par le retour du téléphone)
+│  │                      Modale, la boîte refermée par le retour du téléphone ;
+│  │                      LivreRegles et FeuilleRegles, la feuille de règles ;
+│  │                      Phrase, une phrase de labels.ts en segments typés ;
+│  │                      `ui/reglesDuJeu.ts` ouvre ReglesDeLaPartie)
 │  │                      x01/ · tour-du-monde/ · cricket/ · checkout-practice/
 │  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
@@ -431,7 +466,10 @@ src/
 │  │                      useAppareil (wake lock, préférences, voix) ·
 │  │                      useStockagePersistant (protection des données) ·
 │  │                      useInstallation (invitation à installer) ·
-│  │                      useModaleAuRetour (une modale que le retour ferme)
+│  │                      usePauseAnnulation (la pause après le retrait d'une volée) ·
+│  │                      useModaleAuRetour (une boîte que le retour ferme : Modale,
+│  │                        feuille de règles) ·
+│  │                      useDialogueNatif (la discipline du <dialog>, partagée)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
 │     theme.ts (clair / sombre / système) ·
 │     chemins.ts (slugs et URL du parcours Nouvelle partie) ·
@@ -439,7 +477,8 @@ src/
 │     jourCalendaire.ts (« Aujourd'hui » / « Cette semaine », bornes locales) ·
 │     podium.ts (Statistiques : classement d'une carte, largeurs, ex æquo sur le
 │       chiffre affiché, coupure « N premiers » (apercuPodium), joueur de la cible,
-│       recadrage du ruban d'onglets (defilementPourMontrer) — pur, sans React)
+│       recadrage du ruban d'onglets (defilementPourMontrer) — pur, sans React) ·
+│     reglagesPossibles.ts (SCORES, LEGS, SETS, SORTIES) · reglesDuJeu.ts
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
 ```

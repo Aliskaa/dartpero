@@ -103,6 +103,29 @@ Tokens `@theme` dans `src/index.css`. Utiliser les classes Tailwind (`bg-feutre`
 Nuances (`feutre-nuit`, `ardoise-claire`, `chene-clair`, `chene-sombre`, `laiton-clair`,
 `laiton-sombre`) : elles servent aux tranches et aux fonds d'appui, plus à modeler des reliefs.
 
+**Feuille de règles** (lot `regles-du-jeu`) : les couleurs de la planche `regles-rubriques.html`,
+au pixel, devenues des tokens — **réservés à la feuille de règles et à son livre** (garde `themeBoundary`, `rules/theme-colors.md` § Jetons réservés) :
+
+| Rôle | Token | Sombre | Clair | Usage |
+| ---- | ----- | ------ | ----- | ----- |
+| Texte courant de la feuille | `craie-2-regles` | `#D6CCB9` | `#354137` | Corps des rubriques |
+| Légendes de la feuille | `craie-3-regles` | `#AAA292` | `#485249` | Lignes grises (l'autre réglage), en-têtes du tableau d'exemple, termes des réglages |
+| Petits libellés laiton | `laiton-texte` | `#C9A227` | `#614A08` | « CE SOIR », « EN BREF », titres de rubrique, numéros |
+| Rouge en texte | `rouge-texte` | `#FF8A8F` | `#A81F25` | Restes sans finish de ce soir, « bust » de l'exemple |
+| Vert en texte | `vert-texte` | `#5BB27E` | `#1F6B41` | Succès de l'exemple |
+| Filets | `filet` / `filet-doux` | `#3A4A3F` / `#24332A` | `#C2BBA6` / `#E0D9C7` | Séparateurs de rubriques, tableau, questions |
+| Cadre de la croix | `chene-doux` | `#4A3825` | `#A38D6F` | Bordure du bouton « Fermer » |
+| Voile | `voile` | `rgb(4 8 5 / .62)` | `rgb(47 30 16 / .45)` | `::backdrop` en portrait (transparent en paysage) |
+
+⚠️ `rouge-cible` / `vert-cible` restent des **fonds et des filets** : en texte sur l'ardoise
+sombre ils tombent à 2,8:1 et 3,2:1. Contrastes des tokens de texte (sur `feutre` · `feutre-nuit`
+· `ardoise` · `ardoise-claire`) — sombre : `craie-2-regles` 11,2 · 12,1 · 10,1 · 8,7 ;
+`craie-3-regles` 7,1 · 7,6 · 6,4 · 5,4 ; `laiton-texte` 7,4 · 7,9 · 6,7 · 5,7 ; `rouge-texte`
+7,9 · 8,5 · 7,1 · 6,1 ; `vert-texte` 6,9 · 7,4 · 6,2 · 5,3. Clair : `craie-3-regles` 5,8 · 4,7 ·
+7,3 · 8,0 ; `laiton-texte` 6,0 · 4,8 · 7,6 · 8,3 ; `rouge-texte` 5,2 · **4,2** · 6,5 · 7,2 ;
+`vert-texte` 4,6 · **3,7** · 5,8 · 6,4 — rouge et vert ne se posent que sur l'`ardoise` de la
+feuille, jamais sur son en-tête `feutre-nuit`.
+
 ⚠️ **Le point critique du thème clair, c'est le laiton.** Le laiton vif fait **1,84:1** sur du
 papier : le filet de `.repere-lancer`, qui dit **qui est en train de lancer**, y deviendrait
 invisible — l'information la plus lue de l'app. Il passe donc en laiton foncé (4,4:1), et
@@ -305,7 +328,7 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `Batons` | Les manches comptées en bâtons, quatre traits barrés par un cinquième — **gagnées sur requises** (traits acquis, tirets à gagner), en CSS, sur la feuille de match |
 | `CompteBatons` | Un **total** compté en bâtons de craie (carte Grosses volées) — à ne pas confondre avec `Batons`. SVG d'après la planche : groupe de k traits = 5k + 4 de large, 16 de haut, trait 1,8, barre de (0, 13) à (5k + 4, 3). **Au plus 10 groupes (50 bâtons)**, puis le nombre exact (`decompteBatons`). Nombre toujours écrit dès 1 (`craie`), « — » `craie-3` à 0. Teinte des traits par seuil, en tokens **pleins** : 180 `laiton`, 140+ `craie`, 100+ `craie-2` (jamais d'alpha). Traits `aria-hidden` |
 | `CartePodium` / `BasculesPodium` / `ClassementPodium` (`GrandeLignePodium`, `BarresPodium`, `BoutonToutVoir`) | Les cartes du podium de Statistiques (lot `statistiques-podium`). **Carte** : région nommée par son `<h2>` (titre de Moyenne abrégé en « Moyenne 3 fl. » : à 360 px, « Moyenne 3 fléchettes » était tronqué à côté des bascules ; nom accessible de la carte, du dialogue et de « Tout voir » = court **puis** complet, « Moyenne 3 fl., Moyenne 3 fléchettes », par un `aria-label` sur le `<h2>`, QO-1), `bg-ardoise`, filet haut 3 px `craie`, pictogramme 20 px et titre `entete-colonne` gras en `laiton` (écart connu, voir sous la table), à droite les bascules. **Bascules** : puces `text-etiquette`, bordure `craie/25` texte `craie-2`, active bordure `laiton` texte `laiton-clair` ; libellé **court** à l'écran (« Moy. · F9 · Volée », « 180 · 140+ · 100+ », « % dbl · Haut · Manche »), nom accessible = court **puis** complet (« F9, First 9 », `nomBascule` ; le court seul quand ils se confondent : « 180 ») ; visuel de la planche, zone d'appui de 48 px en hauteur (écart connu). **Classement** : le premier en grand (`GrandeLignePodium` : avatar 34 px, nom `craie-vive`, chiffre `text-5xl` `laiton-clair`, complément `text-sm` `craie-3` : « / 16 », « fl. »), puis une `<ol>` de barres (`BarresPodium` : avatar 24 px, nom, piste `craie/8`, barre `craie/72` ou `laiton` pour les ex æquo en tête — un joueur seul ou tous à égalité à une valeur non nulle (tous à 180) : **tous en tête** ; **jamais de dorure à zéro** (un « 0 % » devant des « — » n'est pas doré ; les sans occasion ne comptent pas) — différent de `MiniTableauPartie`. Sans premier doré, le grand chiffre passe en `craie-vive`), valeur `text-nom-serre` ; **Victoires** : « / j » (parties de **ce** joueur) après la valeur sur chaque barre, `text-etiquette` `craie-3`, colonne des valeurs de 72 px au lieu de 44 — colonnes **fixes**, pour que toutes les pistes d'une carte aient la même longueur. Ni ligne de détail ni ligne de bas (Révision 1). Sans occasion : « — » `craie-3`, barre vide, dernier rang. **N premiers, puis « Tout voir »** (Révision 1) : 5 / 5 / 3 / 5 lignes (Moyenne, Victoires, Grosses volées, Finitions) ; jusqu'à N + 1 joueurs, tout est montré ; deux ex æquo exactement à la coupure : N + 1 ; plus de deux : coupe net à N (`apercuPodium`). « Tout voir » (`BoutonToutVoir`) : sous la liste, pleine largeur, 48 px, bordure `craie/25`, texte `craie-3` en majuscules, `aria-haspopup="dialog"`, nom « Tout voir, <titre> » ; il ouvre une `Modale` (tête : pictogramme, titre qui suit la bascule, ✕ ; bascules partagées avec la carte ; tous les joueurs au même dessin, sans grande ligne). **Grosses volées** classées sur le seuil de la bascule (« 180 » au départ ; ex æquo dans l'ordre de la moyenne), titre fixe, trois rangées par joueur. Classement, coupure, largeurs et ex æquo (jugés sur le **chiffre affiché**) : `ui/podium.ts` |
-| `Modale` (+ `hooks/useModaleAuRetour`) | Une boîte modale **refermée par le retour du téléphone** sans quitter l'écran (lot `statistiques-podium`, Révision 1). `<dialog>` natif (`showModal()`), **monté en permanence**, contenu rendu seulement ouvert ; boîte centrée `bg-ardoise`, `border-2 border-craie/35`, voile `backdrop:bg-feutre-nuit/80` ; **largeur de l'écran moins 2 × 16 px**, bornée à `max-w-lg` (32 rem) ; **hauteur au plus 90 % de la hauteur visible** (`90dvh`) ; tête fixe (pictogramme 20 px `laiton`, `<h2>` `entete-colonne` `laiton`, ✕ 48 px `craie-2` nommé « Fermer », bascules dessous), liste qui défile (`overflow-y-auto overscroll-contain`). Fermée par ✕, Échap, retour **ou un appui sur le voile** (décision de l'utilisateur, renverse R1-Q5 sur ce point) : l'appui doit commencer (pointerdown) et finir (click) hors de la boîte, cible = le `<dialog>` lui-même et coordonnées hors de son `getBoundingClientRect()` — un appui sur la bordure ou un glisser parti de la liste ne ferme pas. Liste plus aérée que la carte : 14 px entre deux barres (8 dans la carte), 18 px entre deux joueurs de Grosses volées (10 dans la carte), prop `espacement`. Focus sur ✕ à l'ouverture, rendu à l'élément d'origine à la fermeture. ⚠️ **Jamais `flex` ni `grid` sur le `<dialog>`** (il s'afficherait fermé) : la mise en page vit dans un conteneur intérieur. Aucune animation. L'ouverture empile une entrée d'historique sur la même URL (`location.state`), la fermeture recule toujours d'une entrée (`navigate(-1)`) : voir CONVENTIONS § 9. Dette : `DialogueNouveauJoueur` (Nouvelle partie) ne passe pas encore par là |
+| `Modale` (+ `hooks/useModaleAuRetour`) | Une boîte modale **refermée par le retour du téléphone** sans quitter l'écran (lot `statistiques-podium`, Révision 1). `<dialog>` natif (`showModal()`), **monté en permanence**, contenu rendu seulement ouvert ; boîte centrée `bg-ardoise`, `border-2 border-craie/35`, voile `backdrop:bg-feutre-nuit/80` ; **largeur de l'écran moins 2 × 16 px**, bornée à `max-w-lg` (32 rem) ; **hauteur au plus 90 % de la hauteur visible** (`90dvh`) ; tête fixe (pictogramme 20 px `laiton`, `<h2>` `entete-colonne` `laiton`, ✕ 48 px `craie-2` nommé « Fermer », bascules dessous), liste qui défile (`overflow-y-auto overscroll-contain`). Discipline du `<dialog>` dans `useDialogueNatif`, partagée avec `FeuilleRegles`. Fermée par ✕, Échap, retour **ou un appui sur le voile** (décision de l'utilisateur, renverse R1-Q5 sur ce point) : l'appui doit commencer (pointerdown) et finir (click) hors de la boîte, cible = le `<dialog>` lui-même et coordonnées hors de son `getBoundingClientRect()` — un appui sur la bordure ou un glisser parti de la liste ne ferme pas. Liste plus aérée que la carte : 14 px entre deux barres (8 dans la carte), 18 px entre deux joueurs de Grosses volées (10 dans la carte), prop `espacement`. Focus sur ✕ à l'ouverture, rendu à l'élément d'origine à la fermeture. ⚠️ **Jamais `flex` ni `grid` sur le `<dialog>`** (il s'afficherait fermé) : la mise en page vit dans un conteneur intérieur. Aucune animation. L'ouverture empile une entrée d'historique sur la même URL (`location.state`), la fermeture recule toujours d'une entrée (`navigate(-1)`) : voir CONVENTIONS § 9. Dette : `DialogueNouveauJoueur` (Nouvelle partie) ne passe pas encore par là |
 | `ChoixSegmente` | Le rail à curseur de laiton · tailles `md` et `sm` |
 | `TableauJoueurs` | La feuille **transposée** : joueurs en colonnes, statistiques en lignes |
 | `PlateauImpacts` / `CarteImpacts` / `PanneauImpacts` | Le plateau seul (`role="img"` nommé), le plateau avec sa légende, et les cartes côte à côte du résumé de partie |
@@ -317,6 +340,8 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `PaveSaisie` | **Le** pavé de saisie des quatre jeux (`PaveFlechettes`, `PaveCricket`, `PaveCibles` n'en sont que de fins enrobages) : grille de cibles, rangée **Bulle · Hors · Annuler** (2 · 1 · 2 sur 5 colonnes), rail S/D/T en pleine largeur sauf au Tour du monde |
 | `LayoutPrincipal` / `NavigationBasse` | Coquille des écrans hors partie. Onglet actif en `craie-vive` souligné du trait `bg-laiton`. La barre a une hauteur **fixe** (`--hauteur-nav-basse`, 3,5 rem, filet du haut compris, plus la safe-area), jamais une hauteur minimale ; le bouton « Nouvelle partie » de l'Accueil se cale en `sticky` sur **le même `calc`** (un test le vérifie). ⚠️ Compromis : avec une police système très agrandie, un libellé d'onglet serait **rogné** plutôt que de faire grandir la barre — à vérifier sur appareil réel ; repli possible : un conteneur `sticky` unique dans `LayoutPrincipal` pour la barre et le bouton |
 | `Etats` | `EmptyState` · `Skeleton` · `Spinner` / `SpinnerLigne` · `MessageErreur` · `EcranErreur` |
+| `LivreRegles` | Le livre ouvert (lot `regles-du-jeu`) : bouton 48 px, `BookOpen` 22 px `aria-hidden`, bordure `laiton-sombre`, icône `laiton-clair` ; **actif** (feuille ouverte) : fond `laiton`, icône `sur-laiton`. Nom accessible « Règles du <jeu> », `aria-haspopup="dialog"`, `aria-expanded`. Même mécanisme que la `Modale`, et lui seul : état dans l'historique par `useModaleAuRetour` (clé `regles`), boîte par `useDialogueNatif`, qui rend le focus au livre à la fermeture (même sans focus préalable, Safari). À droite de l'en-tête de l'étape 2 (`EnTeteEtape` `action`) et à l'extrême droite de `BandeauMatch` (prop **obligatoire** `regles`), hors `.grave` et hors capitales, en marges négatives (la rangée du bandeau reste à 40 px en portrait) |
+| `FeuilleRegles` | La feuille de règles : `<dialog>` natif (`showModal`), nommé par son titre, **monté en permanence** (contenu rendu seulement ouvert), aucune classe de `display` sur le `<dialog>` (la colonne vit dans un conteneur intérieur), discipline de `useDialogueNatif` partagée avec la `Modale`. Fermée par la croix, Échap, le retour **ou un appui à côté** (voile en portrait sur le match ; partie gauche, sous un voile transparent, en paysage) — ajout hors planche, décision de l'utilisateur (Révision 1, U1). Tête en `<div>` (jamais un `<header>` dans celui du bandeau), `feutre-nuit` (pictogramme 24 px `laiton-clair`, « RÈGLES DU X01 », « TELLES QUE DARTPÉRO LES APPLIQUE », croix 48 px `chene-doux`) ; corps qui défile (`overscroll-contain`), sans bande « Défiler pour la suite » : encadré « Ce soir » (`laiton-sombre`), « 1 En bref » toujours ouverts, puis rubriques repliables numérotées dès 2 (lignes de 48 px sous un `h3`, chevron, `aria-expanded`, **toutes repliées à chaque ouverture**, plusieurs ouvrables). Blocs : liste (lignes grises = l'autre réglage), paragraphe, pastilles (`rouge-texte` ce soir, `filet` / `craie-3-regles` l'autre), tableau d'exemple, questions, `dl` des réglages (ce soir en `laiton-clair`), grille du parcours. Disposition : étape 2 pleine hauteur (paysage : côté droit, 52 %) ; match à 210 px du haut, filet craie 3 px, voile `voile` (paysage : sous le bandeau, largeur de la colonne du pavé, filet gauche 3 px, sans voile). Tokens : § Palette, feuille de règles |
 | `CarteJoueur` (`composants/match/`) | Score géant, jetons de manches, volée en cours |
 
 La géométrie du plateau — ordre des secteurs, rayons des anneaux — vit dans `geometrieCible.ts`,
@@ -350,8 +375,10 @@ Laiton unique : **aucune couleur par mode** (la planche en proposait quatre ; se
   `min-h` 150 px, liseré haut laiton, fond `ardoise`.
 - **Fiche de réglages** (`ReglagesJeu`) : filet haut craie 3 px sur `ardoise` ; tête = pictogramme 32 +
   récap en grand (principal en `font-score`, secondaire en capitales) dans un `<output>` ; réglages en
-  `ChoixSegmente` (cartes à `aria-pressed` pour le comptage du Cricket) ; ligne de règles ; dépliants
-  (`aria-expanded`, repliés à chaque ouverture) « Plus de réglages » et « Les règles en entier ».
+  `ChoixSegmente` (cartes à `aria-pressed` pour le comptage du Cricket) ; ligne de règles ; dépliant
+  (`aria-expanded`, replié à chaque ouverture) « Plus de réglages ». « Les règles en entier » n'existe
+  plus (lot `regles-du-jeu`) : les règles complètes, sept cibles du Cricket et parcours en 21 cases
+  compris, sont dans la feuille de règles, derrière le **livre** à droite du titre de l'étape 2.
 - **Feuille d'ordre numérotée** : grand rang, pastille, nom, poignée ≥ 48 px ; le premier en
   `bg-laiton/10` avec liseré gauche laiton et « COMMENCE ». « Tirer au sort » : bouton secondaire ;
   la feuille rejoue `animate-monter` (court, sans rebond), coupé sous `prefers-reduced-motion`.
@@ -392,7 +419,7 @@ le bruit. Durées : `--duration-vif` 100 ms, `--duration-normal` 180 ms, `--dura
 | --------- | ----- | ---- |
 | `pop-score` | 200 ms | Le score qui change : `scale(1.06)` → 1, sans rebond |
 | `secousse` | 260 ms | Bust — trois allers-retours de 4 px |
-| `monter` | 240 ms | Entrée d'élément |
+| `monter` | 240 ms | Entrée d'élément ; l'ouverture de la feuille de règles |
 | `craie` | 240 ms | Texte qui s'écrit (flou → net) |
 | `tour-logo` | 1,2 s, une fois | La cible de l'accueil fait un tour puis se pose |
 | `trace-filet` | 360 ms | Fin de manche / de partie : un filet de 2 px se trace de gauche à droite (`clip-path`), `vert-cible` partout (`MomentCelebratif` et `TableauHonneur`) — ni dégradé ni halo |
@@ -404,6 +431,9 @@ Deux mouvements ne sont pas des `@keyframes` mais des **transitions** (lot `matc
 | ---------- | ----- | ---- |
 | **Repère qui glisse** (`.repere-lancer`) | `--duration-lent`, `--ease-sec` | Dans les trois jeux, quand la main passe, le filet de laiton **glisse** d'une ligne à l'autre (`translateY(index × 100 %)`) au lieu de s'éteindre ici et de s'allumer là. Un seul élément `aria-hidden` ; `aria-current` reste l'état accessible. Exige des lignes de **hauteur strictement égale** : la grille `1fr` de `FeuilleMatch` le garantit, et chaque jeu fixe la même hauteur minimale à toutes ses lignes |
 | **Fondu du filet** (`.touche-armee`) | `--duration-normal`, `--ease-sec` | Au retour à Simple, le filet de laiton et le fond Triple s'effacent en fondu (`border-color`, `box-shadow`, `background-color`). La bordure reste à **1 px** (jamais de `border-width`, non animable, qui décalerait la touche) : le 2ᵉ pixel est un anneau `inset 0 0 0 1px` en première couche de `box-shadow`, transparent au repos, pour que l'ombre fonde au lieu de basculer. **L'inversion de l'appui reste à 90 ms** : c'est l'état d'arrivée qui choisit la durée (`:active` → 90 ms, retour → `--duration-normal`). Le curseur du rail garde son glissement |
+
+Le chevron d'une rubrique de la feuille de règles tourne de 90° en 150 ms (`motion-safe:`), comme
+celui du dépliant « Plus de réglages ».
 
 Supprimées : `eclat` (remplacé par `trace-filet`), `tourner-lent` (boucle de 120 s) et
 `respirer` (le badge du Tour du monde est fixe).
@@ -421,8 +451,8 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 
 ```
 ┌──────────────────────────────────┐
-│ ← ◔ X01                MANCHE 2  │  bandeau de match X01 : pictogramme, titre,
-│     501 · PREMIER À 2 MANCHES    │  sous-titre, DI / DO dessous ; manche (et set) à droite
+│ ← ◔ X01           MANCHE 2  [▯▯] │  bandeau de match X01 : pictogramme, titre,
+│     501 · PREMIER À 2 MANCHES    │  sous-titre, DI / DO dessous ; manche (et set), puis le livre des règles
 │     Dimanche soir                │  nom de la partie : ligne à part, tronquée (masquée en paysage)
 ├──────────────────────────────────┤
 │ JOUEUR          │ VOLÉE │  RESTE │  en-têtes EN INVERSION (craie pleine)
@@ -430,7 +460,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 │  T20  T20  S20  │moy 140│  ‖ 3 f │  ▌ = filet de laiton : c'est son tour
 │ ■ JULIEN        │   83  │    418 │  ■ = carré à la couleur du profil
 │  T19  S19  S7   │moy 83 │  ‖ 3 f │  fléchettes écrites sur leur ligne
-│ ⌖ SORTIE   T20   T7   D20        │  dernière ligne, filet vert, ≤ 170
+│ ⌖ SORTIE   T20   T7   D20        │  dernière ligne, filet vert, ≤ 170 (180 en sortie libre)
 ├──────────────────────────────────┤
 │   1⁶⁰ 2  3  4  5                 │  ZONE SAISIE
 │   6  7  8  9 10                  │  cibles ≥ 48 px
@@ -486,7 +516,9 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
   · Set M » à droite sur la même hauteur. Mesuré (Chrome, 390 × 844 / 844 × 390, hors zone de
   sécurité) : **portrait 73 → 87 px**, **paysage 65 → 49 px** (la ligne du nom y disparaît). Depuis
   le lot `feuille-commune`, ce bandeau est un composant commun (`BandeauMatch`) : le Cricket, le
-  Tour du monde et l'entraînement l'adoptent, avec leur pictogramme.
+  Tour du monde et l'entraînement l'adoptent, avec leur pictogramme. Depuis le lot `regles-du-jeu`,
+  le livre (`LivreRegles`) ferme la rangée à droite : rangée en `gap-2` en portrait (`gap-3` en
+  paysage), livre en marges négatives `-my-1 -mr-1 paysage:-mb-0.5` ; bandeau paysage 49 → 51 px.
 - **Les fléchettes sont écrites sur une ligne** (`.ligne-saisie`), comme au stylo — et non dans
   des pastilles. Les trois emplacements restent **toujours présents** : c'est ce qui garde
   l'alignement d'une ligne à l'autre.
@@ -495,7 +527,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 - **Portrait** par défaut. **Paysage** (téléphone couché) : lecture à gauche, pavé à droite —
   porté par `DispositionPartie` pour les quatre modes.
 - **Le nom de la partie** (lot `nom-de-partie`) occupe sa propre ligne sous la rangée du bandeau,
-  dans le même `<header>` (`h-4 truncate pl-12 text-craie-3`, hauteur réservée même vide, prop obligatoire `nomPartie` de `DispositionPartie`) —
+  dans le même `<header>` (`h-4 truncate pl-11 text-craie-3` : 44 px = flèche de retour de 40 px tirée de 4 px (`-ml-1`) + écart portrait `gap-2`, hauteur réservée même vide, prop obligatoire `nomPartie` de `DispositionPartie`) —
   **masquée en paysage** (`paysage:hidden`, lot `match-x01`) :
   lu à 30 cm, il ne prend rien à la zone de lecture et ne pousse pas le bandeau. Forme
   **à confirmer à la relecture à l'écran** (D5), cas le plus serré : X01 en sets, double in et

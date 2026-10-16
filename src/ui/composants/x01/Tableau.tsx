@@ -9,6 +9,7 @@ import { Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import {
   LIBELLE_JOUEUR,
   LIBELLE_MANCHES,
+  LIBELLE_PAS_DE_FINISH,
   LIBELLE_RESTE,
   LIBELLE_VOLEE,
   nomJoueur,
@@ -20,6 +21,8 @@ type Props = {
   readonly resteAffiche: number
   readonly dartsEnCours: readonly Dart[]
   readonly suggestion: readonly Dart[] | null
+  /** Le plus haut reste qui a une sortie ce soir (170 sur un double, 180 en sortie libre). */
+  readonly sortieMax: number
   readonly profils: ReadonlyMap<PlayerId, Player>
   readonly moyennes: ReadonlyMap<PlayerId, number>
 }
@@ -78,7 +81,7 @@ const RubanSortie = ({
     return (
       <div className="flex items-center gap-3 border-t border-craie/25 px-3 py-2">
         <CircleOff aria-hidden="true" className="size-4 shrink-0 text-craie-3" />
-        <span className="entete-colonne">Pas de finish</span>
+        <span className="entete-colonne">{LIBELLE_PAS_DE_FINISH}</span>
       </div>
     )
   }
@@ -106,6 +109,7 @@ export const Tableau = ({
   resteAffiche,
   dartsEnCours,
   suggestion,
+  sortieMax,
   profils,
   moyennes,
 }: Props) => {
@@ -133,7 +137,7 @@ export const Tableau = ({
         <div className="min-h-11">
           <RubanSortie
             suggestion={suggestion}
-            aucunFinish={state.winnerId === null && resteAffiche > 1 && resteAffiche <= 170}
+            aucunFinish={state.winnerId === null && resteAffiche > 1 && resteAffiche <= sortieMax}
           />
         </div>
       }

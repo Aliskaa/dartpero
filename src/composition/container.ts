@@ -10,6 +10,7 @@ import type { Preferences } from '@/core/application/ports/driven/Preferences'
 import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
+import type { GetCheckoutRange } from '@/core/application/ports/driving/GetCheckoutRange'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
 import type { GetMatchHistory } from '@/core/application/ports/driving/GetMatchHistory'
 import type { GetMatchMode } from '@/core/application/ports/driving/GetMatchMode'
@@ -32,6 +33,7 @@ import type { ShuffleOrder } from '@/core/application/ports/driving/ShuffleOrder
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
 import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVisit'
 import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseCase'
+import { GetCheckoutRangeUseCase } from '@/core/application/use-cases/GetCheckoutRangeUseCase'
 import { GetCheckoutSuggestionUseCase } from '@/core/application/use-cases/GetCheckoutSuggestionUseCase'
 import { GetMatchHistoryUseCase } from '@/core/application/use-cases/GetMatchHistoryUseCase'
 import { GetMatchModeUseCase } from '@/core/application/use-cases/GetMatchModeUseCase'
@@ -115,6 +117,8 @@ export type Services = {
   readonly undoLastVisit: UndoLastVisit
   readonly getMatchState: GetMatchState
   readonly getCheckoutSuggestion: GetCheckoutSuggestion
+  /** 170 ou 180 selon la sortie, et les restes sans finish : « Pas de finish », feuille de règles. */
+  readonly getCheckoutRange: GetCheckoutRange
   readonly getMatchStats: GetMatchStats
   readonly getMatchHistory: GetMatchHistory
   readonly getMatchMode: GetMatchMode
@@ -179,6 +183,7 @@ export const createServices = ({
     undoLastVisit: new UndoLastVisitUseCase(matches, clock),
     getMatchState: new GetMatchStateUseCase(matches),
     getCheckoutSuggestion: new GetCheckoutSuggestionUseCase(),
+    getCheckoutRange: new GetCheckoutRangeUseCase(),
     getMatchStats: new GetMatchStatsUseCase(matches),
     getMatchHistory: new GetMatchHistoryUseCase(matches, players),
     getMatchMode: new GetMatchModeUseCase(matches),

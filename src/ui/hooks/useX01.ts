@@ -78,6 +78,17 @@ export const useX01 = (matchId: MatchId) => {
     })
   }, [services, state, termine, apercu, dartsEnCours.length, resteAffiche])
 
+  /**
+   * Jusqu'où une sortie existe ce soir : 170 sur un double, 180 en sortie libre.
+   * Au-delà, le tableau n'affiche ni route ni « Pas de finish ». Lue par le port,
+   * jamais en dur dans l'écran.
+   */
+  const doubleOut = state?.config.doubleOut ?? null
+  const sortieMax = useMemo(
+    () => (doubleOut === null ? 0 : services.getCheckoutRange.execute({ doubleOut }).max),
+    [services, doubleOut],
+  )
+
   const enregistrer = useCallback(
     async (darts: readonly Dart[]) => {
       setOccupe(true)
@@ -191,6 +202,7 @@ export const useX01 = (matchId: MatchId) => {
     resteAffiche,
     apercu,
     suggestion,
+    sortieMax,
     derniereVolee,
     multiplicateur,
     setMultiplicateur,

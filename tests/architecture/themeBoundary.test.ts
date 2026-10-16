@@ -101,6 +101,79 @@ describe('Frontière des thèmes', () => {
     }
   })
 
+  /**
+   * Les neuf jetons de la feuille de règles (lot `regles-du-jeu`, constat 6 de
+   * la Revue) sont **réservés** à la feuille : leurs noms sont génériques
+   * (`filet`, `voile`, `rouge-texte`…), mais leurs valeurs n'ont été vérifiées
+   * que sur les surfaces de la feuille — `rouge-texte` / `vert-texte` tombent
+   * à 4,2 / 3,7:1 sur `feutre-nuit` en clair. `rules/theme-colors.md`
+   * § Jetons réservés.
+   */
+  const JETONS_FEUILLE = [
+    'craie-2-regles',
+    'craie-3-regles',
+    'laiton-texte',
+    'rouge-texte',
+    'vert-texte',
+    'filet-doux',
+    'filet',
+    'chene-doux',
+    'voile',
+  ]
+  const UTILITAIRE_FEUILLE = new RegExp(
+    `\\b(?:text|bg|border(?:-[trblxy])?|outline|ring|divide|fill|stroke|decoration|shadow|accent|caret)-(?:${JETONS_FEUILLE.join('|')})(?![\\w-])`,
+    'g',
+  )
+  const FICHIERS_FEUILLE = [
+    'composants/commun/FeuilleRegles.tsx',
+    'composants/commun/LivreRegles.tsx',
+  ]
+
+  it('les jetons de la feuille de règles ne servent qu’à la feuille', () => {
+    const tous = fichiers(UI)
+    expect(tous.length).toBeGreaterThan(40)
+
+    // Témoin : la feuille emploie bien ces jetons, le motif les trouve.
+    const feuille = readFileSync(resolve(UI, FICHIERS_FEUILLE[0] ?? ''), 'utf8')
+    expect((feuille.match(UTILITAIRE_FEUILLE) ?? []).length).toBeGreaterThan(5)
+
+    const fautes = tous.flatMap((fichier) => {
+      const chemin = enUi(fichier)
+      if (FICHIERS_FEUILLE.includes(chemin)) return []
+      return (readFileSync(fichier, 'utf8').match(UTILITAIRE_FEUILLE) ?? []).map(
+        (classe) => `${chemin} → ${classe}`,
+      )
+    })
+    expect(fautes).toEqual([])
+  })
+
+  it('le motif des jetons réservés attrape leurs utilitaires et laisse passer les voisins', () => {
+    const attrape = (chaine: string) => chaine.match(UTILITAIRE_FEUILLE) !== null
+    for (const reserve of [
+      'text-rouge-texte',
+      'border-filet',
+      'border-b border-filet-doux',
+      'backdrop:bg-voile',
+      'text-laiton-texte',
+      'border-chene-doux',
+      'text-craie-3-regles',
+      'border-t-filet/50',
+    ]) {
+      expect(attrape(reserve), reserve).toBe(true)
+    }
+    for (const voisin of [
+      'filet-colonne',
+      'filet-laiton',
+      'animate-trace-filet',
+      'text-craie-2',
+      'text-laiton',
+      'bg-feutre-nuit',
+      'text-rouge-cible',
+    ]) {
+      expect(attrape(voisin), voisin).toBe(false)
+    }
+  })
+
   /** Le CSS a le droit d'écrire des couleurs : c'est lui qui les définit. Mais
    *  les deux thèmes doivent définir EXACTEMENT les mêmes tokens, sinon l'un
    *  des deux hérite silencieusement d'une valeur de l'autre. */

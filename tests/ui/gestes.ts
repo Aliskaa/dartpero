@@ -1,6 +1,6 @@
 import { act, screen } from '@testing-library/react'
 import type { UserEvent } from '@testing-library/user-event'
-import { type NavigateFunction, useNavigate } from 'react-router'
+import { type Location, type NavigateFunction, useLocation, useNavigate } from 'react-router'
 
 /**
  * Saisit une fléchette comme le ferait un joueur.
@@ -21,15 +21,42 @@ export const flechette = async (
 }
 
 let naviguer: NavigateFunction | null = null
+let location: Location | null = null
 
 /**
  * Une sonde posée à côté de l'écran testé, dans le même routeur. Elle ne rend
  * rien : elle garde seulement la main sur l'historique, pour que
- * `retourTelephone` puisse reculer comme le ferait le bouton du téléphone.
+ * `retourTelephone` puisse reculer comme le ferait le bouton du téléphone, et
+ * la dernière location vue, pour `locationCourante`.
  */
 export const SondeHistorique = (): null => {
   naviguer = useNavigate()
+  location = useLocation()
   return null
+}
+
+/**
+ * Oublie la sonde du test précédent (appelé par `tests/setup.ts` après chaque
+ * test) : un test qui l'aurait oubliée échoue au lieu de lire une vieille location.
+ */
+export const oublierSonde = (): void => {
+  naviguer = null
+  location = null
+}
+
+/** Le geste « suivant » du navigateur (ou le glissé avant d'iOS) : une entrée en avant. */
+export const avancerTelephone = async (): Promise<void> => {
+  const avancer = naviguer
+  if (!avancer) throw new Error('SondeHistorique absente : rendre avec renderWithServices')
+  await act(async () => {
+    await avancer(1)
+  })
+}
+
+/** L'URL et l'état d'historique courants, tels que le routeur les voit. */
+export const locationCourante = (): Location => {
+  if (!location) throw new Error('SondeHistorique absente : rendre avec renderWithServices')
+  return location
 }
 
 /**

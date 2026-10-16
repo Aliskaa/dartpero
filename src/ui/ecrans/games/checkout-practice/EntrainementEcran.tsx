@@ -11,6 +11,7 @@ import { useCheckoutPractice } from '@/ui/hooks/useCheckoutPractice'
 import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { libelleMancheSurTotal, recapEntrainement, TITRE_BANDEAU_ENTRAINEMENT } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
+import { reglesDeLaConfigEntrainement } from '@/ui/reglesDuJeu'
 
 export const EntrainementEcran = () => {
   const { matchId } = useParams()
@@ -69,6 +70,7 @@ export const EntrainementEcran = () => {
             state.config.minTarget,
             state.config.maxTarget,
           )}
+          regles={reglesDeLaConfigEntrainement(state.config)}
           droite={
             <span className="whitespace-nowrap">
               {libelleMancheSurTotal(

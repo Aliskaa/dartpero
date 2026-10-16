@@ -153,6 +153,17 @@ lancement reste, sans appelant UI (dette), et la clé `partie:ordre-aleatoire` r
 ⚠️ **« Abandonnée » est dérivée, jamais écrite** : `matchStatus`, et lui seul, la calcule contre
 la partie en cours **globale** (`GetOngoingMatch`), jamais contre une liste filtrée par mode —
 même statut à l'Accueil et dans Parties. La mise en page de l'Accueil, elle, n'est pas gravée.
+- **Règles au livre ouvert** (lot `regles-du-jeu`) : un livre (`LivreRegles`, 48 px) à droite de
+l'en-tête de l'étape 2 et du bandeau de match des quatre modes ouvre une feuille de règles
+**par-dessus** l'écran (`FeuilleRegles`, `<dialog>` natif), **jamais une route** : la volée en
+cours survit. ⚠️ **Même mécanisme que la `Modale` des Statistiques, et lui seul** :
+`useModaleAuRetour` (clé `regles`) pour l'état, une entrée d'historique sur la même URL qu'on
+dépile pour fermer, et `useDialogueNatif` pour le `<dialog>` ; pièges : CONVENTIONS § 9.
+Fermée par la croix, Échap, le retour ou un appui à côté. Le premier retour ferme la
+feuille, le second fait ce qu'il faisait. Le texte décrit **les règles que Dartpéro applique**,
+suit les réglages de la partie (la règle de ce soir en entier, l'autre en gris) et vit dans
+`labels.ts` (`reglesX01`…) ; **un lot qui change une règle met à jour sa rubrique**, dans le
+même lot. « Les règles en entier » de la fiche n'existe plus.
 
 ---
 
@@ -191,7 +202,7 @@ cible (`MISS`) ne vaut jamais.
 trois cibles dans la même volée. La volée s'arrête sur la fléchette qui boucle le tour, comme
 une volée de checkout au X01.
 - ⚠️ **On finit le tour de table.** Quand un joueur boucle, la partie ne s'arrête pas : les
-autres jouent leur volée, pour que tout le monde ait eu le même nombre de fléchettes. Sans ça,
+autres jouent leur volée, pour que tout le monde ait joué le même nombre de **volées**. Sans ça,
 celui qui commence part avec une longueur d'avance imméritée.
 - **Départage** : parmi ceux qui ont bouclé, celui qui y a mis le **moins de fléchettes**.
 À égalité parfaite, **match nul** — on ne départage ni au hasard ni à l'ordre de passage.
@@ -229,6 +240,31 @@ d'être devant aux points, donc celui qui la remplit a mérité son avance.
 
 ---
 
+## Règles de l'entraînement (référence — NE PAS improviser)
+
+Le mode solo du lot 5b (`checkout-practice`), gravé au lot `regles-du-jeu` d'après le code
+(`checkout-practice/config.ts`, `rules.ts`, `PlayCheckoutPracticeUseCase.ts`).
+
+- Une séance compte **N manches** (`rounds`) : **5, 10 ou 20** au choix, 10 par défaut. Un
+joueur, seul. À l'écran, ce nombre se choisit et se résume en **sorties** (étape 2, cartes,
+« Ce soir », « Sortie 8 » à l'Accueil) ; la séance en cours compte en **manches**
+(« Manche 3/10 », cartouche « Manche »).
+- Chaque manche, un **reste est tiré au sort** parmi les restes **jouables de 41 à 170**
+(plage non réglable). Jouable = sortable en 3 fléchettes sur un double : les bogey numbers
+s'excluent d'eux-mêmes, **calculés**, jamais tabulés (`playableTargets`).
+- ⚠️ **Le reste tiré est écrit dans le journal** (`RoundStarted`) : annuler une volée redonne le
+même reste, jamais un nouveau tirage.
+- **Une seule volée par manche** (3 fléchettes au plus) : sortie, bust ou trois fléchettes sans
+finir, on passe à la suivante.
+- **Toujours sur un double** : la résolution est celle du X01 (`resolveVisit`, partagé), en
+`double out` sans `double in` — bust à reste `< 0`, `== 1`, ou `== 0` sans double.
+- Résultat : le **taux de réussite** = manches réussies ÷ manches jouées. Pendant la volée, la
+route conseillée suit chaque fléchette.
+- **Hors statistiques** des joueurs (seul le X01 est cumulé). « On remet ça » relance une
+séance identique, avec de **nouveaux** tirages.
+
+---
+
 ## Règles du jeu X01 (référence — NE PAS improviser)
 
 C'est ici que 90 % des compteurs amateurs se trompent. Ces règles sont la spécification du
@@ -257,12 +293,19 @@ out, toute fléchette qui amène à 0 pile gagne le leg.
 - `double in` : désactivé par défaut. Si activé, le score ne décompte qu'à partir de la
 première fléchette qui touche un double.
 
-**Checkouts**
+**Checkouts** — ils suivent la sortie de la partie (lot `regles-du-jeu`, `checkoutRange`) :
 
-- Checkout **maximum = 170** (T20 · T20 · Bull).
-- **Bogey numbers** — pas de finish possible en 3 fléchettes, l'app affiche « pas de finish »
-et **jamais** une suggestion bidon : **169, 168, 166, 165, 163, 162, 159**.
-- La suggestion s'affiche dès que le reste est `≤ 170`.
+- **Sur un double** : checkout **maximum = 170** (T20 · T20 · Bull). **Bogey numbers** — pas
+de finish possible en 3 fléchettes, l'app affiche « Pas de finish » et **jamais** une
+suggestion bidon : **169, 168, 166, 165, 163, 162, 159**. Suggestion dès que le reste est
+`≥ 2` et `≤ 170` (1 est un bust).
+- **Sortie libre** : maximum = **180** (T20 · T20 · T20). Pas de finish en 3 fléchettes :
+**179, 178, 176, 175, 173, 172, 169, 166, 163**. Suggestion dès que le reste est `≥ 1`
+(à 1, **S1**) et `≤ 180`.
+- « Pas de finish » à l'écran X01 suit la même borne (170 ou 180), lue par le port
+`GetCheckoutRange`, jamais en dur.
+- Les deux listes (`BOGEY_NUMBERS`, `FREE_OUT_NO_FINISH`) sont des **références de test** :
+l'algorithme ne les lit pas, il les redécouvre, et `checkout.test.ts` vérifie l'accord.
 
 **Legs & sets**
 
@@ -276,7 +319,8 @@ double si `double out` est actif.
 
 - **Moyenne 3 fléchettes** = `(points marqués ÷ fléchettes lancées) × 3`.
 ⚠️ Une volée *busted* marque **0 point** mais ses fléchettes **sont comptées**.
-- **First 9** = moyenne sur les 9 premières fléchettes d'un leg.
+- **First 9** = moyenne sur les **3 premières volées** de chaque leg (9 fléchettes, moins si
+une volée s'arrête avant, `x01/stats.ts`).
 - **% doubles (checkout %)** = doubles gagnants réussis ÷ tentatives de double.
 - Compteurs : nombre de **180**, **140+**, **100+**, **60+**.
 - **Meilleur leg** (« meilleure manche » à l'écran) = plus petit nombre de fléchettes pour

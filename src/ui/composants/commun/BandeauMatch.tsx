@@ -1,7 +1,9 @@
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { LivreRegles } from '@/ui/composants/commun/LivreRegles'
 import { type NomPictogramme, Pictogramme } from '@/ui/composants/commun/Pictogramme'
+import type { ReglesDeLaPartie } from '@/ui/reglesDuJeu'
 
 /**
  * Une étiquette cerclée du bandeau (DI, DO, « Dernier tour ») : bordure de laiton
@@ -24,11 +26,17 @@ type Props = {
    * portrait et côte à côte en paysage. Absent : rien à droite.
    */
   readonly droite?: ReactNode
+  /**
+   * Les règles de la partie, lues dans sa configuration : le livre ouvert, à
+   * l'extrême droite. Obligatoire — un écran de partie qui l'oublierait ne
+   * compilerait pas (lot `regles-du-jeu`).
+   */
+  readonly regles: ReglesDeLaPartie
 }
 
 /**
- * Le bandeau de chêne des quatre écrans de partie, en trois zones : le retour, le
- * jeu (pictogramme, titre, règles) et où l'on en est.
+ * Le bandeau de chêne des quatre écrans de partie, en quatre zones : le retour, le
+ * jeu (pictogramme, titre, règles), où l'on en est, et le livre des règles.
  *
  * Portrait : le bloc central s'empile (titre, sous-titre, puis le complément
  * sous le sous-titre). **Paysage** : il tient en UNE rangée, la droite aussi — la
@@ -36,7 +44,14 @@ type Props = {
  *
  * Il se pose dans l'emplacement `enTete` de `DispositionPartie`.
  */
-export const BandeauMatch = ({ pictogramme, titre, sousTitre, complement, droite }: Props) => (
+export const BandeauMatch = ({
+  pictogramme,
+  titre,
+  sousTitre,
+  complement,
+  droite,
+  regles,
+}: Props) => (
   <>
     <Link
       to="/"
@@ -69,5 +84,13 @@ export const BandeauMatch = ({ pictogramme, titre, sousTitre, complement, droite
         {droite}
       </div>
     )}
+
+    {/* Le livre, hors de `.grave` et des capitales : la feuille de règles,
+        enfant du livre dans le DOM, n'en hérite pas. Sa cible reste à 48 px,
+        mais il mord sur le rembourrage du bandeau (marges négatives) : la rangée
+        ne grandit pas de 40 à 48 px (mesures : 02-dev-notes du lot). */}
+    <div className="-my-1 -mr-1 shrink-0 paysage:-mb-0.5">
+      <LivreRegles regles={regles} hauteur="moitie" />
+    </div>
   </>
 )

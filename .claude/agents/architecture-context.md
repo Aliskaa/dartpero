@@ -47,8 +47,8 @@ ou une règle dans cette commande.
 - ⚠️ **Ne jamais recopier ni résumer une règle de jeu.** Par mode : la
   section source + le **nom** des points délicats, sans les énoncer
   (bust, bogey numbers, départage, cut-throat, fin du tour de table ;
-  l'entraînement est pointé « non gravé », `PROJECT_PLAN` § 4 / § 6 lot
-  5b). Une règle absente force à lire la source ; une règle résumée incite
+  l'entraînement est pointé comme les autres modes, `CLAUDE.md` § Règles
+  de l'entraînement, gravé au lot `regles-du-jeu`). Une règle absente force à lire la source ; une règle résumée incite
   à s'en passer — et un résumé déformé produit un bug qu'aucun test ne voit.
 - Une décision **renversée** (saisie hybride / mode rapide, « best of N »)
   se cite comme telle, avec ce qui l'a remplacée — jamais comme règle

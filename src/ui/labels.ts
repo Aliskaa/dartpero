@@ -4,6 +4,7 @@ import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStat
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import type { GameModeId } from '@/core/domain/games'
 import { Dart } from '@/core/domain/value-objects/Dart'
+import { LEGS, SCORES, SETS, SORTIES } from '@/ui/reglagesPossibles'
 import type { Theme } from '@/ui/theme'
 
 /** Le cœur reste en anglais ; tout le français de l'app vit ici. */
@@ -914,7 +915,7 @@ export const LIBELLE_TOUT_VOIR = 'Tout voir'
 /** Son nom accessible : « Tout voir, Victoires » — le libellé visible en tête (WCAG 2.5.3). */
 export const nomToutVoir = (titre: string): string => `${LIBELLE_TOUT_VOIR}, ${titre}`
 
-/** Le ✕ d'une modale. */
+/** Le ✕ d'une modale ou de la feuille de règles. */
 export const LIBELLE_FERMER = 'Fermer'
 
 /** Le nom accessible de la colonne des bâtons, sur la ligne d'un joueur. */
@@ -1013,13 +1014,11 @@ export const AIDE_SORTIE: Record<ChoixEntreeSortie, string> = {
 export const aideSorties = (sorties: number): string =>
   `${sorties} restes à sortir, une volée chacun.`
 
-/* La fiche de réglages : le pli « Plus de réglages » et « Les règles en entier ». */
+/* La fiche de réglages : le pli « Plus de réglages ». Les règles complètes vivent
+   dans la feuille de règles (lot `regles-du-jeu`), plus dans la fiche. */
 export const LIBELLE_PLUS_DE_REGLAGES = 'Plus de réglages · sortie, entrée, sets'
-export const LIBELLE_REGLES_EN_ENTIER = 'Les règles en entier'
 export const LEGENDE_RECAP_REGLAGES = 'Réglages choisis'
 export const TITRE_FICHE_REGLAGES = 'Réglages du jeu'
-export const LEGENDE_CIBLES_CRICKET = 'Les sept cibles'
-export const LEGENDE_PARCOURS = 'Le parcours en 21 cases'
 
 /** Cricket : les deux cartes de comptage (planche `reglages-jeux`, mot pour mot). */
 export const CARTES_CRICKET: Record<
@@ -1063,47 +1062,6 @@ export const aideManches = (legs: number, sets: number, joueurs: number): string
  * ne fait que le poser.
  */
 export type Segment = string | { readonly fort: string }
-
-export const PARAGRAPHE_TOUR_DU_MONDE: readonly Segment[] = [
-  'On part du ',
-  { fort: '20' },
-  ' et on descend jusqu’au 1, puis on finit sur la ',
-  { fort: 'bulle' },
-  '. Simple, double ou triple : peu importe, il suffit de toucher le secteur. Quand quelqu’un boucle, le tour de table se termine — c’est le nombre de fléchettes qui départage.',
-]
-
-export const paragrapheCricket = (cutThroat: boolean): readonly Segment[] => [
-  'Sept cibles à fermer en trois touches : ',
-  { fort: '20' },
-  ' à ',
-  { fort: '15' },
-  ' et la ',
-  { fort: 'bulle' },
-  '. Une cible fermée chez soi mais pas chez les autres rapporte des points ; ',
-  cutThroat
-    ? 'en cut-throat ils sont infligés aux adversaires, et le plus PETIT score gagne.'
-    : 'gagne celui qui ferme tout sans être derrière au score.',
-]
-
-export const paragrapheEntrainement = (min: number, max: number): readonly Segment[] => [
-  'Un reste est tiré au sort entre ',
-  { fort: `${min} et ${max}` },
-  ', et vous avez trois fléchettes pour le sortir sur un double. Jamais de reste impossible : les bogey numbers sont écartés du tirage.',
-]
-
-/**
- * Les règles X01 « en entier » de la fiche, tirées de `CLAUDE.md` § Règles du
- * jeu X01. ⚠️ Aucun paragraphe X01 n'existait avant ce lot : le texte reste à
- * valider (lot `regles-du-jeu` pour la version complète).
- */
-export const PARAGRAPHE_X01: readonly Segment[] = [
-  'On décompte le score de départ jusqu’à ',
-  { fort: 'zéro pile' },
-  '. Une volée qui passe sous zéro est annulée (bust) : le score revient à sa valeur d’avant la volée. ',
-  'Avec la sortie sur un double, il faut finir sur un ',
-  { fort: 'double' },
-  ' (la bulle à 50 compte) et un reste de 1 est impossible ; avec l’entrée sur un double, le score ne décompte qu’à partir du premier double.',
-]
 
 /** La ligne de règles de chaque fiche (planche `reglages-jeux`, mot pour mot). */
 export const REGLE_X01: readonly Segment[] = [
@@ -1177,6 +1135,1030 @@ export const recapEntrainementFiche = (
 
 export const recapEntrainement = (sorties: number, min: number, max: number): string =>
   `${pluriel(sorties, 'sortie')} · ${min} à ${max}`
+
+/* ------------------------------------------------------------------------
+ * La feuille de règles (lot `regles-du-jeu`) : le livre ouvert de l'étape 2 et
+ * du bandeau de match.
+ *
+ * Le texte dit les règles **que Dartpéro applique**, et suit les réglages de
+ * la partie : la règle de ce soir en entier, l'autre réglage en gris.
+ * X01 et Cricket : mot pour mot la planche `regles-rubriques.html`, sauf trois
+ * phrases X01 corrigées d'après le code (bust compté en fléchettes lancées,
+ * First 9 sur trois volées, volée de 3 fléchettes « au plus »). Tour du monde,
+ * entraînement, et les variantes non dessinées (sortie et entrée sur un double,
+ * sets, premier à 1 manche, cut-throat) : même plan, écrits d'après
+ * `CLAUDE.md` et le code.
+ *
+ * ⚠️ Un lot qui change une règle met à jour sa rubrique ici, dans le même lot.
+ * Des primitives seulement : `reglesDuJeu.ts` ouvre la configuration.
+ * ---------------------------------------------------------------------- */
+
+export const TITRE_REGLES: Record<GameModeId, string> = {
+  X01: 'Règles du X01',
+  CRICKET: 'Règles du Cricket',
+  TOUR_DU_MONDE: 'Règles du Tour du monde',
+  CHECKOUT_PRACTICE: 'Règles de l’entraînement',
+}
+export const SOUS_TITRE_REGLES = 'Telles que Dartpéro les applique'
+export const LIBELLE_CE_SOIR = 'Ce soir'
+export const LIBELLE_EN_BREF = 'En bref'
+/** Le reste sans sortie en 3 fléchettes : l'écran X01 et la feuille de règles disent le même mot. */
+export const LIBELLE_PAS_DE_FINISH = 'Pas de finish'
+
+export const RUBRIQUE_MARQUER = 'Marquer'
+export const RUBRIQUE_GAGNER = 'Gagner'
+export const RUBRIQUE_CAS_PARTICULIERS = 'Cas particuliers'
+export const RUBRIQUE_SORTIES = 'Les sorties'
+export const RUBRIQUE_EXEMPLE = 'Un exemple'
+export const RUBRIQUE_QUESTIONS = 'Questions fréquentes'
+export const RUBRIQUE_COMPTE = 'Ce que l’app compte'
+export const RUBRIQUE_REGLAGES = 'Les réglages possibles'
+/** Le nom accessible de la grille du parcours, dans « Marquer » du Tour du monde. */
+export const legendeParcours = (cibles: number): string =>
+  `Le parcours en ${pluriel(cibles, 'case')}`
+
+/** Une ligne de liste ; `autre` = la règle d'un autre réglage, en gris. */
+export type LigneRegle = { readonly segments: readonly Segment[]; readonly autre?: boolean }
+
+/** Une case du tableau d'exemple : un chiffre, un bust (rouge), un succès (vert), ou du texte. */
+export type CelluleExemple = {
+  readonly segments: readonly Segment[]
+  readonly ton?: 'chiffre' | 'bust' | 'ok'
+}
+
+export type QuestionRegle = { readonly question: string; readonly reponse: readonly Segment[] }
+
+/** Une valeur proposée à l'étape 2 ; `ceSoir` la met en laiton. `suite` ne l'est jamais. */
+export type OptionReglage = {
+  readonly libelle: string
+  readonly ceSoir: boolean
+  readonly suite?: string
+}
+
+export type ReglagePossible = { readonly terme: string; readonly options: readonly OptionReglage[] }
+
+export type BlocRegles =
+  | { readonly type: 'liste'; readonly lignes: readonly LigneRegle[] }
+  | { readonly type: 'paragraphe'; readonly segments: readonly Segment[]; readonly autre?: boolean }
+  | { readonly type: 'pastilles'; readonly nombres: readonly number[]; readonly autre?: boolean }
+  | {
+      readonly type: 'exemple'
+      readonly colonnes: readonly string[]
+      readonly lignes: readonly (readonly CelluleExemple[])[]
+    }
+  | { readonly type: 'questions'; readonly questions: readonly QuestionRegle[] }
+  | { readonly type: 'reglages'; readonly reglages: readonly ReglagePossible[] }
+  | {
+      readonly type: 'parcours'
+      readonly legende: string
+      readonly cibles: readonly (number | 'BULL')[]
+    }
+
+export type RubriqueRegles = { readonly titre: string; readonly blocs: readonly BlocRegles[] }
+
+export type ContenuRegles = {
+  readonly titre: string
+  /** Le même texte que le récapitulatif de la fiche, sur une ligne. */
+  readonly ceSoir: string
+  readonly enBref: readonly Segment[]
+  /** Numérotées à partir de 2 : « En bref » est la 1. */
+  readonly rubriques: readonly RubriqueRegles[]
+}
+
+/** Jusqu'où l'app propose une sortie, et les restes sans finish en dessous. */
+export type PlageSorties = { readonly max: number; readonly sansFinish: readonly number[] }
+
+const fort = (texte: string): Segment => ({ fort: texte })
+const ligne = (...segments: Segment[]): LigneRegle => ({ segments })
+const ligneSi = (autre: boolean, ...segments: Segment[]): LigneRegle => ({ segments, autre })
+const liste = (...lignes: LigneRegle[]): BlocRegles => ({ type: 'liste', lignes })
+const paragraphe = (...segments: Segment[]): BlocRegles => ({ type: 'paragraphe', segments })
+const paragrapheGris = (...segments: Segment[]): BlocRegles => ({
+  type: 'paragraphe',
+  segments,
+  autre: true,
+})
+const question = (q: string, ...reponse: Segment[]): QuestionRegle => ({ question: q, reponse })
+const chiffre = (texte: string): CelluleExemple => ({ segments: [texte], ton: 'chiffre' })
+const texte = (...segments: Segment[]): CelluleExemple => ({ segments })
+/**
+ * Les valeurs d'un réglage, celle de ce soir marquée. Comparée par égalité
+ * stricte : une vieille partie hors de la liste n'en marque aucune.
+ */
+const options = <T>(
+  valeurs: readonly T[],
+  courante: unknown,
+  libelle: (valeur: T, rang: number) => string,
+): readonly OptionReglage[] =>
+  valeurs.map((valeur, rang) => ({ libelle: libelle(valeur, rang), ceSoir: valeur === courante }))
+
+const REGLAGES_FIGES =
+  'Ce soir en laiton. Les réglages se choisissent à l’étape 2 et ne changent plus en cours de partie.'
+
+const manches = (n: number): string => pluriel(n, 'manche')
+
+export const reglesX01 = ({
+  score,
+  legs,
+  sets,
+  doubleOut,
+  doubleIn,
+  sorties,
+}: {
+  readonly score: number
+  readonly legs: number
+  readonly sets: number
+  readonly doubleOut: boolean
+  readonly doubleIn: boolean
+  readonly sorties: { readonly surUnDouble: PlageSorties; readonly libre: PlageSorties }
+}): ContenuRegles => {
+  const recap = recapX01({ score, legs, sets, doubleOut, doubleIn })
+  const avecSets = sets > 1
+  const deCeSoir = doubleOut ? sorties.surUnDouble : sorties.libre
+  const autre = doubleOut ? sorties.libre : sorties.surUnDouble
+
+  return {
+    titre: TITRE_REGLES.X01,
+    ceSoir: `${recap.principal} · ${recap.secondaire.toLowerCase()}`,
+    enBref: doubleOut
+      ? [
+          'Chacun part de ',
+          fort(String(score)),
+          ' et retire ses points. Le premier qui arrive ',
+          fort('pile à zéro'),
+          ' sur un ',
+          fort('double'),
+          ' gagne la manche.',
+        ]
+      : [
+          'Chacun part de ',
+          fort(String(score)),
+          ' et retire ses points. Le premier qui arrive ',
+          fort('pile à zéro'),
+          ' gagne la manche.',
+        ],
+    rubriques: [
+      {
+        titre: RUBRIQUE_MARQUER,
+        blocs: [
+          liste(
+            ligne('Une volée, c’est ', fort('3 fléchettes'), ' au plus.'),
+            ligne(
+              'Simple, double ou triple du secteur touché. La bulle vaut ',
+              fort('25'),
+              ', le centre ',
+              fort('50'),
+              '.',
+            ),
+            ligne(fort('Pas de triple sur la bulle.'), ' Une fléchette hors cible vaut 0.'),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_GAGNER,
+        blocs: [
+          liste(
+            avecSets
+              ? ligne(
+                  'Le premier à ',
+                  fort(manches(legs)),
+                  ' gagne le set, et le premier à ',
+                  fort(`${sets} sets`),
+                  ' gagne la partie.',
+                )
+              : ligne('Le premier à ', fort(manches(legs)), ' gagne la partie.'),
+            ligne('Celui qui commence ', fort('change à chaque manche'), '.'),
+            ...(legs > 1
+              ? [
+                  ligne(
+                    `À 3 ou 4 joueurs, on joue jusqu’à ce que quelqu’un ait gagné ${legs} manches : ${
+                      avecSets ? 'un set' : 'la partie'
+                    } peut en durer plus de ${2 * legs - 1}.`,
+                  ),
+                ]
+              : []),
+            avecSets
+              ? ligneSi(true, `Sans sets, la partie se gagne au premier à ${manches(legs)}.`)
+              : ligneSi(
+                  true,
+                  'Avec des sets, un set se gagne au premier à N manches, et la partie au premier à S sets.',
+                ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_CAS_PARTICULIERS,
+        blocs: [
+          liste(
+            ligne(
+              fort('Bust'),
+              ' : si la volée fait passer sous zéro, elle est annulée et le score revient à sa valeur d’avant la volée. C’est au suivant.',
+            ),
+            ligneSi(
+              doubleOut,
+              'Sortie libre : n’importe quelle fléchette qui amène ',
+              fort('pile à zéro'),
+              ' gagne.',
+            ),
+            ligneSi(
+              !doubleOut,
+              'Sortie sur un double : il faut finir sur un ',
+              fort('double'),
+              ' (le centre à 50 compte). Un reste de 1, ou un zéro sans double, est aussi un bust.',
+            ),
+            ligneSi(
+              !doubleIn,
+              'Entrée sur un double : le score ne décompte qu’à partir du premier ',
+              fort('double'),
+              '.',
+            ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_SORTIES,
+        blocs: [
+          paragraphe(
+            'Ce soir, l’app propose une sortie dès qu’il reste ',
+            fort(`${deCeSoir.max} ou moins`),
+            doubleOut ? ' (T20 · T20 · centre)' : '',
+            `. Ces restes n’ont pas de sortie en 3 fléchettes, l’app affiche « ${LIBELLE_PAS_DE_FINISH} » :`,
+          ),
+          { type: 'pastilles', nombres: deCeSoir.sansFinish },
+          doubleOut
+            ? paragrapheGris(
+                'Sortie libre : ',
+                fort(String(autre.max)),
+                ' au plus (T20 · T20 · T20), et pas de sortie pour :',
+              )
+            : paragrapheGris(
+                'Sortie sur un double : ',
+                fort(String(autre.max)),
+                ' au plus (T20 · T20 · centre), et pas de sortie pour :',
+              ),
+          { type: 'pastilles', nombres: autre.sansFinish, autre: true },
+        ],
+      },
+      {
+        titre: RUBRIQUE_EXEMPLE,
+        blocs: [
+          paragraphe('Il reste ', fort('40'), ' à Kevin.'),
+          {
+            type: 'exemple',
+            colonnes: ['Fléchette', 'Touche', 'Reste'],
+            lignes: [
+              [texte('1'), chiffre('20'), chiffre('20')],
+              [texte('2'), chiffre('15'), chiffre('5')],
+              [
+                texte('3'),
+                chiffre('10'),
+                { segments: ['Sous zéro : ', fort('bust'), ', retour à 40'], ton: 'bust' },
+              ],
+            ],
+          },
+          doubleOut
+            ? paragraphe(
+                'Kevin repart de 40 à sa prochaine volée. Sur un double, même une troisième fléchette à 5 aurait fait bust : le zéro doit tomber sur un double.',
+              )
+            : paragraphe(
+                'Kevin repart de 40 à sa prochaine volée. Avec une troisième fléchette à 5, il aurait gagné la manche.',
+              ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_QUESTIONS,
+        blocs: [
+          {
+            type: 'questions',
+            questions: [
+              question(
+                'Les fléchettes d’un bust comptent-elles ?',
+                'Pour le score, non : toute la volée est annulée. Pour la moyenne, oui : les fléchettes lancées comptent, avec 0 point.',
+              ),
+              question(
+                'Peut-on finir sur la bulle ?',
+                'Oui. En sortie sur un double, seul le centre à 50 finit : il compte comme un double.',
+              ),
+              question(
+                'Pourquoi l’app ne propose rien à 169 ?',
+                `Aucune volée de 3 fléchettes ne fait 169 avec les règles de ce soir. Plutôt qu’une suggestion fausse, l’app affiche « ${LIBELLE_PAS_DE_FINISH} ».`,
+              ),
+              question(
+                'La sortie proposée est-elle celle des pros ?',
+                'C’est toujours une route qui marche, mais elle peut différer des tables professionnelles.',
+              ),
+              question(
+                'Qui commence la manche suivante ?',
+                'Le joueur suivant dans l’ordre : celui qui commence change à chaque manche.',
+              ),
+            ],
+          },
+        ],
+      },
+      {
+        titre: RUBRIQUE_COMPTE,
+        blocs: [
+          liste(
+            ligne(
+              fort('Moyenne 3 fléchettes'),
+              ' : points marqués ÷ fléchettes lancées × 3. Un bust marque 0 point, mais ses fléchettes comptent.',
+            ),
+            ligne(
+              fort('First 9'),
+              ' : la même moyenne, sur les 3 premières volées de chaque manche.',
+            ),
+            ligne(
+              fort('% doubles'),
+              ' : doubles de sortie réussis ÷ tentatives. Compté seulement en sortie sur un double.',
+            ),
+            ligne(fort('Grosses volées'), ' : 180, 140 et plus, 100 et plus, 60 et plus.'),
+            ligne(
+              fort('Meilleure manche'),
+              ' : le moins de fléchettes pour finir une manche. ',
+              fort('Plus haut checkout'),
+              ' : la plus grosse volée qui a fini une manche.',
+            ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_REGLAGES,
+        blocs: [
+          {
+            type: 'reglages',
+            reglages: [
+              { terme: 'Départ', options: options(SCORES, score, String) },
+              {
+                terme: 'Manches',
+                options: options(LEGS, legs, (n, rang) => (rang === 0 ? `Premier à ${n}` : `${n}`)),
+              },
+              {
+                terme: 'Sets',
+                options: options(SETS, sets, (n, rang) =>
+                  n === 1 ? LIBELLE_SANS_SETS : rang === 1 ? `premier à ${n}` : `${n}`,
+                ),
+              },
+              {
+                terme: LEGENDE_SORTIE,
+                options: options([false, true], doubleOut, (d) => (d ? 'sur un double' : 'Libre')),
+              },
+              {
+                terme: LEGENDE_ENTREE,
+                options: options([false, true], doubleIn, (d) => (d ? 'sur un double' : 'Libre')),
+              },
+            ],
+          },
+          paragrapheGris(REGLAGES_FIGES),
+        ],
+      },
+    ],
+  }
+}
+
+type CibleRegle = number | 'BULL' | 'MISS'
+
+/** « 20, 19, 18, 17, 16, 15 et la bulle ». */
+const listeDesCibles = (cibles: readonly CibleRegle[]): string => {
+  const mots = cibles.map((cible) => (cible === 'BULL' ? 'la bulle' : String(cible)))
+  return mots.length <= 1
+    ? (mots[0] ?? '')
+    : `${mots.slice(0, -1).join(', ')} et ${mots.at(-1) ?? ''}`
+}
+
+/** « 20 à 15 et la bulle » quand les cibles se suivent, sinon la liste entière. */
+const plageDesCibles = (cibles: readonly CibleRegle[]): string => {
+  const nombres = cibles.filter((cible): cible is number => typeof cible === 'number')
+  const finitSurLaBulle = cibles.at(-1) === 'BULL' && nombres.length === cibles.length - 1
+  const suivies = nombres.every((n, rang) => rang === 0 || n === (nombres[rang - 1] ?? 0) - 1)
+  return finitSurLaBulle && suivies && nombres.length > 1
+    ? `${nombres[0]} à ${nombres.at(-1)} et la bulle`
+    : listeDesCibles(cibles)
+}
+
+const enLettres = (n: number): string => (n === 7 ? 'sept' : String(n))
+
+export const reglesCricket = ({
+  variante,
+  cibles,
+}: {
+  readonly variante: 'STANDARD' | 'CUT_THROAT'
+  readonly cibles: readonly CibleRegle[]
+}): ContenuRegles => {
+  const ct = variante === 'CUT_THROAT'
+  const n = enLettres(cibles.length)
+
+  return {
+    titre: TITRE_REGLES.CRICKET,
+    ceSoir: `${sousTitreBandeauCricket(variante, cibles.length)} · ${plageDesCibles(cibles)}`,
+    enBref: ct
+      ? [
+          'Fermez les ',
+          fort(`${n} cibles`),
+          ' avant les autres, ',
+          fort('sans être devant'),
+          ' au score : le ',
+          fort('plus petit'),
+          ' score gagne.',
+        ]
+      : [
+          'Fermez les ',
+          fort(`${n} cibles`),
+          ' avant les autres, ',
+          fort('sans être derrière'),
+          ' au score.',
+        ],
+    rubriques: [
+      {
+        titre: RUBRIQUE_MARQUER,
+        blocs: [
+          liste(
+            ligne('Les cibles : ', fort(listeDesCibles(cibles)), '.'),
+            ligne(
+              'Simple = ',
+              fort('1 marque'),
+              ', double = 2, triple = 3. La bulle à 25 vaut 1 marque, le centre à 50 en vaut 2.',
+            ),
+            ligne(
+              fort('Trois marques ferment'),
+              ' une cible. Elles peuvent venir de plusieurs volées.',
+            ),
+            ct
+              ? ligne(
+                  'Au-delà, chaque marque donne la valeur de la cible (25 pour la bulle) à ',
+                  fort('chaque adversaire'),
+                  ' qui ne l’a pas fermée.',
+                )
+              : ligne(
+                  'Au-delà, chaque marque rapporte la valeur de la cible (25 pour la bulle), ',
+                  fort('seulement si un adversaire au moins'),
+                  ' ne l’a pas fermée.',
+                ),
+            ligne(`Une fléchette hors des ${n} cibles ne vaut `, fort('rien'), '.'),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_GAGNER,
+        blocs: [
+          liste(
+            ligneSi(
+              ct,
+              'Gagne le premier qui a ',
+              fort('tout fermé'),
+              ' avec un score ',
+              fort('au moins égal'),
+              ' à celui de chaque adversaire.',
+            ),
+            ligne(
+              'Une seule partie, sans manches. Dès qu’un joueur gagne, la partie s’arrête : on ne finit pas le tour de table.',
+            ),
+            ct
+              ? ligne(
+                  'En cut-throat, les points vont ',
+                  fort('aux adversaires'),
+                  ' qui n’ont pas fermé la cible : gagne le premier qui a ',
+                  fort('tout fermé'),
+                  ' avec un score ',
+                  fort('au plus égal'),
+                  ' à celui de chaque adversaire.',
+                )
+              : ligneSi(
+                  true,
+                  'En cut-throat, les points vont ',
+                  fort('aux adversaires'),
+                  ' qui n’ont pas fermé la cible, et le ',
+                  fort('plus petit'),
+                  ' score gagne.',
+                ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_CAS_PARTICULIERS,
+        blocs: [
+          liste(
+            ligne('Une cible fermée par ', fort('tout le monde'), ' ne rapporte plus rien.'),
+            ligne(
+              fort('Pas de bust'),
+              ' : une volée ne fait jamais reculer. Elle fait toujours 3 fléchettes, sauf celle qui gagne.',
+            ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_EXEMPLE,
+        blocs: [
+          paragraphe('À deux joueurs. Kevin a fermé le 20, Julien a 1 marque dessus.'),
+          {
+            type: 'exemple',
+            colonnes: ['Qui', 'Touche', 'Effet'],
+            lignes: [
+              [
+                texte('Kevin'),
+                chiffre('T20'),
+                {
+                  segments: [
+                    '3 marques en trop : ',
+                    fort('+60'),
+                    ct ? ' pour Julien' : ' pour Kevin',
+                  ],
+                  // En cut-throat, les points punissent l'adversaire : en rouge (DV4).
+                  ton: ct ? 'bust' : 'ok',
+                },
+              ],
+              [texte('Julien'), chiffre('D20'), texte('1 + 2 = 3 marques : Julien ferme le 20')],
+              [texte('Kevin'), chiffre('20'), texte('Le 20 est fermé partout : 0 point')],
+            ],
+          },
+        ],
+      },
+      {
+        titre: RUBRIQUE_QUESTIONS,
+        blocs: [
+          {
+            type: 'questions',
+            questions: [
+              question(
+                'Une fléchette peut-elle fermer et marquer ?',
+                ct
+                  ? 'Oui. Avec 2 marques sur le 19, un triple 19 ferme (1 marque) et les 2 autres donnent 38 points à chaque adversaire qui n’a pas fermé le 19.'
+                  : 'Oui. Avec 2 marques sur le 19, un triple 19 ferme (1 marque) et les 2 autres rapportent 38 points, si un adversaire n’a pas fermé le 19.',
+              ),
+              ct
+                ? question(
+                    'J’ai tout fermé mais j’ai plus de points : j’ai gagné ?',
+                    'Non. Continuez à marquer sur les cibles encore ouvertes chez les adversaires : les points vont chez eux, jusqu’à ce qu’ils vous rattrapent.',
+                  )
+                : question(
+                    'J’ai tout fermé mais je suis mené : j’ai gagné ?',
+                    'Non. Continuez à marquer sur les cibles encore ouvertes chez l’adversaire, jusqu’à le rattraper.',
+                  ),
+              question(
+                'Et à égalité de points ?',
+                ct
+                  ? 'Celui qui ferme tout à égalité gagne : il suffit de ne pas être devant.'
+                  : 'Celui qui ferme tout à égalité gagne : il suffit de ne pas être derrière.',
+              ),
+              question('Le 12 compte ?', `Non. Hors des ${n} cibles, une fléchette ne vaut rien.`),
+              question(
+                'Peut-on fermer la bulle d’une fléchette ?',
+                'Non : le centre vaut 2 marques au plus, et il n’y a pas de triple sur la bulle.',
+              ),
+            ],
+          },
+        ],
+      },
+      {
+        titre: RUBRIQUE_COMPTE,
+        blocs: [
+          liste(
+            ligne(
+              'Le Cricket ',
+              fort('n’entre pas'),
+              ' dans les statistiques : moyennes, doubles et grosses volées ne valent qu’au X01.',
+            ),
+            ligne('La partie reste dans l’historique, avec son classement de fin de partie.'),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_REGLAGES,
+        blocs: [
+          {
+            type: 'reglages',
+            reglages: [
+              {
+                terme: LEGENDE_COMPTAGE,
+                options: [
+                  {
+                    libelle: LIBELLE_VARIANTE_CRICKET.STANDARD,
+                    ceSoir: !ct,
+                    suite: ' : les points sont pour soi',
+                  },
+                  {
+                    libelle: LIBELLE_VARIANTE_CRICKET.CUT_THROAT,
+                    ceSoir: ct,
+                    suite: ' : les points vont aux adversaires',
+                  },
+                ],
+              },
+              {
+                terme: 'Cibles',
+                options: [
+                  { libelle: `Les ${n}, toujours : elles ne se règlent pas`, ceSoir: false },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }
+}
+
+const sansMiss = (cibles: readonly CibleRegle[]): readonly (number | 'BULL')[] =>
+  cibles.filter((cible): cible is number | 'BULL' => cible !== 'MISS')
+
+/** Une cible du parcours en mots : « 20 », « la bulle », « hors cible ». */
+const motCible = (cible: CibleRegle): string =>
+  cible === 'BULL' ? 'la bulle' : cible === 'MISS' ? LIBELLE_HORS_CIBLE : String(cible)
+
+/**
+ * Le parcours descend-il de 1 en 1, sur deux nombres au moins, en finissant
+ * peut-être sur la bulle (la forme du parcours du domaine) ? Sinon `null` :
+ * un parcours importé arbitraire, qu'on ne décrit qu'en liste.
+ */
+const parcoursDescendant = (
+  cibles: readonly CibleRegle[],
+): { readonly premier: number; readonly dernier: number; readonly bulle: boolean } | null => {
+  const bulle = cibles.at(-1) === 'BULL'
+  const nombres = bulle ? cibles.slice(0, -1) : cibles
+  const descend =
+    nombres.length >= 2 &&
+    nombres.every(
+      (cible, rang) =>
+        typeof cible === 'number' && (rang === 0 || cible === Number(nombres[rang - 1]) - 1),
+    )
+  if (!descend) return null
+  return { premier: Number(nombres[0]), dernier: Number(nombres.at(-1)), bulle }
+}
+
+/**
+ * « 20 → 1, puis la bulle » pour la forme du domaine ; sinon la première et la
+ * dernière cible (« 20 → 19 »), ou la cible seule (« la bulle »).
+ */
+const parcoursEnMots = (cibles: readonly CibleRegle[]): string => {
+  const descendant = parcoursDescendant(cibles)
+  if (descendant) {
+    const { premier, dernier, bulle } = descendant
+    return bulle ? `${premier} → ${dernier}, puis la bulle` : `${premier} → ${dernier}`
+  }
+  const premiere = cibles[0]
+  const derniere = cibles.at(-1)
+  if (premiere === undefined || derniere === undefined) return ''
+  return cibles.length === 1 ? motCible(premiere) : `${motCible(premiere)} → ${motCible(derniere)}`
+}
+
+/**
+ * « En bref » du Tour du monde, lu dans le parcours de la partie (constat C9) :
+ * le parcours du domaine donne la phrase de la planche mot pour mot. Tout autre
+ * parcours (sauvegarde importée) se dit en liste neutre, sans verbe de
+ * direction, cibles « hors cible » comprises — jamais une phrase fausse,
+ * jamais une erreur (P3-7, tranché par l'utilisateur).
+ */
+const enBrefTourDuMonde = (cibles: readonly CibleRegle[]): readonly Segment[] => {
+  const fin: readonly Segment[] = [
+    '. Celui qui boucle le tour avec le ',
+    fort('moins de fléchettes'),
+    ' gagne.',
+  ]
+  const descendant = parcoursDescendant(cibles)
+  if (descendant) {
+    return [
+      'On part du ',
+      fort(String(descendant.premier)),
+      ', on descend jusqu’au ',
+      fort(String(descendant.dernier)),
+      ...(descendant.bulle ? [', puis on finit sur la ', fort('bulle')] : []),
+      ...fin,
+    ]
+  }
+  const mots = cibles.map(motCible)
+  const liste =
+    mots.length <= 1 ? (mots[0] ?? '') : `${mots.slice(0, -1).join(', ')} et ${mots.at(-1) ?? ''}`
+  return ['Le parcours de cette partie : ', fort(liste), ...fin]
+}
+
+export const reglesTourDuMonde = ({
+  cibles,
+}: {
+  readonly cibles: readonly CibleRegle[]
+}): ContenuRegles => ({
+  titre: TITRE_REGLES.TOUR_DU_MONDE,
+  ceSoir: `${parcoursEnMots(cibles)} · ${pluriel(cibles.length, 'cible')} · rien à régler`,
+  enBref: enBrefTourDuMonde(cibles),
+  rubriques: [
+    {
+      titre: RUBRIQUE_MARQUER,
+      blocs: [
+        liste(
+          ligne('Toucher le secteur suffit : simple, double ou triple, ', fort('peu importe'), '.'),
+          ligne(
+            'La bulle se valide aussi bien à ',
+            fort('25'),
+            ' qu’au centre à ',
+            fort('50'),
+            '. Une fléchette hors cible ne vaut jamais.',
+          ),
+          ligne(
+            'Une volée, c’est ',
+            fort('3 fléchettes'),
+            ' au plus, et l’on avance à ',
+            fort('chaque touche'),
+            ' : on peut valider trois cibles dans la même volée.',
+          ),
+        ),
+        {
+          type: 'parcours',
+          legende: legendeParcours(sansMiss(cibles).length),
+          cibles: sansMiss(cibles),
+        },
+      ],
+    },
+    {
+      titre: RUBRIQUE_GAGNER,
+      blocs: [
+        liste(
+          ligne(
+            'Quand un joueur boucle, ',
+            fort('on finit le tour de table'),
+            ' : les autres jouent leur volée, pour que tout le monde ait joué le même nombre de volées.',
+          ),
+          ligne(
+            'Parmi ceux qui ont bouclé, gagne celui qui y a mis le ',
+            fort('moins de fléchettes'),
+            '.',
+          ),
+          ligne(
+            'À égalité parfaite, ',
+            fort('match nul'),
+            ' : on ne départage ni au hasard ni à l’ordre de passage.',
+          ),
+        ),
+      ],
+    },
+    {
+      titre: RUBRIQUE_CAS_PARTICULIERS,
+      blocs: [
+        liste(
+          ligne(
+            'La volée s’arrête sur la fléchette qui ',
+            fort('boucle le tour'),
+            ' : les suivantes ne comptent pas.',
+          ),
+          ligne('Ni bust, ni manche, ni set : la partie tient en ', fort('un seul parcours'), '.'),
+          ligne(
+            `Dès que quelqu’un a bouclé, le bandeau affiche « ${LIBELLE_DERNIER_TOUR} » jusqu’à la fin du tour de table.`,
+          ),
+        ),
+      ],
+    },
+    {
+      titre: RUBRIQUE_EXEMPLE,
+      blocs: [
+        paragraphe('Sarah vise le ', fort('18'), '.'),
+        {
+          type: 'exemple',
+          colonnes: ['Fléchette', 'Touche', 'Ensuite'],
+          lignes: [
+            [texte('1'), chiffre('D18'), { segments: ['18 validé : au ', fort('17')], ton: 'ok' }],
+            [texte('2'), chiffre('3'), texte('Raté : toujours le 17')],
+            [texte('3'), chiffre('T17'), { segments: ['17 validé : au ', fort('16')], ton: 'ok' }],
+          ],
+        },
+        paragraphe('Deux cibles validées dans la volée : Sarah repart du 16 à la prochaine.'),
+      ],
+    },
+    {
+      titre: RUBRIQUE_QUESTIONS,
+      blocs: [
+        {
+          type: 'questions',
+          questions: [
+            question(
+              'Un double fait-il avancer de deux cibles ?',
+              'Non. Simple, double ou triple : une touche valide une cible, et une seule.',
+            ),
+            question(
+              'Et à égalité ?',
+              'Si les meilleurs ont bouclé avec le même nombre de fléchettes, la partie est un match nul.',
+            ),
+            question(
+              'Quand la partie s’arrête-t-elle ?',
+              'À la fin du tour de table où quelqu’un a bouclé : chacun a alors joué le même nombre de volées.',
+            ),
+          ],
+        },
+      ],
+    },
+    {
+      titre: RUBRIQUE_COMPTE,
+      blocs: [
+        liste(
+          ligne(
+            'Les ',
+            fort('cibles validées'),
+            ' et les ',
+            fort('fléchettes lancées'),
+            ' de chaque joueur.',
+          ),
+          ligne(
+            'Le Tour du monde ',
+            fort('n’entre pas'),
+            ' dans les statistiques : moyennes, doubles et grosses volées ne valent qu’au X01.',
+          ),
+          ligne('La partie reste dans l’historique, avec son classement de fin de partie.'),
+        ),
+      ],
+    },
+    {
+      titre: RUBRIQUE_REGLAGES,
+      blocs: [
+        {
+          type: 'reglages',
+          reglages: [
+            {
+              terme: LIBELLE_PARCOURS,
+              options: [
+                {
+                  libelle: `${parcoursEnMots(cibles)}, toujours : il ne se règle pas`,
+                  ceSoir: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+export const reglesEntrainement = ({
+  sorties,
+  min,
+  max,
+}: {
+  readonly sorties: number
+  readonly min: number
+  readonly max: number
+}): ContenuRegles => {
+  const recap = recapEntrainementFiche(sorties, min, max)
+  return {
+    titre: TITRE_REGLES.CHECKOUT_PRACTICE,
+    ceSoir: `${recap.principal} · ${recap.secondaire.toLowerCase()}`,
+    enBref: [
+      'Un reste est tiré au sort entre ',
+      fort(`${min} et ${max}`),
+      '. Vous avez une volée de ',
+      fort('3 fléchettes'),
+      ' pour le sortir, sur un ',
+      fort('double'),
+      '.',
+    ],
+    rubriques: [
+      {
+        titre: RUBRIQUE_MARQUER,
+        blocs: [
+          liste(
+            ligne(
+              'Les fléchettes comptent comme au X01 : simple, double ou triple du secteur. La bulle vaut ',
+              fort('25'),
+              ', le centre ',
+              fort('50'),
+              ', et il n’y a pas de triple sur la bulle.',
+            ),
+            ligne(
+              'Chaque reste se joue en ',
+              fort('une seule volée'),
+              ', de 3 fléchettes au plus.',
+            ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_GAGNER,
+        blocs: [
+          liste(
+            ligne(
+              'Une sortie est ',
+              fort('réussie'),
+              ' quand la volée amène le reste ',
+              fort('pile à zéro'),
+              ', sur un double.',
+            ),
+            ligne(
+              `La séance compte ${pluriel(sorties, 'reste')} à sortir ; elle se termine après le dernier.`,
+            ),
+            ligne(
+              'Le résultat : le ',
+              fort('taux de réussite'),
+              ', sorties réussies ÷ sorties jouées.',
+            ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_CAS_PARTICULIERS,
+        blocs: [
+          liste(
+            ligne(
+              fort('Toujours sur un double'),
+              ' : la sortie libre ne s’applique pas à l’entraînement.',
+            ),
+            ligne(
+              fort('Bust'),
+              ' : passer sous zéro, laisser 1, ou arriver à zéro sans double rate la sortie.',
+            ),
+            ligne('Trois fléchettes sans finir : la sortie est ratée, on passe au reste suivant.'),
+            ligne(
+              'Les restes ',
+              fort('sans sortie possible'),
+              ' en 3 fléchettes (les bogey numbers) ne sont jamais tirés.',
+            ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_EXEMPLE,
+        blocs: [
+          paragraphe('Il reste ', fort('81'), '.'),
+          {
+            type: 'exemple',
+            colonnes: ['Fléchette', 'Touche', 'Reste'],
+            lignes: [
+              [texte('1'), chiffre('T19'), chiffre('24')],
+              [
+                texte('2'),
+                chiffre('D12'),
+                { segments: ['Zéro sur un double : ', fort('sortie réussie')], ton: 'ok' },
+              ],
+            ],
+          },
+          paragraphe('La volée s’arrête sur la fléchette qui sort.'),
+        ],
+      },
+      {
+        titre: RUBRIQUE_QUESTIONS,
+        blocs: [
+          {
+            type: 'questions',
+            questions: [
+              question(
+                'Peut-on tomber sur un reste impossible ?',
+                'Non : seuls les restes qui se sortent en 3 fléchettes sur un double sont tirés.',
+              ),
+              question(
+                'A-t-on une seconde chance sur un reste raté ?',
+                'Non : une volée par reste. Réussi ou raté, on passe au suivant.',
+              ),
+              question(
+                'Annuler change-t-il le reste ?',
+                'Non : le reste tiré est écrit dans la partie. Annuler une volée redonne le même reste.',
+              ),
+            ],
+          },
+        ],
+      },
+      {
+        titre: RUBRIQUE_COMPTE,
+        blocs: [
+          liste(
+            ligne(
+              'Le ',
+              fort('taux de réussite'),
+              ', et les sorties réussies sur les sorties jouées.',
+            ),
+            ligne(
+              'Pendant la volée, une ',
+              fort('route conseillée'),
+              ', recalculée à chaque fléchette.',
+            ),
+            ligne(
+              'L’entraînement ',
+              fort('n’entre pas'),
+              ' dans les statistiques : moyennes, doubles et grosses volées ne valent qu’au X01.',
+            ),
+          ),
+        ],
+      },
+      {
+        titre: RUBRIQUE_REGLAGES,
+        blocs: [
+          {
+            type: 'reglages',
+            reglages: [
+              { terme: 'Sorties', options: options(SORTIES, sorties, String) },
+              {
+                terme: 'Restes',
+                options: [
+                  {
+                    libelle: `Entre ${min} et ${max}, toujours : la plage ne se règle pas`,
+                    ceSoir: false,
+                  },
+                ],
+              },
+              {
+                terme: LEGENDE_SORTIE,
+                options: [{ libelle: 'Sur un double, toujours', ceSoir: false }],
+              },
+            ],
+          },
+          paragrapheGris(REGLAGES_FIGES),
+        ],
+      },
+    ],
+  }
+}
 
 /* Étape 3 — l'ordre de jeu. */
 export const LEGENDE_ORDRE = 'Ordre de passage'

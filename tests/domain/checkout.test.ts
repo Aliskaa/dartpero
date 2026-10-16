@@ -3,8 +3,11 @@ import { DomainError } from '@/core/domain/DomainError'
 import { X01Config } from '@/core/domain/games/x01/config'
 import {
   BOGEY_NUMBERS,
+  checkoutRange,
+  FREE_OUT_NO_FINISH,
   isOnACheckoutDouble,
   MAX_CHECKOUT,
+  MAX_CHECKOUT_FREE_OUT,
   suggestCheckout,
 } from '@/core/domain/services/checkout'
 import { Dart } from '@/core/domain/value-objects/Dart'
@@ -85,6 +88,52 @@ describe('suggestCheckout — bogey numbers', () => {
     }
 
     expect(infinissables.sort((a, b) => b - a)).toEqual([...BOGEY_NUMBERS])
+  })
+})
+
+describe('suggestCheckout — sortie libre', () => {
+  const libre = X01Config.create({ doubleOut: false })
+  const surUnDouble = X01Config.create({ doubleOut: true })
+
+  it.each([1, 2, 3])('propose S1 à un reste de 1 avec %i fléchette(s) en main', (enMain) => {
+    expect(suggestCheckout(1, enMain, libre)?.map(Dart.label)).toEqual(['S1'])
+  })
+
+  it.each([1, 2, 3])('ne propose toujours rien à 1 sur un double (%i en main)', (enMain) => {
+    expect(suggestCheckout(1, enMain, surUnDouble)).toBeNull()
+  })
+
+  it('ne propose rien à 0, ni au-dessus de 180', () => {
+    expect(suggestCheckout(0, 3, libre)).toBeNull()
+    expect(suggestCheckout(MAX_CHECKOUT_FREE_OUT + 1, 3, libre)).toBeNull()
+  })
+
+  /** Le pendant de BOGEY_NUMBERS : la liste écrite est celle que l'algorithme redécouvre. */
+  it('propose une route valide pour tout reste de 1 à 180, sauf la liste des restes sans finish', () => {
+    const infinissables: number[] = []
+
+    for (let reste = 1; reste <= MAX_CHECKOUT_FREE_OUT; reste++) {
+      const route = suggestCheckout(reste, 3, libre)
+      if (route === null) {
+        infinissables.push(reste)
+        continue
+      }
+      const total = route.reduce((somme, dart) => somme + Dart.points(dart), 0)
+      expect(route.length, `route trop longue pour ${reste}`).toBeLessThanOrEqual(3)
+      expect(total, `la route pour ${reste} ne fait pas le compte`).toBe(reste)
+    }
+
+    expect(infinissables.sort((a, b) => b - a)).toEqual([...FREE_OUT_NO_FINISH])
+  })
+})
+
+describe('checkoutRange', () => {
+  it('sur un double : 170 et les bogey numbers', () => {
+    expect(checkoutRange({ doubleOut: true })).toEqual({ max: 170, noFinish: BOGEY_NUMBERS })
+  })
+
+  it('en sortie libre : 180 et sa propre liste', () => {
+    expect(checkoutRange({ doubleOut: false })).toEqual({ max: 180, noFinish: FREE_OUT_NO_FINISH })
   })
 })
 

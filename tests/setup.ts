@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest'
 import 'fake-indexeddb/auto'
 import { cleanup } from '@testing-library/react'
 import { afterEach } from 'vitest'
+import { oublierSonde } from './ui/gestes'
 
 /*
  * Ce que jsdom (29.x) n'implémente pas, et dont l'UI a besoin. Posé
@@ -45,4 +46,6 @@ if (typeof Element.prototype.hasPointerCapture !== 'function') {
 
 afterEach(() => {
   cleanup()
+  // La sonde d'historique ne survit pas au test qui l'a montée.
+  oublierSonde()
 })

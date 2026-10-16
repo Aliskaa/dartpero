@@ -22,6 +22,7 @@ import {
   TITRE_BANDEAU_X01,
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
+import { reglesDeLaConfigX01 } from '@/ui/reglesDuJeu'
 
 /**
  * Le bandeau du X01 : DI / DO en complément du sous-titre, « Manche N » et
@@ -40,6 +41,7 @@ const EnTeteManche = ({
     pictogramme="x01"
     titre={TITRE_BANDEAU_X01}
     sousTitre={sousTitreBandeauX01(config.startingScore, config.legsToWin)}
+    regles={reglesDeLaConfigX01(config)}
     complement={
       (config.doubleIn || config.doubleOut) && (
         <>
@@ -152,6 +154,7 @@ export const X01Ecran = () => {
           resteAffiche={match.resteAffiche}
           dartsEnCours={match.dartsEnCours}
           suggestion={match.suggestion}
+          sortieMax={match.sortieMax}
           profils={profils}
           moyennes={moyennes}
         />

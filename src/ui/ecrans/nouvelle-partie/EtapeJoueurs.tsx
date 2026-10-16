@@ -10,6 +10,7 @@ import {
 } from '@/ui/chemins'
 import { Button } from '@/ui/composants/commun/Button'
 import { MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
+import { LivreRegles } from '@/ui/composants/commun/LivreRegles'
 import type { NouvellePartie } from '@/ui/hooks/useNouvellePartie'
 import {
   CHARGEMENT_PROFILS,
@@ -25,6 +26,7 @@ import {
   TITRE_PANNEAU_JOUEURS,
   TITRE_QUI_S_ENTRAINE,
 } from '@/ui/labels'
+import { reglesDeLaFiche } from '@/ui/reglesDuJeu'
 import { BarreEtapes } from './BarreEtapes'
 import { ChampNom } from './ChampNom'
 import { DialogueNouveauJoueur } from './DialogueNouveauJoueur'
@@ -60,6 +62,7 @@ export const EtapeJoueurs = ({
         titre={LIBELLE_MODE[mode]}
         cheminPrecedent={cheminNouvellePartie()}
         libelleRetour={RETOUR_ETAPE_PRECEDENTE}
+        action={<LivreRegles regles={reglesDeLaFiche(mode, partie.reglages)} hauteur="pleine" />}
         barre={
           entrainement ? (
             <BarreEtapes etapes={[ETAPE_JEU, ETAPE_REGLAGES]} courante={1} />

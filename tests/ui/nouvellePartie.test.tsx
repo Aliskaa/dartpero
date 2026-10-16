@@ -3,13 +3,15 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from '@/App'
 import type { Dependencies, Services } from '@/composition/container'
+import { GAME_MODE_IDS } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
-import { AUCUN_JOUEUR_PARTIE } from '@/ui/labels'
+import { SLUG_MODE } from '@/ui/chemins'
+import { AUCUN_JOUEUR_PARTIE, LIBELLE_MODE, TITRE_REGLES } from '@/ui/labels'
 import { fakeServices } from '../fakes'
 import { ouverture } from '../use-cases/lancerPartie'
 import { retourTelephone } from './gestes'
@@ -1070,39 +1072,30 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     expect(recap).toHaveTextContent('Sortie sur un double')
   })
 
-  /** Critère 7 : « Les règles en entier » déplie sur place, sans changer de route. */
-  it.each([
-    ['x01', 'X01', null, /Avec la sortie sur un double/],
-    ['cricket', 'Cricket', 'Les sept cibles', null],
-    ['tour-du-monde', 'Tour du monde', 'Le parcours en 21 cases', null],
-    ['entrainement', 'Entraînement', null, /écartés du tirage/],
-  ] as const)(
-    'déplie « Les règles en entier » sur place pour %s',
-    async (slug, nom, cases, paragraphe) => {
-      const utilisateur = userEvent.setup()
-      const { services } = await base(['Kevin'], ['Kevin'])
-      ouvrir(services, `/nouvelle-partie/${slug}`)
-      await screen.findByRole('list', { name: 'Joueurs de la partie' })
+  /**
+   * Lot `regles-du-jeu` : « Les règles en entier » a quitté la fiche ; le livre de
+   * l'en-tête ouvre la feuille de règles par-dessus l'étape, sans en sortir.
+   */
+  it.each(GAME_MODE_IDS)('ouvre la feuille de règles par le livre pour %s', async (mode) => {
+    const nom = LIBELLE_MODE[mode]
+    const regles = TITRE_REGLES[mode]
+    const utilisateur = userEvent.setup()
+    const { services } = await base(['Kevin'], ['Kevin'])
+    ouvrir(services, `/nouvelle-partie/${SLUG_MODE[mode]}`)
+    await screen.findByRole('list', { name: 'Joueurs de la partie' })
 
-      const pli = () => screen.getByRole('button', { name: 'Les règles en entier' })
-      expect(pli()).toHaveAttribute('aria-expanded', 'false')
-      if (cases) expect(screen.queryByRole('list', { name: cases })).toBeNull()
-      if (paragraphe) expect(screen.queryByText(paragraphe)).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Les règles en entier' })).toBeNull()
+    expect(screen.queryByRole('dialog')).toBeNull()
 
-      await utilisateur.click(pli())
-      expect(pli()).toHaveAttribute('aria-expanded', 'true')
-      expect(titre()).toHaveTextContent(nom)
-      if (cases) {
-        const liste = screen.getByRole('list', { name: cases })
-        expect(within(liste).getAllByRole('listitem')).toHaveLength(slug === 'cricket' ? 7 : 21)
-      }
-      if (paragraphe) expect(screen.getByText(paragraphe)).toBeInTheDocument()
+    await utilisateur.click(screen.getByRole('button', { name: regles }))
+    const feuille = screen.getByRole('dialog', { name: regles })
+    expect(titre()).toHaveTextContent(nom)
+    expect(within(feuille).getByText('Ce soir')).toBeInTheDocument()
 
-      await utilisateur.click(pli())
-      expect(pli()).toHaveAttribute('aria-expanded', 'false')
-      if (paragraphe) expect(screen.queryByText(paragraphe)).toBeNull()
-    },
-  )
+    await utilisateur.click(within(feuille).getByRole('button', { name: 'Fermer' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(titre()).toHaveTextContent(nom)
+  })
 
   /** ⚠️ Un profil supprimé ne doit pas rester retenu en fantôme : le lancement échouerait. */
   it('oublie un joueur supprimé depuis la dernière partie', async () => {

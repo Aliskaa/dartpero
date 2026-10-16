@@ -18,6 +18,7 @@ import {
   sousTitreBandeauCricket,
   TITRE_BANDEAU_CRICKET,
 } from '@/ui/labels'
+import { reglesDeLaConfigCricket } from '@/ui/reglesDuJeu'
 
 export const CricketEcran = () => {
   const { matchId } = useParams()
@@ -96,6 +97,7 @@ export const CricketEcran = () => {
           pictogramme="cricket"
           titre={TITRE_BANDEAU_CRICKET}
           sousTitre={sousTitreBandeauCricket(state.config.variant, state.config.targets.length)}
+          regles={reglesDeLaConfigCricket(state.config)}
           droite={LIBELLE_CONDITION_CRICKET[state.config.variant].map((ligne, rang) => (
             <Fragment key={ligne}>
               {/* Un espace entre les lignes : invisible (flex), mais le texte se lit

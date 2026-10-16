@@ -54,15 +54,22 @@ type Props = {
  */
 export const DispositionPartie = ({ enTete, nomPartie, children, saisie }: Props) => (
   <div className="feutre-tapis flex min-h-dvh flex-col">
+    {/* ⚠️ `bandeau-match` est aussi un repère : `LivreRegles` mesure le bas de ce
+        bandeau par `closest('.bandeau-match')` pour poser la feuille dessous en
+        paysage. Renommer la classe, c'est renommer la mesure. */}
     <header
       className={[
         'bandeau-match flex flex-col px-3 pb-1.5 pt-[max(0.5rem,env(safe-area-inset-top))]',
         'paysage:pb-0.5 paysage:pt-[max(0.25rem,env(safe-area-inset-top))]',
       ].join(' ')}
     >
-      <div className="flex items-center gap-3">{enTete}</div>
-      {/* Aligné sur le texte de la rangée, après la flèche de retour (3rem). */}
-      <p className="grave h-4 truncate pl-12 font-score text-etiquette leading-4 tracking-wide text-craie-3 paysage:hidden">
+      {/* gap-2 en portrait : avec le livre des règles, la rangée compte quatre
+          éléments, et 12 px de plus tronquaient le sous-titre X01 à 390 px. */}
+      <div className="flex items-center gap-2 paysage:gap-3">{enTete}</div>
+      {/* Aligné sur la rangée, après la flèche de retour : 40 px tirés de 4 px
+          vers la gauche (`-ml-1`), plus l'écart portrait (gap-2, 8 px) = 44 px,
+          `pl-11`. Changer l'un des trois, c'est décaler le nom. */}
+      <p className="grave h-4 truncate pl-11 font-score text-etiquette leading-4 tracking-wide text-craie-3 paysage:hidden">
         {nomPartie}
       </p>
     </header>

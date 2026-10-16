@@ -24,6 +24,7 @@ import {
   sousTitreBandeauTourDuMonde,
   TITRE_BANDEAU_TOUR_DU_MONDE,
 } from '@/ui/labels'
+import { reglesDeLaConfigTourDuMonde } from '@/ui/reglesDuJeu'
 
 export const TourDuMondeEcran = () => {
   const { matchId } = useParams()
@@ -84,6 +85,7 @@ export const TourDuMondeEcran = () => {
           pictogramme="tour-du-monde"
           titre={TITRE_BANDEAU_TOUR_DU_MONDE}
           sousTitre={sousTitreBandeauTourDuMonde(total)}
+          regles={reglesDeLaConfigTourDuMonde(state.config)}
           droite={state.lastRound && <BadgeBandeau>{LIBELLE_DERNIER_TOUR}</BadgeBandeau>}
         />
       }

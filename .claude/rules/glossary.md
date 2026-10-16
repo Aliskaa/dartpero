@@ -14,8 +14,9 @@ ce que lit le joueur, la deuxième ce qu'écrit le code.
 | journal | `MatchEvent[]` | La partie telle qu'elle est stockée ; l'état affiché en est une **projection**. |
 | manche / set | `Leg`, `legsToWin` / `setsToWin` | Manche X01 (*leg* dans le code) : gagnée en atteignant exactement 0, sur un double si double out. Un set se gagne au premier à N manches. On dit « premier à N manches », **jamais** « best of N » ni « leg » à l'écran. |
 | bust | `VisitOutcome` | Volée annulée, le score revient à sa valeur d'avant la volée. Une donnée, pas une erreur. |
-| checkout / sortie | `checkout` | Finir une manche ; la suggestion s'affiche dès que le reste est ≤ 170. |
-| bogey | — | Reste sans finish possible en 3 fléchettes : 169, 168, 166, 165, 163, 162, 159. |
+| checkout / sortie | `checkout` | Finir une manche ; la suggestion s'affiche de 2 à 170 sur un double, de 1 (S1) à 180 en sortie libre (`checkoutRange`). |
+| bogey / pas de finish | `BOGEY_NUMBERS` / `FREE_OUT_NO_FINISH` | Reste sans finish possible en 3 fléchettes. Sur un double : 169, 168, 166, 165, 163, 162, 159. En sortie libre : 179, 178, 176, 175, 173, 172, 169, 166, 163. À l'écran : « Pas de finish ». |
+| feuille de règles | `FeuilleRegles` / `LivreRegles` | Les règles appliquées, ouvertes par le livre, par-dessus l'écran (jamais une route) ; « Ce soir » = les réglages de la partie. |
 | bulle | `BULL_SIMPLE` (25) / `BULL_DOUBLE` (50) | Le centre. Le 50 compte comme un double. |
 | marque | — | Cricket : simple = 1, double = 2, triple = 3 ; trois ferment une cible. |
 | cut-throat | variante Cricket | Les points vont aux adversaires ; le plus petit score gagne. |

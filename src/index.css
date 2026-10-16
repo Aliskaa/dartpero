@@ -43,6 +43,27 @@
      un `#1a1206` illisible dans l'un des deux. */
   --color-sur-laiton: #1a1206;
 
+  /* LA FEUILLE DE RÈGLES (lot `regles-du-jeu`) : les couleurs de la planche
+     `regles-rubriques.html`, au pixel, devenues des tokens (charte § Palette).
+     Elles ne servent qu'à la feuille de règles et à son livre.
+     - `craie-2-regles` / `craie-3-regles` : le texte courant et les légendes de
+       la feuille, un cran plus clairs que `craie-2` / `craie-3` en sombre ;
+     - `laiton-texte` : les petits libellés (« CE SOIR », numéros, rubriques) ;
+     - `rouge-texte` / `vert-texte` : un bust, une liste de restes sans finish,
+       un succès écrits EN TEXTE — `rouge-cible` / `vert-cible` sont des fonds
+       et des filets, à 2,8:1 et 3,2:1 en texte sur l'ardoise sombre ;
+     - `filet` / `filet-doux` : les séparateurs ; `chene-doux` : le cadre de la
+       croix ; `voile` : ce qui dimme l'écran sous la feuille (alpha compris). */
+  --color-craie-2-regles: #d6ccb9;
+  --color-craie-3-regles: #aaa292;
+  --color-laiton-texte: #c9a227;
+  --color-rouge-texte: #ff8a8f;
+  --color-vert-texte: #5bb27e;
+  --color-filet: #3a4a3f;
+  --color-filet-doux: #24332a;
+  --color-chene-doux: #4a3825;
+  --color-voile: rgb(4 8 5 / 0.62);
+
   /* ANGLE VIF PARTOUT - decision de charte, pas un oubli.
      Aucun objet du decor n'a de coin rond : ni l'ardoise, ni la plaque de
      laiton, ni la feuille de match punaisee derriere le bar. Les tokens de
@@ -195,6 +216,20 @@ html[data-theme="clair"] {
   --color-vert-cible: #1f6b41;
 
   --color-sur-laiton: #fbf7ec;
+
+  /* La feuille de règles, en clair : le texte reprend les valeurs de craie-2,
+     craie-3, laiton-clair, rouge-cible et vert-cible claires (≥ 4,5:1 sur
+     l'ardoise et le feutre-nuit de la feuille, voir CHARTE § Palette) ; les
+     filets et le cadre gardent l'écart de la planche sur le papier. */
+  --color-craie-2-regles: #354137;
+  --color-craie-3-regles: #485249;
+  --color-laiton-texte: #614a08;
+  --color-rouge-texte: #a81f25;
+  --color-vert-texte: #1f6b41;
+  --color-filet: #c2bba6;
+  --color-filet-doux: #e0d9c7;
+  --color-chene-doux: #a38d6f;
+  --color-voile: rgb(47 30 16 / 0.45);
 
   --teinte-relief: rgb(255 255 255 / 0.85);
   --ombre-plaque: rgb(90 62 36 / 0.3);

@@ -165,7 +165,7 @@ lu ; le lot `high` à part.
 | 8 | `statistiques-podium` | Cible en tête (dernier joueur consulté, mémorisé ; le sélecteur ne change que la cible), cartes du podium en barres, bâtons de craie, pictogrammes en tête de carte. **Fait le 2026-10-16**, élargi en cours de lot (N premiers et « Tout voir » en modale ; voir § Écran Statistiques). | 4 | **high** (politique publique) |
 | 9 | `nouvelle-partie-parcours` | Barre d'étapes, tuiles 2 × 2, nom de partie à l'étape 2, fiche de réglages par jeu (X01 « Plus de réglages », Cricket en deux cartes, Tour du monde résumé, entraînement), ordre en feuille numérotée, bouton « Tirer au sort ». Les routes restent les mêmes. | 4 | light |
 | 10 | `rejouer` | « Rejouer » en tête de l'étape 1 : 3 configurations distinctes les plus récentes, fusionnées avec leur nombre, profil supprimé écarté, ordre de la dernière fois. Lu depuis l'historique par les use cases. | 9 | light |
-| 11 | `regles-du-jeu` | Livre ouvert en haut à droite (étape 2 et bandeau de match), feuille **par-dessus** l'écran, texte par jeu qui suit les réglages de la partie. Précise `CLAUDE.md` § Checkouts (180 en sortie libre). | 4, 9 | light |
+| 11 | `regles-du-jeu` | Livre ouvert en haut à droite (étape 2 et bandeau de match), feuille **par-dessus** l'écran, texte par jeu qui suit les réglages de la partie. Précise `CLAUDE.md` § Checkouts (180 en sortie libre). ✅ **Fait** (2026-10-16), passé en **`high`** à l'intake (domaine `checkout.ts`, règles gravées) ; rubriques repliables sur le plan de DartsOn, S1 à un reste de 1 corrigé, même mécanisme que la `Modale` des Statistiques. | 4, 9 | ~~light~~ high |
 | 12 | `reglages-par-usage` | Page unique rangée par usage, thème en vignettes, deux voyants (dernière sauvegarde, application), date du dernier export gardée sur l'appareil, état de protection en une phrase. | 4 | light |
 | 13 | `volee-partielle` | La volée en cours survit à un rechargement (journal ou brouillon). Hors charte, décision d'architecture. | — | **high** (format persisté) |
 
@@ -174,8 +174,9 @@ Notes :
 - Le lot 1 peut partir tout de suite : il ne dépend d'aucun choix de style.
 - Le lot 13 n'a pas de rang imposé ; tant qu'il n'est pas fait, le lot 11 protège déjà la volée
   en ouvrant les règles par-dessus.
-- Après le lot 13, l'anomalie de suggestion à un reste de 1 en sortie libre (§ Les règles de
-  chaque jeu) est à vérifier à l'écran, puis à corriger si elle se confirme.
+- ~~Après le lot 13, l'anomalie de suggestion à un reste de 1 en sortie libre (§ Les règles de
+  chaque jeu) est à vérifier à l'écran, puis à corriger si elle se confirme.~~ **Corrigée au lot
+  11** (choix de l'utilisateur à l'intake) : S1 proposé à un reste de 1 en sortie libre.
 
 **Plus tard, hors de ce découpage** : la plage réglable de l'entraînement (décidée « un jour ») ;
 les **nouveaux jeux** de DartsOn (11 jeux : variantes, jeux à plusieurs, entraînements solo),
@@ -399,8 +400,16 @@ dans la fiche.
   libre, la suggestion de sortie va jusqu'à **180**, pas 170 ; la limite de 170 et les bogey
   numbers ne valent qu'en sortie sur un double. `CLAUDE.md` § Checkouts (« dès que le reste est
   ≤ 170 ») ne décrit que le cas double out : à préciser par le lot qui écrira les règles.
-- Observation non vérifiée à l'écran : `suggestCheckout` renvoie `null` dès que le reste est
-  inférieur à 2, y compris en sortie libre où un reste de 1 se finit d'un simple 1.
+  → **Fait au lot 11** : `CLAUDE.md` § Checkouts décrit les deux sorties (170 et bogey numbers ;
+  180 et 179, 178, 176, 175, 173, 172, 169, 166, 163), « Pas de finish » suit la sortie.
+- ~~Observation non vérifiée à l'écran : `suggestCheckout` renvoie `null` dès que le reste est
+  inférieur à 2, y compris en sortie libre où un reste de 1 se finit d'un simple 1.~~ Confirmée
+  et **corrigée au lot 11** (S1).
+- Planche validée au lot 11 : `regles-rubriques.html` (<https://claude.ai/artifact/86bxSsA98uZQpkp6GWZ7pb>),
+  rubriques repliables sur le plan de DartsOn. Les changements de règles « façon DartsOn »
+  retenus par l'utilisateur à l'intake (sens du Tour du monde, tour de table en option, plages
+  et sortie de l'entraînement, master in / out, départ libre, limite de tours, handicaps, manches
+  et variantes au Cricket) attendent **une étude à part**, puis un lot `high` chacun.
 
 #### Référence externe proposée par l'utilisateur : DartsOn
 

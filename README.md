@@ -45,8 +45,11 @@ activé.
 - **Saisie fléchette par fléchette** — la grille 1-20 + 25, et une bascule S/D/T qui **retombe
   sur Simple après chaque fléchette**. Un multiplicateur resté armé sans qu'on le voie, c'est
   trois T20 comptés là où il y avait trois simples.
-- **Suggestion de sortie** dès que le reste passe sous 170 — et « pas de finish » sur les
-  *bogey numbers*, jamais une route bidon.
+- **Suggestion de sortie** qui suit la sortie de la partie : jusqu'à 170 sur un double, jusqu'à
+  180 en sortie libre — et « pas de finish » sur les restes impossibles, jamais une route bidon.
+- **Les règles au livre ouvert** : un appui sur le livre, à la création de partie ou en plein
+  match, ouvre les règles du jeu par-dessus l'écran — celles que l'app applique, avec les
+  réglages de ce soir. La volée en cours ne bouge pas.
 - **Annulation illimitée et fiable** : le bouton retire la fléchette qu'on vient de taper, ou
   la dernière volée enregistrée — même si elle avait gagné une manche.
 - **L'écran ne s'éteint pas** (Wake Lock), le téléphone **vibre** à la validation, et une
@@ -242,9 +245,12 @@ couverte par des tests.
   libre par défaut ; le double out se coche à la création de partie.
 - **Le triple bull n'existe pas** — `Dart.of('BULL', 'TRIPLE')` est refusé par le domaine. Le
   bullseye à 50 **compte comme un double** pour la sortie.
-- **Les 7 bogey numbers** (169, 168, 166, 165, 163, 162, 159) affichent « pas de finish ». Ils
-  ne sont **pas codés en dur** : ils tombent d'une recherche exhaustive, et un test vérifie que
-  *tous* les restes de 2 à 170 ont une route correcte ou sont exactement l'un de ces sept.
+- **Les restes sans sortie** affichent « pas de finish ». Sur un double, ce sont les 7 *bogey
+  numbers* (169, 168, 166, 165, 163, 162, 159), au-delà de 170 rien n'est proposé ; en sortie
+  libre, la borne monte à 180 et la liste devient 179, 178, 176, 175, 173, 172, 169, 166, 163
+  (un reste de 1 se sort d'un simple 1). Ces listes ne sont **pas consultées par l'algorithme** :
+  elles tombent d'une recherche exhaustive, et un test vérifie que *tous* les restes ont une
+  route correcte ou sont exactement l'un de ceux-là.
 - **Une volée *busted* marque 0 point mais ses fléchettes sont comptées** dans la moyenne.
 - **Les moyennes de carrière se recalculent depuis les totaux bruts**, jamais en moyennant des
   moyennes — ce qui serait faux dès que les parties n'ont pas la même longueur, et elles n'en

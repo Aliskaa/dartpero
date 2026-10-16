@@ -16,6 +16,32 @@ visuelle « feuille de match », retraits décidés par l'usage, statistiques d'
 résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit 2026-09-10**
 (détaillés en fin de § 6) : `tour-du-monde-cloture-volee`, `pourcentage-doubles-tiret`,
 `bundle-par-route`. App déployée sur https://dartpero.web.app.
+Lot `regles-du-jeu` (lot 11 de la refonte : règles au livre ouvert, sortie libre gravée, voir
+§ 4 et § 6), rebasé sur `statistiques-podium` puis Révision 1 : **1340 tests verts**.
+Vérifications **acceptées à la relecture** par l'utilisateur (`docs/lots/regles-du-jeu/05-revue.md`,
+passe 2), sur son téléphone, au plus tard au prochain déploiement :
+- **défilement du corps de la feuille** (colonne `flex h-full flex-col`, nouvelle depuis la
+  Révision 1) : la dernière rubrique atteignable à l'étape 2, sur le match en portrait (210 px)
+  et en paysage ;
+- **R1** Android : retour feuille ouverte avec une volée de 1-2 fléchettes, second retour, croix
+  puis retour, Échap ; **R2** l'entrée n'est pas sautée par Chrome ; **U1** voile en portrait,
+  appui sur les scores en paysage (ferme, voulu), glisser dans la feuille (ne ferme pas) ; **U2**
+  rechargement feuille ouverte ; dans la même séance que le **T19** du lot 8, et « Tout voir »
+  des Statistiques (✕, Échap, retour, voile) puisque la `Modale` passe par le hook commun ;
+- **iPhone** : glissé retour avec une volée en cours, PWA (croix et voile seulement), livre à
+  8 px du bord en paysage sans marge d'encoche ;
+- nom de partie en `pl-11` dans les quatre modes ; 360 px (sous-titre X01 à 164/164 px à 390,
+  titres `h1` de l'étape 2) ; sous-titre de la feuille sur deux lignes en paysage ;
+- **textes non dessinés** (DV5) : X01 sur un double, entrée sur un double, sets, premier à
+  1 manche, Cricket cut-throat, Tour du monde, entraînement ; parcours importé (phrase neutre
+  P3-7, « 0 case » pour `['MISS']`) ;
+- sombre et clair (neuf jetons, rouge et vert sur l'ardoise seulement) ; `top-[210px]` sur petit
+  téléphone ; paysage 46 % / 21 rem ; rotation feuille ouverte ; `::backdrop` avant Safari 17.4 /
+  Chrome 122 ; mouvement réduit ; police au maximum.
+Pour le **prochain audit** : la garde des jetons réservés a des faux négatifs (`border-s/e-`,
+`ring-offset-`, valeurs arbitraires, `index.css` ; passer à `border(?:-[trblxyse])?`) ; un
+parcours importé avec doublons donne deux `<li key>` identiques — à traiter avec le constat 11 de
+l'index (refuser `MISS` et les doublons à l'import).
 **765 tests verts** (dont 76 du lot `accueil-parties-recentes`), `lint`, `typecheck` et `build` verts.
 Lot `accueil-parties-recentes` livré (l'Accueil en parties récentes, « Abandonnée », voir § 6) —
 vérifications restantes : la **relecture à l'écran** de `03-plan-de-test.md`
@@ -95,12 +121,10 @@ Ce qu'il reste, par ordre de ce qui coûterait le plus cher à découvrir tard :
    de progression (voir le lot 5b).
 3. **Deux écrans du plan jamais faits** — `/historique/:id` et `/joueurs/:id` — à implémenter
    ou à retirer de ce document (voir § 3).
-4. **Un lot de règles « sortie libre »** (décidé au lot `nouvelle-partie-en-etapes` : report,
-   pas de renvoi dans `CLAUDE.md`). L'écran propose désormais le double out **désactivé** par
-   défaut, mais `CLAUDE.md` § Checkouts (170, bogeys), le glossaire et le README (suggestion
-   « sous 170 », les 7 bogeys) ne décrivent que le cas double out. Sans double out, `checkout.ts` suggère jusqu'à 180 et « % doubles » s'affiche
-   « — » pour toute partie aux réglages par défaut. Règles à écrire avec l'utilisateur, jamais
-   à improviser.
+4. ~~**Un lot de règles « sortie libre »**~~ **Fait au lot `regles-du-jeu`** : `CLAUDE.md`
+   § Checkouts, le glossaire, le README et l'écran (« Pas de finish » jusqu'à 180, S1 à 1)
+   décrivent les deux sorties. Reste, sans règle à écrire : « % doubles » s'affiche « — » pour
+   toute partie en sortie libre (aucune tentative de double comptée), ce qui est exact.
 5. **Les décisions ouvertes** listées dans `CLAUDE.md` : les jeux fun restants (Killer,
    Shanghai, Around the Clock), sync cloud (lot 6), i18n. Aucune n'est bloquante — le mode
    paysage, le Cricket et le thème clair sont tranchés et livrés.
@@ -196,7 +220,8 @@ Bénéfices directs :
 | Service | Rôle |
 | --- | --- |
 | `resolveVisit(...)` | Juge une volée : décompte, détecte **bust** (reste < 0, reste == 1, reste == 0 sans double) et **checkout**. Ne dépend que de `{ doubleIn, doubleOut }`. |
-| `suggestCheckout(reste, dartsRestantes)` | Chemin conseillé. Retourne **« pas de finish »** sur les bogey numbers **169, 168, 166, 165, 163, 162, 159** et au-dessus de 170. |
+| `suggestCheckout(reste, dartsRestantes, sortie)` | Chemin conseillé. Retourne **« pas de finish »** (`null`) sur les restes sans sortie en 3 fléchettes et au-delà de la borne : sur un double, bogey numbers **169, 168, 166, 165, 163, 162, 159**, borne 170, rien sous 2 ; en sortie libre, **179, 178, 176, 175, 173, 172, 169, 166, 163**, borne 180, **S1** à un reste de 1 (lot `regles-du-jeu`). |
+| `checkoutRange(sortie)` | `{ max, noFinish }` : 170 + `BOGEY_NUMBERS` sur un double, 180 + `FREE_OUT_NO_FINISH` en sortie libre (références de test, l'algorithme ne les lit pas). |
 | `dartSearch` | L'espace de recherche (`SETUP_DARTS`) dont vivent les checkouts et les restes jouables de l'entraînement — aucune liste codée en dur. Sa recherche exacte (`findExactScore`) est partie avec le mode rapide. |
 
 ⚠️ `resolveVisit` et `suggestCheckout` étaient au X01 jusqu'au lot 5b ; ils en sont sortis
@@ -228,7 +253,9 @@ fléchettes **sont comptées**.
 **Autres modes** : `PlayTourDuMonde` · `PlayCricket` + `PreviewCricketVisit` ·
 `PlayCheckoutPractice`
 **Transverses** : `GetMatchMode` · `GetMatchHistory` · `GetOngoingMatch` · `DeleteMatch` ·
-`GetCheckoutSuggestion` · `GetPlayerStats` · `ManagePlayers` · `ManageBackup` ·
+`GetCheckoutSuggestion` · **`GetCheckoutRange`** (lot `regles-du-jeu` : borne et listes « pas de
+finish » de la sortie, pour l'écran X01 et la feuille de règles) · `GetPlayerStats` ·
+`ManagePlayers` · `ManageBackup` ·
 **`RestartMatch`** (lot UX) · **`GetMatchName`** (lot `nom-de-partie` : `{ name, createdAt }`,
 de quoi afficher le nom tapé ou recalculer le nom par défaut)
 
@@ -728,6 +755,17 @@ Détail § 6.
 / First 9 / Meilleure volée, Victoires « v / j », Grosses volées en bâtons de craie, Finitions),
 les N premiers puis « Tout voir » dans une modale refermée par le retour du téléphone. Politique
 de confidentialité mise à jour. Détail § 6 ; vérifications sur appareil en § 0.
+
+### Lot « regles-du-jeu »
+
+✅ **Fait — 1340 tests verts** après rebase sur `statistiques-podium`, Révision 1 et tour 3 (1158 à la passe 1).
+Livre ouvert (`LivreRegles`) à l'étape 2 et dans le bandeau des quatre matchs ; feuille de règles
+par-dessus (`FeuilleRegles`, `<dialog>`), même mécanisme que la `Modale` des Statistiques
+(`useModaleAuRetour`, clé `regles` ; `useDialogueNatif`, partagé) ; texte des quatre jeux dans `labels.ts`, qui
+suit les réglages ; « Les règles en entier » retiré de la fiche. Domaine : `checkoutRange`
+(170 / 180), `FREE_OUT_NO_FINISH`, S1 à 1 en sortie libre ; port `GetCheckoutRange` ;
+« Pas de finish » borné par la sortie. Reste : relecture à l'écran (textes non dessinés, retour
+Android par CloseWatcher, iPhone). Détail § 6.
 
 ---
 
@@ -1947,8 +1985,8 @@ source : `docs/prospective/2026-10-13-NEW-revision-charte-graphique.md`, maquett
 - **Laiton unique** : aucune couleur par mode (écart à la planche, lot `pave-unifie`) ; × conservé ;
   barre à un joueur avec Ordre grisé (un cran plus pâle).
 - `Bascule.tsx` supprimé (plus d'interrupteur). `aideSets`, `reglesCarteJeu`, `LIBELLE_DOUBLE_*` retirés.
-- ⚠️ Texte « Les règles en entier » du X01 : aucun paragraphe n'existait, écrit d'après `CLAUDE.md` ;
-  à valider (lot `regles-du-jeu`).
+- ~~Texte « Les règles en entier » du X01 : à valider (lot `regles-du-jeu`).~~ **Close** au lot
+  `regles-du-jeu` : « Les règles en entier » a quitté la fiche, la feuille de règles le remplace.
 - Rendu à relire sur appareil : barre et pseudos tronqués à police max sur 360 px.
 
 ### Décisions du lot « statistiques-podium » (lot 8 de la refonte de la charte)
@@ -1991,3 +2029,62 @@ Session : `docs/lots/statistiques-podium/` (niveau `high` : la politique publiqu
   Dev ×2. L'agent Test n'avait pas de shell : contre-épreuves exécutées par l'Orchestrator ou le
   Dev, toutes conformes.
 - **Tests : 1065 → 1194** sur la branche (base `6109013`) ; **1233** après rebase sur `5644892` (`nouvelle-partie-parcours`). Conflits du rebase : charte, PROJECT_PLAN, `pictogrammesEmplacements.test.tsx` — les deux apports gardés.
+
+### Lot `regles-du-jeu`
+
+- **Historique** (après la Révision 1) : la feuille de règles n'est pas une route. Le livre
+  ouvre par `useModaleAuRetour('regles', ['ouverte'])` : une entrée sur la **même URL** (état
+  courant conservé, `regles: 'ouverte'` validé contre une liste fermée ; l'ancien `regles: true`
+  est ignoré), poussée **au clic** seulement (jamais `<Link>`, jamais dans un effet). Toute
+  fermeture — croix, Échap (`cancel` annulé puis relayé), retour, appui à côté — recule par
+  `navigate(-1)`, une seule fois (garde « en vol » remise à zéro à chaque `location.key`, ce qui
+  tient aussi C1). Le `<dialog>` est monté en permanence, son contenu seulement ouvert
+  (`useDialogueNatif`) ; le focus revient au livre par `retour`. **U2** (utilisateur) : rechargée
+  feuille ouverte, la feuille se rouvre, rubriques repliées, et le retour la ferme. Résiduels :
+  R1, R2, iPhone, à vérifier sur appareil (§ 0).
+- **Domaine** : `suggestCheckout(1, n, libre) = [S1]` ; `checkoutRange` (170 + bogey / 180 +
+  `FREE_OUT_NO_FINISH`), listes vérifiées contre l'algorithme ; entraînement inchangé (toujours
+  `{ doubleOut: true }`). Port `GetCheckoutRange` : borne de « Pas de finish » (`useX01`) et
+  listes de la feuille.
+- **Texte** : X01 et Cricket mot pour mot depuis la planche, sauf Q1 (bust compté en fléchettes
+  lancées, First 9 sur 3 volées, volée de 3 fléchettes « au plus ») ; variantes non dessinées,
+  Tour du monde et entraînement écrits d'après `CLAUDE.md` et le code (Q2-A), à relire.
+- **Jetons** (Q5, Q6, Q8) : `craie-2-regles`, `craie-3-regles`, `laiton-texte`, `rouge-texte`,
+  `vert-texte`, `filet`, `filet-doux`, `chene-doux`, `voile` — charte § Palette.
+- **Bandeau** : livre en marges négatives ; portrait 73 px (inchangé), paysage 49 → 51 px. Le
+  sous-titre X01 « 501 · premier à 2 manches » se tronquait à 390 px : **DV1**, tranché par
+  l'utilisateur, resserre la rangée (`gap-2` en portrait, `gap-3` en paysage) ; la ligne du nom
+  suit (`pl-11` : 40 px de flèche tirés de 4 px + 8 px d'écart, constat 2 de la Revue).
+- **C1** (Test) : après retour puis « suivant », la croix ne fermait plus — la garde contre le
+  double recul se remet désormais à zéro à chaque entrée d'historique (`location.key`).
+- **C6** (Test, tranché par l'utilisateur) : `CLAUDE.md` aligné sur le code (First 9 = 3 premières
+  volées ; Tour du monde, même nombre de volées).
+- **Révision 1** (Revue → Archi, rebase sur `statistiques-podium`) : convergence sur le mécanisme
+  de la `Modale`. le hook propre à la feuille est supprimé ; `useModaleAuRetour('regles', ['ouverte'])` porte
+  l'état ; la discipline du `<dialog>` sort de `Modale` dans `useDialogueNatif`, partagé (`Modale`
+  inchangée, ses tests aussi) ; la feuille est montée en permanence, son contenu seulement ouvert ;
+  un appui à côté la ferme (U1, décision de l'utilisateur) ; mesure paysage par
+  `closest('.bandeau-match')` ; tête en `<div>` ; « En bref » du Tour du monde lu dans le parcours
+  (C9) ; `Phrase` commune ; garde `themeBoundary` des neuf jetons réservés.
+- **Tour 3** (Test → Dev, passe 3) : **P3-1**, régression de la correction du constat 2 —
+  `pl-11font-score` (espace manquante) retirait au nom de partie son retrait et sa police sur les
+  quatre écrans de match ; invisible au lint, au build et aux tests, trouvée en lisant le code ;
+  corrigée, une assertion de classes la garde désormais. **P3-7** (tranché par l'utilisateur) :
+  pour un parcours importé arbitraire, « En bref » et « Ce soir » partagent la détection de la
+  forme du domaine ; tout autre parcours s'écrit en liste neutre (« Le parcours de cette
+  partie : 20, hors cible et 19. ») ; `legendeParcours` compte les cases sans `MISS` (« 1 case »,
+  « 0 case » pour `['MISS']`). Trous de test P3-2 à P3-6 comblés.
+- **README** : suggestion de sortie et listes « pas de finish » des deux sorties, livre ouvert.
+- **Dettes** : `labels.ts` chargé au démarrage (+5,2 kB gzip, ci-dessous) ; une entrée `regles`
+  sans entrée dessous (ouverture directe sur l'URL) rend la croix inopérante — limite partagée avec
+  la `Modale`.
+- **Poids** : `labels.ts` passe en chunk partagé chargé au démarrage ; JS initial 92,1 → 107,4 kB
+  (gzip 29,3 → 34,4 kB), précache 827,8 → 855,7 Kio.
+- `SCORES`, `LEGS`, `SETS`, `SORTIES` déménagent dans `src/ui/reglagesPossibles.ts` (D8).
+- **Tests : 1091 → 1158** (passe 1) **→ 1172** (boucle 1) ; **1329** après rebase sur `26a39fb`
+  (`statistiques-podium`) et Révision 1 ; **1340** après le tour 3. Mené **en parallèle** de
+  `statistiques-podium` (worktree) ; conflits du rebase : CONVENTIONS, `rules/frontend-react.md`,
+  PROJECT_PLAN — les deux apports gardés, puis fusionnés par la convergence. Boucles : 3 tours sur
+  5 (Test → Dev ×2, Revue → Archi ×1). Hors périmètre, préexistant : l'entraînement dit
+  « Sortie 8 » à l'Accueil et « Manche 3/10 » au bandeau (vocabulaire désormais décrit dans
+  `CLAUDE.md` § Entraînement).

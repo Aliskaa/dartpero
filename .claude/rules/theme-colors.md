@@ -35,6 +35,22 @@ Palette et rôles : `docs/CHARTE_GRAPHIQUE.md`.
    1,84:1 sur papier avant correction).
 3. Consommer le token depuis le composant — jamais l'inverse.
 
+## Jetons réservés : la feuille de règles
+
+Neuf jetons (lot `regles-du-jeu`) ne servent **qu'à** `FeuilleRegles.tsx`
+et `LivreRegles.tsx` : `craie-2-regles`, `craie-3-regles`, `laiton-texte`,
+`rouge-texte`, `vert-texte`, `filet`, `filet-doux`, `chene-doux`, `voile`
+(`src/index.css`, charte § Palette).
+
+- Leurs noms sont génériques, leurs valeurs ne le sont pas : contraste
+  vérifié sur les surfaces de la feuille seulement (`rouge-texte` /
+  `vert-texte` tombent à 4,2 / 3,7:1 sur `feutre-nuit` en clair).
+- Ailleurs, prendre le jeton général (`craie-2`, `craie-3`, `laiton`,
+  `border-craie/25`…). Les élargir = vérifier le contraste dans les deux
+  thèmes sur la nouvelle surface, puis élargir la garde.
+- Garde : `themeBoundary.test.ts` (« les jetons de la feuille de règles ne
+  servent qu'à la feuille »), avec son témoin.
+
 ## Exceptions (documentées dans le garde lui-même)
 
 - `src/ui/couleurs.ts` — palette des profils, teintes symboliques.

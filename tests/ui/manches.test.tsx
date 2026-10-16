@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from '@/App'
@@ -77,7 +77,11 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     sansLeg()
   })
 
-  /** Chaque page de « Nouvelle partie », tout déplié : ni « leg » ni « best of », à l'œil comme au lecteur d'écran. */
+  /**
+   * Chaque page de « Nouvelle partie », tout déplié — feuille de règles comprise,
+   * toutes ses rubriques ouvertes : ni « leg » ni « best of », à l'œil comme au
+   * lecteur d'écran.
+   */
   it('à l’étape 1 de Nouvelle partie', async () => {
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/nouvelle-partie' })
@@ -100,11 +104,14 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     await screen.findByRole('region', { name: 'Réglages du jeu' })
     const plus = screen.queryByRole('button', { name: /plus de réglages/i })
     if (plus) await utilisateur.click(plus)
-    await utilisateur.click(screen.getByRole('button', { name: 'Les règles en entier' }))
-    // Rien ne reste replié : la preuve que le dépliage a eu lieu.
-    for (const pli of screen.getAllByRole('button', { expanded: false })) {
-      expect(pli).not.toHaveAccessibleName(/plus de réglages|les règles en entier/i)
+    await utilisateur.click(screen.getByRole('button', { name: /^Règles d/ }))
+    const feuille = await screen.findByRole('dialog')
+    for (const rubrique of within(feuille).getAllByRole('button', { expanded: false })) {
+      await utilisateur.click(rubrique)
     }
+    // Rien ne reste replié : la preuve que le dépliage a eu lieu.
+    expect(within(feuille).queryAllByRole('button', { expanded: false })).toEqual([])
+    expect(within(feuille).getAllByRole('button', { expanded: true }).length).toBeGreaterThan(5)
     sansLeg(temoin)
   })
 

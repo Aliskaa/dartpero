@@ -13,17 +13,40 @@ export type SortieRules = {
   readonly doubleOut: boolean
 }
 
-/** Checkout maximal en 3 fléchettes : T20 · T20 · Bull. */
+/** Checkout maximal en 3 fléchettes, sur un double : T20 · T20 · Bull. */
 export const MAX_CHECKOUT = 170
 
+/** Checkout maximal en 3 fléchettes, en sortie libre : T20 · T20 · T20. */
+export const MAX_CHECKOUT_FREE_OUT = 180
+
 /**
- * Les « bogey numbers » : impossibles à finir en 3 fléchettes malgré un reste
- * ≤ 170. L'app doit afficher « pas de finish » plutôt qu'une suggestion bidon.
+ * Les « bogey numbers » : impossibles à finir en 3 fléchettes sur un double
+ * malgré un reste ≤ 170. L'app affiche « Pas de finish » plutôt qu'une
+ * suggestion bidon, et la feuille de règles les montre.
  *
  * Cette liste est une **référence de test** : l'algorithme ne la consulte pas,
  * il les redécouvre. `checkout.test.ts` vérifie que les deux sont d'accord.
  */
 export const BOGEY_NUMBERS: readonly number[] = [169, 168, 166, 165, 163, 162, 159]
+
+/**
+ * Les restes ≤ 180 qu'aucune volée de 3 fléchettes ne fait pile, en sortie
+ * libre. Même statut que `BOGEY_NUMBERS` : une **référence de test**, jamais
+ * consultée par l'algorithme, vérifiée contre lui par `checkout.test.ts`.
+ */
+export const FREE_OUT_NO_FINISH: readonly number[] = [179, 178, 176, 175, 173, 172, 169, 166, 163]
+
+/** Jusqu'où l'app propose une sortie, et les restes sans finish en dessous. */
+export type CheckoutRange = {
+  readonly max: number
+  readonly noFinish: readonly number[]
+}
+
+/** La plage des sorties selon la règle de sortie : 170 sur un double, 180 en sortie libre. */
+export const checkoutRange = (config: SortieRules): CheckoutRange =>
+  config.doubleOut
+    ? { max: MAX_CHECKOUT, noFinish: BOGEY_NUMBERS }
+    : { max: MAX_CHECKOUT_FREE_OUT, noFinish: FREE_OUT_NO_FINISH }
 
 /**
  * Ordre de préférence des doubles de sortie : la « route en puissances de 2 »
@@ -80,8 +103,9 @@ export const suggestCheckout = (
   if (!Number.isInteger(dartsLeft) || dartsLeft < 1 || dartsLeft > 3) {
     throw new DomainError(`dartsLeft must be between 1 and 3, got ${dartsLeft}`)
   }
-  if (remaining < 2) return null
-  if (remaining > (config.doubleOut ? MAX_CHECKOUT : 180)) return null
+  // Sur un double, 1 est infinissable ; en sortie libre, un simple 1 le sort.
+  if (remaining < (config.doubleOut ? 2 : 1)) return null
+  if (remaining > checkoutRange(config).max) return null
 
   const finishers = ORDERED_FINISHERS(config)
 

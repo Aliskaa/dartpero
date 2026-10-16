@@ -18,6 +18,7 @@ import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { ERREUR_DEMARRAGE, nomParDefaut } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
+import { LEGS, SCORES, SETS, SORTIES } from '@/ui/reglagesPossibles'
 import { usePreference } from './useAppareil'
 import { CLE_JOUEURS, useJoueurs } from './useJoueurs'
 
@@ -49,11 +50,6 @@ const CLE_SELECTION = 'partie:joueurs'
 const CLE_ENTRAINEMENT_JOUEUR = 'entrainement:joueur'
 const CLE_ENTRAINEMENT_SORTIES = 'entrainement:sorties'
 
-export const SCORES = [301, 501, 701] as const
-/** Le nombre de manches à **gagner** — les anciens BO1 / BO3 / BO5 / BO7. */
-export const LEGS = [1, 2, 3, 4] as const
-export const SETS = [1, 2, 3] as const
-export const SORTIES = [5, 10, 20] as const
 export const MAX_JOUEURS = 4
 
 /** Une valeur mémorisée hors de la liste (vieille version, stockage abîmé) retombe sur le défaut. */
