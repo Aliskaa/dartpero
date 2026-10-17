@@ -4,6 +4,7 @@ description: Plan et exécution des tests d'un lot Dartpéro. À utiliser quand 
 tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: high
+maxTurns: 40
 ---
 
 # Rôle : Test

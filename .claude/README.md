@@ -25,7 +25,8 @@ projet sans serveur, sans compte et sans ADR.
 | `dev` | Implémentation | sonnet / medium |
 | `test` | Plan + exécution | sonnet / high |
 | `sec` | Revue sécu (niveau `high`) | sonnet / high (opus sur surface gravée) |
-| `review` | Go / no-go (niveau `high`) | opus / max |
+| `ecran` | Relecture visuelle (lot qui touche le rendu, sur demande) | sonnet / medium |
+| `review` | Go / no-go (niveau `high`) | opus / xhigh |
 | `audit` | Une dimension d'audit | sonnet / high (opus pour `archi` et `domaine`) |
 | `intake` | Brief du cadrage | sonnet / high |
 | `architecture-context` | Index des sources (`.ai/`) | sonnet / high |

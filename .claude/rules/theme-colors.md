@@ -1,3 +1,9 @@
+---
+paths:
+  - "src/ui/**"
+  - "src/index.css"
+---
+
 # Couleurs — les tokens, et seulement eux
 
 **Quand :** `src/ui/`, `src/index.css`, thème clair / sombre.

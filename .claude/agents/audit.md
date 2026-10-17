@@ -4,6 +4,7 @@ description: Auditeur en lecture seule d'UNE dimension du projet Dartpéro. Lanc
 tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: high
+maxTurns: 40
 ---
 
 # Rôle : Auditeur

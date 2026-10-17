@@ -1,3 +1,8 @@
+---
+paths:
+  - "docs/prospective/**"
+---
+
 # Prospective
 
 **Quand :** l'utilisateur demande une étude, une comparaison, une analyse

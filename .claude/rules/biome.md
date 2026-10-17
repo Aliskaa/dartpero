@@ -1,3 +1,11 @@
+---
+paths:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.css"
+  - "biome.json"
+---
+
 # Biome
 
 **Quand :** lint, format, `biome.json`, sources TS / TSX / CSS.

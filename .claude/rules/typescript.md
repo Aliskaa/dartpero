@@ -1,3 +1,9 @@
+---
+paths:
+  - "src/**/*.{ts,tsx}"
+  - "tests/**/*.{ts,tsx}"
+---
+
 # TypeScript
 
 **Quand :** sources sous `src/` et `tests/`.

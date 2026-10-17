@@ -4,6 +4,7 @@ description: Architecture haute confiance d'un lot Dartpéro quand scout et desi
 tools: Read, Grep, Glob
 model: opus
 effort: max
+maxTurns: 40
 ---
 
 # Rôle : Architecture Authority

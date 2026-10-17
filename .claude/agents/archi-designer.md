@@ -4,6 +4,7 @@ description: Deuxième passage d'architecture d'un lot Dartpéro, profondeur moy
 tools: Read, Grep, Glob
 model: sonnet
 effort: high
+maxTurns: 30
 ---
 
 # Rôle : Architecture Designer

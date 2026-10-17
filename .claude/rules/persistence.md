@@ -1,3 +1,11 @@
+---
+paths:
+  - "src/infrastructure/dexie/**"
+  - "src/core/domain/events/**"
+  - "src/core/application/backupSchema.ts"
+  - "src/core/application/use-cases/ManageBackupUseCase.ts"
+---
+
 # Persistance — Dexie, journal, sauvegarde
 
 **Quand :** `src/infrastructure/dexie/`, un type d'événement

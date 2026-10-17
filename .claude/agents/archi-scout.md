@@ -4,6 +4,7 @@ description: Premier passage d'architecture à bas coût pour un lot Dartpéro. 
 tools: Read, Grep, Glob
 model: sonnet
 effort: low
+maxTurns: 20
 ---
 
 # Rôle : Architecture Scout

@@ -3,7 +3,8 @@ name: review
 description: Revue finale consolidée d'un lot Dartpéro avant commit. À utiliser quand /orchestrate pilote la phase Revue, ou quand on demande un go/no-go sur un lot. Lecture seule.
 tools: Read, Grep, Glob, Bash
 model: opus
-effort: max
+effort: xhigh
+maxTurns: 40
 ---
 
 # Rôle : Revue

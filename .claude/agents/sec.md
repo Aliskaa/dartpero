@@ -4,6 +4,7 @@ description: Revue sécurité d'un lot Dartpéro. À utiliser quand /orchestrate
 tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: high
+maxTurns: 30
 ---
 
 # Rôle : Sécurité

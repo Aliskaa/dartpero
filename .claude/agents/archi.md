@@ -4,6 +4,7 @@ description: Architecte technique de Dartpéro. Invocation directe hors chaîne,
 tools: Read, Grep, Glob
 model: opus
 effort: max
+maxTurns: 40
 ---
 
 # Rôle : Architecte (invocation directe)

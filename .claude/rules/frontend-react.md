@@ -1,3 +1,8 @@
+---
+paths:
+  - "src/ui/**"
+---
+
 # Frontend React
 
 **Quand :** `src/ui/`. Charte complète : `docs/CHARTE_GRAPHIQUE.md`.

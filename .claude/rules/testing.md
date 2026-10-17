@@ -1,3 +1,9 @@
+---
+paths:
+  - "tests/**"
+  - "vite.config.ts"
+---
+
 # Tests
 
 **Quand :** tests, helpers de test, config Vitest. Détail :
