@@ -245,7 +245,7 @@ describe('Accueil — la partie en cours', () => {
         X01: 'Manche 1',
         CRICKET: 'En cours',
         TOUR_DU_MONDE: 'En cours',
-        CHECKOUT_PRACTICE: 'Sortie 1',
+        CHECKOUT_PRACTICE: 'Checkout 1',
       } as const
       expect(carte(/Dernière/)).toHaveTextContent(ETAT[mode])
     },

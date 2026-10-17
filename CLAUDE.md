@@ -79,7 +79,7 @@ maintenant prouvé deux fois.
 `usePreference`) : **501**, **2 manches à gagner**, **1 set** (pas de sets), **double out
 désactivé**, **double in** désactivé.
 ⚠️ **Double out : décoché à l'écran, activé dans le domaine, à dessein.** L'utilisateur a
-choisi la sortie libre par défaut (`577dc5f`, entériné au lot `nouvelle-partie-en-etapes`) ;
+choisi le checkout libre par défaut (`577dc5f`, entériné au lot `nouvelle-partie-en-etapes`) ;
 l'écran passe **toujours** `doubleOut` à `X01Config.create`. Le défaut du domaine reste
 `doubleOut: true` : c'est la règle standard, les tests de règles s'y adossent, et
 `backupSchema` en complète une sauvegarde qui n'aurait pas le champ. Ne pas « aligner » l'un
@@ -91,6 +91,11 @@ a toujours stocké `legsToWin` (« premier à N ») : c'est ce que l'UI affiche 
 manches »), via `libelleLegs` / `libelleLegsCourt` (`src/ui/labels.ts`).
 `X01Config.legsForBestOf` survit pour le défaut et ses tests, mais **plus aucun écran ne
 l'appelle**.
+- **À l'écran, on dit « checkout », jamais « sortie »** (lot `vocabulaire-anglais`) : libellés, règles,
+  entraînement (« 10 checkouts », « Checkout 8 »), réglage « Checkout libre / sur un double ». La voix
+  dit « bust » et « checkout » en `en-US` au milieu d'une phrase française (segments typés par langue
+  du port `Announcer`, construits dans `labels.ts`). Les identifiants du code (`SortieRules`,
+  `sortieMax`, `entrainement:sorties`…) et les clés persistées ne changent pas.
 - **À l'écran, on dit « manche », jamais « leg »** (lot `nouvelle-partie-en-etapes`) ; « leg »
 reviendra avec une éventuelle version anglaise. Le code garde `Leg`, `legsToWin`, `LegWon`,
 `libelleLegs`… et les clés persistées ne se renomment pas (`partie:legs`). « Set » reste
@@ -264,15 +269,15 @@ Le mode solo du lot 5b (`checkout-practice`), gravé au lot `regles-du-jeu` d'ap
 (`checkout-practice/config.ts`, `rules.ts`, `PlayCheckoutPracticeUseCase.ts`).
 
 - Une séance compte **N manches** (`rounds`) : **5, 10 ou 20** au choix, 10 par défaut. Un
-joueur, seul. À l'écran, ce nombre se choisit et se résume en **sorties** (étape 2, cartes,
-« Ce soir », « Sortie 8 » à l'Accueil) ; la séance en cours compte en **manches**
+joueur, seul. À l'écran, ce nombre se choisit et se résume en **checkouts** (étape 2, cartes,
+« Ce soir », « Checkout 8 » à l'Accueil) ; la séance en cours compte en **manches**
 (« Manche 3/10 », cartouche « Manche »).
 - Chaque manche, un **reste est tiré au sort** parmi les restes **jouables de 41 à 170**
 (plage non réglable). Jouable = sortable en 3 fléchettes sur un double : les bogey numbers
 s'excluent d'eux-mêmes, **calculés**, jamais tabulés (`playableTargets`).
 - ⚠️ **Le reste tiré est écrit dans le journal** (`RoundStarted`) : annuler une volée redonne le
 même reste, jamais un nouveau tirage.
-- **Une seule volée par manche** (3 fléchettes au plus) : sortie, bust ou trois fléchettes sans
+- **Une seule volée par manche** (3 fléchettes au plus) : checkout, bust ou trois fléchettes sans
 finir, on passe à la suivante.
 - **Toujours sur un double** : la résolution est celle du X01 (`resolveVisit`, partagé), en
 `double out` sans `double in` — bust à reste `< 0`, `== 1`, ou `== 0` sans double.
@@ -293,7 +298,7 @@ domaine, elles doivent être couvertes par des tests.
 - Segments : `1..20`, `BULL_SIMPLE` (25), `BULL_DOUBLE` (50).
 - Multiplicateurs : simple / double / triple.
 - **Le triple est interdit sur le bull.** Le `BULL_DOUBLE` (50) **compte comme un double**
-pour la sortie.
+pour le checkout.
 - Une volée (*visit*) = **3 fléchettes maximum**. Elle s'arrête avant si le joueur sort
 (checkout) ou si elle est annulée (bust).
 
@@ -311,13 +316,13 @@ out, toute fléchette qui amène à 0 pile gagne le leg.
 - `double in` : désactivé par défaut. Si activé, le score ne décompte qu'à partir de la
 première fléchette qui touche un double.
 
-**Checkouts** — ils suivent la sortie de la partie (lot `regles-du-jeu`, `checkoutRange`) :
+**Checkouts** — ils suivent le checkout de la partie (lot `regles-du-jeu`, `checkoutRange`) :
 
 - **Sur un double** : checkout **maximum = 170** (T20 · T20 · Bull). **Bogey numbers** — pas
 de finish possible en 3 fléchettes, l'app affiche « Pas de finish » et **jamais** une
 suggestion bidon : **169, 168, 166, 165, 163, 162, 159**. Suggestion dès que le reste est
 `≥ 2` et `≤ 170` (1 est un bust).
-- **Sortie libre** : maximum = **180** (T20 · T20 · T20). Pas de finish en 3 fléchettes :
+- **Checkout libre** : maximum = **180** (T20 · T20 · T20). Pas de finish en 3 fléchettes :
 **179, 178, 176, 175, 173, 172, 169, 166, 163**. Suggestion dès que le reste est `≥ 1`
 (à 1, **S1**) et `≤ 180`.
 - « Pas de finish » à l'écran X01 suit la même borne (170 ou 180), lue par le port

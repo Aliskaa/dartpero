@@ -42,6 +42,7 @@ import {
   LEGENDE_BASCULE_MOYENNE,
   LEGENDE_JOUEUR_CIBLE,
   LEGENDE_PERIODE,
+  LIBELLE_HORS,
   LIBELLE_HORS_CIBLE,
   LIBELLE_PERIODE,
   libelleZone,
@@ -317,7 +318,7 @@ const BlocCible = ({ joueur }: { readonly joueur: PlayerCareer }) => {
             }`}
           >
             <span className="chiffres text-xl leading-tight font-bold text-craie">
-              {nombre(joueur.hits.missed)}
+              {joueur.hits.missed === 0 ? LIBELLE_HORS : nombre(joueur.hits.missed)}
             </span>
             <span className="text-etiquette text-craie-3">{LIBELLE_HORS_CIBLE}</span>
           </li>

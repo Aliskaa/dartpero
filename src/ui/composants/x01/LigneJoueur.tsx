@@ -164,8 +164,8 @@ export const LigneJoueur = ({
             Bust
           </span>
         ) : sortie ? (
-          <span className="font-score text-xs font-bold uppercase tracking-[0.14em] text-vert-cible">
-            Sortie
+          <span className="font-score text-xs font-bold uppercase tracking-tight text-vert-cible">
+            Checkout
           </span>
         ) : (
           <span

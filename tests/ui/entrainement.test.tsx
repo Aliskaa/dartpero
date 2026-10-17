@@ -3,10 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from '@/App'
 import { createServices, type Services } from '@/composition/container'
-import type { Announcer } from '@/core/application/ports/driven/Announcer'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { X01Config } from '@/core/domain/games/x01/config'
-import { fakeDependencies, fakeServices } from '../fakes'
+import { FakeAnnouncer, fakeDependencies, fakeServices } from '../fakes'
 import { flechette } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
@@ -16,15 +15,11 @@ import { renderWithServices } from './renderWithServices'
  * navigateur ni synthèse vocale.
  */
 const avecVoix = () => {
-  const dites: string[] = []
-  const announcer: Announcer = {
-    say: (texte) => dites.push(texte),
-    cancel: () => {},
-  }
+  const announcer = new FakeAnnouncer()
 
   const base = fakeDependencies()
   return {
-    dites,
+    announcer,
     services: createServices({ ...base, devices: { ...base.devices, announcer } }),
   }
 }
@@ -46,7 +41,7 @@ describe('Entraînement au checkout — écran', () => {
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
 
-    const reste = await screen.findByLabelText('Reste à sortir')
+    const reste = await screen.findByLabelText('Reste pour le checkout')
     const cible = Number(reste.textContent)
     expect(cible).toBeGreaterThanOrEqual(41)
 
@@ -70,7 +65,7 @@ describe('Entraînement au checkout — écran', () => {
     const { matchId } = await seance(services, 2)
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
-    await screen.findByLabelText('Reste à sortir')
+    await screen.findByLabelText('Reste pour le checkout')
 
     // Deux manches ratées : trois fléchettes chacune, aucune sortie.
     for (const _ of [0, 1]) {
@@ -86,7 +81,7 @@ describe('Entraînement au checkout — écran', () => {
     const { matchId } = await seance(services)
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
-    await screen.findByLabelText('Reste à sortir')
+    await screen.findByLabelText('Reste pour le checkout')
 
     expect(screen.queryByRole('button', { name: /rapide/i })).toBeNull()
     // Mais bien le pavé fléchette par fléchette, avec ses multiplicateurs.
@@ -108,14 +103,14 @@ describe('Entraînement au checkout — écran', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
     await utilisateur.click(await screen.findByRole('button', { name: 'Commencer' }))
 
-    expect(await screen.findByLabelText('Reste à sortir')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Reste pour le checkout')).toBeInTheDocument()
   })
 })
 
 describe('Annonce vocale', () => {
   it('annonce le score, le bust et la sortie au X01', async () => {
     const utilisateur = userEvent.setup()
-    const { dites, services } = avecVoix()
+    const { announcer, services } = avecVoix()
 
     const kevin = await services.managePlayers.create('Kevin')
     const matchId = await services.startMatch.execute({
@@ -129,13 +124,15 @@ describe('Annonce vocale', () => {
     // 20 · 20 · 20 = 60, mais sans double : bust.
     for (const _ of [0, 1, 2]) await flechette(utilisateur, '20')
 
-    await waitFor(() => expect(dites).toContain('Bust'))
+    await waitFor(() =>
+      expect(announcer.annonces).toContainEqual([{ texte: 'Bust', langue: 'en-US' }]),
+    )
   })
 
   /** Les nombres partent en chiffres : la voix française les lit très bien. */
   it('annonce le total en chiffres, pas en lettres', async () => {
     const utilisateur = userEvent.setup()
-    const { dites, services } = avecVoix()
+    const { announcer, services } = avecVoix()
 
     const kevin = await services.managePlayers.create('Kevin')
     const matchId = await services.startMatch.execute({
@@ -148,12 +145,14 @@ describe('Annonce vocale', () => {
 
     for (const _ of [0, 1, 2]) await flechette(utilisateur, '20', 'Triple')
 
-    await waitFor(() => expect(dites).toContain('180'))
+    await waitFor(() =>
+      expect(announcer.annonces).toContainEqual([{ texte: '180', langue: 'fr-FR' }]),
+    )
   })
 
   it('se tait quand l’utilisateur l’a coupée dans les réglages', async () => {
     const utilisateur = userEvent.setup()
-    const { dites, services } = avecVoix()
+    const { announcer, services } = avecVoix()
 
     const kevin = await services.managePlayers.create('Kevin')
     const matchId = await services.startMatch.execute({
@@ -174,16 +173,16 @@ describe('Annonce vocale', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Score restant de Kevin')).toHaveTextContent('441'),
     )
-    expect(dites).toEqual([])
+    expect(announcer.annonces).toEqual([])
   })
 
   it('laisse essayer la voix depuis les réglages', async () => {
     const utilisateur = userEvent.setup()
-    const { dites, services } = avecVoix()
+    const { announcer, services } = avecVoix()
 
     renderWithServices(<App />, { services, route: '/reglages' })
     await utilisateur.click(await screen.findByRole('button', { name: /essayer la voix/i }))
 
-    expect(dites).toEqual(['Cent quatre-vingts'])
+    expect(announcer.annonces).toEqual([[{ texte: 'Cent quatre-vingts', langue: 'fr-FR' }]])
   })
 })

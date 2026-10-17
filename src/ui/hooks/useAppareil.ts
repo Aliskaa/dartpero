@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { Annonce } from '@/core/application/ports/driven/Announcer'
 import { useServices } from '../providers/ServicesProvider'
 import { appliquerTheme, CLE_THEME, ecouterThemeSysteme, THEME_DEFAUT, type Theme } from '../theme'
 
@@ -67,16 +68,16 @@ export const useDernierExport = (): readonly [number | null, (horodatage: number
  *
  * ⚠️ La préférence est relue à **chaque** annonce plutôt que capturée au
  * montage : sans ça, couper la voix depuis les réglages ne ferait effet qu'à la
- * partie suivante. Le port reçoit du texte déjà écrit en français (voir
- * `labels.ts`) — l'adapter ne fait que le prononcer.
+ * partie suivante. Le port reçoit des segments déjà écrits et étiquetés par
+ * langue (voir `labels.ts`) — l'adapter ne fait que les prononcer.
  */
-export const useVoix = (): ((texte: string) => void) => {
+export const useVoix = (): ((annonce: Annonce) => void) => {
   const { devices } = useServices()
 
   return useCallback(
-    (texte: string) => {
+    (annonce: Annonce) => {
       if (!devices.preferences.read(CLE_VOIX, true)) return
-      devices.announcer.say(texte)
+      devices.announcer.say(annonce)
     },
     [devices],
   )

@@ -124,7 +124,7 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
     expect(items[1]).not.toHaveTextContent('fois')
     expect(items[2]).toHaveTextContent('X01 · 501')
     expect(items[2]).toHaveTextContent('4 fois')
-    expect(items[2]).toHaveTextContent('premier à 2 manches · sortie libre')
+    expect(items[2]).toHaveTextContent('premier à 2 manches · checkout libre')
   })
 
   it('une configuration dont un profil est supprimé n’apparaît pas ; la quatrième la remplace', async () => {
@@ -268,7 +268,7 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
     ouvrir(services)
 
     await utilisateur.click(
-      await screen.findByRole('button', { name: 'Lancer Entraînement 5 sorties avec Julien' }),
+      await screen.findByRole('button', { name: 'Lancer Entraînement 5 checkouts avec Julien' }),
     )
     await waitFor(() => expect(locationCourante().pathname).toMatch(/^\/partie\//))
 

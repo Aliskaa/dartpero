@@ -3,11 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from '@/App'
 import { createServices, type Services } from '@/composition/container'
-import type { Announcer } from '@/core/application/ports/driven/Announcer'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { libelleFormat, libelleLegs, libelleLegsCourt, libelleMancheEnCours } from '@/ui/labels'
-import { fakeDependencies, fakeServices } from '../fakes'
+import { FakeAnnouncer, fakeDependencies, fakeServices } from '../fakes'
 import { flechette } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
@@ -41,10 +40,12 @@ const sansLeg = (temoin: RegExp = /manche/i) => {
 }
 
 const avecVoix = () => {
-  const dites: string[] = []
-  const announcer: Announcer = { say: (texte) => dites.push(texte), cancel: () => {} }
+  const announcer = new FakeAnnouncer()
   const base = fakeDependencies()
-  return { dites, services: createServices({ ...base, devices: { ...base.devices, announcer } }) }
+  return {
+    announcer,
+    services: createServices({ ...base, devices: { ...base.devices, announcer } }),
+  }
 }
 
 /** Une partie à sets : Kevin et Julien, 40 à faire, premier à 2 manches, 2 sets. */
@@ -95,7 +96,7 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     ['x01', /manche/i],
     ['cricket', /Cut-throat/],
     ['tour-du-monde', /21 cibles/],
-    ['entrainement', /sorties/i],
+    ['entrainement', /checkouts/i],
   ] as const)('à l’étape 2, tout déplié, pour %s', async (slug, temoin) => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -129,7 +130,7 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
 
   it('en partie à sets, après une manche gagnée — à l’écran comme à la voix', async () => {
     const utilisateur = userEvent.setup()
-    const { dites, services } = avecVoix()
+    const { announcer, services } = avecVoix()
     const { matchId } = await partieASets(services)
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
@@ -140,8 +141,8 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     expect(screen.getByText('Manche 2')).toBeInTheDocument()
 
     sansLeg()
-    expect(dites.length).toBeGreaterThan(0)
-    expect(dites.filter((phrase) => LEG.test(phrase))).toEqual([])
+    expect(announcer.textes.length).toBeGreaterThan(0)
+    expect(announcer.textes.filter((phrase) => LEG.test(phrase))).toEqual([])
   })
 
   it('sur l’Accueil, avec une partie à sets en cours', async () => {

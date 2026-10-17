@@ -34,8 +34,8 @@ describe('Parcours complet', () => {
     const manches = within(screen.getByRole('group', { name: 'Manches à gagner' }))
     await utilisateur.click(manches.getByRole('button', { name: '1' }))
     await utilisateur.click(screen.getByRole('button', { name: /plus de réglages/i }))
-    const sortie = within(screen.getByRole('group', { name: 'Sortie' }))
-    await utilisateur.click(sortie.getByRole('button', { name: 'Sur un double' }))
+    const sortie = within(screen.getByRole('group', { name: 'Checkout' }))
+    await utilisateur.click(sortie.getByRole('button', { name: 'Checkout sur un double' }))
     // Seul en piste : pas d'étape d'ordre, on commence d'ici.
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 

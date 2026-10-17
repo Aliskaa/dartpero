@@ -95,7 +95,7 @@ describe('Nouvelle partie — étape 1, le jeu', () => {
     expect(tuiles[0]).toHaveAccessibleName(/Décompter 301, 501 ou 701 jusqu’à zéro pile\./)
     expect(tuiles[1]).toHaveAccessibleName(/Fermer du 20 au 15 et la bulle avant les autres\./)
     expect(tuiles[2]).toHaveAccessibleName(/Du 20 au 1, puis la bulle\./)
-    expect(tuiles[3]).toHaveAccessibleName(/Seul : sortir un reste tiré au sort\./)
+    expect(tuiles[3]).toHaveAccessibleName(/Seul : faire le checkout d’un reste tiré au sort\./)
     expect(screen.queryByRole('textbox')).toBeNull()
   })
 
@@ -148,7 +148,9 @@ describe('Nouvelle partie — parcours complet', () => {
     await utilisateur.click(rail('Score de départ').getByRole('button', { name: '301' }))
     await utilisateur.click(rail('Manches à gagner').getByRole('button', { name: '3' }))
     await deplierPlus(utilisateur)
-    await utilisateur.click(rail('Sortie').getByRole('button', { name: 'Sur un double' }))
+    await utilisateur.click(
+      rail('Checkout').getByRole('button', { name: 'Checkout sur un double' }),
+    )
     await utilisateur.click(rail('Entrée').getByRole('button', { name: 'Sur un double' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Continuer' }))
 
@@ -234,10 +236,10 @@ describe('Nouvelle partie — parcours complet', () => {
 
     await screen.findByRole('list', { name: 'Joueurs de la partie' })
     // Replié, le récap dit quand même la sortie et l'entrée.
-    expect(screen.getByText(/sortie libre/i)).toBeInTheDocument()
+    expect(screen.getByText(/checkout libre/i)).toBeInTheDocument()
     expect(screen.getByText(/entrée libre/i)).toBeInTheDocument()
     await deplierPlus(utilisateur)
-    expect(rail('Sortie').getByRole('button', { name: 'Libre' })).toHaveAttribute(
+    expect(rail('Checkout').getByRole('button', { name: 'Checkout libre' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
@@ -282,10 +284,10 @@ describe('Nouvelle partie — entraînement', () => {
     expect(etapes.getByText('1 · Jeu')).not.toHaveAttribute('aria-current')
     expect(screen.getByText('non réglable')).toBeInTheDocument()
 
-    await utilisateur.click(rail('Nombre de sorties').getByRole('button', { name: '5' }))
+    await utilisateur.click(rail('Nombre de checkouts').getByRole('button', { name: '5' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
 
-    expect(await screen.findByLabelText('Reste à sortir')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Reste pour le checkout')).toBeInTheDocument()
     const partie = await derniere(services)
     expect(partie.mode).toBe('CHECKOUT_PRACTICE')
     if (partie.mode !== 'CHECKOUT_PRACTICE') throw new Error('mode inattendu')
@@ -981,7 +983,7 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     }
   })
 
-  /** T5 : les bascules, la variante et le nombre de sorties survivent aussi. */
+  /** T5 : les bascules, la variante et le nombre de checkouts survivent aussi. */
   it('mémorise sortie, entrée, variante et sorties', async () => {
     const utilisateur = userEvent.setup()
     const { services, dependencies } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
@@ -990,7 +992,9 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     let ecran = ouvrir(services, '/nouvelle-partie/x01')
     await screen.findByRole('list', { name: 'Joueurs de la partie' })
     await deplierPlus(utilisateur)
-    await utilisateur.click(rail('Sortie').getByRole('button', { name: 'Sur un double' }))
+    await utilisateur.click(
+      rail('Checkout').getByRole('button', { name: 'Checkout sur un double' }),
+    )
     await utilisateur.click(rail('Entrée').getByRole('button', { name: 'Sur un double' }))
     ecran.unmount()
 
@@ -1002,13 +1006,13 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     dependencies.devices.preferences.write('entrainement:joueur', null)
     ecran = ouvrir(services, '/nouvelle-partie/entrainement')
     await screen.findByText('0 / 1')
-    await utilisateur.click(rail('Nombre de sorties').getByRole('button', { name: '20' }))
+    await utilisateur.click(rail('Nombre de checkouts').getByRole('button', { name: '20' }))
     ecran.unmount()
 
     ecran = ouvrir(services, '/nouvelle-partie/x01')
     await screen.findByRole('list', { name: 'Joueurs de la partie' })
     await deplierPlus(utilisateur)
-    pressee(rail('Sortie').getByRole('button', { name: 'Sur un double' }))
+    pressee(rail('Checkout').getByRole('button', { name: 'Checkout sur un double' }))
     pressee(rail('Entrée').getByRole('button', { name: 'Sur un double' }))
     ecran.unmount()
 
@@ -1019,7 +1023,7 @@ describe('Nouvelle partie — gardes et mémoire', () => {
 
     ouvrir(services, '/nouvelle-partie/entrainement')
     await screen.findByText('0 / 1')
-    pressee(rail('Nombre de sorties').getByRole('button', { name: '20' }))
+    pressee(rail('Nombre de checkouts').getByRole('button', { name: '20' }))
   })
 
   /** Dette assumée : l'ancienne clé de l'interrupteur reste orpheline, sans effet. */
@@ -1051,25 +1055,27 @@ describe('Nouvelle partie — gardes et mémoire', () => {
 
     const pli = () => screen.getByRole('button', { name: /plus de réglages/i })
     expect(pli()).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByRole('group', { name: 'Sortie' })).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Checkout' })).toBeNull()
     const recap = screen.getByLabelText('Réglages choisis')
     expect(recap).toHaveTextContent('501 · premier à 2 manches')
-    expect(recap).toHaveTextContent('Sortie libre · Entrée libre · Sans sets')
+    expect(recap).toHaveTextContent('Checkout libre · Entrée libre · Sans sets')
 
     await utilisateur.click(rail('Score de départ').getByRole('button', { name: '301' }))
     expect(recap).toHaveTextContent('301 · premier à 2 manches')
 
     await utilisateur.click(pli())
     expect(pli()).toHaveAttribute('aria-expanded', 'true')
-    await utilisateur.click(rail('Sortie').getByRole('button', { name: 'Sur un double' }))
+    await utilisateur.click(
+      rail('Checkout').getByRole('button', { name: 'Checkout sur un double' }),
+    )
     await utilisateur.click(rail('Sets à gagner').getByRole('button', { name: '2' }))
-    expect(recap).toHaveTextContent('Sortie sur un double · Entrée libre · Premier à 2 sets')
+    expect(recap).toHaveTextContent('Checkout sur un double · Entrée libre · Premier à 2 sets')
 
     await utilisateur.click(pli())
     expect(pli()).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByRole('group', { name: 'Sortie' })).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Checkout' })).toBeNull()
     // Replié, le récap continue de tout dire.
-    expect(recap).toHaveTextContent('Sortie sur un double')
+    expect(recap).toHaveTextContent('Checkout sur un double')
   })
 
   /**
@@ -1172,7 +1178,10 @@ describe('Nouvelle partie — depuis un résumé', () => {
             config: X01Config.create({ startingScore: 40, legsToWin: 1 }),
           })
         case 'CRICKET':
-          return services.playCricket.start({ playerIds: [kevin], config: CricketConfig.create() })
+          return services.playCricket.start({
+            playerIds: [kevin],
+            config: CricketConfig.create(),
+          })
         case 'TOUR_DU_MONDE':
           return services.playTourDuMonde.start({
             playerIds: [kevin],

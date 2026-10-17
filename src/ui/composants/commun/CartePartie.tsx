@@ -62,7 +62,12 @@ export const CartePartie = ({
           <span className="whitespace-nowrap font-score text-etiquette font-bold tracking-[0.04em] text-craie-2">
             {vue.detail}
           </span>
-          <span className="font-score text-etiquette font-medium uppercase tracking-[0.06em] text-craie-3">
+          {/* « checkouts » est la seule unité qui dépasse la colonne de 56 px : on la resserre. */}
+          <span
+            className={`font-score text-etiquette font-medium uppercase text-craie-3 ${
+              vue.unite.length > 8 ? 'tracking-tighter' : 'tracking-[0.06em]'
+            }`}
+          >
             {vue.unite}
           </span>
         </span>

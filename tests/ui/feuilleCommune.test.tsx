@@ -398,7 +398,7 @@ describe('Bandeau Entraînement — sous-titre et « Manche N/total »', () => {
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
 
-    expect(await screen.findByText(/^2 sorties · \d+ à \d+$/)).toBeInTheDocument()
+    expect(await screen.findByText(/^2 checkouts · \d+ à \d+$/)).toBeInTheDocument()
     expect(screen.getByText('Manche 1/2')).toBeInTheDocument()
 
     // Une manche ratée : trois fléchettes, la suivante commence.
@@ -431,7 +431,7 @@ describe('Moment célébré — une rangée de 44 px', () => {
   it('par défaut sur le bas de la feuille ; `sous` : sous la feuille en portrait, sur son bas en paysage', () => {
     const { unmount } = render(
       <div className="relative">
-        <MomentCelebratif moment={{ cle: 'c', titre: 'Sortie !' }} />
+        <MomentCelebratif moment={{ cle: 'c', titre: 'Checkout !' }} />
       </div>,
     )
     expect(screen.getByRole('status')).toHaveClass('bottom-0')
@@ -465,7 +465,7 @@ describe('Moment célébré — une rangée de 44 px', () => {
     expect(moment).toHaveClass('top-full', 'absolute', 'pointer-events-none')
   })
 
-  it('au Cricket et au X01 il recouvre le pied de la feuille (ligne de volée, ruban de sortie)', async () => {
+  it('au Cricket et au X01 il recouvre le pied de la feuille (ligne de volée, ruban de checkout)', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
     const [kevin, julien] = await creerJoueurs(services, ['Kevin', 'Julien'])

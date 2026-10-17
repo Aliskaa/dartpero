@@ -1,3 +1,4 @@
+import type { Annonce, Langue, SegmentAnnonce } from '@/core/application/ports/driven/Announcer'
 import type { StorageProtection } from '@/core/application/ports/driven/PersistentStorage'
 import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
 import type { ReplayableConfiguration } from '@/core/application/ports/driving/GetReplayableConfigurations'
@@ -12,8 +13,21 @@ import type { DureeSauvegarde, EtatGuideInstallation } from '@/ui/voyants'
 export const LIBELLE_ISSUE: Record<VisitOutcome, string> = {
   SCORED: 'Volée enregistrée',
   BUSTED: 'Bust !',
-  CHECKOUT: 'Sortie !',
+  CHECKOUT: 'Checkout !',
 }
+
+/**
+ * La langue de base de la voix : un seul endroit à changer le jour de l'i18n.
+ * Les mots de darts (« bust », « checkout ») se disent en en-US quelle que soit
+ * la langue de base.
+ */
+export const LANGUE_DE_BASE: Langue = 'fr-FR'
+
+/** Un segment de la langue de base. */
+export const fr = (texte: string): SegmentAnnonce => ({ texte, langue: LANGUE_DE_BASE })
+
+/** Un segment dit en en-US (vocabulaire de darts). */
+export const en = (texte: string): SegmentAnnonce => ({ texte, langue: 'en-US' })
 
 /**
  * Ce que la voix annonce à la fin d'une volée.
@@ -22,17 +36,17 @@ export const LIBELLE_ISSUE: Record<VisitOutcome, string> = {
  * synthèse vocale française les prononce correctement toute seule, et écrire
  * « cent quarante » ferait buter les voix qui lisent lettre à lettre.
  *
- * C'est ici, et nulle part ailleurs, que se décide ce qui est dit — le port
- * `Announcer` ne reçoit que du texte déjà écrit.
+ * C'est ici, et nulle part ailleurs, que se décide ce qui est dit et dans
+ * quelle langue — le port `Announcer` ne reçoit que des segments déjà écrits.
  */
-export const annonceVolee = (scored: number, outcome: VisitOutcome): string => {
-  if (outcome === 'BUSTED') return 'Bust'
-  if (outcome === 'CHECKOUT') return 'Sortie !'
-  return String(scored)
+export const annonceVolee = (scored: number, outcome: VisitOutcome): Annonce => {
+  if (outcome === 'BUSTED') return [en('Bust')]
+  if (outcome === 'CHECKOUT') return [en('Checkout')]
+  return [fr(String(scored))]
 }
 
-export const annonceIssue = (outcome: VisitOutcome): string =>
-  outcome === 'CHECKOUT' ? 'Sortie !' : outcome === 'BUSTED' ? 'Bust' : 'Raté'
+export const annonceIssue = (outcome: VisitOutcome): Annonce =>
+  outcome === 'CHECKOUT' ? [en('Checkout')] : outcome === 'BUSTED' ? [en('Bust')] : [fr('Raté')]
 
 /** « À toi, Julien » — ce qu'on dit vraiment autour d'une cible. */
 export const annonceTour = (nom: string): string => `À toi, ${nom}`
@@ -53,10 +67,11 @@ export const annonceCible = (libelle: string): string => `Cible : ${libelle}`
  * `prochain` est `null` en solo et en fin de partie : on ne rappelle pas à un
  * joueur seul que c'est encore à lui, et on n'enchaîne pas sur la victoire.
  */
-export const annonceFinDeVolee = (resultat: string | null, prochain: string | null): string => {
-  if (prochain === null) return resultat ?? ''
-  if (resultat === null) return annonceTour(prochain)
-  return `${resultat}. ${annonceTour(prochain)}`
+export const annonceFinDeVolee = (resultat: Annonce | null, prochain: string | null): Annonce => {
+  if (prochain === null) return resultat ?? []
+  if (resultat === null) return [fr(annonceTour(prochain))]
+  // Le point reste dans le segment de la langue de base, jamais dans l'anglais.
+  return [...resultat, fr(`. ${annonceTour(prochain)}`)]
 }
 
 /**
@@ -120,10 +135,10 @@ export const annonceCricket = ({
   readonly fermees: number
   readonly gagnee: boolean
   readonly cutThroat: boolean
-}): string | null => {
-  if (gagnee) return 'Partie gagnée !'
-  if (points > 0) return cutThroat ? `${points} pour les autres` : String(points)
-  if (fermees > 0) return fermees > 1 ? `${fermees} cibles fermées` : 'Cible fermée'
+}): Annonce | null => {
+  if (gagnee) return [fr('Partie gagnée !')]
+  if (points > 0) return [fr(cutThroat ? `${points} pour les autres` : String(points))]
+  if (fermees > 0) return [fr(fermees > 1 ? `${fermees} cibles fermées` : 'Cible fermée')]
   return null
 }
 
@@ -244,7 +259,7 @@ export const TITRE_GROUPE_JOUEURS_APPLI = 'Joueurs et appli'
 export const ETIQUETTE_CHOIX_THEME = 'Thème'
 
 export const TITRE_ANNONCER_VOLEES = 'Annoncer les volées'
-export const AIDE_ANNONCER_VOLEES = 'Score, bust et sorties, à voix haute'
+export const AIDE_ANNONCER_VOLEES = 'Score, bust et checkouts, à voix haute'
 export const TITRE_ESSAYER_VOIX = 'Essayer la voix'
 /** Ce que dit la voix à l'essai : le score que tout le monde reconnaît. */
 export const PHRASE_ESSAI_VOIX = 'Cent quatre-vingts'
@@ -438,7 +453,7 @@ export const moyenne = (valeur: number): string =>
  * ⚠️ Un tiret plutôt que « 0 % » quand rien n'a été joué ou tenté : zéro pour
  * cent, ça veut dire « il a tout perdu ». Rien du tout, ça veut dire « on ne
  * sait pas encore » — une manche en cours n'est ni gagnée ni perdue, et un
- * joueur qui n'a jamais eu de double à jouer n'a pas raté ses sorties, il n'en
+ * joueur qui n'a jamais eu de double à jouer n'a pas raté ses checkouts, il n'en
  * a simplement pas eu. Ne sert plus qu'au pourcentage de doubles : résumé X01
  * et carte Finitions des statistiques. Les pourcentages de matchs et de
  * manches ont quitté l'écran Statistiques (lot `statistiques-podium`) : chaque
@@ -594,7 +609,7 @@ export const reglesCarteTourDuMonde = (
   `${premiere === 'BULL' ? 'bulle' : premiere} → ${derniere === 'BULL' ? 'bulle' : derniere}`
 
 export const reglesCarteEntrainement = (sorties: number, min: number, max: number): string =>
-  `${pluriel(sorties, 'sortie')} · ${min} à ${max}`
+  `${pluriel(sorties, 'checkout')} · ${min} à ${max}`
 
 /** Le détail de la colonne de gauche : « 501 », « STD » / « CT », « 20→B », « 41-170 ». */
 export const detailCarteX01 = (score: number): string => String(score)
@@ -616,7 +631,7 @@ export const UNITE_CARTE: Record<GameModeId, string> = {
   X01: 'reste',
   CRICKET: 'pts',
   TOUR_DU_MONDE: 'fl.',
-  CHECKOUT_PRACTICE: 'sorties',
+  CHECKOUT_PRACTICE: 'checkouts',
 }
 
 /** Le petit suffixe du chiffre d'un mini tableau, au Tour du monde une fois bouclé. */
@@ -631,7 +646,8 @@ export const libelleEtatX01 = (mancheEnCours: number, setEnCours: number | null)
 /** Tour du monde : quelqu'un a bouclé, les autres jouent leur dernière volée. */
 export const LIBELLE_ETAT_DERNIER_TOUR = 'Dernier tour'
 
-export const libelleEtatEntrainement = (sortieEnCours: number): string => `Sortie ${sortieEnCours}`
+export const libelleEtatEntrainement = (sortieEnCours: number): string =>
+  `Checkout ${sortieEnCours}`
 
 /** Au-delà de ce nombre, les carrés de manches (ou de sets) laissent place à « 3/10 ». */
 export const SEUIL_CARRES_JAUGE = 5
@@ -658,11 +674,11 @@ export const parleCibles = (validees: number, total: number, avecUnite: boolean)
 /** Un ratio sans occasion s'affiche « — », jamais « 0/0 ». */
 export const VALEUR_ABSENTE = '—'
 
-/** Entraînement sans sortie jouée : « Kevin, aucune sortie jouée ». */
-export const parleAucuneSortie = (): string => ', aucune sortie jouée'
+/** Entraînement sans checkout joué : « Kevin, aucun checkout joué ». */
+export const parleAucuneSortie = (): string => ', aucun checkout joué'
 
 export const parleSorties = (reussies: number, jouees: number): string =>
-  `${pluriel(reussies, 'sortie réussie', 'sorties réussies')} sur ${jouees}`
+  `${pluriel(reussies, 'checkout réussi', 'checkouts réussis')} sur ${jouees}`
 
 /** Une partie finie sans vainqueur, dite en tête de phrase (« Match nul, Julien 48 fléchettes ; … »). */
 export const parleSansVainqueur = (mode: GameModeId): string =>
@@ -671,7 +687,7 @@ export const parleSansVainqueur = (mode: GameModeId): string =>
 export const parleGagne = (nom: string, valeur: string | null): string =>
   valeur === null ? libelleGagne(nom) : `${libelleGagne(nom)}, ${valeur}`
 
-/** Une valeur qui s'ouvre sur une virgule (« , aucune sortie jouée ») se colle au nom. */
+/** Une valeur qui s'ouvre sur une virgule (« , aucun checkout joué ») se colle au nom. */
 export const parleJoueur = (nom: string, valeur: string): string =>
   valeur.startsWith(',') ? `${nom}${valeur}` : `${nom} ${valeur}`
 
@@ -1036,7 +1052,7 @@ export const PHRASE_TUILE: Record<GameModeId, string> = {
   X01: 'Décompter 301, 501 ou 701 jusqu’à zéro pile.',
   CRICKET: 'Fermer du 20 au 15 et la bulle avant les autres.',
   TOUR_DU_MONDE: 'Du 20 au 1, puis la bulle.',
-  CHECKOUT_PRACTICE: 'Seul : sortir un reste tiré au sort.',
+  CHECKOUT_PRACTICE: 'Seul : faire le checkout d’un reste tiré au sort.',
 }
 
 export const LEGENDE_JOUEURS_PARTIE = 'Joueurs de la partie'
@@ -1121,7 +1137,7 @@ export const libelleNFois = (nombre: number): string | null =>
 
 /**
  * La ligne de réglages : le vocabulaire de l'étape 2, puis la date, puis « N fois ».
- * « premier à 2 manches · sortie libre · hier · 4 fois ».
+ * « premier à 2 manches · checkout libre · hier · 4 fois ».
  */
 export const resumeRejouer = (
   configuration: ReplayableConfiguration,
@@ -1133,7 +1149,7 @@ export const resumeRejouer = (
         const { legsToWin, setsToWin, doubleOut, doubleIn } = configuration.config
         return [
           libelleFormat(legsToWin, setsToWin),
-          doubleOut ? 'sortie sur un double' : 'sortie libre',
+          doubleOut ? 'checkout sur un double' : 'checkout libre',
           doubleIn ? 'entrée sur un double' : null,
         ]
       }
@@ -1142,7 +1158,7 @@ export const resumeRejouer = (
       case 'TOUR_DU_MONDE':
         return ['20 → 1, puis la bulle']
       case 'CHECKOUT_PRACTICE':
-        return [pluriel(configuration.config.rounds, 'sortie')]
+        return [pluriel(configuration.config.rounds, 'checkout')]
     }
   })()
   return [
@@ -1157,7 +1173,7 @@ export const resumeRejouer = (
 /**
  * Le nom accessible de ▶ : le jeu et **tous** les pseudos en entier (les pastilles
  * n'ont que des initiales). « Rejouer X01 501 avec Kevin, Julien et Sarah » à deux
- * joueurs ou plus (▶ mène à l'ordre) ; « Lancer Entraînement 10 sorties avec Kevin »
+ * joueurs ou plus (▶ mène à l'ordre) ; « Lancer Entraînement 10 checkouts avec Kevin »
  * en solo (▶ lance la partie).
  */
 export const ariaRejouer = (
@@ -1173,7 +1189,7 @@ export const ariaRejouer = (
       case 'TOUR_DU_MONDE':
         return LIBELLE_MODE.TOUR_DU_MONDE
       case 'CHECKOUT_PRACTICE':
-        return `${LIBELLE_MODE.CHECKOUT_PRACTICE} ${pluriel(configuration.config.rounds, 'sortie')}`
+        return `${LIBELLE_MODE.CHECKOUT_PRACTICE} ${pluriel(configuration.config.rounds, 'checkout')}`
     }
   })()
   const verbe = configuration.playerIds.length === 1 ? 'Lancer' : 'Rejouer'
@@ -1192,34 +1208,39 @@ export const LEGENDE_SCORE_DEPART = 'Score de départ'
 export const LEGENDE_MANCHES_A_GAGNER = 'Manches à gagner'
 export const LEGENDE_SETS_A_GAGNER = 'Sets à gagner'
 export const LEGENDE_COMPTAGE = 'Comptage'
-export const LEGENDE_NOMBRE_SORTIES = 'Nombre de sorties'
+export const LEGENDE_NOMBRE_SORTIES = 'Nombre de checkouts'
 export const LEGENDE_PLAGE_RESTES = 'Plage des restes'
 export const LIBELLE_NON_REGLABLE = 'non réglable'
-export const LEGENDE_SORTIE = 'Sortie'
+export const LEGENDE_SORTIE = 'Checkout'
 export const LEGENDE_ENTREE = 'Entrée'
 
-/** Sortie et entrée X01 : « Libre » ou « Sur un double » (double out / double in du code). */
+/** Checkout et entrée X01 : « Libre » ou « Sur un double » (double out / double in du code). */
 export type ChoixEntreeSortie = 'LIBRE' | 'DOUBLE'
 export const CHOIX_ENTREE_SORTIE: readonly ChoixEntreeSortie[] = ['LIBRE', 'DOUBLE']
 export const LIBELLE_CHOIX_ENTREE_SORTIE: Record<ChoixEntreeSortie, string> = {
   LIBRE: 'Libre',
   DOUBLE: 'Sur un double',
 }
+/** Les boutons de la légende « Checkout » se nomment en entier (lecteur d'écran compris). */
+export const LIBELLE_CHOIX_SORTIE: Record<ChoixEntreeSortie, string> = {
+  LIBRE: 'Checkout libre',
+  DOUBLE: 'Checkout sur un double',
+}
 export const LIBELLE_SANS_SETS = 'Sans'
 
-/** L'effet de la sortie choisie, en une ligne (planche, puis l'aide actuelle du double out). */
+/** L'effet du checkout choisi, en une ligne (planche, puis l'aide actuelle du double out). */
 export const AIDE_SORTIE: Record<ChoixEntreeSortie, string> = {
   LIBRE: 'Toute fléchette qui amène pile à zéro gagne la manche.',
   DOUBLE: 'Finir obligatoirement sur un double',
 }
 
-/** L'effet du nombre de sorties, à l'entraînement. */
+/** L'effet du nombre de checkouts, à l'entraînement. */
 export const aideSorties = (sorties: number): string =>
-  `${sorties} restes à sortir, une volée chacun.`
+  `${sorties} checkouts à faire, une volée chacun.`
 
 /* La fiche de réglages : le pli « Plus de réglages ». Les règles complètes vivent
    dans la feuille de règles (lot `regles-du-jeu`), plus dans la fiche. */
-export const LIBELLE_PLUS_DE_REGLAGES = 'Plus de réglages · sortie, entrée, sets'
+export const LIBELLE_PLUS_DE_REGLAGES = 'Plus de réglages · checkout, entrée, sets'
 export const LEGENDE_RECAP_REGLAGES = 'Réglages choisis'
 export const TITRE_FICHE_REGLAGES = 'Réglages du jeu'
 
@@ -1249,8 +1270,8 @@ export const aideManches = (legs: number, sets: number, joueurs: number): string
   const parSet = sets > 1
   if (legs === 1) {
     return parSet
-      ? 'Une seule manche par set : le premier qui sort gagne le set.'
-      : 'Une seule manche : le premier qui sort gagne la partie.'
+      ? 'Une seule manche par set : le premier qui fait le checkout gagne le set.'
+      : 'Une seule manche : le premier qui fait le checkout gagne la partie.'
   }
   const base = parSet
     ? `Par set : le premier à ${legs} manches gagne le set`
@@ -1285,14 +1306,14 @@ export const REGLE_TOUR_DU_MONDE: readonly Segment[] = [
   ' ; le moins de fléchettes gagne.',
 ]
 export const REGLE_ENTRAINEMENT: readonly Segment[] = [
-  'Trois fléchettes pour sortir le reste ',
+  'Trois fléchettes pour faire le checkout du reste ',
   { fort: 'sur un double' },
   ' ; jamais de reste impossible.',
 ]
 
 /**
  * L'en-tête de la fiche : le réglage principal en grand, le reste en dessous.
- * Mis à jour à chaque appui ; le X01 dit **toujours** sortie, entrée et sets.
+ * Mis à jour à chaque appui ; le X01 dit **toujours** checkout, entrée et sets.
  */
 export type RecapReglages = { readonly principal: string; readonly secondaire: string }
 
@@ -1311,7 +1332,7 @@ export const recapX01 = ({
 }): RecapReglages => ({
   principal: `${score} · ${libelleLegs(legs)}`,
   secondaire: [
-    doubleOut ? 'Sortie sur un double' : 'Sortie libre',
+    doubleOut ? 'Checkout sur un double' : 'Checkout libre',
     doubleIn ? 'Entrée sur un double' : 'Entrée libre',
     sets <= 1 ? 'Sans sets' : `Premier à ${sets} sets`,
   ].join(' · '),
@@ -1332,12 +1353,12 @@ export const recapEntrainementFiche = (
   min: number,
   max: number,
 ): RecapReglages => ({
-  principal: pluriel(sorties, 'sortie'),
+  principal: pluriel(sorties, 'checkout'),
   secondaire: `Restes tirés entre ${min} et ${max}`,
 })
 
 export const recapEntrainement = (sorties: number, min: number, max: number): string =>
-  `${pluriel(sorties, 'sortie')} · ${min} à ${max}`
+  `${pluriel(sorties, 'checkout')} · ${min} à ${max}`
 
 /* ------------------------------------------------------------------------
  * La feuille de règles (lot `regles-du-jeu`) : le livre ouvert de l'étape 2 et
@@ -1348,7 +1369,7 @@ export const recapEntrainement = (sorties: number, min: number, max: number): st
  * X01 et Cricket : mot pour mot la planche `regles-rubriques.html`, sauf trois
  * phrases X01 corrigées d'après le code (bust compté en fléchettes lancées,
  * First 9 sur trois volées, volée de 3 fléchettes « au plus »). Tour du monde,
- * entraînement, et les variantes non dessinées (sortie et entrée sur un double,
+ * entraînement, et les variantes non dessinées (checkout et entrée sur un double,
  * sets, premier à 1 manche, cut-throat) : même plan, écrits d'après
  * `CLAUDE.md` et le code.
  *
@@ -1365,13 +1386,13 @@ export const TITRE_REGLES: Record<GameModeId, string> = {
 export const SOUS_TITRE_REGLES = 'Telles que Dartpéro les applique'
 export const LIBELLE_CE_SOIR = 'Ce soir'
 export const LIBELLE_EN_BREF = 'En bref'
-/** Le reste sans sortie en 3 fléchettes : l'écran X01 et la feuille de règles disent le même mot. */
+/** Le reste sans checkout en 3 fléchettes : l'écran X01 et la feuille de règles disent le même mot. */
 export const LIBELLE_PAS_DE_FINISH = 'Pas de finish'
 
 export const RUBRIQUE_MARQUER = 'Marquer'
 export const RUBRIQUE_GAGNER = 'Gagner'
 export const RUBRIQUE_CAS_PARTICULIERS = 'Cas particuliers'
-export const RUBRIQUE_SORTIES = 'Les sorties'
+export const RUBRIQUE_SORTIES = 'Les checkouts'
 export const RUBRIQUE_EXEMPLE = 'Un exemple'
 export const RUBRIQUE_QUESTIONS = 'Questions fréquentes'
 export const RUBRIQUE_COMPTE = 'Ce que l’app compte'
@@ -1428,7 +1449,7 @@ export type ContenuRegles = {
   readonly rubriques: readonly RubriqueRegles[]
 }
 
-/** Jusqu'où l'app propose une sortie, et les restes sans finish en dessous. */
+/** Jusqu'où l'app propose un checkout, et les restes sans finish en dessous. */
 export type PlageSorties = { readonly max: number; readonly sansFinish: readonly number[] }
 
 const fort = (texte: string): Segment => ({ fort: texte })
@@ -1559,13 +1580,13 @@ export const reglesX01 = ({
             ),
             ligneSi(
               doubleOut,
-              'Sortie libre : n’importe quelle fléchette qui amène ',
+              'Checkout libre : n’importe quelle fléchette qui amène ',
               fort('pile à zéro'),
               ' gagne.',
             ),
             ligneSi(
               !doubleOut,
-              'Sortie sur un double : il faut finir sur un ',
+              'Checkout sur un double : il faut finir sur un ',
               fort('double'),
               ' (le centre à 50 compte). Un reste de 1, ou un zéro sans double, est aussi un bust.',
             ),
@@ -1582,22 +1603,22 @@ export const reglesX01 = ({
         titre: RUBRIQUE_SORTIES,
         blocs: [
           paragraphe(
-            'Ce soir, l’app propose une sortie dès qu’il reste ',
+            'Ce soir, l’app propose un checkout dès qu’il reste ',
             fort(`${deCeSoir.max} ou moins`),
             doubleOut ? ' (T20 · T20 · centre)' : '',
-            `. Ces restes n’ont pas de sortie en 3 fléchettes, l’app affiche « ${LIBELLE_PAS_DE_FINISH} » :`,
+            `. Ces restes n’ont pas de checkout en 3 fléchettes, l’app affiche « ${LIBELLE_PAS_DE_FINISH} » :`,
           ),
           { type: 'pastilles', nombres: deCeSoir.sansFinish },
           doubleOut
             ? paragrapheGris(
-                'Sortie libre : ',
+                'Checkout libre : ',
                 fort(String(autre.max)),
-                ' au plus (T20 · T20 · T20), et pas de sortie pour :',
+                ' au plus (T20 · T20 · T20), et pas de checkout pour :',
               )
             : paragrapheGris(
-                'Sortie sur un double : ',
+                'Checkout sur un double : ',
                 fort(String(autre.max)),
-                ' au plus (T20 · T20 · centre), et pas de sortie pour :',
+                ' au plus (T20 · T20 · centre), et pas de checkout pour :',
               ),
           { type: 'pastilles', nombres: autre.sansFinish, autre: true },
         ],
@@ -1640,14 +1661,14 @@ export const reglesX01 = ({
               ),
               question(
                 'Peut-on finir sur la bulle ?',
-                'Oui. En sortie sur un double, seul le centre à 50 finit : il compte comme un double.',
+                'Oui. En checkout sur un double, seul le centre à 50 finit : il compte comme un double.',
               ),
               question(
                 'Pourquoi l’app ne propose rien à 169 ?',
                 `Aucune volée de 3 fléchettes ne fait 169 avec les règles de ce soir. Plutôt qu’une suggestion fausse, l’app affiche « ${LIBELLE_PAS_DE_FINISH} ».`,
               ),
               question(
-                'La sortie proposée est-elle celle des pros ?',
+                'Le checkout proposé est-il celui des pros ?',
                 'C’est toujours une route qui marche, mais elle peut différer des tables professionnelles.',
               ),
               question(
@@ -1672,7 +1693,7 @@ export const reglesX01 = ({
             ),
             ligne(
               fort('% doubles'),
-              ' : doubles de sortie réussis ÷ tentatives. Compté seulement en sortie sur un double.',
+              ' : doubles de checkout réussis ÷ tentatives. Compté seulement en checkout sur un double.',
             ),
             ligne(fort('Grosses volées'), ' : 180, 140 et plus, 100 et plus, 60 et plus.'),
             ligne(
@@ -2204,7 +2225,7 @@ export const reglesEntrainement = ({
       fort(`${min} et ${max}`),
       '. Vous avez une volée de ',
       fort('3 fléchettes'),
-      ' pour le sortir, sur un ',
+      ' pour faire le checkout, sur un ',
       fort('double'),
       '.',
     ],
@@ -2233,19 +2254,19 @@ export const reglesEntrainement = ({
         blocs: [
           liste(
             ligne(
-              'Une sortie est ',
-              fort('réussie'),
+              'Un checkout est ',
+              fort('réussi'),
               ' quand la volée amène le reste ',
               fort('pile à zéro'),
               ', sur un double.',
             ),
             ligne(
-              `La séance compte ${pluriel(sorties, 'reste')} à sortir ; elle se termine après le dernier.`,
+              `La séance compte ${pluriel(sorties, 'checkout')} à faire ; elle se termine après le dernier.`,
             ),
             ligne(
               'Le résultat : le ',
               fort('taux de réussite'),
-              ', sorties réussies ÷ sorties jouées.',
+              ', checkouts réussis ÷ checkouts joués.',
             ),
           ),
         ],
@@ -2256,16 +2277,16 @@ export const reglesEntrainement = ({
           liste(
             ligne(
               fort('Toujours sur un double'),
-              ' : la sortie libre ne s’applique pas à l’entraînement.',
+              ' : le checkout libre ne s’applique pas à l’entraînement.',
             ),
             ligne(
               fort('Bust'),
-              ' : passer sous zéro, laisser 1, ou arriver à zéro sans double rate la sortie.',
+              ' : passer sous zéro, laisser 1, ou arriver à zéro sans double rate le checkout.',
             ),
-            ligne('Trois fléchettes sans finir : la sortie est ratée, on passe au reste suivant.'),
+            ligne('Trois fléchettes sans finir : le checkout est raté, on passe au reste suivant.'),
             ligne(
               'Les restes ',
-              fort('sans sortie possible'),
+              fort('sans checkout possible'),
               ' en 3 fléchettes (les bogey numbers) ne sont jamais tirés.',
             ),
           ),
@@ -2283,11 +2304,11 @@ export const reglesEntrainement = ({
               [
                 texte('2'),
                 chiffre('D12'),
-                { segments: ['Zéro sur un double : ', fort('sortie réussie')], ton: 'ok' },
+                { segments: ['Zéro sur un double : ', fort('checkout réussi')], ton: 'ok' },
               ],
             ],
           },
-          paragraphe('La volée s’arrête sur la fléchette qui sort.'),
+          paragraphe('La volée s’arrête sur la fléchette qui fait le checkout.'),
         ],
       },
       {
@@ -2298,7 +2319,7 @@ export const reglesEntrainement = ({
             questions: [
               question(
                 'Peut-on tomber sur un reste impossible ?',
-                'Non : seuls les restes qui se sortent en 3 fléchettes sur un double sont tirés.',
+                'Non : seuls les restes qui se finissent en 3 fléchettes sur un double sont tirés.',
               ),
               question(
                 'A-t-on une seconde chance sur un reste raté ?',
@@ -2319,7 +2340,7 @@ export const reglesEntrainement = ({
             ligne(
               'Le ',
               fort('taux de réussite'),
-              ', et les sorties réussies sur les sorties jouées.',
+              ', et les checkouts réussis sur les checkouts joués.',
             ),
             ligne(
               'Pendant la volée, une ',
@@ -2340,7 +2361,7 @@ export const reglesEntrainement = ({
           {
             type: 'reglages',
             reglages: [
-              { terme: 'Sorties', options: options(SORTIES, sorties, String) },
+              { terme: 'Checkouts', options: options(SORTIES, sorties, String) },
               {
                 terme: 'Restes',
                 options: [

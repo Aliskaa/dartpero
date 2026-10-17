@@ -24,6 +24,7 @@ import {
   LEGENDE_SETS_A_GAGNER,
   LEGENDE_SORTIE,
   LIBELLE_CHOIX_ENTREE_SORTIE,
+  LIBELLE_CHOIX_SORTIE,
   LIBELLE_NON_REGLABLE,
   LIBELLE_PLUS_DE_REGLAGES,
   LIBELLE_SANS_SETS,
@@ -134,7 +135,7 @@ const CorpsX01 = ({
         valeurs={CHOIX_ENTREE_SORTIE}
         valeur={choixDe(reglages.doubleOut)}
         onChange={(choix) => reglages.setDoubleOut(choix === 'DOUBLE')}
-        libelle={(choix) => LIBELLE_CHOIX_ENTREE_SORTIE[choix]}
+        libelle={(choix) => LIBELLE_CHOIX_SORTIE[choix]}
         aide={AIDE_SORTIE[choixDe(reglages.doubleOut)]}
       />
       <ChoixSegmente

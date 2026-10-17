@@ -45,7 +45,7 @@ export const momentDepuisVoleeX01 = (
   if (visit.outcome === 'CHECKOUT') {
     return {
       cle: `sortie-${resultat.state.history.length}`,
-      titre: 'Sortie !',
+      titre: 'Checkout !',
       detail: String(visit.scored),
     }
   }

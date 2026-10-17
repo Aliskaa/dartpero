@@ -100,7 +100,7 @@ Tokens `@theme` dans `src/index.css`. Utiliser les classes Tailwind (`bg-feutre`
 | **Chiffres du tableau** | `craie-vive` | `#FFFFFF` | `#0C1512` | Scores géants |
 | Texte sur laiton | `sur-laiton` | `#1A1206` | `#FBF7EC` | Étiquette d'un bouton primaire |
 | Alerte / bust | `rouge-cible` | `#C1272D` | `#A81F25` | Bust, danger |
-| Succès / sortie | `vert-cible` | `#2E7D4F` | `#1F6B41` | Ligne de sortie, manche gagnée |
+| Succès / checkout | `vert-cible` | `#2E7D4F` | `#1F6B41` | Ligne de checkout, manche gagnée |
 
 Nuances (`feutre-nuit`, `ardoise-claire`, `chene-clair`, `chene-sombre`, `laiton-clair`,
 `laiton-sombre`) : elles servent aux tranches et aux fonds d'appui, plus à modeler des reliefs.
@@ -309,12 +309,12 @@ repaint par image sur un vieux téléphone. Le joueur au lancer se signale par `
 
 Hors saisie uniquement — jamais pendant qu'on tape une volée :
 
-- **`MomentCelebratif`** : bandeau vert éphémère (manche / set / sortie / tour bouclé / cible
+- **`MomentCelebratif`** : bandeau vert éphémère (manche / set / checkout / tour bouclé / cible
   fermée), `pointer-events-none`, ~2,2 s. ⚠️ **Hors du flux** (lot `match-x01`) : il est `absolute`
   au bas de son ancêtre `relative` — l'écran enveloppe son tableau et le moment dans un
   `div.relative`, le moment en dernier enfant. ⚠️ **Une seule rangée de 44 px** (`h-11`, lot
   `feuille-commune`), titre puis détail (« FERMÉE ! · 19 »), pour les trois jeux : il recouvre
-  exactement le pied de la feuille (X01 : le ruban de sortie ; Cricket : la ligne de volée), ne
+  exactement le pied de la feuille (X01 : le ruban de checkout ; Cricket : la ligne de volée), ne
   décale rien, ne touche jamais le pavé. Fond **opaque** (`bg-ardoise`) sous la teinte verte :
   sans lui le pied transparaîtrait. **Tour du monde** (prop `ancrage="sous"`) : la feuille n'a pas
   de pied, 44 px sur la dernière ligne en masquaient la cible et la volée (mesuré à quatre joueurs :
@@ -353,7 +353,7 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `PlateauImpacts` / `CarteImpacts` / `PanneauImpacts` | Le plateau seul (`role="img"` nommé), le plateau avec sa légende, et les cartes côte à côte du résumé de partie |
 | `TableauHonneur` / `MomentCelebratif` | Podium de résumé · bandeau de célébration |
 | `CartePartie` | **Ligne de feuille** (lot `cartes-partie`), à l'Accueil et dans Parties, posée dans une `FeuillePartie` (filet 3 px `craie`, fond `ardoise`, filets 1 px `craie/22`, une feuille par période). Colonne de 56 px : `Pictogramme` 20 px `laiton-clair`, détail (501, STD, CT, 20→B, 41-170), unité (reste, pts, fl., sorties). Titre : le nom **tapé** seulement, sinon les règles en petites capitales sans le nom du jeu ; heure à droite. Joueurs **classés** (`rankPlayers`) : avatar + chiffre en rangée à 1-3, grille 2 × 2 avec noms à 4 ; partie finie : le premier (tous les ex æquo) en `laiton-clair` avec ✓, jamais à l'entraînement. Étiquettes « Abandonnée » (bordure `craie/40`) et, dans Parties, « En cours » (`laiton`). **Une seule cible** (lien `min-h-16`), corbeille sœur du lien (`actions`). Visuel `aria-hidden` + phrase `sr-only` (« Sarah gagne, 86 points ; Kevin 61 ; Julien 22 ») |
-| `MiniTableauPartie` | La partie en cours de l'Accueil, seule : bordure 1 px `laiton`, tête (pictogramme 24 px, titre = nom tapé ou nom du jeu, règles, heure, état « Manche 3 », « Set 2 · manche 4 », « Dernier tour », « Sortie 8 », « En cours »), une ligne par joueur classé (avatar 28 px, nom, jauge, chiffre ; les ex æquo en tête teintés `laiton/12` et chiffre `laiton-clair`, **seulement s'il reste quelqu'un derrière eux** : au départ, tous égaux, aucune teinte), « Reprendre » 48 px, visuel de l'unique lien. Jauges : X01 carrés de manches + traits de sets (jusqu'à 5, au-delà « 3/10 »), Cricket cases, Tour du monde barre (`vert-cible` une fois bouclé), entraînement barre. `ui/cartesPartie.ts` est **le seul endroit** de l'UI qui ouvre l'union `MatchSummary` pour une carte |
+| `MiniTableauPartie` | La partie en cours de l'Accueil, seule : bordure 1 px `laiton`, tête (pictogramme 24 px, titre = nom tapé ou nom du jeu, règles, heure, état « Manche 3 », « Set 2 · manche 4 », « Dernier tour », « Checkout 8 », « En cours »), une ligne par joueur classé (avatar 28 px, nom, jauge, chiffre ; les ex æquo en tête teintés `laiton/12` et chiffre `laiton-clair`, **seulement s'il reste quelqu'un derrière eux** : au départ, tous égaux, aucune teinte), « Reprendre » 48 px, visuel de l'unique lien. Jauges : X01 carrés de manches + traits de sets (jusqu'à 5, au-delà « 3/10 »), Cricket cases, Tour du monde barre (`vert-cible` une fois bouclé), entraînement barre. `ui/cartesPartie.ts` est **le seul endroit** de l'UI qui ouvre l'union `MatchSummary` pour une carte |
 | `ActionsFinDePartie` | « On remet ça » / « Changer les règles » / « Accueil » — les 4 résumés |
 | `DispositionPartie` | Ossature portrait / paysage des écrans de jeu ; en paysage le pavé est **calé en bas** (`self-end`) |
 | `PaveSaisie` | **Le** pavé de saisie des quatre jeux (`PaveFlechettes`, `PaveCricket`, `PaveCibles` n'en sont que de fins enrobages) : grille de cibles, rangée **Bulle · Hors · Annuler** (2 · 1 · 2 sur 5 colonnes), rail S/D/T en pleine largeur sauf au Tour du monde |
@@ -417,11 +417,11 @@ d'étapes. Planche : `docs/maquettes/derniers/derniers.html`, piste 2 (`np2`).
   mode 40 px en `currentColor` (`text-laiton-clair`, **laiton unique**, pas de couleur par mode) ;
   titre `font-score` capitales (« X01 · 501 », « Cricket · Cut-throat », « Tour du monde »,
   « Entraînement ») ; résumé en capitales `text-craie-3` dans le vocabulaire de l'étape 2
-  (« premier à 2 manches · sortie libre · hier · 4 fois ») ; pastilles `Avatar` `xs` à initiales,
+  (« premier à 2 manches · checkout libre · hier · 4 fois ») ; pastilles `Avatar` `xs` à initiales,
   qui passent à la ligne à 360 px (le pseudo entier vit dans l'`aria-label` de ▶ seulement).
 - **▶** : `<button>` carré 48 px, `laiton-poli` (comme « Commencer »), icône `Play` pleine,
   `aria-hidden`. Nom accessible : « Rejouer X01 501 avec Kevin, Julien et Sarah » (≥ 2 joueurs, mène à
-  l'Ordre) ou « Lancer Entraînement 10 sorties avec Kevin » (solo, lance la partie). Désactivé pendant
+  l'Ordre) ou « Lancer Entraînement 10 checkouts avec Kevin » (solo, lance la partie). Désactivé pendant
   un lancement ; l'échec affiche `ERREUR_DEMARRAGE` **sous la section**.
 - **Date relative courte, sans heure** (`libelleDateRelative`) : « aujourd'hui », « hier », le jour
   (« mardi ») jusqu'à 6 jours, puis « 3 oct. » (« 3 oct. 2025 » si l'année diffère). **« N fois »
@@ -531,7 +531,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 │  T20  T20  S20  │moy 140│  ‖ 3 f │  ▌ = filet de laiton : c'est son tour
 │ ■ JULIEN        │   83  │    418 │  ■ = carré à la couleur du profil
 │  T19  S19  S7   │moy 83 │  ‖ 3 f │  fléchettes écrites sur leur ligne
-│ ⌖ SORTIE   T20   T7   D20        │  dernière ligne, filet vert, ≤ 170 (180 en sortie libre)
+│ ⌖ CHECKOUT T20   T7   D20        │  dernière ligne, filet vert, ≤ 170 (180 en checkout libre)
 ├──────────────────────────────────┤
 │   1⁶⁰ 2  3  4  5                 │  ZONE SAISIE
 │   6  7  8  9 10                  │  cibles ≥ 48 px
@@ -593,7 +593,7 @@ Deux zones nettement séparées, parce qu'on lit à 3 m et qu'on tape à 30 cm :
 - **Les fléchettes sont écrites sur une ligne** (`.ligne-saisie`), comme au stylo — et non dans
   des pastilles. Les trois emplacements restent **toujours présents** : c'est ce qui garde
   l'alignement d'une ligne à l'autre.
-- **La suggestion de sortie est la dernière ligne de la feuille**, filet vert, cibles alignées
+- **La suggestion de checkout est la dernière ligne de la feuille**, filet vert, cibles alignées
   sous les colonnes de fléchettes. Elle ne flotte plus au-dessus du tableau.
 - **Portrait** par défaut. **Paysage** (téléphone couché) : lecture à gauche, pavé à droite —
   porté par `DispositionPartie` pour les quatre modes.

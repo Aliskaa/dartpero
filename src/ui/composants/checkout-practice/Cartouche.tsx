@@ -40,11 +40,11 @@ export const Cartouche = ({
     <section aria-label="Manche en cours" className="flex flex-col gap-2.5">
       <div className="feuille flex flex-col items-center gap-1 px-4 py-5">
         <p className="font-score text-etiquette uppercase tracking-[0.3em] text-craie-3">
-          Sortie demandée
+          Checkout demandé
         </p>
 
         <output
-          aria-label="Reste à sortir"
+          aria-label="Reste pour le checkout"
           className="chiffres trace-craie block text-score-solo font-bold leading-none text-craie-vive"
         >
           <span key={resteAffiche} className="inline-block animate-pop-score">

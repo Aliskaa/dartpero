@@ -5,6 +5,7 @@ import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import {
   annonceFinDeVolee,
+  fr,
   libelleAnnulation,
   libelleFlechetteTourDuMonde,
   nomJoueur,
@@ -88,9 +89,9 @@ export const useTourDuMonde = (matchId: MatchId) => {
         dire(
           annonceFinDeVolee(
             boucle
-              ? 'Tour bouclé !'
+              ? [fr('Tour bouclé !')]
               : touches > 0
-                ? `${touches} touché${touches > 1 ? 's' : ''}`
+                ? [fr(`${touches} touché${touches > 1 ? 's' : ''}`)]
                 : null,
             prochainJoueur(resultat.state, profilsRef.current),
           ),

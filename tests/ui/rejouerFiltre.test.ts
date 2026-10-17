@@ -78,7 +78,7 @@ describe('Rejouer — le filtre « reproductible »', () => {
     expect(estReproductible(monde([20, 19]))).toBe(false)
   })
 
-  it('écarte un nombre de sorties hors liste ou une plage de restes qui n’est pas celle du défaut', () => {
+  it('écarte un nombre de checkouts hors liste ou une plage de restes qui n’est pas celle du défaut', () => {
     const entrainement = (reglages: Parameters<typeof CheckoutPracticeConfig.create>[0]) =>
       ({
         ...commun(0, [kevin]),
@@ -166,7 +166,7 @@ describe('Rejouer — les libellés', () => {
   it('résume X01 : manches, sets s’il y en a, sortie, entrée seulement si activée', () => {
     const base = { ...x01({ doubleOut: false }), lastPlayedAt: local(2026, 9, 13), count: 4 }
     expect(resumeRejouer(base, maintenant)).toBe(
-      'premier à 2 manches · sortie libre · hier · 4 fois',
+      'premier à 2 manches · checkout libre · hier · 4 fois',
     )
 
     const complet = {
@@ -174,7 +174,7 @@ describe('Rejouer — les libellés', () => {
       lastPlayedAt: local(2026, 9, 14),
     }
     expect(resumeRejouer(complet, maintenant)).toBe(
-      'premier à 2 sets · 1 manche par set · sortie sur un double · entrée sur un double · aujourd’hui',
+      'premier à 2 sets · 1 manche par set · checkout sur un double · entrée sur un double · aujourd’hui',
     )
   })
 
@@ -211,7 +211,7 @@ describe('Rejouer — les libellés', () => {
       lastPlayedAt: local(2026, 9, 14),
     } as ReplayableConfiguration
     expect(titreRejouer(entrainement)).toBe('Entraînement')
-    expect(resumeRejouer(entrainement, maintenant)).toBe('10 sorties · aujourd’hui')
+    expect(resumeRejouer(entrainement, maintenant)).toBe('10 checkouts · aujourd’hui')
   })
 
   it('dit le jeu et tous les pseudos dans le nom accessible de ▶', () => {
@@ -224,6 +224,6 @@ describe('Rejouer — les libellés', () => {
       mode: 'CHECKOUT_PRACTICE',
       config: CheckoutPracticeConfig.create({ rounds: 10 }),
     } as ReplayableConfiguration
-    expect(ariaRejouer(solo, ['Kevin'])).toBe('Lancer Entraînement 10 sorties avec Kevin')
+    expect(ariaRejouer(solo, ['Kevin'])).toBe('Lancer Entraînement 10 checkouts avec Kevin')
   })
 })

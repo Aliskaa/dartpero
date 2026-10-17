@@ -43,7 +43,7 @@ const dernieresVolees = (state: X01State): ReadonlyMap<PlayerId, { visit: Visit;
     return acc
   }, new Map<PlayerId, { visit: Visit; rang: number }>())
 
-/** La sortie conseillée, en ruban : trois cibles qu'on lit de loin. */
+/** Le checkout conseillé, en ruban : trois cibles qu'on lit de loin. */
 const RubanSortie = ({
   suggestion,
   aucunFinish,
@@ -62,7 +62,7 @@ const RubanSortie = ({
     return (
       <div className="flex animate-monter items-center gap-3 border-t-2 border-vert-cible bg-vert-cible/12 px-3 py-2">
         <Pictogramme nom="sortie" taille={20} className="shrink-0 text-vert-cible" />
-        <span className="entete-colonne text-vert-cible">Sortie</span>
+        <span className="entete-colonne text-vert-cible">Checkout</span>
         <span className="flex flex-1 items-center justify-end gap-2">
           {cibles.map((cible) => (
             <span

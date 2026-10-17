@@ -69,11 +69,11 @@ export const ResumeEntrainementEcran = () => {
         </output>
 
         <p className="mt-1 font-score text-sm uppercase tracking-[0.2em] text-vert-cible">
-          {state.roundsWon} sortie{state.roundsWon > 1 ? 's' : ''} sur {state.roundsPlayed}
+          {state.roundsWon} checkout{state.roundsWon > 1 ? 's' : ''} sur {state.roundsPlayed}
         </p>
       </TableauHonneur>
 
-      <Panneau titre="Les sorties réussies" contenuClassName="p-3">
+      <Panneau titre="Les checkouts réussis" contenuClassName="p-3">
         {reussies.length === 0 ? (
           <p className="py-2 text-center text-sm text-craie-3">
             Aucune cette fois — le prochain double est le bon.

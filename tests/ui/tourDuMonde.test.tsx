@@ -399,7 +399,7 @@ describe('Création de partie', () => {
     // Ni sortie ni « Plus de réglages » : ces réglages sont ceux du X01.
     expect(within(regles).queryByRole('button', { name: /plus de réglages/i })).toBeNull()
     expect(within(regles).queryByText(/sur un double/i)).toBeNull()
-    expect(within(regles).queryByRole('group', { name: 'Sortie' })).toBeNull()
+    expect(within(regles).queryByRole('group', { name: 'Checkout' })).toBeNull()
     expect(within(regles).getByText('21 cibles · rien à régler')).toBeInTheDocument()
   })
 

@@ -69,11 +69,11 @@ describe('vueCarte — la colonne du mode : détail, unité, règles sans le nom
     expect(court.detail).toBe('20→B')
   })
 
-  it('entraînement : « 41-170 », « sorties », « 10 sorties · 41 à 170 »', () => {
+  it('entraînement : « 41-170 », « sorties », « 10 checkouts · 41 à 170 »', () => {
     const vue = vueCarte(resumeEntrainement())
     expect(vue.detail).toBe('41-170')
-    expect(vue.unite).toBe('sorties')
-    expect(vue.regles).toBe('10 sorties · 41 à 170')
+    expect(vue.unite).toBe('checkouts')
+    expect(vue.regles).toBe('10 checkouts · 41 à 170')
     expect(vue.pictogramme).toBe('entrainement')
   })
 })
@@ -199,8 +199,8 @@ describe('vueCarte — l’état du mini tableau (R1-R4)', () => {
     expect(vueCarte(dernier).etat).toBe('Dernier tour')
   })
 
-  it('entraînement : « Sortie N »', () => {
-    expect(vueCarte(resumeEntrainement({ roundsPlayed: 7 })).etat).toBe('Sortie 8')
+  it('entraînement : « Checkout N »', () => {
+    expect(vueCarte(resumeEntrainement({ roundsPlayed: 7 })).etat).toBe('Checkout 8')
   })
 })
 
@@ -265,7 +265,7 @@ describe('vueCarte — les jauges du mini tableau', () => {
     ])
   })
 
-  it('entraînement : les sorties réussies sur le nombre prévu', () => {
+  it('entraînement : les checkouts réussis sur le nombre prévu', () => {
     const vue = vueCarte(resumeEntrainement({ roundsWon: 4, roundsPlayed: 7 }))
     expect(vue.joueurs[0]?.jauge).toEqual({ type: 'barre', rempli: 4, total: 10, bouclee: false })
     expect(vue.joueurs[0]?.chiffre).toEqual({ valeur: '4', petit: '/7' })
@@ -358,15 +358,15 @@ describe('vueCarte — la phrase des lecteurs d’écran (R11)', () => {
     expect(vue.phrase).toBe('Terminée, Kevin 40 points ; Sarah 40')
   })
 
-  it('entraînement : « Kevin 4 sorties réussies sur 7 »', () => {
+  it('entraînement : « Kevin 4 checkouts réussis sur 7 »', () => {
     const vue = vueCarte(resumeEntrainement({ roundsWon: 4, roundsPlayed: 7 }))
-    expect(vue.phrase).toBe('Kevin 4 sorties réussies sur 7')
+    expect(vue.phrase).toBe('Kevin 4 checkouts réussis sur 7')
   })
 
-  it('le singulier s’accorde : « 1 point », « 1 sortie réussie sur 1 »', () => {
+  it('le singulier s’accorde : « 1 point », « 1 checkout réussi sur 1 »', () => {
     expect(vueCarte(resumeCricket([{ nom: 'Kevin', score: 1 }])).phrase).toBe('Kevin 1 point')
     expect(vueCarte(resumeEntrainement({ roundsWon: 1, roundsPlayed: 1 })).phrase).toBe(
-      'Kevin 1 sortie réussie sur 1',
+      'Kevin 1 checkout réussi sur 1',
     )
   })
 
@@ -521,7 +521,7 @@ describe('CartePartie — la ligne de feuille', () => {
     const rangee = container.querySelector('li a div > span[aria-hidden="true"]')
     expect(rangee).toHaveTextContent('—')
     expect(rangee).not.toHaveTextContent('0/0')
-    expect(vueCarte(resumeEntrainement()).phrase).toBe('Kevin, aucune sortie jouée')
+    expect(vueCarte(resumeEntrainement()).phrase).toBe('Kevin, aucun checkout joué')
   })
 
   it('un profil supprimé : avatar neutre (teinte de bois), « Joueur supprimé » dans la phrase', () => {
@@ -639,7 +639,7 @@ describe('MiniTableauPartie — la partie en cours', () => {
     expect(rang).toHaveTextContent('—')
     expect(rang).not.toHaveTextContent('0/0')
     expect(screen.getByRole('link')).toHaveAccessibleName(
-      expect.stringContaining('Kevin, aucune sortie jouée'),
+      expect.stringContaining('Kevin, aucun checkout joué'),
     )
   })
 
@@ -714,9 +714,9 @@ describe('MiniTableauPartie — la partie en cours', () => {
     expect(kevin?.querySelector('i')).toHaveClass('bg-laiton')
   })
 
-  it('entraînement : barre des sorties réussies sur le nombre prévu, « 4/7 », « Sortie 8 »', () => {
+  it('entraînement : barre des checkouts réussis sur le nombre prévu, « 4/7 », « Checkout 8 »', () => {
     const { container } = mini(resumeEntrainement({ roundsWon: 4, roundsPlayed: 7 }))
-    expect(screen.getByText('Sortie 8')).toBeVisible()
+    expect(screen.getByText('Checkout 8')).toBeVisible()
     const rang = container.querySelector('[aria-hidden="true"] > div') as HTMLElement
     expect(rang).toHaveTextContent('4/7')
     expect(rang.querySelector('i')).toHaveStyle({ width: '40%' })

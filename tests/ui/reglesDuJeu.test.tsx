@@ -105,7 +105,7 @@ describe('Feuille de règles — le texte suit les réglages', () => {
     const contenu = contenuRegles(X01_PLANCHE, SORTIES)
     expect(contenu.titre).toBe('Règles du X01')
     expect(contenu.ceSoir).toBe(
-      '501 · premier à 2 manches · sortie libre · entrée libre · sans sets',
+      '501 · premier à 2 manches · checkout libre · entrée libre · sans sets',
     )
     expect(texteDe(contenu.enBref)).toBe(
       'Chacun part de 501 et retire ses points. Le premier qui arrive pile à zéro gagne la manche.',
@@ -114,7 +114,7 @@ describe('Feuille de règles — le texte suit les réglages', () => {
       'Marquer',
       'Gagner',
       'Cas particuliers',
-      'Les sorties',
+      'Les checkouts',
       'Un exemple',
       'Questions fréquentes',
       'Ce que l’app compte',
@@ -131,30 +131,30 @@ describe('Feuille de règles — le texte suit les réglages', () => {
     expect(texte).not.toContain('9 premières fléchettes')
   })
 
-  it('X01 en sortie libre : sortie libre pleine, sortie et entrée sur un double en gris', () => {
+  it('X01 en checkout libre : checkout libre pleine, sortie et entrée sur un double en gris', () => {
     const cas = lignes(contenuRegles(X01_PLANCHE, SORTIES), 'Cas particuliers')
-    expect(cas.find(([t]) => t.startsWith('Sortie libre'))?.[1]).toBe(false)
-    expect(cas.find(([t]) => t.startsWith('Sortie sur un double'))?.[1]).toBe(true)
+    expect(cas.find(([t]) => t.startsWith('Checkout libre'))?.[1]).toBe(false)
+    expect(cas.find(([t]) => t.startsWith('Checkout sur un double'))?.[1]).toBe(true)
     expect(cas.find(([t]) => t.startsWith('Entrée sur un double'))?.[1]).toBe(true)
   })
 
   it('X01 sur un double et entrée sur un double : la bascule, même ordre', () => {
     const contenu = contenuRegles({ ...X01_PLANCHE, doubleOut: true, doubleIn: true }, SORTIES)
-    expect(contenu.ceSoir).toContain('sortie sur un double · entrée sur un double')
+    expect(contenu.ceSoir).toContain('checkout sur un double · entrée sur un double')
     const cas = lignes(contenu, 'Cas particuliers')
     expect(cas.map(([t]) => t.split(' :')[0])).toEqual([
       'Bust',
-      'Sortie libre',
-      'Sortie sur un double',
+      'Checkout libre',
+      'Checkout sur un double',
       'Entrée sur un double',
     ])
     expect(cas.map(([, gris]) => gris)).toEqual([false, true, false, false])
     expect(auLaiton(contenu)).toEqual(['501', '2', 'Sans', 'sur un double', 'sur un double'])
   })
 
-  it('X01, « Les sorties » : la liste de ce soir en rouge, l’autre en gris', () => {
+  it('X01, « Les checkouts » : la liste de ce soir en rouge, l’autre en gris', () => {
     const pastilles = (doubleOut: boolean) =>
-      rubrique(contenuRegles({ ...X01_PLANCHE, doubleOut }, SORTIES), 'Les sorties').flatMap(
+      rubrique(contenuRegles({ ...X01_PLANCHE, doubleOut }, SORTIES), 'Les checkouts').flatMap(
         (bloc) => (bloc.type === 'pastilles' ? [[bloc.nombres, bloc.autre === true] as const] : []),
       )
     expect(pastilles(false)).toEqual([
@@ -222,7 +222,7 @@ describe('Feuille de règles — le texte suit les réglages', () => {
       SORTIES,
     )
     expect(contenu.titre).toBe('Règles de l’entraînement')
-    expect(contenu.ceSoir).toBe(`${sorties} sorties · restes tirés entre 41 et 170`)
+    expect(contenu.ceSoir).toBe(`${sorties} checkouts · restes tirés entre 41 et 170`)
     expect(auLaiton(contenu)).toEqual([String(sorties)])
   })
 
@@ -266,7 +266,7 @@ describe('Feuille de règles — le texte suit les réglages', () => {
     ]
     for (const regles of tous) {
       const texte = toutLeTexte(contenuRegles(regles, SORTIES))
-      expect(texte).toMatch(/manche|cible|sortie/i)
+      expect(texte).toMatch(/manche|cible|checkout/i)
       expect(texte).not.toMatch(/\blegs?\b/i)
       expect(texte).not.toMatch(/best of/i)
     }
@@ -277,7 +277,7 @@ describe('Feuille de règles — le texte suit les réglages', () => {
 describe('Feuille de règles — les exemples tiennent aux vraies règles', () => {
   const ouverte = { doubleIn: false } as const
 
-  it('X01 : 40, puis 20, 15, 10 → bust ; une troisième à 5 gagne en sortie libre, pas sur un double', () => {
+  it('X01 : 40, puis 20, 15, 10 → bust ; une troisième à 5 gagne en checkout libre, pas sur un double', () => {
     const libre = { ...ouverte, doubleOut: false }
     expect(
       resolveVisit(libre, 40, true, [Dart.single(20), Dart.single(15), Dart.single(10)]).outcome,
@@ -483,19 +483,19 @@ describe('Le livre ouvert, sur le match', () => {
       '2Marquer',
       '3Gagner',
       '4Cas particuliers',
-      '5Les sorties',
+      '5Les checkouts',
       '6Un exemple',
       '7Questions fréquentes',
       '8Ce que l’app compte',
       '9Les réglages possibles',
     ])
     await utilisateur.click(within(feuille).getByRole('button', { name: /Marquer/ }))
-    await utilisateur.click(within(feuille).getByRole('button', { name: /Les sorties/ }))
+    await utilisateur.click(within(feuille).getByRole('button', { name: /Les checkouts/ }))
     expect(within(feuille).getByRole('button', { name: /Marquer/ })).toHaveAttribute(
       'aria-expanded',
       'true',
     )
-    expect(within(feuille).getByRole('button', { name: /Les sorties/ })).toHaveAttribute(
+    expect(within(feuille).getByRole('button', { name: /Les checkouts/ })).toHaveAttribute(
       'aria-expanded',
       'true',
     )
@@ -518,34 +518,34 @@ describe('Le livre ouvert, à l’étape 2', () => {
 
     await utilisateur.click(livre)
     expect(
-      within(screen.getByRole('dialog')).getByText(/sortie libre · entrée libre/),
+      within(screen.getByRole('dialog')).getByText(/checkout libre · entrée libre/),
     ).toBeVisible()
     await utilisateur.click(screen.getByRole('button', { name: 'Fermer' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 
     await utilisateur.click(screen.getByRole('button', { name: /plus de réglages/i }))
-    const sortie = within(screen.getByRole('group', { name: 'Sortie' }))
-    await utilisateur.click(sortie.getByRole('button', { name: 'Sur un double' }))
+    const sortie = within(screen.getByRole('group', { name: 'Checkout' }))
+    await utilisateur.click(sortie.getByRole('button', { name: 'Checkout sur un double' }))
     await utilisateur.click(livre)
     expect(
-      within(screen.getByRole('dialog')).getByText(/sortie sur un double · entrée libre/),
+      within(screen.getByRole('dialog')).getByText(/checkout sur un double · entrée libre/),
     ).toBeVisible()
     expect(locationCourante().pathname).toBe('/nouvelle-partie/x01')
   })
 })
 
 describe('« Pas de finish » suit la sortie de la partie', () => {
-  it.each([172, 173, 175, 176, 178, 179])('sortie libre : pas de finish à %i', async (reste) => {
+  it.each([172, 173, 175, 176, 178, 179])('checkout libre : pas de finish à %i', async (reste) => {
     const { services, matchId } = await partieX01({ startingScore: reste, doubleOut: false })
     ouvrirMatch(services, matchId)
     expect(await screen.findByText(LIBELLE_PAS_DE_FINISH)).toBeInTheDocument()
   })
 
-  it.each([174, 177, 180])('sortie libre : une route à %i', async (reste) => {
+  it.each([174, 177, 180])('checkout libre : une route à %i', async (reste) => {
     const { services, matchId } = await partieX01({ startingScore: reste, doubleOut: false })
     ouvrirMatch(services, matchId)
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent(String(reste)))
-    expect(await screen.findByText('Sortie')).toBeInTheDocument()
+    expect(await screen.findByText('Checkout')).toBeInTheDocument()
     expect(screen.queryByText(LIBELLE_PAS_DE_FINISH)).toBeNull()
   })
 
@@ -554,7 +554,7 @@ describe('« Pas de finish » suit la sortie de la partie', () => {
     ouvrirMatch(services, matchId)
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent(String(reste)))
     expect(screen.queryByText(LIBELLE_PAS_DE_FINISH)).toBeNull()
-    expect(screen.queryByText('Sortie')).toBeNull()
+    expect(screen.queryByText('Checkout')).toBeNull()
   })
 })
 
@@ -641,7 +641,7 @@ describe('C2 — « Ce soir » lit la configuration de la partie', () => {
     expect(ceSoir()).toBe('20 → 1, puis la bulle · 21 cibles · rien à régler')
   })
 
-  it('entraînement de 5 sorties', async () => {
+  it('entraînement de 5 checkouts', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
     const k = await services.managePlayers.create('Kevin')
@@ -651,7 +651,7 @@ describe('C2 — « Ce soir » lit la configuration de la partie', () => {
     })
     ouvrirMatch(services, matchId)
     await ouvrirLivre(utilisateur)
-    expect(ceSoir()).toBe('5 sorties · restes tirés entre 41 et 170')
+    expect(ceSoir()).toBe('5 checkouts · restes tirés entre 41 et 170')
   })
 
   it('X01 : la sortie et l’entrée ne se confondent pas', async () => {
@@ -660,7 +660,7 @@ describe('C2 — « Ce soir » lit la configuration de la partie', () => {
     ouvrirMatch(services, matchId)
     await ouvrirLivre(utilisateur)
     expect(ceSoir()).toBe(
-      '501 · premier à 2 manches · sortie libre · entrée sur un double · sans sets',
+      '501 · premier à 2 manches · checkout libre · entrée sur un double · sans sets',
     )
   })
 
@@ -677,18 +677,18 @@ describe('C2 — « Ce soir » lit la configuration de la partie', () => {
     expect(ceSoir()).toBe('Cut-throat · 7 cibles · 20 à 15 et la bulle')
   })
 
-  it('étape 2 de l’entraînement : changer le nombre de sorties puis rouvrir', async () => {
+  it('étape 2 de l’entraînement : changer le nombre de checkouts puis rouvrir', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/nouvelle-partie/entrainement' })
     await ouvrirLivre(utilisateur)
-    expect(ceSoir()).toBe('10 sorties · restes tirés entre 41 et 170')
+    expect(ceSoir()).toBe('10 checkouts · restes tirés entre 41 et 170')
     await fermerParLaCroix(utilisateur)
 
-    const rail = within(screen.getByRole('group', { name: 'Nombre de sorties' }))
+    const rail = within(screen.getByRole('group', { name: 'Nombre de checkouts' }))
     await utilisateur.click(rail.getByRole('button', { name: '20' }))
     await ouvrirLivre(utilisateur)
-    expect(ceSoir()).toBe('20 sorties · restes tirés entre 41 et 170')
+    expect(ceSoir()).toBe('20 checkouts · restes tirés entre 41 et 170')
   })
 
   it('étape 2 du X01 : l’entrée sur un double seule ne touche pas la sortie', async () => {
@@ -700,7 +700,7 @@ describe('C2 — « Ce soir » lit la configuration de la partie', () => {
     const entree = within(screen.getByRole('group', { name: 'Entrée' }))
     await utilisateur.click(entree.getByRole('button', { name: 'Sur un double' }))
     await ouvrirLivre(utilisateur)
-    expect(ceSoir()).toContain('sortie libre · entrée sur un double')
+    expect(ceSoir()).toContain('checkout libre · entrée sur un double')
   })
 })
 
@@ -718,8 +718,8 @@ describe('C3 — les couleurs de rôle, dans le DOM', () => {
       within(feuille)
         .getAllByRole('listitem')
         .find((li) => li.textContent?.startsWith(debut))
-    expect(ligne('Sortie libre')).toHaveClass('text-craie-3-regles')
-    expect(ligne('Sortie sur un double')).not.toHaveClass('text-craie-3-regles')
+    expect(ligne('Checkout libre')).toHaveClass('text-craie-3-regles')
+    expect(ligne('Checkout sur un double')).not.toHaveClass('text-craie-3-regles')
 
     const reglage = (terme: string) => within(feuille).getByText(terme).nextElementSibling
     const allumes = [...(reglage('Départ')?.querySelectorAll('.text-laiton-clair') ?? [])]
@@ -772,10 +772,10 @@ describe('C4 — le retour à l’étape 2', () => {
  * corrigées d'après le code (Q1), marquées « Q1 ».
  */
 describe('C5 — le texte de la planche, mot pour mot', () => {
-  it('X01 : 501, premier à 2, sortie libre, entrée libre, sans sets', () => {
+  it('X01 : 501, premier à 2, checkout libre, entrée libre, sans sets', () => {
     expect(toutLeTexte(contenuRegles(X01_PLANCHE, SORTIES)).split('\n')).toEqual([
       'Règles du X01',
-      '501 · premier à 2 manches · sortie libre · entrée libre · sans sets',
+      '501 · premier à 2 manches · checkout libre · entrée libre · sans sets',
       'Chacun part de 501 et retire ses points. Le premier qui arrive pile à zéro gagne la manche.',
       'Marquer',
       'Une volée, c’est 3 fléchettes au plus.', // Q1 (c)
@@ -788,13 +788,13 @@ describe('C5 — le texte de la planche, mot pour mot', () => {
       'Avec des sets, un set se gagne au premier à N manches, et la partie au premier à S sets.',
       'Cas particuliers',
       'Bust : si la volée fait passer sous zéro, elle est annulée et le score revient à sa valeur d’avant la volée. C’est au suivant.',
-      'Sortie libre : n’importe quelle fléchette qui amène pile à zéro gagne.',
-      'Sortie sur un double : il faut finir sur un double (le centre à 50 compte). Un reste de 1, ou un zéro sans double, est aussi un bust.',
+      'Checkout libre : n’importe quelle fléchette qui amène pile à zéro gagne.',
+      'Checkout sur un double : il faut finir sur un double (le centre à 50 compte). Un reste de 1, ou un zéro sans double, est aussi un bust.',
       'Entrée sur un double : le score ne décompte qu’à partir du premier double.',
-      'Les sorties',
-      'Ce soir, l’app propose une sortie dès qu’il reste 180 ou moins. Ces restes n’ont pas de sortie en 3 fléchettes, l’app affiche « Pas de finish » :',
+      'Les checkouts',
+      'Ce soir, l’app propose un checkout dès qu’il reste 180 ou moins. Ces restes n’ont pas de checkout en 3 fléchettes, l’app affiche « Pas de finish » :',
       '179 178 176 175 173 172 169 166 163',
-      'Sortie sur un double : 170 au plus (T20 · T20 · centre), et pas de sortie pour :',
+      'Checkout sur un double : 170 au plus (T20 · T20 · centre), et pas de checkout pour :',
       '169 168 166 165 163 162 159',
       'Un exemple',
       'Il reste 40 à Kevin.',
@@ -807,24 +807,24 @@ describe('C5 — le texte de la planche, mot pour mot', () => {
       'Les fléchettes d’un bust comptent-elles ?',
       'Pour le score, non : toute la volée est annulée. Pour la moyenne, oui : les fléchettes lancées comptent, avec 0 point.', // Q1 (a)
       'Peut-on finir sur la bulle ?',
-      'Oui. En sortie sur un double, seul le centre à 50 finit : il compte comme un double.',
+      'Oui. En checkout sur un double, seul le centre à 50 finit : il compte comme un double.',
       'Pourquoi l’app ne propose rien à 169 ?',
       'Aucune volée de 3 fléchettes ne fait 169 avec les règles de ce soir. Plutôt qu’une suggestion fausse, l’app affiche « Pas de finish ».',
-      'La sortie proposée est-elle celle des pros ?',
+      'Le checkout proposé est-il celui des pros ?',
       'C’est toujours une route qui marche, mais elle peut différer des tables professionnelles.',
       'Qui commence la manche suivante ?',
       'Le joueur suivant dans l’ordre : celui qui commence change à chaque manche.',
       'Ce que l’app compte',
       'Moyenne 3 fléchettes : points marqués ÷ fléchettes lancées × 3. Un bust marque 0 point, mais ses fléchettes comptent.',
       'First 9 : la même moyenne, sur les 3 premières volées de chaque manche.', // Q1 (b)
-      '% doubles : doubles de sortie réussis ÷ tentatives. Compté seulement en sortie sur un double.',
+      '% doubles : doubles de checkout réussis ÷ tentatives. Compté seulement en checkout sur un double.',
       'Grosses volées : 180, 140 et plus, 100 et plus, 60 et plus.',
       'Meilleure manche : le moins de fléchettes pour finir une manche. Plus haut checkout : la plus grosse volée qui a fini une manche.',
       'Les réglages possibles',
       'Départ 301 · 501 · 701',
       'Manches Premier à 1 · 2 · 3 · 4',
       'Sets Sans · premier à 2 · 3',
-      'Sortie Libre · sur un double',
+      'Checkout Libre · sur un double',
       'Entrée Libre · sur un double',
       'Ce soir en laiton. Les réglages se choisissent à l’étape 2 et ne changent plus en cours de partie.',
     ])
@@ -988,7 +988,7 @@ describe('R1 — la feuille suit la discipline de la `Modale`', () => {
     await deplier(utilisateur, /Cas particuliers/)
     const grise = within(feuille)
       .getAllByRole('listitem')
-      .find((li) => li.textContent?.startsWith('Sortie libre'))
+      .find((li) => li.textContent?.startsWith('Checkout libre'))
     const fortGris = grise?.querySelector('strong')
     expect(fortGris).not.toBeNull()
     expect(fortGris).toHaveClass('font-semibold', 'text-craie-2-regles')
@@ -1141,7 +1141,7 @@ describe('R1 / constat 8 — sets, départ et manches arrivent jusqu’à « Ce 
     ouvrirMatch(services, matchId)
     await ouvrirLivre(utilisateur)
     expect(ceSoir()).toBe(
-      '301 · premier à 3 manches · sortie sur un double · entrée libre · premier à 2 sets',
+      '301 · premier à 3 manches · checkout sur un double · entrée libre · premier à 2 sets',
     )
   })
 
@@ -1160,7 +1160,7 @@ describe('R1 / constat 8 — sets, départ et manches arrivent jusqu’à « Ce 
 
     await ouvrirLivre(utilisateur)
     expect(ceSoir()).toBe(
-      '701 · premier à 3 manches · sortie libre · entrée libre · premier à 2 sets',
+      '701 · premier à 3 manches · checkout libre · entrée libre · premier à 2 sets',
     )
   })
 })

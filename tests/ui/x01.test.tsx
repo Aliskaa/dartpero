@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import App from '@/App'
 import { createServices, type Services } from '@/composition/container'
 import { X01Config, type X01ConfigInput } from '@/core/domain/games/x01/config'
-import { fakeDependencies, fakeServices } from '../fakes'
+import { FakeAnnouncer, fakeDependencies, fakeServices } from '../fakes'
 import { flechette } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
@@ -27,12 +27,12 @@ const scoreDe = (nom: string) => screen.getByLabelText(`Score restant de ${nom}`
 /** Une partie dont on écoute la voix : le port `Announcer`, en mémoire. */
 const partieSonore = async () => {
   const dependencies = fakeDependencies()
-  const dit: string[] = []
+  const voix = new FakeAnnouncer()
   services = createServices({
     ...dependencies,
     devices: {
       ...dependencies.devices,
-      announcer: { say: (texte: string) => dit.push(texte), cancel: () => {} },
+      announcer: voix,
     },
   })
 
@@ -43,7 +43,7 @@ const partieSonore = async () => {
     config: X01Config.create(),
   })
   renderWithServices(<App />, { services, route: `/partie/${matchId}` })
-  return dit
+  return voix
 }
 
 describe('Écran de match', () => {
@@ -150,14 +150,19 @@ describe('Écran de match', () => {
    */
   it('annonce le score PUIS le joueur suivant, en une seule phrase', async () => {
     const utilisateur = userEvent.setup()
-    const dit = await partieSonore()
+    const voix = await partieSonore()
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
 
     await flechette(utilisateur, '20', 'Triple')
     await flechette(utilisateur, '20', 'Triple')
     await flechette(utilisateur, '20', 'Triple')
 
-    await waitFor(() => expect(dit).toEqual(['180. À toi, Julien']))
+    await waitFor(() => expect(voix.textes).toEqual(['180. À toi, Julien']))
+    // Le score et le tour sont en français, le point dans le segment français du tour.
+    expect(voix.annonces[0]).toEqual([
+      { texte: '180', langue: 'fr-FR' },
+      { texte: '. À toi, Julien', langue: 'fr-FR' },
+    ])
   })
 
   it('affiche la sortie conseillée dès que le reste le permet', async () => {

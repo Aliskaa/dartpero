@@ -4,7 +4,7 @@
 
 **Le compteur de fléchettes entre potes.**
 X01, Tour du monde, Cricket et entraînement au checkout —
-saisie fléchette par fléchette, suggestions de sortie, stats et historique.
+saisie fléchette par fléchette, suggestions de checkout, stats et historique.
 
 **100 % local · hors ligne · sans compte · sans pub**
 
@@ -38,15 +38,15 @@ activé.
 | 🎯 | **X01** | 301 / 501 / 701, double in et double out, premier à N manches, sets en option. Le mode principal. |
 | 🌍 | **Tour du monde** | Du 20 à la bulle, 21 cibles. On finit le tour de table, et le moins de fléchettes gagne. |
 | ✖️ | **Cricket** | Sept cibles à fermer, variantes **standard** et **cut-throat** (où le plus petit score gagne). |
-| 🎓 | **Entraînement** | Un reste tiré au sort entre 41 et 170, trois fléchettes pour le sortir. En solo. |
+| 🎓 | **Entraînement** | Un reste tiré au sort entre 41 et 170, trois fléchettes pour faire le checkout. En solo. |
 
 ### Pendant la partie
 
 - **Saisie fléchette par fléchette** — la grille 1-20 + 25, et une bascule S/D/T qui **retombe
   sur Simple après chaque fléchette**. Un multiplicateur resté armé sans qu'on le voie, c'est
   trois T20 comptés là où il y avait trois simples.
-- **Suggestion de sortie** qui suit la sortie de la partie : jusqu'à 170 sur un double, jusqu'à
-  180 en sortie libre — et « pas de finish » sur les restes impossibles, jamais une route bidon.
+- **Suggestion de checkout** qui suit le checkout de la partie : jusqu'à 170 sur un double, jusqu'à
+  180 en checkout libre — et « pas de finish » sur les restes impossibles, jamais une route bidon.
 - **Les règles au livre ouvert** : un appui sur le livre, à la création de partie ou en plein
   match, ouvre les règles du jeu par-dessus l'écran — celles que l'app applique, avec les
   réglages de ce soir. La volée en cours ne bouge pas.
@@ -241,12 +241,12 @@ couverte par des tests.
 
 - **Bust** — la volée entière est annulée et le score revient à sa valeur d'avant : reste
   `< 0` ; et, **quand le double out est actif**, reste `== 1` (impossible à finir sur un double)
-  ou reste `== 0` sans que la **dernière** fléchette soit un double. L'écran propose la sortie
+  ou reste `== 0` sans que la **dernière** fléchette soit un double. L'écran propose le checkout
   libre par défaut ; le double out se coche à la création de partie.
 - **Le triple bull n'existe pas** — `Dart.of('BULL', 'TRIPLE')` est refusé par le domaine. Le
-  bullseye à 50 **compte comme un double** pour la sortie.
-- **Les restes sans sortie** affichent « pas de finish ». Sur un double, ce sont les 7 *bogey
-  numbers* (169, 168, 166, 165, 163, 162, 159), au-delà de 170 rien n'est proposé ; en sortie
+  bullseye à 50 **compte comme un double** pour le checkout.
+- **Les restes sans checkout** affichent « pas de finish ». Sur un double, ce sont les 7 *bogey
+  numbers* (169, 168, 166, 165, 163, 162, 159), au-delà de 170 rien n'est proposé ; en checkout
   libre, la borne monte à 180 et la liste devient 179, 178, 176, 175, 173, 172, 169, 166, 163
   (un reste de 1 se sort d'un simple 1). Ces listes ne sont **pas consultées par l'algorithme** :
   elles tombent d'une recherche exhaustive, et un test vérifie que *tous* les restes ont une

@@ -1,5 +1,9 @@
 import { createServices, type Dependencies, type Services } from '@/composition/container'
-import { NullAnnouncer } from '@/core/application/ports/driven/Announcer'
+import {
+  type Annonce,
+  type Announcer,
+  NullAnnouncer,
+} from '@/core/application/ports/driven/Announcer'
 import {
   type AppInstallation,
   type InstallOutcome,
@@ -186,6 +190,25 @@ export class DepotSuspendu extends InMemoryMatchRepository {
     await super.save(record)
   }
 }
+/** La voix en mémoire : garde les annonces (segments typés par langue) telles que reçues. */
+export class FakeAnnouncer implements Announcer {
+  readonly annonces: Annonce[] = []
+  annulations = 0
+
+  say(annonce: Annonce): void {
+    this.annonces.push(annonce)
+  }
+
+  cancel(): void {
+    this.annulations += 1
+  }
+
+  /** Chaque annonce recollée en une phrase, sans la langue. */
+  get textes(): string[] {
+    return this.annonces.map((annonce) => annonce.map((segment) => segment.texte).join(''))
+  }
+}
+
 export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Dependencies => ({
   matches: new InMemoryMatchRepository(),
   players: new InMemoryPlayerRepository(),

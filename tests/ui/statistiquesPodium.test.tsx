@@ -84,6 +84,25 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     )
   })
 
+  it('« Hors » remplace le 0 des fléchettes hors cible ; un nombre non nul reste affiché', async () => {
+    const { services, dependencies, julien } = await troisJoueurs()
+    const derniereCase = () =>
+      cible().then((plateau) => {
+        const cases = within(plateau.closest('figure') as HTMLElement).getAllByRole('listitem')
+        return cases[cases.length - 1]?.textContent
+      })
+
+    // Kevin n'a rien manqué : le mot, jamais « 0 ».
+    const { unmount } = renderWithServices(<App />, { services, route: '/statistiques' })
+    expect(await derniereCase()).toBe('Horshors cible')
+    unmount()
+
+    // Julien a manqué 9 fléchettes : le nombre.
+    dependencies.devices.preferences.write(CLE, julien.id)
+    renderWithServices(<App />, { services, route: '/statistiques' })
+    expect(await derniereCase()).toBe('9hors cible')
+  })
+
   it('à l’ouverture, montre le dernier joueur consulté', async () => {
     const { services, dependencies, julien } = await troisJoueurs()
     dependencies.devices.preferences.write(CLE, julien.id)
@@ -149,7 +168,7 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
       within(plateau.closest('figure') as HTMLElement)
         .getAllByRole('listitem')
         .map((c) => c.textContent)
-    expect(cases()).toEqual(['S209 fois', '0hors cible'])
+    expect(cases()).toEqual(['S209 fois', 'Horshors cible'])
     const cartes = () =>
       ['Moyenne 3 fl., Moyenne 3 fléchettes', 'Victoires', 'Grosses volées', 'Finitions'].map(
         (nom) => screen.getByRole('region', { name: nom }).textContent,
@@ -167,7 +186,7 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
       within(apres.closest('figure') as HTMLElement)
         .getAllByRole('listitem')
         .map((c) => c.textContent),
-    ).toEqual(['S53 fois', '0hors cible'])
+    ).toEqual(['S53 fois', 'Horshors cible'])
     expect(within(ruban()).getByRole('button', { name: 'Sarah' })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -196,7 +215,7 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     const cases = within(plateau.closest('figure') as HTMLElement)
       .getAllByRole('listitem')
       .map((c) => c.textContent)
-    expect(cases).toEqual(['Bulle 502 fois', 'Bulle 251 fois', '0hors cible'])
+    expect(cases).toEqual(['Bulle 502 fois', 'Bulle 251 fois', 'Horshors cible'])
   })
 })
 
@@ -563,7 +582,7 @@ describe('Statistiques — cas de bord à l’écran (T-M6)', () => {
     const cases = within(vide.closest('figure') as HTMLElement)
       .getAllByRole('listitem')
       .map((c) => c.textContent)
-    expect(cases).toEqual(['0hors cible'])
+    expect(cases).toEqual(['Horshors cible'])
   })
 })
 

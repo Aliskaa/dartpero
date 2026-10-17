@@ -35,6 +35,7 @@ import {
   ETIQUETTE_VOYANT_SAUVEGARDE,
   EXPLICATION_RESTAURATION,
   entreesIgnorees,
+  fr,
   LIBELLE_DEMANDER_PROTECTION,
   LIBELLE_EXPORTER,
   LIBELLE_INSTALLER,
@@ -390,7 +391,7 @@ export const ReglagesEcran = () => {
               action={{
                 type: 'bouton',
                 desactivee: !voix,
-                onClick: () => services.devices.announcer.say(PHRASE_ESSAI_VOIX),
+                onClick: () => services.devices.announcer.say([fr(PHRASE_ESSAI_VOIX)]),
               }}
             />
           </ListeReglages>
