@@ -19,6 +19,7 @@ import type { GetMatchState } from '@/core/application/ports/driving/GetMatchSta
 import type { GetMatchStats } from '@/core/application/ports/driving/GetMatchStats'
 import type { GetOngoingMatch } from '@/core/application/ports/driving/GetOngoingMatch'
 import type { GetPlayerStats } from '@/core/application/ports/driving/GetPlayerStats'
+import type { GetReplayableConfigurations } from '@/core/application/ports/driving/GetReplayableConfigurations'
 import type { ManageBackup } from '@/core/application/ports/driving/ManageBackup'
 import type { ManagePlayers } from '@/core/application/ports/driving/ManagePlayers'
 import type { PlayCheckoutPractice } from '@/core/application/ports/driving/PlayCheckoutPractice'
@@ -42,6 +43,7 @@ import { GetMatchStateUseCase } from '@/core/application/use-cases/GetMatchState
 import { GetMatchStatsUseCase } from '@/core/application/use-cases/GetMatchStatsUseCase'
 import { GetOngoingMatchUseCase } from '@/core/application/use-cases/GetOngoingMatchUseCase'
 import { GetPlayerStatsUseCase } from '@/core/application/use-cases/GetPlayerStatsUseCase'
+import { GetReplayableConfigurationsUseCase } from '@/core/application/use-cases/GetReplayableConfigurationsUseCase'
 import { ManageBackupUseCase } from '@/core/application/use-cases/ManageBackupUseCase'
 import { ManagePlayersUseCase } from '@/core/application/use-cases/ManagePlayersUseCase'
 import { PlayCheckoutPracticeUseCase } from '@/core/application/use-cases/PlayCheckoutPracticeUseCase'
@@ -121,6 +123,8 @@ export type Services = {
   readonly getCheckoutRange: GetCheckoutRange
   readonly getMatchStats: GetMatchStats
   readonly getMatchHistory: GetMatchHistory
+  /** Les configurations récentes distinctes, pour « Rejouer » (étape 1 de Nouvelle partie). */
+  readonly getReplayableConfigurations: GetReplayableConfigurations
   readonly getMatchMode: GetMatchMode
   /** Le nom tapé d'une partie et sa date de création, pour son bandeau et son résumé. */
   readonly getMatchName: GetMatchName
@@ -186,6 +190,7 @@ export const createServices = ({
     getCheckoutRange: new GetCheckoutRangeUseCase(),
     getMatchStats: new GetMatchStatsUseCase(matches),
     getMatchHistory: new GetMatchHistoryUseCase(matches, players),
+    getReplayableConfigurations: new GetReplayableConfigurationsUseCase(matches, players),
     getMatchMode: new GetMatchModeUseCase(matches),
     getMatchName: new GetMatchNameUseCase(matches),
     getOngoingMatch: new GetOngoingMatchUseCase(matches, players),

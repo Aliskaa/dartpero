@@ -67,7 +67,7 @@ export const NouvellePartieEcran = () => {
   return (
     <main className="feutre-tapis flex min-h-dvh flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
       <Routes>
-        <Route index element={<EtapeJeu />} />
+        <Route index element={<EtapeJeu partie={partie} />} />
         <Route
           path=":jeu"
           element={<AvecJeu>{(mode) => <EtapeJoueurs mode={mode} partie={partie} />}</AvecJeu>}

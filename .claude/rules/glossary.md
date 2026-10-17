@@ -23,6 +23,7 @@ ce que lit le joueur, la deuxième ce qu'écrit le code.
 | Tour du monde | `tour-du-monde` | 20 → 1 puis bulle ; on finit le tour de table. |
 | entraînement | `checkout-practice` | Mode solo d'entraînement à la sortie. |
 | manche (entraînement) | `rounds` | Une tentative de l'entraînement : un reste tiré, une volée pour le sortir. Même mot que la manche X01, autre objet. |
+| Rejouer | `GetReplayableConfigurations` | Étape 1 de Nouvelle partie : les 3 configurations récentes (mode + réglages + ensemble de joueurs, lues sur l'historique, rien de stocké). ▶ préremplit le parcours ; le **nom n'est jamais repris**. À ne pas confondre avec « On remet ça » (résumé de fin), qui relance la partie à l'identique et garde le nom. |
 | nom de partie | `MatchName` | Nom **tapé** (≤ 30 caractères, espaces autour retirés), seul écrit, dans l'événement d'ouverture. À défaut, « Jour tranche » recalculé depuis la date de création, jamais écrit — la nuit (0-5 h) au nom du jour du calendrier. |
 | partie en cours | `GetOngoingMatch` | La partie non terminée **modifiée le plus récemment**, parmi les 20 dernières. Épinglée en tête de l'Accueil, seule carte qui porte « Reprendre ». |
 | abandonnée | `'ABANDONED'` / `matchStatus` | Partie non terminée qui n'est **pas** la partie en cours. Dérivée, jamais écrite ; toujours reprenable ; même statut à l'Accueil et dans Parties, jamais calculée contre une liste filtrée. |

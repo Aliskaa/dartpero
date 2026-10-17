@@ -383,6 +383,40 @@ Laiton unique : **aucune couleur par mode** (la planche en proposait quatre ; se
   `bg-laiton/10` avec liseré gauche laiton et « COMMENCE ». « Tirer au sort » : bouton secondaire ;
   la feuille rejoue `animate-monter` (court, sans rebond), coupé sous `prefers-reduced-motion`.
 
+#### Rejouer (lot `rejouer`, étape 1)
+
+Avec un historique, l'étape 1 s'ouvre sur **les trois configurations récentes** puis sur les quatre
+jeux en rangée ; sans configuration rejouable (historique vide, ou parties toutes écartées : profil
+supprimé, valeur hors des listes, booléen mal typé d'une sauvegarde importée, plus de 4 joueurs),
+les tuiles 2 × 2 ci-dessus restent telles quelles ; pendant le chargement, rien sous la barre
+d'étapes. Planche : `docs/maquettes/derniers/derniers.html`, piste 2 (`np2`).
+
+- **Section « Rejouer »** : étiquette `font-score` capitales `text-laiton-clair` (`TITRE_REJOUER`),
+  puis un `<ul>` nommé (`LEGENDE_REJOUER`), une ligne par configuration, la plus récente en tête.
+  **Une seule cible par ligne : ▶.**
+- **Ligne** : filet `border-laiton/55` sur `ardoise`, grille `40 px · 1fr · auto`. Pictogramme du
+  mode 40 px en `currentColor` (`text-laiton-clair`, **laiton unique**, pas de couleur par mode) ;
+  titre `font-score` capitales (« X01 · 501 », « Cricket · Cut-throat », « Tour du monde »,
+  « Entraînement ») ; résumé en capitales `text-craie-3` dans le vocabulaire de l'étape 2
+  (« premier à 2 manches · sortie libre · hier · 4 fois ») ; pastilles `Avatar` `xs` à initiales,
+  qui passent à la ligne à 360 px (le pseudo entier vit dans l'`aria-label` de ▶ seulement).
+- **▶** : `<button>` carré 48 px, `laiton-poli` (comme « Commencer »), icône `Play` pleine,
+  `aria-hidden`. Nom accessible : « Rejouer X01 501 avec Kevin, Julien et Sarah » (≥ 2 joueurs, mène à
+  l'Ordre) ou « Lancer Entraînement 10 sorties avec Kevin » (solo, lance la partie). Désactivé pendant
+  un lancement ; l'échec affiche `ERREUR_DEMARRAGE` **sous la section**.
+- **Date relative courte, sans heure** (`libelleDateRelative`) : « aujourd'hui », « hier », le jour
+  (« mardi ») jusqu'à 6 jours, puis « 3 oct. » (« 3 oct. 2025 » si l'année diffère). **« N fois »
+  masqué à 1**, affiché dès 2.
+- **« Ou un autre jeu »** : même étiquette, `<ul>` de quatre `<Link>` compacts (liseré haut laiton
+  3 px, pictogramme 24 px au-dessus du nom ; l'entraînement s'y dit **« Solo »**, le libellé court du
+  filtre de Parties, et « Entraînement » partout ailleurs), vers l'étape 2 avec `ETAT_PARCOURS`. Tant que l'historique
+  ou les profils chargent : **rien** sous la barre d'étapes (ni rangée, ni tuiles) — pas de bascule
+  de mise en page sous le doigt.
+- **La phrase d'aide de la planche** (« ▶ ouvre l'ordre de jeu… ») est **retirée** (fausse en solo).
+- Écarts à la planche : laiton unique (lot 6b), barre d'étapes du lot 9 en tête, pictogrammes
+  `currentColor`, pictogramme de la rangée gardé à **24 px** (la planche en dessine 28 ; la taille
+  28 n'est pas dans `TaillePictogramme`), « Solo » pour l'entraînement dans la rangée.
+
 ### La carte des impacts
 
 ⚠️ **Ce n'est pas la `Cible` décorative avec un calque par-dessus.** Sur un plateau déjà rouge,

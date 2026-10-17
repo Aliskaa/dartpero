@@ -199,8 +199,9 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   sur le `<dialog>`** (il s'afficherait fermé) : la mise en page vit dans un conteneur intérieur.
   Une tête de boîte est un `<div>`, jamais un `<header>` (le bandeau en est déjà un). Dette :
   `DialogueNouveauJoueur` ne suit pas encore ce modèle.
-- Les listes que l'étape 2 propose (`SCORES`, `LEGS`, `SETS`, `SORTIES`) vivent dans
-  `src/ui/reglagesPossibles.ts`, module neutre lu par la fiche, le hook du parcours et la feuille.
+- Les listes que l'étape 2 propose (`SCORES`, `LEGS`, `SETS`, `SORTIES`) et les bornes de joueurs
+  (`MAX_JOUEURS`, `JOUEURS_ENTRAINEMENT`) vivent dans `src/ui/reglagesPossibles.ts`, module neutre
+  lu par la fiche, le hook du parcours, la feuille et le filtre « Rejouer » (`ui/rejouer.ts`).
 
 ## 10 · Hooks (`ui/hooks/use<Mode>.ts`)
 
@@ -213,7 +214,9 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `invalidateQueries` qui redéclenche un fetch. ⚠️ Cette règle vaut pour le **cache d'un hook de
   mode** ; les **listes** (historique, Accueil, partie en cours), elles, s'invalident.
 - **Clés de requête partagées** : `src/ui/clesRequetes.ts` — `CLE_HISTORIQUE`, préfixe de toute
-  lecture d'historique (l'Accueil lit `[...CLE_HISTORIQUE, 'accueil']`), et `CLE_MATCH_EN_COURS`.
+  lecture d'historique (l'Accueil lit `[...CLE_HISTORIQUE, 'accueil']`), `CLE_REJOUER`
+  (`[...CLE_HISTORIQUE, 'rejouer']` : les configurations de « Rejouer », rafraîchies avec
+  l'historique) et `CLE_MATCH_EN_COURS`.
   Le lancement (`useNouvellePartie`), « On remet ça » (`ActionsFinDePartie`) et la suppression
   (`HistoriqueEcran`) invalident les deux ; l'import (`ReglagesEcran`) invalide tout. ⚠️ Jamais
   une clé déclarée dans un écran chargé à la demande : l'Accueil, importé statiquement,
@@ -397,7 +400,7 @@ compléter à la main.
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
 invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchangé au lot
 « accueil-parties-recentes » ; lot « regles-du-jeu » : 23 ports driving (`ShuffleOrder`,
-`GetCheckoutRange`)
+`GetCheckoutRange`) ; lot « rejouer » : 24 (`GetReplayableConfigurations`)
 (hors `MatchSummary.ts`, un type), 11 driven, 13 hooks (plus `tourDeTable.ts`, un utilitaire),
 4 modes, 4 services transverses.
 
@@ -428,7 +431,8 @@ src/
 │     │                   GetOngoingMatch, GetPlayerStats, DeleteMatch,
 │     │                   ManagePlayers, ManageBackup, PlayTourDuMonde,
 │     │                   PlayCricket, PreviewCricketVisit, PreviewTourDuMondeVisit,
-│     │                   PlayCheckoutPractice, ShuffleOrder
+│     │                   PlayCheckoutPractice, ShuffleOrder,
+│     │                   GetReplayableConfigurations
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
 │     │                   PersistentStorage, AppInstallation
@@ -452,7 +456,7 @@ src/
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
 │  │                        cricket/ · checkout-practice/
 │  │                      nouvelle-partie/ ← le parcours en étapes (une route par
-│  │                        étape : EtapeJeu (tuiles), EtapeJoueurs (rangée, fiche
+│  │                        étape : EtapeJeu (« Rejouer » + rangée, ou tuiles), EtapeJoueurs (rangée, fiche
 │  │                        ReglagesJeu, ChampNom), EtapeOrdre (feuille, « Tirer au
 │  │                        sort » via le port ShuffleOrder / ShuffleOrderUseCase),
 │  │                        BarreEtapes (non interactive, posée par EnTeteEtape),
@@ -478,7 +482,9 @@ src/
 │     podium.ts (Statistiques : classement d'une carte, largeurs, ex æquo sur le
 │       chiffre affiché, coupure « N premiers » (apercuPodium), joueur de la cible,
 │       recadrage du ruban d'onglets (defilementPourMontrer) — pur, sans React) ·
-│     reglagesPossibles.ts (SCORES, LEGS, SETS, SORTIES) · reglesDuJeu.ts
+│     reglagesPossibles.ts (SCORES, LEGS, SETS, SORTIES, MAX_JOUEURS,
+       JOUEURS_ENTRAINEMENT) · rejouer.ts (« Rejouer » : filtre « reproductible », les trois
+       lignes — pur, sans React) · reglesDuJeu.ts
 tests/                    domain/ · use-cases/ · infrastructure/ · architecture/ ·
                           fakes/ · ui/ (+ gestes.ts)
 ```

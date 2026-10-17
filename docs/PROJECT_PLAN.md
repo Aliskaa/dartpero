@@ -18,6 +18,11 @@ résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit
 `bundle-par-route`. App déployée sur https://dartpero.web.app.
 Lot `regles-du-jeu` (lot 11 de la refonte : règles au livre ouvert, sortie libre gravée, voir
 § 4 et § 6), rebasé sur `statistiques-podium` puis Révision 1 : **1340 tests verts**.
+Lot `rejouer` (lot 10 de la refonte : « Rejouer » à l'étape 1 de Nouvelle partie, voir § 4 et § 6) :
+**fait, 1408 tests verts** ; **relecture à l'écran en attente** (portrait, paysage, 360 px, deux thèmes).
+**Suites hors lot** : (1) `backupSchema` ne contrôle pas le type de `doubleOut` / `doubleIn` d'une partie
+importée (le filtre de « Rejouer » les écarte côté UI, mais l'import les laisse entrer) ; (2) un journal
+importé non projetable fait échouer la lecture de l'historique (constat 11 de l'index).
 Vérifications **acceptées à la relecture** par l'utilisateur (`docs/lots/regles-du-jeu/05-revue.md`,
 passe 2), sur son téléphone, au plus tard au prochain déploiement :
 - **défilement du corps de la feuille** (colonne `flex h-full flex-col`, nouvelle depuis la
@@ -256,6 +261,8 @@ fléchettes **sont comptées**.
 `GetCheckoutSuggestion` · **`GetCheckoutRange`** (lot `regles-du-jeu` : borne et listes « pas de
 finish » de la sortie, pour l'écran X01 et la feuille de règles) · `GetPlayerStats` ·
 `ManagePlayers` · `ManageBackup` ·
+**`GetReplayableConfigurations`** (lot `rejouer` : les configurations distinctes des 50 dernières
+parties, pour « Rejouer ») ·
 **`RestartMatch`** (lot UX) · **`GetMatchName`** (lot `nom-de-partie` : `{ name, createdAt }`,
 de quoi afficher le nom tapé ou recalculer le nom par défaut)
 
@@ -766,6 +773,15 @@ suit les réglages ; « Les règles en entier » retiré de la fiche. Domaine : 
 (170 / 180), `FREE_OUT_NO_FINISH`, S1 à 1 en sortie libre ; port `GetCheckoutRange` ;
 « Pas de finish » borné par la sortie. Reste : relecture à l'écran (textes non dessinés, retour
 Android par CloseWatcher, iPhone). Détail § 6.
+
+### Lot « rejouer » (lot 10 de la refonte de la charte)
+
+✅ **Fait — 1408 tests verts** (+68). Section « Rejouer » en tête de l'étape 1 de Nouvelle partie :
+les trois configurations distinctes récentes (mode + réglages + ensemble de joueurs), fusionnées
+avec « N fois », relancées par ▶ (Ordre à deux joueurs ou plus, lancement direct en solo),
+« Ou un autre jeu » en rangée compacte. Port `GetReplayableConfigurations` + use case lus sur
+l'historique, rien de stocké. Reste : relecture à l'écran (portrait, paysage, 360 px, deux
+thèmes). Détail § 6.
 
 ---
 
@@ -2088,3 +2104,47 @@ Session : `docs/lots/statistiques-podium/` (niveau `high` : la politique publiqu
   5 (Test → Dev ×2, Revue → Archi ×1). Hors périmètre, préexistant : l'entraînement dit
   « Sortie 8 » à l'Accueil et « Manche 3/10 » au bandeau (vocabulaire désormais décrit dans
   `CLAUDE.md` § Entraînement).
+
+
+### Lot `rejouer`
+
+Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `high` en cours de lot** : une décision s'ajoute à `CLAUDE.md` § Décisions structurantes ; aucune surface gravée de code touchée). Planche
+`docs/maquettes/derniers/derniers.html`, piste 2 (`np2`) ; mené **en parallèle** de
+`reglages-par-usage` (worktree).
+
+- **Lecture seule de l'historique** : port driving `GetReplayableConfigurations` +
+  `GetReplayableConfigurationsUseCase(matches, players)` (fenêtre `REPLAY_WINDOW` = 50, comme
+  Parties) ; câblé dans `container.ts`. Groupes clés = mode + réglages + joueurs **triés** ; les
+  cibles (Cricket, Tour du monde) et la plage des restes y figurent aussi, pour qu'une partie à
+  cibles non standard ne se fonde jamais dans le groupe standard. Liste **non coupée**.
+- **Filtre « reproductible »** dans `src/ui/rejouer.ts` (module neutre, comme `reglagesPossibles.ts` :
+  `application` ne peut pas le lire) : valeurs dans `SCORES` / `LEGS` / `SETS` / `SORTIES`, cibles et
+  plage du défaut ; puis `slice(0, 3)`. Les profils absents de la liste chargée sont écartés au même
+  endroit, **avant** la coupe.
+- **Lancement factorisé** : `lancer(mode, valeurs = courants)` de `useNouvellePartie` reste le seul
+  chemin ; `rejouer` y passe les valeurs en argument (la lecture des préférences serait périmée
+  juste après un `setX`) tout en les écrivant. Nom : `{}` explicite **et** saisie remise à la
+  proposition (un nom tapé avant un retour ne fuit pas). ▶ vers l'Ordre porte `ETAT_PARCOURS`.
+- **`CLE_REJOUER`** sous `CLE_HISTORIQUE` : la liste est relue au montage de l'étape 1, et le
+  lancement invalide `['historique']`.
+- **Chargement** (arbitrage utilisateur, corrige U6) : tant que l'historique ou les profils chargent,
+  **rien** sous la barre d'étapes (ni rangée, ni tuiles : pas de bascule, pas d'appui perdu). Une fois
+  chargé : configurations rejouables → « Rejouer » + rangée compacte ; aucune → tuiles 2 × 2.
+- **Libellés** (`labels.ts`) : `titreRejouer`, `resumeRejouer`, `libelleDateRelative` (jours
+  comptés sur le calendrier local), `libelleNFois`, `ariaRejouer`.
+- **S1** (Sécurité) : une sauvegarde importée peut porter `doubleOut: "oui"` (`backupSchema` ne contrôle
+  pas le type) ; le filtre exige des booléens, sinon la configuration est écartée. **S2** (décision
+  utilisateur) : plus de `MAX_JOUEURS` (4) joueurs = non reproductible par le parcours, écartée.
+  Un entraînement à plusieurs est écarté aussi, par une branche **défensive** (C1) : le domaine
+  refuse déjà un tel entraînement. Constantes `MAX_JOUEURS`, `JOUEURS_ENTRAINEMENT` dans
+  `reglagesPossibles.ts`.
+- **Décisions de relecture** : **Q1** pictogramme de la rangée gardé à 24 px (la planche : 28) ; **Q2**
+  la date affichée et le tri sont ceux du **lancement** (`createdAt`), jamais de la dernière
+  modification ; **Q3** l'entraînement se dit « Solo » dans la rangée compacte seulement (libellé
+  court du filtre de Parties).
+- **Suites hors lot** : contrôle de type de `doubleOut` / `doubleIn` dans `backupSchema` ; journaux
+  importés non projetables qui font échouer la lecture (constat 11 de l'index).
+- **Tests : 1340 → 1408** (use case aux fakes, filtre et libellés, UI de l'étape 1). Risque
+  accepté : « N fois » ne compte que dans la fenêtre de 50 parties.
+- **Reste** : relecture à l'écran (portrait, paysage, 360 px — quatre noms de jeu à 80 px, pastilles
+  à la ligne —, thèmes sombre et clair).

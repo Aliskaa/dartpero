@@ -142,7 +142,8 @@ réglages), plus à l'étape 1 (lot `nouvelle-partie-parcours`) ; la règle ci-d
 - **Parcours Nouvelle partie, habillage** (lot `nouvelle-partie-parcours`) : une **barre d'étapes**
 (`BarreEtapes`, `1 · JEU`, `2 · JOUEURS`, `3 · ORDRE` ; deux segments à l'entraînement ; Ordre
 grisé seul en piste) en tête de chaque étape, **non interactive** (on revient par le retour) ;
-étape 1 en tuiles 2 × 2 ; étape 2 en fiche de réglages par jeu. ⚠️ **« Tirer au sort » est un
+étape 1 en tuiles 2 × 2 (sans configuration à rejouer ; sinon « Rejouer » puis une rangée
+compacte, lot `rejouer`) ; étape 2 en fiche de réglages par jeu. ⚠️ **« Tirer au sort » est un
 mélange visible** à l'étape Ordre : port driving `ShuffleOrder` (`ShuffleOrderUseCase`, même
 `RandomSource` que les lancements), vrai hasard (le tirage peut redonner l'ordre d'avant, aucune
 relance), bref mouvement de la feuille, ordre écrit dans `partie:joueurs` comme un déplacement à
@@ -153,6 +154,14 @@ lancement reste, sans appelant UI (dette), et la clé `partie:ordre-aleatoire` r
 ⚠️ **« Abandonnée » est dérivée, jamais écrite** : `matchStatus`, et lui seul, la calcule contre
 la partie en cours **globale** (`GetOngoingMatch`), jamais contre une liste filtrée par mode —
 même statut à l'Accueil et dans Parties. La mise en page de l'Accueil, elle, n'est pas gravée.
+- **Rejouer** (lot `rejouer`) : l'étape 1 de Nouvelle partie propose les **3 configurations
+distinctes les plus récentes**. ⚠️ **Configuration = mode + réglages + ensemble de joueurs** :
+l'ordre de passage et le nom n'en font pas partie. Elle est **lue sur l'historique** (port
+`GetReplayableConfigurations`), **rien n'est stocké** : parties identiques fusionnées, toutes
+comptées (terminées, abandonnées, en cours). Une configuration dont un profil est supprimé, ou
+**non reproductible par le parcours**, est **écartée**. ▶ **préremplit** : les réglages deviennent
+les réglages mémorisés (`partie:*`, `entrainement:*`), puis ≥ 2 joueurs → étape **Ordre**, solo →
+lancement direct. ⚠️ **Le nom n'est jamais repris**. Détail : CHARTE § Parcours.
 - **Règles au livre ouvert** (lot `regles-du-jeu`) : un livre (`LivreRegles`, 48 px) à droite de
 l'en-tête de l'étape 2 et du bandeau de match des quatre modes ouvre une feuille de règles
 **par-dessus** l'écran (`FeuilleRegles`, `<dialog>` natif), **jamais une route** : la volée en

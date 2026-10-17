@@ -11,3 +11,6 @@ export const SCORES = [301, 501, 701] as const
 export const LEGS = [1, 2, 3, 4] as const
 export const SETS = [1, 2, 3] as const
 export const SORTIES = [5, 10, 20] as const
+/** Les joueurs d'une partie de groupe, au plus ; l'entraînement se joue seul. */
+export const MAX_JOUEURS = 4
+export const JOUEURS_ENTRAINEMENT = 1

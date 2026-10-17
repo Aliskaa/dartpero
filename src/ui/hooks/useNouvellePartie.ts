@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import type { ReplayableConfiguration } from '@/core/application/ports/driving/GetReplayableConfigurations'
 import type { Player } from '@/core/domain/entities/Player'
 import type { GameModeId } from '@/core/domain/games'
 import {
@@ -15,10 +16,18 @@ import {
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import { cheminOrdre, ETAT_PARCOURS } from '@/ui/chemins'
 import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { ERREUR_DEMARRAGE, nomParDefaut } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
-import { LEGS, SCORES, SETS, SORTIES } from '@/ui/reglagesPossibles'
+import {
+  JOUEURS_ENTRAINEMENT,
+  LEGS,
+  MAX_JOUEURS,
+  SCORES,
+  SETS,
+  SORTIES,
+} from '@/ui/reglagesPossibles'
 import { usePreference } from './useAppareil'
 import { CLE_JOUEURS, useJoueurs } from './useJoueurs'
 
@@ -50,8 +59,6 @@ const CLE_SELECTION = 'partie:joueurs'
 const CLE_ENTRAINEMENT_JOUEUR = 'entrainement:joueur'
 const CLE_ENTRAINEMENT_SORTIES = 'entrainement:sorties'
 
-export const MAX_JOUEURS = 4
-
 /** Une valeur mémorisée hors de la liste (vieille version, stockage abîmé) retombe sur le défaut. */
 const dansLaListe = <T>(liste: readonly T[], valeur: unknown, defaut: T): T =>
   (liste as readonly unknown[]).includes(valeur) ? (valeur as T) : defaut
@@ -69,6 +76,19 @@ const booleen = (valeur: unknown, defaut: boolean): boolean =>
 export const nomTape = (saisie: string, proposition: string): { readonly name?: string } => {
   const propre = saisie.trim()
   return propre === '' || propre === proposition ? {} : { name: propre }
+}
+
+/** Ce qu'il faut pour lancer une partie : les joueurs dans l'ordre, les réglages, le nom tapé (ou rien). */
+type Lancement = {
+  playerIds: readonly PlayerId[]
+  score: number
+  legs: number
+  sets: number
+  doubleOut: boolean
+  doubleIn: boolean
+  variante: CricketVariant
+  sorties: number
+  name: { readonly name?: string }
 }
 
 /**
@@ -158,7 +178,8 @@ export const useNouvellePartie = () => {
   const selection = (mode: GameModeId): readonly PlayerId[] =>
     mode === 'CHECKOUT_PRACTICE' ? selectionEntrainement : selectionGroupe
 
-  const max = (mode: GameModeId): number => (mode === 'CHECKOUT_PRACTICE' ? 1 : MAX_JOUEURS)
+  const max = (mode: GameModeId): number =>
+    mode === 'CHECKOUT_PRACTICE' ? JOUEURS_ENTRAINEMENT : MAX_JOUEURS
 
   /** Les profils retenus, dans l'ordre de passage. */
   const joueursRetenus = (mode: GameModeId): readonly Player[] =>
@@ -210,28 +231,47 @@ export const useNouvellePartie = () => {
     return ordre
   }
 
-  /** Un mode, un use case : l'aiguillage de la couture `GameMode`, côté départ. */
-  const lancer = (mode: GameModeId): Promise<MatchId> => {
+  /** Les valeurs de la partie à lancer : celles du rendu courant, ou celles d'une configuration rejouée. */
+  const courants = (mode: GameModeId): Lancement => ({
+    playerIds: selection(mode),
+    score,
+    legs,
+    sets,
+    doubleOut,
+    doubleIn,
+    variante,
+    sorties,
+    name: nomTape(saisieNom, proposition),
+  })
+
+  /**
+   * Un mode, un use case : l'aiguillage de la couture `GameMode`, côté départ.
+   *
+   * ⚠️ **Le seul chemin de lancement.** `valeurs` vaut par défaut celles du rendu
+   * courant ; « Rejouer » les passe en argument, parce qu'un `setX` de
+   * `usePreference` ne se lit qu'au rendu suivant — relire `score` juste après
+   * `setScore` lancerait la partie d'avant.
+   */
+  const lancer = (mode: GameModeId, valeurs: Lancement = courants(mode)): Promise<MatchId> => {
     // L'ordre part tel quel dans le journal : le tirage a déjà eu lieu à l'écran.
-    const playerIds = selection(mode)
-    const name = nomTape(saisieNom, proposition)
+    const { playerIds, name } = valeurs
     switch (mode) {
       case 'X01':
         return services.startMatch.execute({
           playerIds,
           config: X01Config.create({
-            startingScore: score,
-            legsToWin: legs,
-            setsToWin: sets,
-            doubleOut,
-            doubleIn,
+            startingScore: valeurs.score,
+            legsToWin: valeurs.legs,
+            setsToWin: valeurs.sets,
+            doubleOut: valeurs.doubleOut,
+            doubleIn: valeurs.doubleIn,
           }),
           ...name,
         })
       case 'CRICKET':
         return services.playCricket.start({
           playerIds,
-          config: CricketConfig.create({ variant: variante }),
+          config: CricketConfig.create({ variant: valeurs.variante }),
           ...name,
         })
       case 'TOUR_DU_MONDE':
@@ -245,7 +285,7 @@ export const useNouvellePartie = () => {
         if (!playerId) return Promise.reject(new Error('No player selected'))
         return services.playCheckoutPractice.start({
           playerId,
-          config: CheckoutPracticeConfig.create({ rounds: sorties }),
+          config: CheckoutPracticeConfig.create({ rounds: valeurs.sorties }),
           ...name,
         })
       }
@@ -256,11 +296,11 @@ export const useNouvellePartie = () => {
     }
   }
 
-  const demarrer = async (mode: GameModeId): Promise<void> => {
+  const demarrer = async (mode: GameModeId, valeurs?: Lancement): Promise<void> => {
     setErreur(null)
     setOccupe(true)
     try {
-      const matchId = await lancer(mode)
+      const matchId = await lancer(mode, valeurs)
       await queryClient.invalidateQueries({ queryKey: CLE_MATCH_EN_COURS })
       // La nouvelle partie est une carte de plus à l'Accueil et à l'Historique.
       await queryClient.invalidateQueries({ queryKey: CLE_HISTORIQUE })
@@ -271,8 +311,70 @@ export const useNouvellePartie = () => {
     }
   }
 
+  /**
+   * ▶ de « Rejouer » : la configuration devient **les réglages mémorisés**, comme
+   * si elle avait été choisie à la main, puis solo → on lance, à deux ou plus →
+   * on ouvre l'Ordre (avec « Tirer au sort » et « Commencer »).
+   *
+   * ⚠️ Le **nom n'est jamais repris** : `{}` explicite, et la saisie revient à la
+   * proposition — un nom tapé avant un retour fuirait sinon dans la nouvelle partie.
+   * ⚠️ Les valeurs partent **en argument** de `lancer` (la lecture des préférences
+   * serait périmée), mais s'écrivent aussi, pour l'étape 2 et la prochaine partie.
+   */
+  const rejouer = (configuration: ReplayableConfiguration): void => {
+    const { mode, playerIds } = configuration
+    let valeurs: Lancement = { ...courants(mode), playerIds, name: {} }
+    switch (configuration.mode) {
+      case 'X01': {
+        const {
+          startingScore,
+          legsToWin,
+          setsToWin,
+          doubleOut: sortie,
+          doubleIn: entree,
+        } = configuration.config
+        // Reproductible (`estReproductible`) : les valeurs sont dans les listes de l'étape 2.
+        setScore(startingScore as (typeof SCORES)[number])
+        setLegs(legsToWin as (typeof LEGS)[number])
+        setSets(setsToWin as (typeof SETS)[number])
+        setDoubleOut(sortie)
+        setDoubleIn(entree)
+        valeurs = {
+          ...valeurs,
+          score: startingScore,
+          legs: legsToWin,
+          sets: setsToWin,
+          doubleOut: sortie,
+          doubleIn: entree,
+        }
+        break
+      }
+      case 'CRICKET':
+        setVariante(configuration.config.variant)
+        valeurs = { ...valeurs, variante: configuration.config.variant }
+        break
+      case 'CHECKOUT_PRACTICE':
+        setSorties(configuration.config.rounds as (typeof SORTIES)[number])
+        valeurs = { ...valeurs, sorties: configuration.config.rounds }
+        break
+      case 'TOUR_DU_MONDE':
+        break
+    }
+
+    if (mode === 'CHECKOUT_PRACTICE') setJoueurEntrainement(playerIds[0] ?? null)
+    else setMemorisee(playerIds)
+    setSaisieNom(proposition)
+
+    if (mode === 'CHECKOUT_PRACTICE' || playerIds.length === 1) {
+      void demarrer(mode, valeurs)
+    } else {
+      navigate(cheminOrdre(mode), { state: ETAT_PARCOURS })
+    }
+  }
+
   return {
     profils,
+    rejouer,
     chargement: joueurs.isPending,
     selection,
     joueursRetenus,

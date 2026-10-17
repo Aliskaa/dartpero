@@ -1,6 +1,7 @@
 import type { InstallState } from '@/core/application/ports/driven/AppInstallation'
 import type { StorageProtection } from '@/core/application/ports/driven/PersistentStorage'
 import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
+import type { ReplayableConfiguration } from '@/core/application/ports/driving/GetReplayableConfigurations'
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import type { GameModeId } from '@/core/domain/games'
 import { Dart } from '@/core/domain/value-objects/Dart'
@@ -976,6 +977,120 @@ export const erreurPseudo = (cause: unknown): string =>
     : 'Ce pseudo n’est pas valide.'
 
 export const ERREUR_DEMARRAGE = 'Impossible de démarrer la partie.'
+
+/* ------------------------------------------------------------------------
+ * Rejouer : la section de l'étape 1 (lot `rejouer`).
+ * ---------------------------------------------------------------------- */
+
+export const TITRE_REJOUER = 'Rejouer'
+export const TITRE_AUTRE_JEU = 'Ou un autre jeu'
+/** Le nom accessible de la liste des configurations. */
+export const LEGENDE_REJOUER = 'Rejouer une partie récente'
+
+/** « Kevin », « Kevin et Julien », « Kevin, Julien et Sarah ». */
+const listeDeNoms = (noms: readonly string[]): string =>
+  noms.length <= 1 ? (noms[0] ?? '') : `${noms.slice(0, -1).join(', ')} et ${noms.at(-1)}`
+
+/** Le titre d'une ligne : « X01 · 501 », « Cricket · Cut-throat », « Tour du monde », « Entraînement ». */
+export const titreRejouer = (configuration: ReplayableConfiguration): string => {
+  switch (configuration.mode) {
+    case 'X01':
+      return `${LIBELLE_MODE.X01} · ${configuration.config.startingScore}`
+    case 'CRICKET':
+      return `${LIBELLE_MODE.CRICKET} · ${LIBELLE_VARIANTE_CRICKET[configuration.config.variant]}`
+    case 'TOUR_DU_MONDE':
+      return LIBELLE_MODE.TOUR_DU_MONDE
+    case 'CHECKOUT_PRACTICE':
+      return LIBELLE_MODE.CHECKOUT_PRACTICE
+  }
+}
+
+/**
+ * La date de la dernière fois, courte et **sans heure** : « aujourd'hui », « hier »,
+ * le jour (« mardi ») jusqu'à 6 jours, puis « 3 oct. » (« 3 oct. 2025 » si l'année
+ * diffère de celle de `maintenant`). Les jours se comptent sur le **calendrier
+ * local**, jamais en divisant des heures : un jour de changement d'heure dure 23
+ * ou 25 h. `Date` ne sert que de calendrier : l'heure courante vient de `services.clock`.
+ */
+export const libelleDateRelative = (horodatage: number, maintenant: number): string => {
+  const jour = (instant: number): number => {
+    const date = new Date(instant)
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  }
+  const ecart = Math.round((jour(maintenant) - jour(horodatage)) / 86_400_000)
+  if (ecart <= 0) return 'aujourd’hui'
+  if (ecart === 1) return 'hier'
+  if (ecart <= 6) return (JOURS[new Date(horodatage).getDay()] ?? '').toLowerCase()
+  if (new Date(horodatage).getFullYear() !== new Date(maintenant).getFullYear()) {
+    return dateCourte(horodatage)
+  }
+  return new Date(horodatage).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
+/** « 4 fois » : masqué à 1 (la ligne n'a alors rien à compter). */
+export const libelleNFois = (nombre: number): string | null =>
+  nombre > 1 ? `${nombre} fois` : null
+
+/**
+ * La ligne de réglages : le vocabulaire de l'étape 2, puis la date, puis « N fois ».
+ * « premier à 2 manches · sortie libre · hier · 4 fois ».
+ */
+export const resumeRejouer = (
+  configuration: ReplayableConfiguration,
+  maintenant: number,
+): string => {
+  const reglages: readonly (string | null)[] = (() => {
+    switch (configuration.mode) {
+      case 'X01': {
+        const { legsToWin, setsToWin, doubleOut, doubleIn } = configuration.config
+        return [
+          libelleFormat(legsToWin, setsToWin),
+          doubleOut ? 'sortie sur un double' : 'sortie libre',
+          doubleIn ? 'entrée sur un double' : null,
+        ]
+      }
+      case 'CRICKET':
+        return [pluriel(configuration.config.targets.length, 'cible')]
+      case 'TOUR_DU_MONDE':
+        return ['20 → 1, puis la bulle']
+      case 'CHECKOUT_PRACTICE':
+        return [pluriel(configuration.config.rounds, 'sortie')]
+    }
+  })()
+  return [
+    ...reglages,
+    libelleDateRelative(configuration.lastPlayedAt, maintenant),
+    libelleNFois(configuration.count),
+  ]
+    .filter((morceau): morceau is string => morceau !== null)
+    .join(' · ')
+}
+
+/**
+ * Le nom accessible de ▶ : le jeu et **tous** les pseudos en entier (les pastilles
+ * n'ont que des initiales). « Rejouer X01 501 avec Kevin, Julien et Sarah » à deux
+ * joueurs ou plus (▶ mène à l'ordre) ; « Lancer Entraînement 10 sorties avec Kevin »
+ * en solo (▶ lance la partie).
+ */
+export const ariaRejouer = (
+  configuration: ReplayableConfiguration,
+  noms: readonly string[],
+): string => {
+  const jeu = (() => {
+    switch (configuration.mode) {
+      case 'X01':
+        return `${LIBELLE_MODE.X01} ${configuration.config.startingScore}`
+      case 'CRICKET':
+        return `${LIBELLE_MODE.CRICKET} ${LIBELLE_VARIANTE_CRICKET[configuration.config.variant]}`
+      case 'TOUR_DU_MONDE':
+        return LIBELLE_MODE.TOUR_DU_MONDE
+      case 'CHECKOUT_PRACTICE':
+        return `${LIBELLE_MODE.CHECKOUT_PRACTICE} ${pluriel(configuration.config.rounds, 'sortie')}`
+    }
+  })()
+  const verbe = configuration.playerIds.length === 1 ? 'Lancer' : 'Rejouer'
+  return `${verbe} ${jeu} avec ${listeDeNoms(noms)}`
+}
 
 export const TITRE_AUCUN_PROFIL = 'Aucun profil'
 export const DESCRIPTION_AUCUN_PROFIL =
