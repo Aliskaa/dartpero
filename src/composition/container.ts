@@ -12,6 +12,7 @@ import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
 import type { GetCheckoutRange } from '@/core/application/ports/driving/GetCheckoutRange'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
+import type { GetDeviceContents } from '@/core/application/ports/driving/GetDeviceContents'
 import type { GetMatchHistory } from '@/core/application/ports/driving/GetMatchHistory'
 import type { GetMatchMode } from '@/core/application/ports/driving/GetMatchMode'
 import type { GetMatchName } from '@/core/application/ports/driving/GetMatchName'
@@ -36,6 +37,7 @@ import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVis
 import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseCase'
 import { GetCheckoutRangeUseCase } from '@/core/application/use-cases/GetCheckoutRangeUseCase'
 import { GetCheckoutSuggestionUseCase } from '@/core/application/use-cases/GetCheckoutSuggestionUseCase'
+import { GetDeviceContentsUseCase } from '@/core/application/use-cases/GetDeviceContentsUseCase'
 import { GetMatchHistoryUseCase } from '@/core/application/use-cases/GetMatchHistoryUseCase'
 import { GetMatchModeUseCase } from '@/core/application/use-cases/GetMatchModeUseCase'
 import { GetMatchNameUseCase } from '@/core/application/use-cases/GetMatchNameUseCase'
@@ -130,6 +132,8 @@ export type Services = {
   readonly getMatchName: GetMatchName
   readonly getOngoingMatch: GetOngoingMatch
   readonly getPlayerStats: GetPlayerStats
+  /** Le compte des parties et des profils de ce téléphone, pour les Réglages. */
+  readonly getDeviceContents: GetDeviceContents
   readonly deleteMatch: DeleteMatch
   readonly managePlayers: ManagePlayers
   readonly manageBackup: ManageBackup
@@ -195,6 +199,7 @@ export const createServices = ({
     getMatchName: new GetMatchNameUseCase(matches),
     getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
     getPlayerStats: new GetPlayerStatsUseCase(matches, players, clock),
+    getDeviceContents: new GetDeviceContentsUseCase(matches, players),
     deleteMatch: new DeleteMatchUseCase(matches),
     managePlayers: new ManagePlayersUseCase(players, ids, clock),
     manageBackup: new ManageBackupUseCase(matches, players, clock),

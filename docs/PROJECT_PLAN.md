@@ -23,6 +23,20 @@ Lot `rejouer` (lot 10 de la refonte : « Rejouer » à l'étape 1 de Nouvelle pa
 **Suites hors lot** : (1) `backupSchema` ne contrôle pas le type de `doubleOut` / `doubleIn` d'une partie
 importée (le filtre de « Rejouer » les écarte côté UI, mais l'import les laisse entrer) ; (2) un journal
 importé non projetable fait échouer la lecture de l'historique (constat 11 de l'index).
+Lot `reglages-par-usage` (lot 12 de la refonte : Réglages en une page, deux voyants, date du
+dernier export, voir § 4 et § 6) : passé par Test (boucle 1), Sécurité (PASS) et Revue (NO-GO en passe 1,
+boucle 5 : valeur de voyant en gras, duo à 56 px ; GO en passe 2) — **1429 tests verts**, **1497** après rebase sur `rejouer`. Reste, sur appareil :
+- **relecture à l'écran** sur le téléphone, portrait et paysage, sombre et clair ;
+- **360 px et police système au maximum** (l'étiquette « Dernier export » n'est vérifiée qu'à
+  125 % dans Chromium) ;
+- **contraste réel** des vignettes de thème et du vert `vert-etat` (« Installée ») ;
+- **iPhone réel** : « Comment ? » et guide `#installer`, export (« export réussi » = fichier remis
+  au navigateur, U9) ;
+- **mesure** de la lecture de toute la base à l'ouverture des Réglages (01, Baseline : « Dev
+  mesure ») : **non faite** ; repli `count()` dans les dépôts si une lenteur se voit.
+Dettes du lot (`03-plan-de-test.md`) : **D1** — `useDernierExport` sans test du hook isolé
+(`renderHook` si un second lecteur apparaît) ; **N1** — garde de l'aperçu en liste noire (une
+couleur Tailwind par défaut passerait ; durcir en « toute couleur d'`Apercu` est `apercu-*` »).
 Vérifications **acceptées à la relecture** par l'utilisateur (`docs/lots/regles-du-jeu/05-revue.md`,
 passe 2), sur son téléphone, au plus tard au prochain déploiement :
 - **défilement du corps de la feuille** (colonne `flex h-full flex-col`, nouvelle depuis la
@@ -264,7 +278,9 @@ finish » de la sortie, pour l'écran X01 et la feuille de règles) · `GetPlaye
 **`GetReplayableConfigurations`** (lot `rejouer` : les configurations distinctes des 50 dernières
 parties, pour « Rejouer ») ·
 **`RestartMatch`** (lot UX) · **`GetMatchName`** (lot `nom-de-partie` : `{ name, createdAt }`,
-de quoi afficher le nom tapé ou recalculer le nom par défaut)
+de quoi afficher le nom tapé ou recalculer le nom par défaut) ·
+**`GetDeviceContents`** (lot `reglages-par-usage` : `{ matches, players }`, le compte de toute la
+base pour « N parties · M joueurs sur ce téléphone » et « Gérer les joueurs »)
 
 Lot `accueil-parties-recentes` : `X01Summary.legsPlayed` (manches jouées, tous sets confondus,
 dérivé des `LegWon`) ; `matchStatus(summary, ongoingId)` (`use-cases/summarize.ts`), fonction
@@ -323,9 +339,9 @@ use case ni écran qui l'appelle, c'est du code non testé qui vieillit en atten
 | `/partie/:id/resume` | Résumé de fin : vainqueur, stats du match, rejouer | 3 ✅ |
 | `/entrainement` | Redirige vers `/nouvelle-partie/entrainement` (l'écran de lancement a disparu) | `nouvelle-partie-en-etapes` ✅ |
 | `/historique` | Liste des parties jouées, tous modes, avec statut et suppression — même carte que l'Accueil (`CartePartie`), même statut « Abandonnée », sans détail par joueur (il reste dans le résumé) | 4 ✅ · carte : `accueil-parties-recentes` ✅ |
-| `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) — atteint depuis Réglages → Joueurs (plus d'onglet) | 4 ✅ |
+| `/joueurs` | Profils locaux (créer, renommer, couleur, supprimer) — atteint depuis Réglages → Joueurs et appli → Gérer les joueurs (plus d'onglet) | 4 ✅ |
 | `/statistiques` | Carrière : tableaux comparatifs classés | 4 ✅ |
-| `/reglages` | Préférences (voix, haptique), **thème clair / sombre / système**, export / import JSON, à propos (entrée d'installation, ancre `#installer`, lien Confidentialité) | 4 ✅ |
+| `/reglages` | Une page rangée par usage : voyants Dernier export et Application, compte de la base, guide d'installation (ancre `#installer`), Affichage (**thème clair / sombre / système** en vignettes, voix), Sauvegarde (export / import JSON, protection), Joueurs et appli (lien Joueurs, Confidentialité) | 4 ✅ · `reglages-par-usage` ✅ |
 | `/confidentialite` | Politique de confidentialité et mentions légales — URL donnée à la Play Console | `confidentialite-assetlinks` ✅ |
 | `/historique/:id` | Détail d'une partie | **jamais fait** |
 | `/joueurs/:id` | Stats cumulées d'un joueur | **jamais fait** |
@@ -782,6 +798,15 @@ avec « N fois », relancées par ▶ (Ordre à deux joueurs ou plus, lancement 
 « Ou un autre jeu » en rangée compacte. Port `GetReplayableConfigurations` + use case lus sur
 l'historique, rien de stocké. Reste : relecture à l'écran (portrait, paysage, 360 px, deux
 thèmes). Détail § 6.
+### Lot « reglages-par-usage » (lot 12 de la refonte de la charte)
+
+✅ **Fait — 1429 tests verts** (Test boucle 1 : 1428 ; Sécurité PASS ; Revue : NO-GO en passe 1, boucle 5, GO en passe 2). Réglages en une page (planche `derniers.html` `#rg4`) :
+deux voyants (`Voyant`) en tête, ligne « N parties · M joueurs » (port `GetDeviceContents`),
+guide `#installer` sous la ligne, puis Affichage (`VignetteTheme`, `LigneReglage`), Sauvegarde
+(duo, phrase de protection, « Demander la protection »), Joueurs et appli, pied. Date du dernier
+export : préférence `sauvegarde:dernier-export`, citée par la politique (mise à jour le
+17 octobre 2026). Jetons `vert-etat` et `apercu-*` réservés. Reste : vérifications sur appareil (§ 0).
+Détail § 6.
 
 ---
 
@@ -2148,3 +2173,40 @@ Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `hig
   accepté : « N fois » ne compte que dans la fenêtre de 50 parties.
 - **Reste** : relecture à l'écran (portrait, paysage, 360 px — quatre noms de jeu à 80 px, pastilles
   à la ligne —, thèmes sombre et clair).
+
+### Lot `reglages-par-usage` (lot 12 de la refonte de la charte)
+
+- **Voyants** : Dernier export (étiquette « Dernière sauvegarde » de la planche raccourcie par l'utilisateur : deux lignes à 125 % de police à 360 px ; jours du calendrier local, « Hier » = la veille ; laiton au-delà
+  de 30 jours et pour « Jamais » ; « Il y a N mois » dès 60 jours, mois = jours ÷ 30 arrondi en
+  dessous ; date future → « Aujourd'hui » sans alerte ; valeur illisible → « Jamais ») ;
+  Application (« Installée » en `vert-etat`, « Installer » = invite native, « Comment ? » = guide
+  `#installer`, rendu en `ios-manual`, `ios-other-browser`, `unavailable`). Calculs purs dans
+  `ui/voyants.ts`, durée par `joursCalendairesEntre` (`jourCalendaire.ts`, composantes locales
+  reportées en UTC : exact aux changements d'heure).
+- **Date du dernier export** : préférence d'appareil (`useDernierExport`), écrite par l'écran
+  **après** le téléchargement, à l'horodatage `exportedAt` de la sauvegarde ; jamais par
+  l'import ; validée à la relecture (nombre fini, sinon « Jamais »). Gravé dans `CLAUDE.md`.
+  « Export réussi » = fichier remis au navigateur sans erreur (U9).
+- **Compte** : port driving `GetDeviceContents` (deux `listAll()`), une source pour la ligne et
+  « Gérer les joueurs » ; rien d'affiché en chargement ni en échec, jamais un faux « 0 ». Repli
+  `count()` dans les dépôts si une lenteur était mesurée.
+- **Vignettes** : six jetons `apercu-*` constants (copies de `feutre`, `craie`, `laiton` de chaque
+  thème, redéfinis à l'identique sous le clair) plutôt qu'un thème local : le mécanisme du thème
+  reste intact. Garde d'égalité et garde de réservation (table jetons → fichiers).
+- **Protection** : une phrase sous le duo, rappel d'exporter dans les trois états ; « Demander la
+  protection » (ex-« Redemander ») hors de l'`<output>`, zone d'appui 48 px par pseudo-élément ;
+  refus orienté vers le voyant Application (réduit si l'app est installée). Plus de bouton ni de
+  lien d'installation sous la phrase.
+- **`Button`** : tailles `xs` / `sm` (56 px comme le `.cta` de la planche — Revue, boucle 5 ;
+  interlettrage dans la taille) pour le duo à 360 px. Valeur de voyant en gras, interligne 1,1
+  (Revue, boucle 5).
+- **Boucle 1 (Test)** : un horodatage hors de la plage de `Date` (`1e20`) affichait « Il y a NaN
+  mois » en vert ; validé dans `useDernierExport` **et** dans `vueVoyantSauvegarde` (« Jamais »).
+- **Politique** : localStorage cite « la date du dernier export » ; « Annoncer les volées » est
+  dans Réglages → Affichage ; date « 17 octobre 2026 ».
+- **Hors demande** : `docs/captures/reglages.png` du README montre l'ancienne page.
+- **Rebase sur `rejouer`** (`63cb636`, mené en parallèle) : conflits sur CONVENTIONS (clés de
+  requête, 25 ports driving), charte (les deux sections), PLAN (§ 0, § 4, § 6) — les deux apports
+  gardés ; index repris de `main` puis régénéré. **1497 tests**. Préexistant sur `main` : le test
+  « crée une partie depuis l'accueil… » (`parcours.test.tsx`) dépasse ses 5 s en suite complète,
+  vert seul.

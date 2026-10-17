@@ -1,4 +1,3 @@
-import type { InstallState } from '@/core/application/ports/driven/AppInstallation'
 import type { StorageProtection } from '@/core/application/ports/driven/PersistentStorage'
 import type { StatsPeriod } from '@/core/application/ports/driving/GetPlayerStats'
 import type { ReplayableConfiguration } from '@/core/application/ports/driving/GetReplayableConfigurations'
@@ -7,6 +6,7 @@ import type { GameModeId } from '@/core/domain/games'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { LEGS, SCORES, SETS, SORTIES } from '@/ui/reglagesPossibles'
 import type { Theme } from '@/ui/theme'
+import type { DureeSauvegarde, EtatGuideInstallation } from '@/ui/voyants'
 
 /** Le cœur reste en anglais ; tout le français de l'app vit ici. */
 export const LIBELLE_ISSUE: Record<VisitOutcome, string> = {
@@ -188,30 +188,118 @@ export const LIBELLE_THEME: Record<Theme, string> = {
   systeme: 'Système',
 }
 
-/** Ce que dit la ligne d'état de la protection du stockage, dans les Réglages. */
-export const LIBELLE_PROTECTION_STOCKAGE: Record<StorageProtection, string> = {
-  persisted: 'Données protégées : le navigateur ne les effacera pas de lui-même.',
-  'not-persisted': 'Le navigateur peut effacer les données si l’espace manque.',
-  unavailable: 'Protection non prise en charge par ce navigateur.',
-}
+/*
+ * Les Réglages (lot `reglages-par-usage`, planche `derniers.html` `#rg4`) : une
+ * page rangée par usage, deux voyants en tête.
+ */
+export const TITRE_REGLAGES = 'Réglages'
+
+/** Les deux voyants. L'étiquette nomme aussi la valeur (`<output aria-label>`). */
+/** Abrégé (Q-d, choix de l'utilisateur) : « Dernière sauvegarde » (planche) passait sur deux lignes à 125 % de police à 360 px. */
+export const ETIQUETTE_VOYANT_SAUVEGARDE = 'Dernier export'
+export const ETIQUETTE_VOYANT_APPLICATION = 'Application'
+export const ACTION_EXPORTER = 'Exporter'
+/** Nom accessible de l'action « Exporter » du voyant : il contient le texte visible. */
+export const NOM_ACTION_EXPORTER = 'Exporter une sauvegarde'
+export const VALEUR_INSTALLEE = 'Installée'
+export const VALEUR_PAS_INSTALLEE = 'Pas installée'
+export const ACTION_COMMENT_INSTALLER = 'Comment ?'
+/** Nom accessible de « Comment ? » : le texte visible, puis ce qu'il explique (WCAG 2.5.3). */
+export const NOM_ACTION_COMMENT_INSTALLER = 'Comment ? Installer Dartpéro'
 
 /**
- * Le rappel d'exporter, présent dans chaque état : même protégée, la base
- * disparaît avec la désinstallation de la PWA, l'effacement des données du
- * site ou la perte du téléphone. Ce n'est jamais une sauvegarde.
+ * Depuis quand le dernier export a eu lieu (`vueVoyantSauvegarde`, `voyants.ts`).
+ * « Il y a N jours » de 2 à 59, puis « Il y a N mois » (N ≥ 2).
  */
-export const RAPPEL_EXPORT_STOCKAGE: Record<StorageProtection, string> = {
-  persisted: 'Ce n’est pas une sauvegarde : exportez pour garder une copie.',
-  'not-persisted': 'Exportez régulièrement.',
-  unavailable: 'Exportez régulièrement : le fichier JSON est votre seule copie.',
+export const libelleDureeSauvegarde = (duree: DureeSauvegarde): string => {
+  switch (duree.type) {
+    case 'jamais':
+      return 'Jamais'
+    case 'aujourdhui':
+      return 'Aujourd’hui'
+    case 'hier':
+      return 'Hier'
+    case 'jours':
+      return `Il y a ${duree.nombre} jours`
+    case 'mois':
+      return `Il y a ${duree.nombre} mois`
+    default: {
+      const jamais: never = duree
+      return jamais
+    }
+  }
 }
 
-/** Retour d'une redemande faite par l'utilisateur et refusée (jamais au démarrage). */
-export const REFUS_REDEMANDE_STOCKAGE =
-  'Le navigateur a refusé. Il accepte en général une fois Dartpéro installé sur l’écran d’accueil.'
+/** La ligne sous les voyants : toutes les parties enregistrées, entraînements compris. */
+export const ETIQUETTE_CONTENU_APPAREIL = 'Contenu de ce téléphone'
+export const contenuAppareil = (parties: number, joueurs: number): string =>
+  `${pluriel(parties, 'partie')} · ${pluriel(joueurs, 'joueur')} sur ce téléphone.`
+
+/** Les trois groupes de la page. */
+export const TITRE_GROUPE_AFFICHAGE = 'Affichage'
+export const TITRE_GROUPE_SAUVEGARDE = 'Sauvegarde'
+export const TITRE_GROUPE_JOUEURS_APPLI = 'Joueurs et appli'
+
+/** Le nom du groupe des trois vignettes. */
+export const ETIQUETTE_CHOIX_THEME = 'Thème'
+
+export const TITRE_ANNONCER_VOLEES = 'Annoncer les volées'
+export const AIDE_ANNONCER_VOLEES = 'Score, bust et sorties, à voix haute'
+export const TITRE_ESSAYER_VOIX = 'Essayer la voix'
+/** Ce que dit la voix à l'essai : le score que tout le monde reconnaît. */
+export const PHRASE_ESSAI_VOIX = 'Cent quatre-vingts'
+
+/** Le duo du groupe Sauvegarde. */
+export const LIBELLE_EXPORTER = 'Exporter'
+export const LIBELLE_RESTAURER = 'Restaurer'
+export const ETIQUETTE_FICHIER_SAUVEGARDE = 'Fichier de sauvegarde'
+
+/**
+ * La phrase d'état de la protection du stockage, sous Exporter / Restaurer.
+ * Le rappel d'exporter ouvre chaque état : même protégée, la base disparaît
+ * avec la désinstallation de la PWA, l'effacement des données du site ou la
+ * perte du téléphone. Ce n'est jamais une sauvegarde.
+ */
+const RAPPEL_EXPORT = 'Tout vit sur ce téléphone : exportez pour garder une copie.'
+export const PHRASE_PROTECTION_STOCKAGE: Record<StorageProtection, string> = {
+  persisted: `${RAPPEL_EXPORT} Le navigateur s’est engagé à ne pas effacer les données de lui-même.`,
+  'not-persisted': `${RAPPEL_EXPORT} Le navigateur peut effacer les données si l’espace manque.`,
+  unavailable: `${RAPPEL_EXPORT} Ce navigateur ne sait pas protéger les données.`,
+}
+
+/** Retour d'une demande faite par l'utilisateur et refusée (jamais au démarrage). */
+export const REFUS_PROTECTION_STOCKAGE =
+  'Le navigateur a refusé. Il accepte en général une fois Dartpéro installé (voir Application, en haut).'
+/** Le même refus, Dartpéro déjà installé : le renvoi n'aurait plus de sens. */
+export const REFUS_PROTECTION_STOCKAGE_INSTALLEE = 'Le navigateur a refusé.'
 
 export const ETIQUETTE_PROTECTION_STOCKAGE = 'Protection des données'
-export const LIBELLE_REDEMANDER_PROTECTION = 'Redemander'
+export const LIBELLE_DEMANDER_PROTECTION = 'Demander la protection'
+
+/** L'explication de la restauration, en petit, sous la phrase de protection. */
+export const EXPLICATION_RESTAURATION: readonly Segment[] = [
+  'La restauration ',
+  { fort: 'complète' },
+  ' la base : les profils et parties du fichier s’ajoutent, et ceux déjà présents (même identifiant) sont remplacés par la version du fichier. Le reste n’est pas touché.',
+]
+
+export const ERREUR_EXPORT = 'La sauvegarde n’a pas pu être créée.'
+export const ERREUR_JSON_ILLISIBLE = 'Ce fichier n’est pas un JSON lisible.'
+export const ERREUR_RESTAURATION = 'Cette sauvegarde n’a pas pu être restaurée.'
+
+/** Le résumé d'une restauration réussie. */
+export const TITRE_RESUME_IMPORT = 'Sauvegarde restaurée'
+export const resumeImport = (joueurs: number, parties: number): string =>
+  `${pluriel(joueurs, 'joueur')} et ${pluriel(parties, 'partie')} importés.`
+export const entreesIgnorees = (nombre: number): string =>
+  `${pluriel(nombre, 'entrée illisible', 'entrées illisibles')} — ignorée${nombre > 1 ? 's' : ''}.`
+
+/** Les lignes du groupe Joueurs et appli. */
+export const LIEN_GERER_JOUEURS = 'Gérer les joueurs'
+export const AIDE_GERER_JOUEURS = 'Renommer, couleur, supprimer'
+
+/** Le pied de page. */
+export const PIED_REGLAGES = '100 % local, hors ligne, sans compte.'
 
 /** La ligne discrète de l'Accueil. Jamais sur un écran de partie. */
 export const TITRE_INVITATION_INSTALLATION = 'Installer Dartpéro'
@@ -220,16 +308,19 @@ export const TEXTE_INVITATION_INSTALLATION =
 export const LIBELLE_INSTALLER = 'Installer'
 export const LIBELLE_PLUS_TARD = 'Plus tard'
 
-/** Réglages → À propos. */
+/** Nom accessible de l'action « Installer » du voyant : il contient le texte visible. */
 export const LIBELLE_INSTALLER_DARTPERO = 'Installer Dartpéro'
+/** Le guide `#installer`, sous la ligne de contenu des Réglages. */
 export const ETIQUETTE_INSTALLATION = 'Installation'
 export const PRESENTATION_DARTPERO =
   'Dartpéro — compteur de fléchettes : X01, Tour du monde, Cricket et entraînement au checkout.'
 
-/** La phrase d'état de l'installation, une par état. */
-export const ETAT_INSTALLATION: Record<InstallState, string> = {
-  installed: 'Dartpéro est installé sur cet appareil.',
-  installable: 'Installez Dartpéro pour l’ouvrir en plein écran, comme une application.',
+/**
+ * La phrase du guide `#installer`, dans les trois états où il est rendu
+ * (`guideInstallationVisible`) : « Installée » et « Installer » sont portés par
+ * le voyant Application.
+ */
+export const ETAT_INSTALLATION: Record<EtatGuideInstallation, string> = {
   'ios-manual': 'Sur iPhone ou iPad, l’installation se fait depuis Safari, en trois gestes :',
   'ios-other-browser': 'Ouvrez ce lien dans Safari pour installer Dartpéro.',
   unavailable:
@@ -247,9 +338,6 @@ export const ETAPES_INSTALLATION_IOS = [
   'Touchez « Ajouter ».',
 ] as const
 
-/** Après un refus de « Redemander » : le chemin vers l'installation sur iOS. */
-export const LIEN_GUIDE_INSTALLATION = 'Voir comment installer'
-
 /*
  * Politique de confidentialité et mentions légales (`/confidentialite`).
  *
@@ -266,14 +354,14 @@ export const LIEN_GUIDE_INSTALLATION = 'Voir comment installer'
  * commentaire le cite sans risque : la minification le retire du bundle.
  */
 
-/** La ligne-lien de Réglages → À propos. */
+/** La ligne-lien de Réglages → Joueurs et appli. */
 export const LIEN_CONFIDENTIALITE = 'Confidentialité et mentions légales'
 
 export const TITRE_CONFIDENTIALITE = 'Confidentialité'
 export const SOUS_TITRE_CONFIDENTIALITE = 'Politique et mentions légales'
 
 /** Chaîne française littérale : jamais recalculée depuis une date ISO. */
-export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 16 octobre 2026'
+export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 17 octobre 2026'
 
 export const RETOUR_REGLAGES = 'Retour aux réglages'
 
@@ -296,7 +384,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
     titre: 'Sur votre appareil',
     paragraphes: [
       'Vos profils (pseudo, couleur, date de création) et vos parties (le nom que vous leur avez donné, s’il y en a un, et chaque fléchette saisie, avec ses dates) sont enregistrés dans la base de données du navigateur (IndexedDB), sur ce téléphone seulement.',
-      'Les préférences de l’appareil vont dans le stockage local du navigateur (localStorage) : le thème, l’annonce vocale, les réglages de la dernière partie, les derniers joueurs choisis (leurs identifiants internes), le dernier joueur consulté dans Statistiques (son identifiant interne) et le « Plus tard » de l’invitation à installer. Au démarrage, une valeur de test y est écrite puis effacée aussitôt.',
+      'Les préférences de l’appareil vont dans le stockage local du navigateur (localStorage) : le thème, l’annonce vocale, les réglages de la dernière partie, les derniers joueurs choisis (leurs identifiants internes), le dernier joueur consulté dans Statistiques (son identifiant interne), le « Plus tard » de l’invitation à installer et la date du dernier export. Au démarrage, une valeur de test y est écrite puis effacée aussitôt.',
       'Si une mise à jour de l’application ne parvient pas à se charger, un marqueur technique est posé dans le stockage de session (sessionStorage), pour ne recharger la page qu’une seule fois.',
       'Une copie des fichiers de l’application est gardée en cache par le navigateur, pour qu’elle fonctionne hors ligne.',
       'Au démarrage, Dartpéro demande au navigateur de protéger ce stockage, pour qu’il ne l’efface pas de lui-même quand la place vient à manquer. Cette protection n’est pas une sauvegarde.',
@@ -314,7 +402,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
     titre: 'Fonctions du téléphone',
     paragraphes: [
       'Pendant une partie, Dartpéro garde l’écran allumé et peut faire vibrer le téléphone (pas sur iPhone). Il n’utilise jamais la caméra, le micro, la localisation, les contacts ni les notifications.',
-      'L’annonce vocale lit les scores et le pseudo du joueur suivant avec une voix fournie par le navigateur. Selon le navigateur, cette voix peut être synthétisée en ligne par son fournisseur, qui reçoit alors le texte annoncé, pseudos compris. Pour l’éviter, coupez « Annoncer les volées » dans Réglages → Annonce vocale.',
+      'L’annonce vocale lit les scores et le pseudo du joueur suivant avec une voix fournie par le navigateur. Selon le navigateur, cette voix peut être synthétisée en ligne par son fournisseur, qui reçoit alors le texte annoncé, pseudos compris. Pour l’éviter, coupez « Annoncer les volées » dans Réglages → Affichage.',
     ],
   },
   {
@@ -2306,11 +2394,6 @@ export const sousTitreOrdre = (
     }
   }
 }
-
-/* Réglages → Joueurs. */
-export const SOUS_TITRE_REGLAGES = 'Joueurs, affichage, sauvegarde et informations'
-export const TEXTE_PANNEAU_JOUEURS = 'Renommer, changer la couleur, supprimer un profil.'
-export const LIEN_GERER_JOUEURS = 'Gérer les joueurs'
 
 /** Phrases d'ambiance pour les résumés — le côté apéro, hors saisie. */
 export const PHRASE_VICTOIRE = [

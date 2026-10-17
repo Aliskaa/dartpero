@@ -13,3 +13,10 @@ export const CLE_REJOUER = [...CLE_HISTORIQUE, 'rejouer'] as const
 
 /** La partie en cours (la plus récente non terminée, parmi les 20 dernières). */
 export const CLE_MATCH_EN_COURS = ['matchEnCours'] as const
+
+/**
+ * Le compte « N parties · M joueurs » des Réglages. Hors du préfixe
+ * `historique` : l'import invalide tout le cache, et c'est le seul moment où
+ * le compte change sans que l'on quitte l'écran.
+ */
+export const CLE_CONTENU_APPAREIL = ['contenuAppareil'] as const

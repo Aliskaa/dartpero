@@ -93,7 +93,7 @@ vibration et PWA y marchent déjà, sans avertissement de certificat) ;
 ## Stockage persistant
 
 L'app demande `navigator.storage.persist()` au démarrage (port `PersistentStorage`) et affiche
-l'état dans Réglages → Sauvegarde. Le navigateur tranche seul, et **un refus est attendu, pas un
+l'état dans Réglages, groupe Sauvegarde, en une phrase sous Exporter / Restaurer. Le navigateur tranche seul, et **un refus est attendu, pas un
 défaut** :
 
 | Navigateur | Comportement attendu (à vérifier sur appareil) |
@@ -101,13 +101,14 @@ défaut** :
 | Chrome / Android | Accorde ou refuse selon l'engagement (installée, ajoutée aux favoris, notifications…) ; un onglet simple peut être refusé. Vérifier avec la PWA installée. |
 | Safari iOS | Sans installation, la base peut être effacée après ~7 jours sans ouverture ; le support de `persist()` hors installation n'est pas garanti. |
 | Firefox | Peut afficher sa propre demande à l'utilisateur ; l'app ne l'anticipe pas. `persist()` étant demandé sur toutes les routes, cela vaut aussi pour un visiteur de `/confidentialite` (R-e, accepté). |
-| API absente | État « indisponible » : pas de bouton, simple rappel d'exporter. |
+| API absente | État « indisponible » : pas de lien, simple rappel d'exporter. |
 
-« Redemander » (état non protégé) rappelle `persist()` ; si le navigateur refuse encore, l'écran
-le dit (« Le navigateur a refusé… installé sur l'écran d'accueil ») plutôt que de rester muet.
-Le refus du démarrage, lui, n'affiche rien.
-Depuis le lot `installation-guidee`, ce refus propose aussi d'installer quand c'est possible
-(bouton « Installer Dartpéro », ou lien vers le guide iOS).
+« Demander la protection » (lien de la phrase, état non protégé ; « Redemander » avant le lot
+`reglages-par-usage`) rappelle `persist()` ; si le navigateur refuse encore, l'écran le dit
+(« Le navigateur a refusé. Il accepte en général une fois Dartpéro installé (voir Application, en
+haut). », réduit à « Le navigateur a refusé. » si l'app est déjà installée) plutôt que de rester
+muet. Le refus du démarrage, lui, n'affiche rien. L'installation n'est plus proposée sous la
+phrase : c'est le voyant Application, en tête des Réglages, qui porte l'action.
 
 ⚠️ Protégé ne veut pas dire sauvegardé : désinstaller l'app ou vider les données du site efface
 toujours la base. L'export JSON reste le filet.
@@ -121,11 +122,11 @@ et `navigator.standalone`. Il écoute **dès sa construction** : les services na
 
 | Navigateur | Ce que voit l'utilisateur |
 | --- | --- |
-| Chrome / Edge Android, Chromium de bureau | `beforeinstallprompt` capté : ligne « Installer Dartpéro » sur l'Accueil, bouton dans Réglages → À propos ; « Installer » ouvre la fenêtre native (avec les captures). Ne part que si Chrome juge l'app installable, et parfois tard (heuristique d'engagement). |
-| Safari iOS / iPadOS | Pas d'API : guide en trois gestes dans Réglages → À propos (Partager, « Sur l'écran d'accueil », « Ajouter ») ; la ligne d'Accueil y mène (`/reglages#installer`). |
-| Chrome, Firefox, Edge… sur iOS, navigateurs intégrés aux apps | « Ouvrez ce lien dans Safari pour installer Dartpéro. » |
-| Firefox Android, Safari macOS, autres | État « indisponible » : rien sur l'Accueil, phrase générique (menu du navigateur) dans les Réglages. |
-| App installée (`standalone`) | Rien sur l'Accueil ; « Dartpéro est installé sur cet appareil. » |
+| Chrome / Edge Android, Chromium de bureau | `beforeinstallprompt` capté : ligne « Installer Dartpéro » sur l'Accueil, action « Installer » du voyant Application des Réglages ; « Installer » ouvre la fenêtre native (avec les captures). Ne part que si Chrome juge l'app installable, et parfois tard (heuristique d'engagement). |
+| Safari iOS / iPadOS | Pas d'API : voyant « Pas installée » + « Comment ? », qui mène au guide en trois gestes sous la ligne de contenu des Réglages (Partager, « Sur l'écran d'accueil », « Ajouter ») ; la ligne d'Accueil y mène (`/reglages#installer`). |
+| Chrome, Firefox, Edge… sur iOS, navigateurs intégrés aux apps | « Comment ? » ; le guide dit « Ouvrez ce lien dans Safari pour installer Dartpéro. » |
+| Firefox Android, Safari macOS, autres | État « indisponible » : rien sur l'Accueil ; « Comment ? » et phrase générique (menu du navigateur) dans les Réglages. |
+| App installée (`standalone`) | Rien sur l'Accueil ; voyant Application « Installée », en vert, sans action. |
 
 - **« Plus tard »** masque la ligne de l'Accueil pour de bon sur cet appareil (préférence
   `installation:ecartee`, à ne jamais renommer) ; les Réglages gardent toujours leur entrée.
@@ -133,7 +134,8 @@ et `navigator.standalone`. Il écoute **dès sa construction** : les services na
 - Détection iOS par user agent (`detectIosBrowser`) : un iPad en « site pour ordinateur » se
   présente comme un Mac, reconnu à ses points de contact. Brave iOS passe pour Safari.
 - **Installée mais ouverte dans un onglet** : après rechargement, aucune API ne le dit — état
-  « indisponible », Accueil muet, phrase générique. Accepté.
+  « indisponible », Accueil muet ; dans les Réglages, voyant « Pas installée » + « Comment ? »
+  et phrase générique du guide. Accepté (aucune API pour le savoir).
 
 **Manifeste** (`vite.config.ts`) :
 
@@ -186,7 +188,7 @@ et `confidentialite-assetlinks`, `docs/lots/*/02-dev-notes.md`).
 Lot `confidentialite-assetlinks` (feuille de route Play Store, lot 3).
 
 **La politique** vit dans l'app : `/confidentialite` (`ConfidentialiteEcran`, route `lazy`, lien
-depuis Réglages → À propos), texte dans `src/ui/labels.ts` (`SECTIONS_CONFIDENTIALITE`,
+depuis Réglages, groupe Joueurs et appli), texte dans `src/ui/labels.ts` (`SECTIONS_CONFIDENTIALITE`,
 `MENTION_*`, `DATE_MISE_A_JOUR_CONFIDENTIALITE`).
 
 - **URL à donner à la Play Console** : `https://dartpero.web.app/confidentialite`. Page rendue
@@ -211,8 +213,8 @@ depuis Réglages → À propos), texte dans `src/ui/labels.ts` (`SECTIONS_CONFID
   le smoke n'ouvre que deux pages (R-c). Cookies, permissions, stockage : relecture seulement.
 - **Annonce vocale (R-d, accepté)** : `SpeechAnnouncer` prend la première voix `fr` sans
   regarder `localService` ; selon le navigateur, le texte annoncé (pseudo compris) peut être
-  synthétisé en ligne. La politique le dit et renvoie à Réglages → Annonce vocale → « Annoncer
-  les volées » : **si ces libellés changent, mettre la phrase de la politique à jour**.
+  synthétisé en ligne. La politique le dit et renvoie à « Annoncer les volées » dans
+  Réglages → Affichage (lot `reglages-par-usage`) : **si ces libellés changent, mettre la phrase de la politique à jour**.
 - **Import** : la politique dit que les éléments de même identifiant sont **remplacés** par la
   version du fichier (`ManageBackupUseCase.importFrom`). Si l'import change de comportement, le
   texte suit.

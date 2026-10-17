@@ -216,7 +216,8 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
 - **Clés de requête partagées** : `src/ui/clesRequetes.ts` — `CLE_HISTORIQUE`, préfixe de toute
   lecture d'historique (l'Accueil lit `[...CLE_HISTORIQUE, 'accueil']`), `CLE_REJOUER`
   (`[...CLE_HISTORIQUE, 'rejouer']` : les configurations de « Rejouer », rafraîchies avec
-  l'historique) et `CLE_MATCH_EN_COURS`.
+  l'historique), `CLE_MATCH_EN_COURS`, et `CLE_CONTENU_APPAREIL` (le compte des Réglages,
+  rafraîchi au montage et par l'invalidation globale de l'import).
   Le lancement (`useNouvellePartie`), « On remet ça » (`ActionsFinDePartie`) et la suppression
   (`HistoriqueEcran`) invalident les deux ; l'import (`ReglagesEcran`) invalide tout. ⚠️ Jamais
   une clé déclarée dans un écran chargé à la demande : l'Accueil, importé statiquement,
@@ -400,7 +401,8 @@ compléter à la main.
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
 invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchangé au lot
 « accueil-parties-recentes » ; lot « regles-du-jeu » : 23 ports driving (`ShuffleOrder`,
-`GetCheckoutRange`) ; lot « rejouer » : 24 (`GetReplayableConfigurations`)
+`GetCheckoutRange`) ; lot « rejouer » : 24 (`GetReplayableConfigurations`) ; lot
+« reglages-par-usage » : 25 (`GetDeviceContents`)
 (hors `MatchSummary.ts`, un type), 11 driven, 13 hooks (plus `tourDeTable.ts`, un utilitaire),
 4 modes, 4 services transverses.
 
@@ -432,7 +434,8 @@ src/
 │     │                   ManagePlayers, ManageBackup, PlayTourDuMonde,
 │     │                   PlayCricket, PreviewCricketVisit, PreviewTourDuMondeVisit,
 │     │                   PlayCheckoutPractice, ShuffleOrder,
-│     │                   GetReplayableConfigurations
+│     │                   GetReplayableConfigurations,
+│     │                   GetDeviceContents (compte des parties et profils)
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
 │     │                   PersistentStorage, AppInstallation
@@ -450,6 +453,8 @@ src/
 │  │                      Modale, la boîte refermée par le retour du téléphone ;
 │  │                      LivreRegles et FeuilleRegles, la feuille de règles ;
 │  │                      Phrase, une phrase de labels.ts en segments typés ;
+│  │                      Voyant, VignetteTheme, ListeReglages / LigneReglage, les
+│  │                      briques des Réglages ;
 │  │                      `ui/reglesDuJeu.ts` ouvre ReglesDeLaPartie)
 │  │                      x01/ · tour-du-monde/ · cricket/ · checkout-practice/
 │  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
@@ -467,7 +472,8 @@ src/
 │  │                      useCheckoutPractice · useJoueurs ·
 │  │                      useNouvellePartie (réglages mémorisés, nom, démarrage) ·
 │  │                      useNomDePartie (le nom affiché d'une partie) ·
-│  │                      useAppareil (wake lock, préférences, voix) ·
+│  │                      useAppareil (wake lock, préférences, voix, date du dernier
+│  │                        export validée : useDernierExport) ·
 │  │                      useStockagePersistant (protection des données) ·
 │  │                      useInstallation (invitation à installer) ·
 │  │                      usePauseAnnulation (la pause après le retrait d'une volée) ·
@@ -478,7 +484,10 @@ src/
 │     theme.ts (clair / sombre / système) ·
 │     chemins.ts (slugs et URL du parcours Nouvelle partie) ·
 │     clesRequetes.ts (clés TanStack Query partagées) ·
-│     jourCalendaire.ts (« Aujourd'hui » / « Cette semaine », bornes locales) ·
+│     jourCalendaire.ts (« Aujourd'hui » / « Cette semaine », bornes locales,
+│       joursCalendairesEntre) ·
+│     voyants.ts (les deux voyants des Réglages : durée depuis l'export, seuils
+│       30 / 60, état d'installation, guide #installer — pur, sans React) ·
 │     podium.ts (Statistiques : classement d'une carte, largeurs, ex æquo sur le
 │       chiffre affiché, coupure « N premiers » (apercuPodium), joueur de la cible,
 │       recadrage du ruban d'onglets (defilementPourMontrer) — pur, sans React) ·

@@ -10,7 +10,11 @@ import { useServices } from '../providers/ServicesProvider'
  */
 export const CLE_INSTALLATION_ECARTEE = 'installation:ecartee'
 
-/** Un état où l'app peut proposer quelque chose : un bouton, ou un guide. */
+/**
+ * Un état où l'ACCUEIL propose sa ligne : un bouton, ou un lien vers le guide iOS.
+ * ⚠️ Pas le critère des Réglages : leur guide #installer s'affiche aussi en
+ * `unavailable` (`guideInstallationVisible`, `ui/voyants.ts`).
+ */
 export const installationPossible = (etat: InstallState): boolean =>
   etat === 'installable' || etat === 'ios-manual' || etat === 'ios-other-browser'
 

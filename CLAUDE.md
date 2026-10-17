@@ -121,15 +121,24 @@ et les API navigateur).
 sinon l'app est inutilisable en conditions réelles.
 - **Stockage persistant demandé au démarrage** (lot `stockage-persistant`) : port driven
 `PersistentStorage` (`Services.devices`, même exception que `screenLock`), seul l'adapter lit
-`navigator.storage`. L'état se lit dans Réglages → Sauvegarde, jamais ailleurs (zéro friction).
+`navigator.storage`. L'état se lit dans Réglages, groupe Sauvegarde, en une phrase sous
+Exporter / Restaurer (« Demander la protection » en non protégée), jamais ailleurs (zéro
+friction) — **jamais en voyant** : en vert à côté d'une sauvegarde ancienne, il rassurait à tort
+(lot `reglages-par-usage`).
 ⚠️ **« Protégé » n'est pas une sauvegarde** : désinstallation, effacement du site ou perte du
 téléphone vident la base quand même — le rappel d'exporter s'affiche dans **les trois** états.
+- **Date du dernier export** (lot `reglages-par-usage`) : préférence d'appareil
+`sauvegarde:dernier-export` (citée par la politique, ne se renomme jamais), écrite au seul export
+réussi, jamais par une restauration ni dans le fichier ; le voyant « Dernier export » des
+Réglages la lit par `services.clock`.
 - **Invitation à installer** (lot `installation-guidee`) : port driven `AppInstallation`
 (`Services.devices`, même exception que `screenLock`) ; seul l'adapter lit `beforeinstallprompt`,
 `appinstalled`, `display-mode` et `navigator.standalone`. ⚠️ Les services naissent dans
 `src/main.tsx`, **avant** `createRoot`. Ligne discrète sur l'Accueil (« Plus tard » mémorisé,
-Accueil seulement), entrée complète dans Réglages → À propos. Jamais sur un écran de partie,
-jamais ouverte d'elle-même.
+Accueil seulement) ; entrée complète dans les Réglages : voyant Application en tête
+(« Installer » ouvre l'invite native ; « Comment ? » mène au guide `#installer`, rendu sur iOS,
+autre navigateur iOS et navigateur sans invite — là où mène la ligne de l'Accueil). Jamais sur
+un écran de partie, jamais ouverte d'elle-même.
 - **Nom de partie** (lot `nom-de-partie`) : seul un nom **tapé** s'écrit — champ facultatif
 `name` de l'événement d'ouverture des quatre modes, 30 caractères au plus, espaces autour
 retirés (`MatchName.of`). Le nom par défaut (« Dimanche soir » ; nuit de 0 h à 5 h, au nom

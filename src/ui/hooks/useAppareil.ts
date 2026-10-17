@@ -38,6 +38,31 @@ export const usePreference = <T>(cle: string, defaut: T): readonly [T, (valeur: 
 export const CLE_VOIX = 'annonce-vocale'
 
 /**
+ * La date du dernier export réussi (horodatage de `services.clock`).
+ * Préférence d'appareil : jamais dans le fichier exporté, jamais écrite par une
+ * restauration. ⚠️ La clé est citée par la politique de confidentialité et ne
+ * se renomme jamais (précédent `installation:ecartee`).
+ */
+export const CLE_DERNIER_EXPORT = 'sauvegarde:dernier-export'
+
+/**
+ * Un horodatage lisible, ou rien : la valeur relue n'a pas de schéma. Fini ne
+ * suffit pas — `1e20` l'est, mais sort de la plage de `Date` (± 8,64 × 10¹⁵ ms).
+ */
+const horodatageOuNull = (valeur: unknown): number | null =>
+  typeof valeur === 'number' && Number.isFinite(new Date(valeur).getTime()) ? valeur : null
+
+/**
+ * La date du dernier export, validée : une valeur éditée à la main ou
+ * illisible vaut « Jamais », elle n'est jamais affichée brute.
+ */
+export const useDernierExport = (): readonly [number | null, (horodatage: number) => void] => {
+  const [valeur, ecrire] = usePreference<unknown>(CLE_DERNIER_EXPORT, null)
+  const noter = useCallback((horodatage: number) => ecrire(horodatage), [ecrire])
+  return [horodatageOuNull(valeur), noter] as const
+}
+
+/**
  * Annonce une phrase, si l'utilisateur a laissé la voix active.
  *
  * ⚠️ La préférence est relue à **chaque** annonce plutôt que capturée au

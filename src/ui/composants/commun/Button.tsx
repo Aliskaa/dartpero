@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 type Variante = 'primaire' | 'secondaire' | 'discret' | 'danger'
-type Taille = 'md' | 'lg'
+type Taille = 'xs' | 'sm' | 'md' | 'lg'
 
 /**
  * Cibles ≥ 48 px : on tape debout, une fléchette dans l'autre main.
@@ -17,15 +17,23 @@ const VARIANTES: Record<Variante, string> = {
   danger: 'border-2 border-rouge-cible text-rouge-cible active:bg-rouge-cible active:text-craie',
 }
 
+/**
+ * L'interlettrage vit dans la taille : un bouton serré (le duo Exporter /
+ * Restaurer des Réglages, deux par ligne à 360 px) le resserre sans classe
+ * concurrente passée par `className`. `xs` et `sm` font 56 px de haut, comme
+ * le duo de la planche (`.cta`, `min-height: 56px`).
+ */
 const TAILLES: Record<Taille, string> = {
-  md: 'min-h-12 px-5 text-base',
-  lg: 'min-h-14 px-7 text-lg',
+  xs: 'min-h-14 px-3 text-xs tracking-[0.12em]',
+  sm: 'min-h-14 px-3 text-sm tracking-[0.14em]',
+  md: 'min-h-12 px-5 text-base tracking-widest',
+  lg: 'min-h-14 px-7 text-lg tracking-widest',
 }
 
 export const classesBouton = (variante: Variante = 'primaire', taille: Taille = 'md'): string =>
   [
     'inline-flex items-center justify-center gap-2',
-    'font-score font-bold uppercase tracking-widest',
+    'font-score font-bold uppercase',
     'transition-[transform,box-shadow,background-color] duration-100',
     'disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
     TAILLES[taille],

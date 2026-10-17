@@ -64,6 +64,26 @@
   --color-chene-doux: #4a3825;
   --color-voile: rgb(4 8 5 / 0.62);
 
+  /* LE VOYANT DES RÉGLAGES (lot `reglages-par-usage`) : « Installée », écrit EN
+     TEXTE vert sur l'ardoise. `vert-cible` y fait 3,2:1 en sombre ; celui-ci
+     8,5:1 (sombre) et 5,8:1 (clair) sur l'ardoise. Réservé à `Voyant.tsx` :
+     contraste vérifié sur l'ardoise seulement (charte § Palette). Le filet du
+     voyant, lui, reste `vert-cible`. */
+  --color-vert-etat: #6fcf97;
+
+  /* LES APERÇUS DE THÈME (lot `reglages-par-usage`) : ce que montre chaque
+     vignette du choix du thème. ⚠️ CONSTANTS À DESSEIN : la vignette « Clair »
+     doit montrer du papier même sous le sombre, et inversement. Ce sont des
+     COPIES des valeurs de feutre, craie et laiton de chaque thème, redéfinies
+     À L'IDENTIQUE sous le clair plus bas. Réservés à `VignetteTheme.tsx` ; la
+     garde `themeBoundary` vérifie l'égalité avec les jetons qu'ils montrent. */
+  --color-apercu-sombre-fond: #0e1a13;
+  --color-apercu-sombre-encre: #f2e8d5;
+  --color-apercu-sombre-accent: #c9a227;
+  --color-apercu-clair-fond: #e3d9c1;
+  --color-apercu-clair-encre: #1f2d24;
+  --color-apercu-clair-accent: #8a6d12;
+
   /* ANGLE VIF PARTOUT - decision de charte, pas un oubli.
      Aucun objet du decor n'a de coin rond : ni l'ardoise, ni la plaque de
      laiton, ni la feuille de match punaisee derriere le bar. Les tokens de
@@ -230,6 +250,19 @@ html[data-theme="clair"] {
   --color-filet-doux: #e0d9c7;
   --color-chene-doux: #a38d6f;
   --color-voile: rgb(47 30 16 / 0.45);
+
+  /* Le vert de « Installée », en clair : la valeur claire de vert-cible
+     (5,8:1 sur l'ardoise-papier). */
+  --color-vert-etat: #1f6b41;
+
+  /* Les aperçus de thème : identiques à dessein (voir `@theme`). Une vignette
+     montre son thème, pas celui de l'écran. */
+  --color-apercu-sombre-fond: #0e1a13;
+  --color-apercu-sombre-encre: #f2e8d5;
+  --color-apercu-sombre-accent: #c9a227;
+  --color-apercu-clair-fond: #e3d9c1;
+  --color-apercu-clair-encre: #1f2d24;
+  --color-apercu-clair-accent: #8a6d12;
 
   --teinte-relief: rgb(255 255 255 / 0.85);
   --ombre-plaque: rgb(90 62 36 / 0.3);

@@ -135,7 +135,9 @@ describe('Installation — Accueil', () => {
       services: avec(new FakeAppInstallation('installable'), { preferences }),
     })
 
-    expect(await screen.findByRole('status', { name: 'Installation' })).toBeInTheDocument()
+    expect(await screen.findByRole('status', { name: 'Application' })).toHaveTextContent(
+      'Pas installée',
+    )
     expect(screen.getByRole('button', { name: 'Installer Dartpéro' })).toBeInTheDocument()
   })
 
@@ -170,57 +172,75 @@ describe('Installation — Accueil', () => {
   })
 })
 
-describe('Installation — Réglages → À propos', () => {
+describe('Installation — Réglages, voyant Application et guide #installer', () => {
   const ouvrir = (etat: InstallState, route = '/reglages') => {
     const installation = new FakeAppInstallation(etat)
     renderWithServices(<ReglagesEcran />, { services: avec(installation), route })
     return installation
   }
 
-  it('installable : la phrase d’état et un bouton qui ouvre l’invite une fois', async () => {
+  const voyant = () => screen.findByRole('status', { name: 'Application' })
+  const guide = () => screen.queryByRole('status', { name: 'Installation' })
+  const comment = () => screen.queryByRole('link', { name: 'Comment ? Installer Dartpéro' })
+  const installer = () => screen.queryByRole('button', { name: 'Installer Dartpéro' })
+
+  it.each([
+    ['installed', 'Installée', 'aucune'],
+    ['installable', 'Pas installée', 'installer'],
+    ['ios-manual', 'Pas installée', 'comment'],
+    ['ios-other-browser', 'Pas installée', 'comment'],
+    ['unavailable', 'Pas installée', 'comment'],
+  ] as const)('%s : « %s », action %s', async (etat, valeur, action) => {
+    ouvrir(etat)
+
+    expect(await voyant()).toHaveTextContent(valeur)
+    expect(installer() !== null).toBe(action === 'installer')
+    expect(comment() !== null).toBe(action === 'comment')
+    // Le guide n'est rendu que là où « Comment ? » y mène.
+    expect(guide() !== null).toBe(action === 'comment')
+  })
+
+  it('installable : « Installer » ouvre l’invite une fois, puis cède la place à « Comment ? »', async () => {
     const installation = ouvrir('installable')
     const utilisateur = userEvent.setup()
 
-    expect(await screen.findByRole('status', { name: 'Installation' })).toHaveTextContent(
-      'Installez Dartpéro pour l’ouvrir en plein écran',
-    )
-    await utilisateur.click(screen.getByRole('button', { name: 'Installer Dartpéro' }))
+    await voyant()
+    await utilisateur.click(installer() as HTMLElement)
 
     // Le fake compte chaque appel : un second `prompt()` par clic ferait 2.
     expect(installation.promptCalls).toBe(1)
     // L'invite consommée n'est plus proposée.
-    expect(screen.queryByRole('button', { name: 'Installer Dartpéro' })).toBeNull()
+    expect(installer()).toBeNull()
+    expect(comment()).toBeInTheDocument()
   })
 
-  it('ios-manual : les trois gestes en ligne', async () => {
+  it('« Comment ? » mène à l’ancre #installer de la même page', async () => {
+    ouvrir('ios-manual')
+    await voyant()
+
+    expect(comment()).toHaveAttribute('href', '/reglages#installer')
+  })
+
+  it('ios-manual : la phrase et les trois gestes en ligne', async () => {
     ouvrir('ios-manual')
 
     expect(await screen.findByRole('status', { name: 'Installation' })).toHaveTextContent('Safari')
-    const etapes = within(screen.getByRole('list')).getAllByRole('listitem')
+    const bloc = document.getElementById('installer') as HTMLElement
+    const etapes = within(within(bloc).getByRole('list')).getAllByRole('listitem')
     expect(etapes).toHaveLength(3)
     expect(etapes[0]).toHaveTextContent('Partager')
     expect(etapes[1]).toHaveTextContent('Sur l’écran d’accueil')
     expect(etapes[2]).toHaveTextContent('Ajouter')
-    expect(screen.queryByRole('button', { name: 'Installer Dartpéro' })).toBeNull()
   })
 
-  it('ios-other-browser : « Ouvrez dans Safari », sans guide ni bouton', async () => {
+  it('ios-other-browser : « Ouvrez dans Safari », sans gestes', async () => {
     ouvrir('ios-other-browser')
 
     expect(await screen.findByRole('status', { name: 'Installation' })).toHaveTextContent(
       'Ouvrez ce lien dans Safari pour installer Dartpéro.',
     )
-    expect(screen.queryByRole('list')).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Installer Dartpéro' })).toBeNull()
-  })
-
-  it('installed : « Dartpéro est installé sur cet appareil. »', async () => {
-    ouvrir('installed')
-
-    expect(await screen.findByRole('status', { name: 'Installation' })).toHaveTextContent(
-      'Dartpéro est installé sur cet appareil.',
-    )
-    expect(screen.queryByRole('button', { name: 'Installer Dartpéro' })).toBeNull()
+    const bloc = document.getElementById('installer') as HTMLElement
+    expect(within(bloc).queryByRole('list')).toBeNull()
   })
 
   it('unavailable : la phrase générique du menu du navigateur', async () => {
@@ -229,19 +249,18 @@ describe('Installation — Réglages → À propos', () => {
     expect(await screen.findByRole('status', { name: 'Installation' })).toHaveTextContent(
       'Ajouter à l’écran d’accueil',
     )
-    expect(screen.queryByRole('button', { name: 'Installer Dartpéro' })).toBeNull()
   })
 
   it('suit l’état en direct : appinstalled pendant que les Réglages sont ouverts', async () => {
     const installation = ouvrir('installable')
-    await screen.findByRole('button', { name: 'Installer Dartpéro' })
+    expect(await voyant()).toHaveTextContent('Pas installée')
 
     act(() => installation.regler('installed'))
 
-    expect(screen.getByRole('status', { name: 'Installation' })).toHaveTextContent(
-      'Dartpéro est installé',
-    )
-    expect(screen.queryByRole('button', { name: 'Installer Dartpéro' })).toBeNull()
+    expect(screen.getByRole('status', { name: 'Application' })).toHaveTextContent('Installée')
+    expect(screen.getByRole('status', { name: 'Application' })).not.toHaveTextContent('Pas')
+    expect(installer()).toBeNull()
+    expect(comment()).toBeNull()
   })
 
   describe('ancre #installer', () => {
@@ -255,7 +274,7 @@ describe('Installation — Réglages → À propos', () => {
       expect(await screen.findByRole('status', { name: 'Installation' })).toBeInTheDocument()
     })
 
-    it('fait défiler jusqu’à l’entrée d’installation', async () => {
+    it('fait défiler jusqu’au guide d’installation', async () => {
       const cibles: string[] = []
       HTMLElement.prototype.scrollIntoView = function (this: HTMLElement) {
         cibles.push(this.id)
@@ -276,10 +295,25 @@ describe('Installation — Réglages → À propos', () => {
 
       expect(cibles).toEqual([])
     })
+
+    it('« Comment ? » fait défiler jusqu’au guide, à chaque appui', async () => {
+      const cibles: string[] = []
+      HTMLElement.prototype.scrollIntoView = function (this: HTMLElement) {
+        cibles.push(this.id)
+      }
+      ouvrir('unavailable')
+      const utilisateur = userEvent.setup()
+      await voyant()
+
+      await utilisateur.click(comment() as HTMLElement)
+      await utilisateur.click(comment() as HTMLElement)
+
+      expect(cibles).toEqual(['installer', 'installer'])
+    })
   })
 })
 
-describe('Installation — après un refus de « Redemander »', () => {
+describe('Installation — après un refus de « Demander la protection »', () => {
   const refuser = async (etat: InstallState) => {
     const installation = new FakeAppInstallation(etat)
     renderWithServices(<ReglagesEcran />, {
@@ -289,18 +323,18 @@ describe('Installation — après un refus de « Redemander »', () => {
       route: '/reglages',
     })
     const utilisateur = userEvent.setup()
-    await utilisateur.click(await screen.findByRole('button', { name: 'Redemander' }))
+    await utilisateur.click(await screen.findByRole('button', { name: 'Demander la protection' }))
     expect(screen.getByRole('status', { name: 'Protection des données' })).toHaveTextContent(
       'Le navigateur a refusé.',
     )
     return { installation, utilisateur }
   }
 
-  it('installable : un second bouton « Installer Dartpéro », hors de la région live', async () => {
+  it('installable : aucun second bouton, le voyant porte l’action', async () => {
     const { installation, utilisateur } = await refuser('installable')
 
     const boutons = screen.getAllByRole('button', { name: 'Installer Dartpéro' })
-    expect(boutons).toHaveLength(2)
+    expect(boutons).toHaveLength(1)
     const protection = screen.getByRole('status', { name: 'Protection des données' })
     expect(within(protection).queryByRole('button')).toBeNull()
 
@@ -309,32 +343,12 @@ describe('Installation — après un refus de « Redemander »', () => {
   })
 
   it.each(['ios-manual', 'ios-other-browser'] as const)(
-    '%s : un lien vers le guide d’installation',
+    '%s : plus de lien sous la phrase, « Comment ? » seul y mène',
     async (etat) => {
       await refuser(etat)
 
-      expect(screen.getByRole('link', { name: 'Voir comment installer' })).toHaveAttribute(
-        'href',
-        '/reglages#installer',
-      )
+      expect(screen.queryByRole('link', { name: 'Voir comment installer' })).toBeNull()
+      expect(screen.getAllByRole('link', { name: 'Comment ? Installer Dartpéro' })).toHaveLength(1)
     },
   )
-
-  it.each(['installed', 'unavailable'] as const)('%s : aucune action de plus', async (etat) => {
-    await refuser(etat)
-
-    expect(screen.queryByRole('link', { name: 'Voir comment installer' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Installer Dartpéro' })).toBeNull()
-  })
-
-  it('aucune action vers l’installation tant qu’il n’y a pas eu de refus', async () => {
-    renderWithServices(<ReglagesEcran />, {
-      services: avec(new FakeAppInstallation('ios-manual'), {
-        stockage: new FakePersistentStorage('not-persisted', { accorde: false }),
-      }),
-    })
-    await screen.findByRole('button', { name: 'Redemander' })
-
-    expect(screen.queryByRole('link', { name: 'Voir comment installer' })).toBeNull()
-  })
 })

@@ -21,14 +21,13 @@ const ouvrir = (route: string) =>
 const titre = () => screen.findByRole('heading', { level: 1, name: 'Confidentialité' })
 
 describe('Confidentialité — depuis les Réglages', () => {
-  it('À propos porte un lien vers /confidentialite, hors de toute liste', async () => {
+  it('« Joueurs et appli » porte une ligne-lien vers /confidentialite', async () => {
     ouvrir('/reglages')
 
     const lien = await screen.findByRole('link', { name: 'Confidentialité et mentions légales' })
     expect(lien).toHaveAttribute('href', '/confidentialite')
-    expect(lien.closest('ul, ol')).toBeNull()
-    const aPropos = screen.getByRole('heading', { level: 2, name: 'À propos' }).closest('section')
-    expect(aPropos).toContainElement(lien)
+    const groupe = screen.getByRole('region', { name: 'Joueurs et appli' })
+    expect(groupe).toContainElement(lien)
   })
 
   it('le lien mène à la page, à travers les routes de l’app', async () => {
@@ -82,7 +81,29 @@ describe('Confidentialité — en accès direct', () => {
     ouvrir('/confidentialite')
     await titre()
 
-    expect(screen.getAllByText('Mise à jour le 16 octobre 2026')).toHaveLength(1)
+    expect(screen.getAllByText('Mise à jour le 17 octobre 2026')).toHaveLength(1)
+  })
+
+  it('cite la date du dernier export, gardée dans le stockage local', async () => {
+    ouvrir('/confidentialite')
+    await titre()
+
+    const section = screen
+      .getByRole('heading', { level: 2, name: 'Sur votre appareil' })
+      .closest('section') as HTMLElement
+    const paragraphe = within(section).getByText(/stockage local du navigateur \(localStorage\)/)
+    expect(paragraphe).toHaveTextContent(
+      'le « Plus tard » de l’invitation à installer et la date du dernier export.',
+    )
+  })
+
+  it('situe « Annoncer les volées » dans Réglages → Affichage, là où il est', async () => {
+    ouvrir('/confidentialite')
+    await titre()
+
+    expect(
+      screen.getByText(/coupez « Annoncer les volées » dans Réglages → Affichage\./),
+    ).toBeInTheDocument()
   })
 
   it('cite le dernier joueur consulté dans Statistiques, gardé dans le stockage local', async () => {

@@ -1,5 +1,7 @@
 /**
- * Le jour calendaire **local** d'une partie, relativement à « maintenant ».
+ * Le jour calendaire **local** d'un instant, relativement à « maintenant » :
+ * le groupe d'une partie à l'Accueil (`groupeDeJour`) et l'âge du dernier
+ * export dans les Réglages (`joursCalendairesEntre`).
  *
  * `maintenant` vient de `services.clock.now()` : jamais `Date.now()` ici.
  * `Date` ne sert que de **calendrier** pour des horodatages donnés.
@@ -38,3 +40,22 @@ export const groupeDeJour = (createdAt: number, maintenant: number): GroupeDeJou
   if (createdAt >= new Date(annee, mois, jour - JOURS_PRECEDENTS).getTime()) return 'CETTE_SEMAINE'
   return null
 }
+
+/** Minuit UTC du jour calendaire LOCAL d'un instant : une étiquette de jour, pas une heure. */
+const etiquetteDeJour = (horodatage: number): number => {
+  const date = new Date(horodatage)
+  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+const UN_JOUR_UTC = 86_400_000
+
+/**
+ * Le nombre de jours calendaires locaux de `avant` à `maintenant` : 0 le même
+ * jour, 1 la veille (même à 23 h 59 contre 0 h 01), négatif dans le futur.
+ *
+ * Les deux jours sont reportés en UTC par leurs **composantes** locales : en
+ * UTC, chaque jour dure 24 h, et un changement d'heure entre les deux ne
+ * décale rien.
+ */
+export const joursCalendairesEntre = (avant: number, maintenant: number): number =>
+  Math.round((etiquetteDeJour(maintenant) - etiquetteDeJour(avant)) / UN_JOUR_UTC)

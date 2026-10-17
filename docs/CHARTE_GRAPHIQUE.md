@@ -69,7 +69,9 @@ remettre un rayon dans le `@theme` rallumerait tout d'un coup.
 
 **Un seul jeu de tokens, deux jeux de valeurs.** `@theme` déclare la palette **sombre**, le
 défaut ; `html[data-theme="clair"]` n'en redéfinit que les **valeurs**. Aucune classe de
-`src/ui` ne connaît le thème.
+`src/ui` ne connaît le thème, sauf les **aperçus constants** de la vignette du choix du thème
+(`VignetteTheme`, lot `reglages-par-usage`) : la vignette « Clair » montre du papier même sous
+le sombre (§ Palette, aperçus de thème).
 
 ⚠️ **Le défaut est « sombre », pas « système ».** Le cadrage est un garage mal éclairé : le
 sombre *est* l'app, le clair est une option. Ouvrir la mise à jour sur un fond blanc parce que
@@ -125,6 +127,20 @@ sombre ils tombent à 2,8:1 et 3,2:1. Contrastes des tokens de texte (sur `feutr
 7,3 · 8,0 ; `laiton-texte` 6,0 · 4,8 · 7,6 · 8,3 ; `rouge-texte` 5,2 · **4,2** · 6,5 · 7,2 ;
 `vert-texte` 4,6 · **3,7** · 5,8 · 6,4 — rouge et vert ne se posent que sur l'`ardoise` de la
 feuille, jamais sur son en-tête `feutre-nuit`.
+
+**Voyant et aperçus de thème** (lot `reglages-par-usage`) : deux familles de plus, **réservées**
+chacune à un composant (garde `themeBoundary`, `rules/theme-colors.md` § Jetons réservés) :
+
+| Rôle | Token | Sombre | Clair | Usage |
+| ---- | ----- | ------ | ----- | ----- |
+| Vert en texte du voyant | `vert-etat` | `#6FCF97` | `#1F6B41` | « Installée », dans `Voyant` seulement — 8,5:1 (sombre) et 5,8:1 (clair) sur l'`ardoise` ; le filet du voyant reste `vert-cible` |
+| Aperçu sombre | `apercu-sombre-fond` · `-encre` · `-accent` | `#0E1A13` · `#F2E8D5` · `#C9A227` | **identiques** | Copies de `feutre`, `craie`, `laiton` sombres |
+| Aperçu clair | `apercu-clair-fond` · `-encre` · `-accent` | `#E3D9C1` · `#1F2D24` · `#8A6D12` | **identiques** | Copies de `feutre`, `craie`, `laiton` clairs |
+
+⚠️ Les six aperçus sont **constants à dessein** : redéfinis à l'identique sous le clair (la règle
+« le clair redéfinit tous les jetons » tient), ils ne suivent pas le thème — c'est leur rôle.
+Réservés à `VignetteTheme` ; une garde vérifie que chacun vaut le jeton qu'il montre, dans les
+deux blocs. Ce ne sont pas des textes : aucun contraste exigé.
 
 ⚠️ **Le point critique du thème clair, c'est le laiton.** Le laiton vif fait **1,84:1** sur du
 papier : le filet de `.repere-lancer`, qui dit **qui est en train de lancer**, y deviendrait
@@ -318,12 +334,15 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 
 | Composant | Rôle |
 | --------- | ---- |
-| `Button` | Primaire laiton / secondaire cadre bois / discret / danger · tailles `md` et `lg` |
+| `Button` | Primaire laiton / secondaire cadre bois / discret / danger · tailles `xs`, `sm` (serrées, **56 px** de haut comme le `.cta` de la planche, interlettrage 0,12 / 0,14 em : le duo Exporter / Restaurer des Réglages, deux par ligne à 360 px), `md` et `lg` ; l'interlettrage vit dans la taille, jamais passé par `className` |
+| `Voyant` | Un état en tête des Réglages (lot `reglages-par-usage`, planche `derniers.html` `#rg4`) : `ardoise`, filet haut 3 px **`vert-cible` si tout va bien, `laiton` si une action est attendue** ; étiquette `text-etiquette` capitales `craie-3` ; valeur `font-score text-base` **grasse**, interligne 1,1 (planche), dans un `<output>` nommé par l'étiquette, en `craie-vive`, `laiton-clair` (alerte) ou `vert-etat` (« Installée ») ; action facultative (bouton ou lien) soulignée `laiton-clair`, **étirée sur tout le voyant** par un pseudo-élément (le voyant entier est la cible, l'`<output>` reste hors du contrôle, l'anneau de focus suit la zone). Deux voyants côte à côte, `gap-1.5` |
+| `VignetteTheme` | Le choix du thème en trois vignettes (Sombre, Clair, Système) : `<fieldset>` nommé « Thème », boutons `aria-pressed`, active cerclée de laiton 2 px ; aperçu `aria-hidden` de 54 px (fond, barres encre 70 %, accent 40 %, encre 55 % à 60 %) peint avec les jetons **constants** `apercu-*` — Système : fond sombre et bloc clair à droite, sur 40 % de la largeur de l'aperçu (≈ les 40 px de la planche en portrait, proportionnel en paysage), deux barres sombres, ni dégradé ni ombre |
+| `ListeReglages` / `LigneReglage` | Une liste de réglages : `<ul>` `ardoise` sous un filet 3 px `craie` ; chaque ligne est **une** cible de 56 px (`min-h-14`, filet bas `craie/25`) : titre `font-score text-sm` gras capitales `craie-vive`, aide `text-xs craie-3`, valeur `text-sm laiton-clair`, puis chevron `laiton` (lien ou bouton) **ou** bascule 46 × 26 px (curseur 18 px, `aria-hidden` ; l'état est l'`aria-pressed` de la ligne) |
 | `Avatar` | Pastille couleur + initiales (2 lettres max) |
 | `Cible` | Plateau SVG génératif (décoratif, `aria-hidden`) |
 | `Enseigne` / `LogoHero` | Marque Dartpéro |
 | `Panneau` | Ardoise dans un cadre · `titre` (`<h2>`) **ou** `enTete` libre |
-| `EnTeteEcran` | Titre d'écran + sous-titre |
+| `EnTeteEcran` | Titre d'écran + sous-titre (facultatif : les Réglages n'en ont plus) |
 | `StatTile` | Tuile de statistique — **deux lignes réservées au libellé** |
 | `Batons` | Les manches comptées en bâtons, quatre traits barrés par un cinquième — **gagnées sur requises** (traits acquis, tirets à gagner), en CSS, sur la feuille de match |
 | `CompteBatons` | Un **total** compté en bâtons de craie (carte Grosses volées) — à ne pas confondre avec `Batons`. SVG d'après la planche : groupe de k traits = 5k + 4 de large, 16 de haut, trait 1,8, barre de (0, 13) à (5k + 4, 3). **Au plus 10 groupes (50 bâtons)**, puis le nombre exact (`decompteBatons`). Nombre toujours écrit dès 1 (`craie`), « — » `craie-3` à 0. Teinte des traits par seuil, en tokens **pleins** : 180 `laiton`, 140+ `craie`, 100+ `craie-2` (jamais d'alpha). Traits `aria-hidden` |
@@ -416,6 +435,24 @@ d'étapes. Planche : `docs/maquettes/derniers/derniers.html`, piste 2 (`np2`).
 - Écarts à la planche : laiton unique (lot 6b), barre d'étapes du lot 9 en tête, pictogrammes
   `currentColor`, pictogramme de la rangée gardé à **24 px** (la planche en dessine 28 ; la taille
   28 n'est pas dans `TaillePictogramme`), « Solo » pour l'entraînement dans la rangée.
+
+### Les Réglages (lot `reglages-par-usage`)
+
+Planche `derniers.html` `#rg4`, une seule page rangée par usage, lue à 30 cm : titre « Réglages »
+sans sous-titre ; **deux voyants** (`Voyant`) — Dernier export (étiquette raccourcie par décision de l'utilisateur, Q-d : « Dernière sauvegarde » (planche) passait sur deux lignes à 125 % de police à 360 px ; « Jamais », « Aujourd'hui »,
+« Hier », « Il y a N jours » jusqu'à 59, « Il y a N mois » ; laiton au-delà de 30 jours et pour
+« Jamais » ; action « Exporter ») et Application (« Installée » vert sans action, ou « Pas
+installée » + « Installer » / « Comment ? ») ; la ligne « N parties · M joueurs sur ce
+téléphone. » (`text-xs craie-3`) ; le guide `#installer` (iOS, autre navigateur iOS, navigateur
+sans invite) ; puis trois groupes titrés `text-etiquette` gras capitales `tracking-[0.2em]`
+`craie-3` : **Affichage** (`VignetteTheme`, puis « Annoncer les volées » à bascule et « Essayer la
+voix »), **Sauvegarde** (duo `Button` `xs` primaire / `sm` secondaire, 56 px de haut tous les deux, phrase de protection avec
+le rappel d'exporter dans les trois états et le lien « Demander la protection » en non protégée,
+explication de la restauration, erreurs, résumé d'import), **Joueurs et appli** (« Gérer les
+joueurs » avec le nombre de profils, « Confidentialité et mentions légales ») ; pied « 100 %
+local, hors ligne, sans compte. » et présentation de Dartpéro. Paliers : plancher 0,75 rem
+partout (étiquettes, actions, titres de groupe, vignettes, phrases), valeur de voyant 1 rem en gras,
+titres et valeurs de ligne 0,875 rem.
 
 ### La carte des impacts
 

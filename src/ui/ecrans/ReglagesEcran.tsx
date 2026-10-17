@@ -1,53 +1,75 @@
-import { useQueryClient } from '@tanstack/react-query'
-import {
-  ChevronRight,
-  CircleCheck,
-  Download,
-  Share,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldOff,
-  Smartphone,
-  SquarePlus,
-  TriangleAlert,
-  Upload,
-  Volume2,
-  VolumeX,
-  WifiOff,
-} from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Download, Share, SquarePlus, TriangleAlert, Upload } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { useLocation } from 'react-router'
+import type { InstallState } from '@/core/application/ports/driven/AppInstallation'
 import type { ImportReport } from '@/core/application/ports/driving/ManageBackup'
-import { Button, classesBouton } from '@/ui/composants/commun/Button'
-import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
+import { CLE_CONTENU_APPAREIL } from '@/ui/clesRequetes'
+import { Button } from '@/ui/composants/commun/Button'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { MessageErreur } from '@/ui/composants/commun/Etats'
-import { Panneau } from '@/ui/composants/commun/Panneau'
-import { CLE_VOIX, usePreference } from '@/ui/hooks/useAppareil'
-import { installationPossible, useInstallation } from '@/ui/hooks/useInstallation'
+import { LigneReglage, ListeReglages } from '@/ui/composants/commun/LigneReglage'
+import { Phrase } from '@/ui/composants/commun/Phrase'
+import { VignetteTheme } from '@/ui/composants/commun/VignetteTheme'
+import { type ActionVoyant, Voyant } from '@/ui/composants/commun/Voyant'
+import { CLE_VOIX, useDernierExport, usePreference } from '@/ui/hooks/useAppareil'
+import { useInstallation } from '@/ui/hooks/useInstallation'
 import { useProtectionStockage } from '@/ui/hooks/useStockagePersistant'
 import {
+  ACTION_COMMENT_INSTALLER,
+  ACTION_EXPORTER,
+  AIDE_ANNONCER_VOLEES,
+  AIDE_GERER_JOUEURS,
+  contenuAppareil,
+  ERREUR_EXPORT,
+  ERREUR_JSON_ILLISIBLE,
+  ERREUR_RESTAURATION,
   ETAPES_INSTALLATION_IOS,
   ETAT_INSTALLATION,
+  ETIQUETTE_CHOIX_THEME,
+  ETIQUETTE_CONTENU_APPAREIL,
+  ETIQUETTE_FICHIER_SAUVEGARDE,
   ETIQUETTE_INSTALLATION,
   ETIQUETTE_PROTECTION_STOCKAGE,
+  ETIQUETTE_VOYANT_APPLICATION,
+  ETIQUETTE_VOYANT_SAUVEGARDE,
+  EXPLICATION_RESTAURATION,
+  entreesIgnorees,
+  LIBELLE_DEMANDER_PROTECTION,
+  LIBELLE_EXPORTER,
+  LIBELLE_INSTALLER,
   LIBELLE_INSTALLER_DARTPERO,
-  LIBELLE_PROTECTION_STOCKAGE,
-  LIBELLE_REDEMANDER_PROTECTION,
-  LIBELLE_THEME,
+  LIBELLE_RESTAURER,
   LIEN_CONFIDENTIALITE,
   LIEN_GERER_JOUEURS,
-  LIEN_GUIDE_INSTALLATION,
+  libelleDureeSauvegarde,
+  NOM_ACTION_COMMENT_INSTALLER,
+  NOM_ACTION_EXPORTER,
+  PHRASE_ESSAI_VOIX,
+  PHRASE_PROTECTION_STOCKAGE,
+  PIED_REGLAGES,
   PRESENTATION_DARTPERO,
-  pluriel,
-  RAPPEL_EXPORT_STOCKAGE,
-  REFUS_REDEMANDE_STOCKAGE,
-  SOUS_TITRE_REGLAGES,
-  TEXTE_PANNEAU_JOUEURS,
-  TITRE_PANNEAU_JOUEURS,
+  REFUS_PROTECTION_STOCKAGE,
+  REFUS_PROTECTION_STOCKAGE_INSTALLEE,
+  resumeImport,
+  TITRE_ANNONCER_VOLEES,
+  TITRE_ESSAYER_VOIX,
+  TITRE_GROUPE_AFFICHAGE,
+  TITRE_GROUPE_JOUEURS_APPLI,
+  TITRE_GROUPE_SAUVEGARDE,
+  TITRE_REGLAGES,
+  TITRE_RESUME_IMPORT,
+  VALEUR_INSTALLEE,
+  VALEUR_PAS_INSTALLEE,
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
-import { appliquerTheme, CLE_THEME, THEME_DEFAUT, THEMES, type Theme } from '@/ui/theme'
+import { appliquerTheme, CLE_THEME, THEME_DEFAUT, type Theme } from '@/ui/theme'
+import {
+  type EtatGuideInstallation,
+  guideInstallationVisible,
+  vueVoyantApplication,
+  vueVoyantSauvegarde,
+} from '@/ui/voyants'
 
 /**
  * Le nom du fichier porte la date : on finit toujours par en avoir plusieurs
@@ -90,84 +112,69 @@ const Resume = ({ rapport }: { readonly rapport: ImportReport }) => {
       className="border border-vert-cible/60 bg-vert-cible/12 px-4 py-3 text-sm text-craie"
     >
       <p className="font-score text-xs uppercase tracking-widest text-vert-cible">
-        Sauvegarde restaurée
+        {TITRE_RESUME_IMPORT}
       </p>
-      <p className="mt-1">
-        {pluriel(rapport.playersImported, 'joueur')} et{' '}
-        {pluriel(rapport.matchesImported, 'partie', 'parties')} importés.
-      </p>
+      <p className="mt-1">{resumeImport(rapport.playersImported, rapport.matchesImported)}</p>
       {ignores > 0 && (
         <p className="mt-1 flex items-start gap-1.5 text-craie-3">
           <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-          {pluriel(ignores, 'entrée illisible', 'entrées illisibles')} — ignorée
-          {ignores > 1 ? 's' : ''}.
+          {entreesIgnorees(ignores)}
         </p>
       )}
     </div>
   )
 }
 
-const ICONE_PROTECTION = {
-  persisted: ShieldCheck,
-  'not-persisted': ShieldAlert,
-  unavailable: ShieldOff,
-} as const
+/** Le titre d'un groupe : capitales espacées, sans cadre (planche `#rg4`). */
+const TitreGroupe = ({ id, children }: { readonly id: string; readonly children: string }) => (
+  <h2
+    id={id}
+    className="mt-1.5 font-score text-etiquette font-bold uppercase tracking-[0.2em] text-craie-3"
+  >
+    {children}
+  </h2>
+)
 
 /**
- * L'état de la protection du stockage. Rien n'est rendu tant que `status()`
- * n'a pas répondu : la réponse est locale et quasi instantanée, un texte
- * provisoire ne ferait que clignoter.
+ * La phrase de protection du stockage, sous Exporter / Restaurer. Rien n'est
+ * rendu tant que `status()` n'a pas répondu : la réponse est locale et quasi
+ * instantanée, un texte provisoire ne ferait que clignoter.
+ *
+ * « Demander la protection » suit l'`<output>`, dans le même paragraphe mais
+ * hors de lui : aucun contrôle dans une région live. Son pseudo-élément porte
+ * la zone d'appui à 48 px de haut.
  */
-const EtatProtection = () => {
+const PhraseProtection = ({ installation }: { readonly installation: InstallState }) => {
   const { etat, redemander, refusee } = useProtectionStockage()
-  const { etat: installation, installer } = useInstallation()
   if (etat === null) return null
 
-  // Le refus prolongé vers l'installation, quand elle est possible. Hors de
-  // l'`<output>` : aucun contrôle dans une région live.
-  const versInstallation = refusee && etat === 'not-persisted' && installationPossible(installation)
-
-  const Icone = ICONE_PROTECTION[etat]
+  const nonProtegee = etat === 'not-persisted'
+  const refus =
+    refusee && nonProtegee
+      ? installation === 'installed'
+        ? REFUS_PROTECTION_STOCKAGE_INSTALLEE
+        : REFUS_PROTECTION_STOCKAGE
+      : null
 
   return (
-    <div className="flex flex-col gap-3">
-      <output
-        aria-label={ETIQUETTE_PROTECTION_STOCKAGE}
-        className={`flex items-start gap-2 border px-3 py-2 text-sm ${
-          etat === 'persisted'
-            ? 'border-vert-cible/60 bg-vert-cible/12 text-craie'
-            : 'border-craie/25 text-craie-2'
-        }`}
-      >
-        <Icone
-          aria-hidden="true"
-          className={`mt-0.5 size-4 shrink-0 ${etat === 'persisted' ? 'text-vert-cible' : ''}`}
-        />
-        <span>
-          {LIBELLE_PROTECTION_STOCKAGE[etat]}{' '}
-          <span className="block text-craie-2">{RAPPEL_EXPORT_STOCKAGE[etat]}</span>
-          {refusee && etat === 'not-persisted' && (
-            <span className="mt-1 block text-craie">{REFUS_REDEMANDE_STOCKAGE}</span>
-          )}
-        </span>
+    <p className="text-xs text-craie-3">
+      <output aria-label={ETIQUETTE_PROTECTION_STOCKAGE}>
+        {PHRASE_PROTECTION_STOCKAGE[etat]}
+        {refus && <span className="block text-craie-2">{refus}</span>}
       </output>
-      {versInstallation &&
-        (installation === 'installable' ? (
-          <Button variante="secondaire" onClick={installer}>
-            <Download aria-hidden="true" className="size-4" />
-            {LIBELLE_INSTALLER_DARTPERO}
-          </Button>
-        ) : (
-          <Link to={{ hash: '#installer' }} className={classesBouton('secondaire')}>
-            {LIEN_GUIDE_INSTALLATION}
-          </Link>
-        ))}
-      {etat === 'not-persisted' && (
-        <Button variante="secondaire" onClick={() => void redemander()}>
-          {LIBELLE_REDEMANDER_PROTECTION}
-        </Button>
+      {nonProtegee && (
+        <>
+          {' '}
+          <button
+            type="button"
+            onClick={() => void redemander()}
+            className="relative font-score text-etiquette uppercase tracking-widest text-laiton-clair underline underline-offset-3 after:absolute after:inset-x-0 after:-inset-y-4"
+          >
+            {LIBELLE_DEMANDER_PROTECTION}
+          </button>
+        </>
       )}
-    </div>
+    </p>
   )
 }
 
@@ -175,14 +182,14 @@ const EtatProtection = () => {
 const ICONES_ETAPES_IOS = [Share, SquarePlus, null] as const
 
 /**
- * Réglages → À propos : l'installation selon l'état, rendue dès le premier
- * rendu (l'état est synchrone). « Plus tard » n'est jamais consulté ici.
+ * Le guide `#installer`, sous la ligne de contenu : rendu seulement là où
+ * « Comment ? » y mène (iOS, autre navigateur iOS, navigateur sans invite) —
+ * et donc là où aboutit la ligne de l'Accueil (iOS). Sans cadre : la phrase,
+ * puis les trois gestes sur iOS.
  *
- * Ancre `#installer` : l'Accueil (iOS) et le refus de « Redemander » y mènent.
  * Le défilement est relancé à chaque navigation (`key`), même vers la même ancre.
  */
-const EntreeInstallation = () => {
-  const { etat, installer } = useInstallation()
+const GuideInstallation = ({ etat }: { readonly etat: EtatGuideInstallation }) => {
   const { hash, key } = useLocation()
   const ancre = useRef<HTMLDivElement>(null)
 
@@ -192,36 +199,15 @@ const EntreeInstallation = () => {
     if (hash === '#installer') ancre.current?.scrollIntoView?.({ block: 'start' })
   }, [hash, key])
 
-  const installee = etat === 'installed'
-  const Icone = installee ? CircleCheck : Smartphone
-
   return (
     <div
       id="installer"
       ref={ancre}
-      className="flex scroll-mt-[max(1rem,env(safe-area-inset-top))] flex-col gap-3"
+      className="flex scroll-mt-[max(1rem,env(safe-area-inset-top))] flex-col gap-2"
     >
-      <output
-        aria-label={ETIQUETTE_INSTALLATION}
-        className={`flex items-start gap-2 border px-3 py-2 text-sm ${
-          installee
-            ? 'border-vert-cible/60 bg-vert-cible/12 text-craie'
-            : 'border-craie/25 text-craie-2'
-        }`}
-      >
-        <Icone
-          aria-hidden="true"
-          className={`mt-0.5 size-4 shrink-0 ${installee ? 'text-vert-cible' : ''}`}
-        />
-        <span>{ETAT_INSTALLATION[etat]}</span>
+      <output aria-label={ETIQUETTE_INSTALLATION} className="text-sm text-craie-2">
+        {ETAT_INSTALLATION[etat]}
       </output>
-
-      {etat === 'installable' && (
-        <Button variante="secondaire" onClick={installer}>
-          <Download aria-hidden="true" className="size-4" />
-          {LIBELLE_INSTALLER_DARTPERO}
-        </Button>
-      )}
 
       {etat === 'ios-manual' && (
         <ol className="flex flex-col">
@@ -253,8 +239,19 @@ export const ReglagesEcran = () => {
   const queryClient = useQueryClient()
   const champFichier = useRef<HTMLInputElement>(null)
   const idChamp = useId()
+  const idAffichage = useId()
+  const idSauvegarde = useId()
+  const idJoueurs = useId()
   const [voix, setVoix] = usePreference(CLE_VOIX, true)
   const [theme, setTheme] = usePreference<Theme>(CLE_THEME, THEME_DEFAUT)
+  const [dernierExport, noterExport] = useDernierExport()
+  const { etat: installation, installer } = useInstallation()
+
+  // Rien d'affiché tant que le compte n'est pas là, ni en échec : jamais un faux « 0 ».
+  const contenu = useQuery({
+    queryKey: CLE_CONTENU_APPAREIL,
+    queryFn: () => services.getDeviceContents.execute(),
+  })
 
   const [rapport, setRapport] = useState<ImportReport | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -267,8 +264,11 @@ export const ReglagesEcran = () => {
     try {
       const sauvegarde = await services.manageBackup.exportAll()
       telecharger(sauvegarde, nomFichier(sauvegarde.exportedAt))
+      // Après le téléchargement, jamais avant : un export qui échoue n'écrit
+      // rien. Même instant que le nom du fichier, même horloge que l'écran.
+      noterExport(sauvegarde.exportedAt)
     } catch {
-      setErreur('La sauvegarde n’a pas pu être créée.')
+      setErreur(ERREUR_EXPORT)
     } finally {
       setOccupe(false)
     }
@@ -279,18 +279,18 @@ export const ReglagesEcran = () => {
     setRapport(null)
     setOccupe(true)
     try {
-      const contenu: unknown = JSON.parse(await fichier.text())
-      const resultat = await services.manageBackup.importFrom(contenu)
-      // Tout le cache est invalidé : joueurs, historique et stats ont changé.
+      const contenuFichier: unknown = JSON.parse(await fichier.text())
+      const resultat = await services.manageBackup.importFrom(contenuFichier)
+      // Tout le cache est invalidé : joueurs, historique, stats et compte ont changé.
       await queryClient.invalidateQueries()
       setRapport(resultat)
     } catch (cause) {
       setErreur(
         cause instanceof SyntaxError
-          ? 'Ce fichier n’est pas un JSON lisible.'
+          ? ERREUR_JSON_ILLISIBLE
           : cause instanceof Error
             ? cause.message
-            : 'Cette sauvegarde n’a pas pu être restaurée.',
+            : ERREUR_RESTAURATION,
       )
     } finally {
       setOccupe(false)
@@ -299,80 +299,70 @@ export const ReglagesEcran = () => {
     }
   }
 
+  // L'heure du rendu, par l'horloge des use cases (comme l'Accueil) : aucun minuteur.
+  const vueSauvegarde = vueVoyantSauvegarde(dernierExport, services.clock.now())
+  const application = vueVoyantApplication(installation)
+  const actionApplication: ActionVoyant | null =
+    application.action === 'installer'
+      ? // Appelée directement dans le clic : l'invite native l'exige.
+        {
+          type: 'bouton',
+          libelle: LIBELLE_INSTALLER,
+          nom: LIBELLE_INSTALLER_DARTPERO,
+          onClick: installer,
+        }
+      : application.action === 'comment'
+        ? {
+            type: 'lien',
+            libelle: ACTION_COMMENT_INSTALLER,
+            nom: NOM_ACTION_COMMENT_INSTALLER,
+            vers: { hash: '#installer' },
+          }
+        : null
+
   return (
-    <main className="flex flex-1 flex-col gap-4 pb-4">
-      <EnTeteEcran titre="Réglages" sousTitre={SOUS_TITRE_REGLAGES} />
+    <main className="flex flex-1 flex-col gap-3 pb-4">
+      <EnTeteEcran titre={TITRE_REGLAGES} />
 
       <div className="flex flex-col gap-3 px-4">
-        {/* L'onglet Joueurs a quitté la barre du bas : on y ajoute ses potes
-            en créant une partie, on ne gère les profils qu'occasionnellement. */}
-        <Panneau titre={TITRE_PANNEAU_JOUEURS} contenuClassName="flex flex-col gap-3 p-4">
-          <p className="text-sm text-craie-2">{TEXTE_PANNEAU_JOUEURS}</p>
-          <Link
-            to="/joueurs"
-            className="flex min-h-12 w-full items-center justify-between gap-3 border-t border-craie/25 pt-3 text-sm text-craie active:text-craie-vive"
-          >
-            {LIEN_GERER_JOUEURS}
-            <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-laiton" />
-          </Link>
-        </Panneau>
+        <div className="grid grid-cols-2 gap-1.5">
+          <Voyant
+            etiquette={ETIQUETTE_VOYANT_SAUVEGARDE}
+            valeur={libelleDureeSauvegarde(vueSauvegarde.duree)}
+            ton={vueSauvegarde.ton}
+            teinte={vueSauvegarde.ton === 'ok' ? 'neutre' : 'laiton'}
+            action={{
+              type: 'bouton',
+              libelle: ACTION_EXPORTER,
+              nom: NOM_ACTION_EXPORTER,
+              onClick: () => void exporter(),
+              desactivee: occupe,
+            }}
+          />
+          <Voyant
+            etiquette={ETIQUETTE_VOYANT_APPLICATION}
+            valeur={application.installee ? VALEUR_INSTALLEE : VALEUR_PAS_INSTALLEE}
+            ton={application.ton}
+            teinte={application.installee ? 'vert' : 'neutre'}
+            {...(actionApplication && { action: actionApplication })}
+          />
+        </div>
 
-        <Panneau titre="Sauvegarde" contenuClassName="flex flex-col gap-3 p-4">
-          <p className="text-sm text-craie-2">
-            Tout vit sur ce téléphone : pas de compte, pas de serveur. Le fichier JSON est donc la
-            <strong className="text-craie"> seule façon</strong> de changer d’appareil sans repartir
-            de zéro.
-          </p>
-
-          <EtatProtection />
-
-          <Button onClick={() => void exporter()} disabled={occupe}>
-            <Download aria-hidden="true" className="size-4" />
-            Exporter la base
-          </Button>
-
-          <div>
-            <Button
-              variante="secondaire"
-              className="w-full"
-              disabled={occupe}
-              onClick={() => champFichier.current?.click()}
-            >
-              <Upload aria-hidden="true" className="size-4" />
-              Restaurer une sauvegarde
-            </Button>
-            <input
-              id={idChamp}
-              ref={champFichier}
-              type="file"
-              accept="application/json,.json"
-              aria-label="Fichier de sauvegarde"
-              className="sr-only"
-              onChange={(evenement) => {
-                const fichier = evenement.target.files?.[0]
-                if (fichier) void importer(fichier)
-              }}
-            />
-          </div>
-
+        {contenu.data && (
           <p className="text-xs text-craie-3">
-            La restauration <strong className="text-craie-2">complète</strong> la base : les profils
-            et parties du fichier s’ajoutent, et ceux déjà présents (même identifiant) sont
-            remplacés par la version du fichier. Le reste n’est pas touché.
+            <output aria-label={ETIQUETTE_CONTENU_APPAREIL}>
+              {contenuAppareil(contenu.data.matches, contenu.data.players)}
+            </output>
           </p>
+        )}
 
-          {erreur && <MessageErreur>{erreur}</MessageErreur>}
-          {rapport && <Resume rapport={rapport} />}
-        </Panneau>
+        {guideInstallationVisible(installation) && <GuideInstallation etat={installation} />}
 
-        <Panneau titre="Thème" contenuClassName="flex flex-col gap-3 p-4">
-          <ChoixSegmente
-            legende="Affichage"
-            valeurs={THEMES}
+        <section aria-labelledby={idAffichage} className="flex flex-col gap-3">
+          <TitreGroupe id={idAffichage}>{TITRE_GROUPE_AFFICHAGE}</TitreGroupe>
+          <VignetteTheme
+            legende={ETIQUETTE_CHOIX_THEME}
             valeur={theme}
-            taille="sm"
-            libelle={(choix) => LIBELLE_THEME[choix]}
-            aide="« Système » suit le réglage du téléphone. Le sombre est fait pour un garage mal éclairé, le clair pour une pièce en plein jour."
             onChange={(choix) => {
               setTheme(choix)
               // Posé tout de suite : la préférence seule ne repeint rien, et un
@@ -380,84 +370,94 @@ export const ReglagesEcran = () => {
               appliquerTheme(choix)
             }}
           />
-        </Panneau>
+          <ListeReglages>
+            <LigneReglage
+              titre={TITRE_ANNONCER_VOLEES}
+              aide={AIDE_ANNONCER_VOLEES}
+              action={{
+                type: 'bascule',
+                active: voix,
+                onClick: () => {
+                  setVoix(!voix)
+                  if (voix) services.devices.announcer.cancel()
+                },
+              }}
+            />
+            {/* Toutes les voix françaises ne sont pas installées partout : mieux
+                vaut l'entendre ici que de découvrir le silence en pleine partie. */}
+            <LigneReglage
+              titre={TITRE_ESSAYER_VOIX}
+              action={{
+                type: 'bouton',
+                desactivee: !voix,
+                onClick: () => services.devices.announcer.say(PHRASE_ESSAI_VOIX),
+              }}
+            />
+          </ListeReglages>
+        </section>
 
-        <Panneau titre="Annonce vocale" contenuClassName="flex flex-col gap-3 p-4">
-          <button
-            type="button"
-            aria-pressed={voix}
-            onClick={() => {
-              setVoix(!voix)
-              if (voix) services.devices.announcer.cancel()
-            }}
-            className={[
-              'flex min-h-14 items-center justify-between gap-3 border px-4 text-left',
-              'transition-colors duration-150',
-              voix ? 'border-laiton/50 bg-laiton/10' : 'border-chene/55 bg-feutre/60',
-            ].join(' ')}
-          >
-            <span className="flex min-w-0 items-center gap-3">
-              {voix ? (
-                <Volume2 aria-hidden="true" className="size-5 shrink-0 text-laiton-clair" />
-              ) : (
-                <VolumeX aria-hidden="true" className="size-5 shrink-0 text-craie-3" />
-              )}
-              <span className="min-w-0">
-                <span
-                  className={`block font-score text-sm font-bold uppercase tracking-widest ${
-                    voix ? 'text-laiton-clair' : 'text-craie-2'
-                  }`}
-                >
-                  Annoncer les volées
-                </span>
-                <span className="block truncate text-xs text-craie-3">
-                  Le score, les bust et les sorties, à voix haute
-                </span>
-              </span>
-            </span>
-
-            <span
-              aria-hidden="true"
-              className={`relative h-7 w-12 shrink-0 border transition-colors duration-200 ${
-                voix ? 'border-laiton/60 bg-laiton/25' : 'border-craie/20 bg-feutre-nuit/70'
-              }`}
+        <section aria-labelledby={idSauvegarde} className="flex flex-col gap-3">
+          <TitreGroupe id={idSauvegarde}>{TITRE_GROUPE_SAUVEGARDE}</TitreGroupe>
+          <div className="grid grid-cols-2 gap-1.5">
+            <Button taille="xs" onClick={() => void exporter()} disabled={occupe}>
+              <Download aria-hidden="true" className="size-4 shrink-0" />
+              {LIBELLE_EXPORTER}
+            </Button>
+            <Button
+              variante="secondaire"
+              taille="sm"
+              disabled={occupe}
+              onClick={() => champFichier.current?.click()}
             >
-              <span
-                className={`absolute top-0.5 size-5 transition-all duration-200 ${
-                  voix ? 'laiton-plat left-[1.6rem]' : 'left-0.5 bg-craie/45'
-                }`}
-              />
-            </span>
-          </button>
+              <Upload aria-hidden="true" className="size-4 shrink-0" />
+              {LIBELLE_RESTAURER}
+            </Button>
+          </div>
+          <input
+            id={idChamp}
+            ref={champFichier}
+            type="file"
+            accept="application/json,.json"
+            aria-label={ETIQUETTE_FICHIER_SAUVEGARDE}
+            className="sr-only"
+            onChange={(evenement) => {
+              const fichier = evenement.target.files?.[0]
+              if (fichier) void importer(fichier)
+            }}
+          />
 
-          {/* Toutes les voix françaises ne sont pas installées partout : mieux
-              vaut l'entendre ici que de découvrir le silence en pleine partie. */}
-          <Button
-            variante="secondaire"
-            disabled={!voix}
-            onClick={() => services.devices.announcer.say('Cent quatre-vingts')}
-          >
-            <Volume2 aria-hidden="true" className="size-4" />
-            Essayer la voix
-          </Button>
-        </Panneau>
+          <PhraseProtection installation={installation} />
 
-        <Panneau titre="À propos" contenuClassName="flex flex-col gap-3 p-4">
-          <p className="flex items-center gap-2 text-sm text-craie-2">
-            <WifiOff aria-hidden="true" className="size-4 shrink-0" />
-            100 % local, hors ligne, sans compte.
+          <p className="text-xs text-craie-3">
+            <Phrase segments={EXPLICATION_RESTAURATION} classeFort="text-craie-2" />
           </p>
+
+          {erreur && <MessageErreur>{erreur}</MessageErreur>}
+          {rapport && <Resume rapport={rapport} />}
+        </section>
+
+        <section aria-labelledby={idJoueurs} className="flex flex-col gap-3">
+          <TitreGroupe id={idJoueurs}>{TITRE_GROUPE_JOUEURS_APPLI}</TitreGroupe>
+          <ListeReglages>
+            {/* L'onglet Joueurs a quitté la barre du bas : on y ajoute ses potes
+                en créant une partie, on ne gère les profils qu'occasionnellement. */}
+            <LigneReglage
+              titre={LIEN_GERER_JOUEURS}
+              aide={AIDE_GERER_JOUEURS}
+              {...(contenu.data && { valeur: String(contenu.data.players) })}
+              action={{ type: 'lien', vers: '/joueurs' }}
+            />
+            <LigneReglage
+              titre={LIEN_CONFIDENTIALITE}
+              action={{ type: 'lien', vers: '/confidentialite' }}
+            />
+          </ListeReglages>
+        </section>
+
+        <footer className="flex flex-col gap-1.5">
+          <p className="text-xs text-craie-3">{PIED_REGLAGES}</p>
           <p className="text-xs text-craie-3">{PRESENTATION_DARTPERO}</p>
-          <EntreeInstallation />
-          {/* Hors de toute liste : l'entrée d'installation en rend une sur iOS. */}
-          <Link
-            to="/confidentialite"
-            className="flex min-h-12 w-full items-center justify-between gap-3 border-t border-craie/25 pt-3 text-sm text-craie active:text-craie-vive"
-          >
-            {LIEN_CONFIDENTIALITE}
-            <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-laiton" />
-          </Link>
-        </Panneau>
+        </footer>
       </div>
     </main>
   )

@@ -38,7 +38,8 @@ const faireCommeSiLeSystemeEtait = (systeme: 'clair' | 'sombre') => {
 
 const railTheme = async () => {
   await screen.findByRole('heading', { name: 'Réglages' })
-  return screen.getByRole('group', { name: 'Affichage' })
+  // Les trois vignettes du groupe Affichage (lot `reglages-par-usage`).
+  return screen.getByRole('group', { name: 'Thème' })
 }
 
 describe('Thème clair / sombre / système', () => {

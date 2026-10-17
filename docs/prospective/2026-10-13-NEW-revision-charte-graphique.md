@@ -166,7 +166,7 @@ lu ; le lot `high` à part.
 | 9 | `nouvelle-partie-parcours` | Barre d'étapes, tuiles 2 × 2, nom de partie à l'étape 2, fiche de réglages par jeu (X01 « Plus de réglages », Cricket en deux cartes, Tour du monde résumé, entraînement), ordre en feuille numérotée, bouton « Tirer au sort ». Les routes restent les mêmes. | 4 | light |
 | 10 | `rejouer` | « Rejouer » en tête de l'étape 1 : 3 configurations distinctes les plus récentes, fusionnées avec leur nombre, profil supprimé écarté, ordre de la dernière fois. Lu depuis l'historique par les use cases. | 9 | light |
 | 11 | `regles-du-jeu` | Livre ouvert en haut à droite (étape 2 et bandeau de match), feuille **par-dessus** l'écran, texte par jeu qui suit les réglages de la partie. Précise `CLAUDE.md` § Checkouts (180 en sortie libre). ✅ **Fait** (2026-10-16), passé en **`high`** à l'intake (domaine `checkout.ts`, règles gravées) ; rubriques repliables sur le plan de DartsOn, S1 à un reste de 1 corrigé, même mécanisme que la `Modale` des Statistiques. | 4, 9 | ~~light~~ high |
-| 12 | `reglages-par-usage` | Page unique rangée par usage, thème en vignettes, deux voyants (dernière sauvegarde, application), date du dernier export gardée sur l'appareil, état de protection en une phrase. | 4 | light |
+| 12 | `reglages-par-usage` | Page unique rangée par usage, thème en vignettes, deux voyants (dernière sauvegarde, application), date du dernier export gardée sur l'appareil, état de protection en une phrase. ✅ **Fait** (2026-10-17 ; Test, Sécurité PASS, Revue avec une boucle), passé en **`high`** à l'intake (politique publique, décisions « stockage persistant » et « installation ») ; port `GetDeviceContents`, jetons d'aperçu constants, « Comment ? » vers le guide `#installer`. | 4 | ~~light~~ high |
 | 13 | `volee-partielle` | La volée en cours survit à un rechargement (journal ou brouillon). Hors charte, décision d'architecture. | — | **high** (format persisté) |
 
 Notes :
@@ -449,6 +449,10 @@ gênait l'utilisateur en tant que voyant, pas l'information elle-même :
   n'est pas une sauvegarde (obligatoire dans les trois états, décision gravée).
 - Écartés : « Hors ligne prêt » (toujours vrai après la première ouverture, un port de plus),
   voix disponible, écran maintenu allumé.
+- → **Fait au lot 12** (`reglages-par-usage`) : la date du dernier export est une préférence
+  d'appareil (`sauvegarde:dernier-export`, gravée dans `CLAUDE.md`, citée par la politique) ;
+  hors invite native, le voyant Application propose « Comment ? », qui mène au guide
+  `#installer` ; la phrase de protection porte « Demander la protection » ; l'étiquette du premier voyant est « Dernier export » : « Dernière sauvegarde » (planche) passait sur deux lignes à 125 % de police à 360 px — choix de l'utilisateur (Q-d, 2026-10-17).
 
 ### Lot 6 — découpage et pavé (2026-10-14, cadrage de `feuille-commune`)
 

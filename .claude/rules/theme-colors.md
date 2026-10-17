@@ -41,7 +41,13 @@ Palette et rôles : `docs/CHARTE_GRAPHIQUE.md`.
    1,84:1 sur papier avant correction).
 3. Consommer le token depuis le composant — jamais l'inverse.
 
-## Jetons réservés : la feuille de règles
+## Jetons réservés
+
+Trois familles, chacune à ses fichiers ; la garde est une table
+jetons → fichiers (`themeBoundary.test.ts`, « les jetons réservés … ne
+servent qu'à leurs fichiers »), un témoin par famille.
+
+### La feuille de règles
 
 Neuf jetons (lot `regles-du-jeu`) ne servent **qu'à** `FeuilleRegles.tsx`
 et `LivreRegles.tsx` : `craie-2-regles`, `craie-3-regles`, `laiton-texte`,
@@ -54,8 +60,18 @@ et `LivreRegles.tsx` : `craie-2-regles`, `craie-3-regles`, `laiton-texte`,
 - Ailleurs, prendre le jeton général (`craie-2`, `craie-3`, `laiton`,
   `border-craie/25`…). Les élargir = vérifier le contraste dans les deux
   thèmes sur la nouvelle surface, puis élargir la garde.
-- Garde : `themeBoundary.test.ts` (« les jetons de la feuille de règles ne
-  servent qu'à la feuille »), avec son témoin.
+
+### Le voyant et les aperçus de thème (lot `reglages-par-usage`)
+
+- `vert-etat` : « Installée » en texte vert, **seulement** dans `Voyant.tsx`
+  (contraste vérifié sur l'`ardoise` : 8,5 / 5,8:1 ; 4,6:1 sur `feutre`
+  en clair). Le filet reste `vert-cible`.
+- `apercu-{sombre,clair}-{fond,encre,accent}` : **seulement** dans
+  `VignetteTheme.tsx`. ⚠️ Constants à dessein — redéfinis **à l'identique**
+  sous `html[data-theme="clair"]` : ce sont des copies de `feutre`, `craie`,
+  `laiton` de chaque thème. Une seconde garde vérifie l'égalité avec le
+  jeton montré, dans les deux blocs. Changer une valeur de palette =
+  changer son aperçu dans les deux blocs.
 
 ## Exceptions (documentées dans le garde lui-même)
 

@@ -109,6 +109,12 @@ describe('Frontière des thèmes', () => {
    * à 4,2 / 3,7:1 sur `feutre-nuit` en clair. `rules/theme-colors.md`
    * § Jetons réservés.
    */
+  const utilitaires = (jetons: readonly string[]) =>
+    new RegExp(
+      `\\b(?:text|bg|border(?:-[trblxy])?|outline|ring|divide|fill|stroke|decoration|shadow|accent|caret)-(?:${jetons.join('|')})(?![\\w-])`,
+      'g',
+    )
+
   const JETONS_FEUILLE = [
     'craie-2-regles',
     'craie-3-regles',
@@ -120,31 +126,150 @@ describe('Frontière des thèmes', () => {
     'chene-doux',
     'voile',
   ]
-  const UTILITAIRE_FEUILLE = new RegExp(
-    `\\b(?:text|bg|border(?:-[trblxy])?|outline|ring|divide|fill|stroke|decoration|shadow|accent|caret)-(?:${JETONS_FEUILLE.join('|')})(?![\\w-])`,
-    'g',
+  const UTILITAIRE_FEUILLE = utilitaires(JETONS_FEUILLE)
+
+  /**
+   * Les jetons réservés, famille par famille : ceux de la feuille de règles,
+   * le vert de « Installée » (contraste vérifié sur l'ardoise seulement) et les
+   * aperçus de thème, CONSTANTS à dessein (lot `reglages-par-usage`) — employés
+   * ailleurs, ils ne suivraient pas le thème. Chaque famille a son témoin : le
+   * fichier qui l'emploie, et le nombre d'emplois au moins attendus.
+   */
+  const RESERVES = [
+    {
+      famille: 'feuille de règles',
+      motif: UTILITAIRE_FEUILLE,
+      fichiers: ['composants/commun/FeuilleRegles.tsx', 'composants/commun/LivreRegles.tsx'],
+      temoin: 6,
+    },
+    {
+      famille: 'vert du voyant',
+      motif: utilitaires(['vert-etat']),
+      fichiers: ['composants/commun/Voyant.tsx'],
+      temoin: 1,
+    },
+    {
+      famille: 'aperçus de thème',
+      motif: utilitaires(['apercu-[a-z-]+']),
+      fichiers: ['composants/commun/VignetteTheme.tsx'],
+      temoin: 6,
+    },
+  ] as const
+
+  it.each(RESERVES)(
+    'les jetons réservés « $famille » ne servent qu’à leurs fichiers',
+    ({ motif, fichiers: reserves, temoin }) => {
+      const tous = fichiers(UI)
+      expect(tous.length).toBeGreaterThan(40)
+
+      // Témoin : le premier fichier emploie bien ces jetons, le motif les trouve.
+      const premier = readFileSync(resolve(UI, reserves[0]), 'utf8')
+      expect((premier.match(motif) ?? []).length).toBeGreaterThanOrEqual(temoin)
+
+      const fautes = tous.flatMap((fichier) => {
+        const chemin = enUi(fichier)
+        if ((reserves as readonly string[]).includes(chemin)) return []
+        return (readFileSync(fichier, 'utf8').match(motif) ?? []).map(
+          (classe) => `${chemin} → ${classe}`,
+        )
+      })
+      expect(fautes).toEqual([])
+    },
   )
-  const FICHIERS_FEUILLE = [
-    'composants/commun/FeuilleRegles.tsx',
-    'composants/commun/LivreRegles.tsx',
-  ]
 
-  it('les jetons de la feuille de règles ne servent qu’à la feuille', () => {
-    const tous = fichiers(UI)
-    expect(tous.length).toBeGreaterThan(40)
+  it('le motif des aperçus et du vert attrape leurs utilitaires et laisse passer les voisins', () => {
+    const apercus = utilitaires(['apercu-[a-z-]+'])
+    const vert = utilitaires(['vert-etat'])
+    for (const reserve of [
+      'bg-apercu-sombre-fond',
+      'bg-apercu-clair-encre/60',
+      'border-apercu-x',
+    ]) {
+      expect(reserve.match(apercus), reserve).not.toBeNull()
+    }
+    expect('text-vert-etat'.match(vert)).not.toBeNull()
+    for (const voisin of ['bg-feutre', 'text-vert-texte', 'text-vert-cible', 'border-vert-cible']) {
+      expect(voisin.match(apercus), voisin).toBeNull()
+      expect(voisin.match(vert), voisin).toBeNull()
+    }
+  })
 
-    // Témoin : la feuille emploie bien ces jetons, le motif les trouve.
-    const feuille = readFileSync(resolve(UI, FICHIERS_FEUILLE[0] ?? ''), 'utf8')
-    expect((feuille.match(UTILITAIRE_FEUILLE) ?? []).length).toBeGreaterThan(5)
+  /**
+   * L'aperçu d'une vignette ne peint QU'AVEC des `apercu-*` : un `bg-feutre`
+   * suivrait le thème courant, et la vignette « Clair » virerait au sombre.
+   * Le cadre de la vignette (`border-laiton`, `border-craie/25`) et son libellé
+   * vivent hors du composant `Apercu` et ne sont pas visés.
+   */
+  const COULEUR_DE_TOKEN =
+    /\b(?:bg|text|border(?:-[trblxy])?|fill|stroke|outline|ring)-(?:feutre|ardoise|chene|laiton|craie|rouge|vert|sur-laiton|apercu)[\w-]*(?:\/\d+)?/g
+  const couleursHorsApercu = (source: string): string[] =>
+    (source.match(COULEUR_DE_TOKEN) ?? []).filter((classe) => !/-apercu-/.test(classe))
+  const corpsApercu = (source: string): string => {
+    const debut = source.indexOf('const Apercu')
+    const fin = source.indexOf('\ntype Props', debut)
+    expect(debut).toBeGreaterThan(-1)
+    expect(fin).toBeGreaterThan(debut)
+    return source.slice(debut, fin)
+  }
 
-    const fautes = tous.flatMap((fichier) => {
-      const chemin = enUi(fichier)
-      if (FICHIERS_FEUILLE.includes(chemin)) return []
-      return (readFileSync(fichier, 'utf8').match(UTILITAIRE_FEUILLE) ?? []).map(
-        (classe) => `${chemin} → ${classe}`,
+  it('l’aperçu d’une vignette ne peint qu’avec les jetons apercu-*', () => {
+    const source = readFileSync(resolve(UI, 'composants/commun/VignetteTheme.tsx'), 'utf8')
+    const apercu = corpsApercu(source)
+
+    // Témoin : l'aperçu emploie bien des couleurs, le motif les voit.
+    expect((apercu.match(COULEUR_DE_TOKEN) ?? []).length).toBeGreaterThanOrEqual(6)
+    expect(couleursHorsApercu(apercu)).toEqual([])
+    // Le cadre permis existe bien, hors de l'aperçu.
+    expect(source).toContain('border-laiton')
+    expect(source).toContain('border-craie/25')
+  })
+
+  it('le motif de l’aperçu attrape une couleur qui suit le thème', () => {
+    const fautif =
+      'const Apercu = () => <span className="bg-feutre text-craie-vive bg-apercu-clair-fond border-laiton/40" />\ntype Props'
+    expect(couleursHorsApercu(corpsApercu(fautif))).toEqual([
+      'bg-feutre',
+      'text-craie-vive',
+      'border-laiton/40',
+    ])
+  })
+
+  /**
+   * Les aperçus de thème sont des COPIES : chacun doit valoir exactement le
+   * jeton qu'il montre (feutre, craie, laiton du thème montré), et la même
+   * valeur dans les deux blocs — sinon la vignette « Clair » changerait de
+   * couleur avec le thème courant, ou mentirait sur le thème qu'elle montre.
+   */
+  it('chaque aperçu de thème vaut le jeton qu’il montre, à l’identique dans les deux blocs', () => {
+    const css = readFileSync(resolve(RACINE, 'src/index.css'), 'utf8')
+    const valeurs = (depuis: string): Map<string, string> => {
+      const debut = css.indexOf(depuis)
+      expect(debut).toBeGreaterThan(-1)
+      const fin = css.indexOf('\n}', debut)
+      return new Map(
+        [...css.slice(debut, fin).matchAll(/--color-([a-z0-9-]+):\s*([^;]+);/g)].map(
+          (correspondance) => [correspondance[1] ?? '', (correspondance[2] ?? '').trim()],
+        ),
       )
-    })
-    expect(fautes).toEqual([])
+    }
+    const sombre = valeurs('@theme {')
+    const clair = valeurs('html[data-theme="clair"] {')
+
+    const COPIES = [
+      ['apercu-sombre-fond', sombre, 'feutre'],
+      ['apercu-sombre-encre', sombre, 'craie'],
+      ['apercu-sombre-accent', sombre, 'laiton'],
+      ['apercu-clair-fond', clair, 'feutre'],
+      ['apercu-clair-encre', clair, 'craie'],
+      ['apercu-clair-accent', clair, 'laiton'],
+    ] as const
+
+    for (const [apercu, theme, source] of COPIES) {
+      const attendu = theme.get(source)
+      expect(attendu, source).toBeDefined()
+      expect(sombre.get(apercu), `${apercu} (sombre)`).toBe(attendu)
+      expect(clair.get(apercu), `${apercu} (clair)`).toBe(attendu)
+    }
   })
 
   it('le motif des jetons réservés attrape leurs utilitaires et laisse passer les voisins', () => {
