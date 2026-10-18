@@ -2276,3 +2276,21 @@ Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `hig
   jeton `voile`, entrée à part de la garde `themeBoundary`. Acceptés : boîte centrée qui masque la ligne du
   joueur en paysage ; appui hors de la boîte = *Corriger*.
 - **Travail en parallèle** avec les lots A et E (worktree, port 5202). **Rebase sur `vocabulaire-anglais`** (`f545419`) : conflits sur l'index (pris de main, régénéré), PLAN § 6 (les deux entrées gardées) et manches.test.tsx (imports) ; Announcer.say prend maintenant une Annonce (banc de test adapté) ; **1571 tests**, lint, typecheck, build verts. Le lot E (phrases-victoire) reste à fusionner.
+
+### Lot `phrases-victoire` (retour 7 des beta-testeurs ; lot E de l'étude)
+
+✅ **Fait — 1590 tests verts** (1585 après Dev ; Test boucle 1 : +5 tests de couverture), lint, typecheck, build verts. Niveau `light` : tout en `src/ui`, aucun format persisté, `/confidentialite` inchangée.
+
+- **La voix dit la phrase de victoire** : `phraseVictoire(matchId)` — la **même** que le résumé —, dans le
+  **même `say`** que le résultat (`annonceFinDeVolee`, 3e paramètre optionnel ; le « . » joint reste dans
+  le segment `fr`). 5 phrases ajoutées (9 au tirage).
+- **Quand** : après *Valider la sortie*, sur le jalon `MatchFinished`. X01 : victoire du **match** seulement
+  (ni `LegWon` ni `SetWon`) ; Cricket : la fléchette qui gagne, cut-throat compris ; Tour du monde : la
+  **fin de partie** (`winnerId` non nul, donc jamais en nul), « Tour bouclé ! » gardé à la fléchette qui
+  boucle (et dit avant la phrase si le dernier du tour boucle et gagne). Jamais sur un bust, jamais à
+  l'entraînement, rien si la voix est coupée.
+- **Test** : passe sans shell (relecture statique) ; commandes relancées par l'Orchestrator. Boucle 1
+  (Test → Dev, tests seulement) : voix coupée, égalité voix-résumé au Tour du monde, cas entraînement
+  vert à vide, *Corriger* muet.
+- **Reste, vrai téléphone** : écoute du « — » et du « ? » de « Bien joué — on remet ça ? », du « . » en
+  tête de segment `fr` après un segment `en`, durée de la phrase après « Checkout ».

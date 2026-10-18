@@ -8,6 +8,7 @@ import {
   annonceVolee,
   libelleAnnulation,
   nomJoueur,
+  phraseVictoire,
   texteConfirmationX01,
   titreConfirmationX01,
 } from '@/ui/labels'
@@ -111,10 +112,14 @@ export const useX01 = (matchId: MatchId) => {
 
         // Le score, puis à qui c'est le tour : le téléphone est posé à deux
         // mètres du lanceur, la voix est le seul canal qui porte jusque-là.
+        // À la victoire du match seulement (`MatchFinished`, jamais `LegWon` ni
+        // `SetWon`) : la phrase du résumé, dans le même énoncé.
+        const matchGagne = resultat.milestones.some((jalon) => jalon.type === 'MatchFinished')
         dire(
           annonceFinDeVolee(
             annonceVolee(resultat.visit.scored, resultat.visit.outcome),
             prochainJoueur(resultat.state, profilsRef.current),
+            matchGagne ? phraseVictoire(matchId) : undefined,
           ),
         )
       } catch (cause) {

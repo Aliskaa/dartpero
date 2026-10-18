@@ -196,6 +196,12 @@ du **gagnant**, cut-throat compris) ou qui boucle le parcours (Tour du monde, `c
 la boîte `BoiteConfirmation` (forme B de la planche). **Jamais sur un bust, jamais à l'entraînement.**
 Fermer sans choisir (retour, Échap, voile) vaut *Corriger*. Même mécanisme que la `Modale`
 (`useModaleAuRetour`, clé `confirmation`) ; pièges : CONVENTIONS § 9, 10.
+- **Phrase de victoire à la voix** (lot `phrases-victoire`) : après *Valider la sortie*, la voix dit
+  `phraseVictoire(matchId)` — la **même** phrase que le résumé, 9 au tirage, rien de stocké — dans le
+  **même `say`** que le résultat (`annonceFinDeVolee`, 3e paramètre). X01 : victoire du **match**
+  seulement (pas de phrase à la manche ni au set) ; Cricket : la fléchette qui gagne ; Tour du monde :
+  la **fin de partie**, jamais en nul, « Tour bouclé ! » gardé à la fléchette qui boucle. Jamais sur un
+  bust, jamais à l'entraînement. CONVENTIONS § 5.
 
 ---
 

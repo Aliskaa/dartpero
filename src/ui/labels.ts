@@ -66,12 +66,26 @@ export const annonceCible = (libelle: string): string => `Cible : ${libelle}`
  * pas, mais elle passe quand même la main, et ça, il faut le dire.
  * `prochain` est `null` en solo et en fin de partie : on ne rappelle pas à un
  * joueur seul que c'est encore à lui, et on n'enchaîne pas sur la victoire.
+ *
+ * `phrase` (lot `phrases-victoire`) : la phrase de victoire, dite **après** le
+ * résultat dans le même énoncé (« Checkout. Le tableau a parlé. »). Facultative,
+ * donc les appels existants ne changent pas.
  */
-export const annonceFinDeVolee = (resultat: Annonce | null, prochain: string | null): Annonce => {
-  if (prochain === null) return resultat ?? []
-  if (resultat === null) return [fr(annonceTour(prochain))]
+export const annonceFinDeVolee = (
+  resultat: Annonce | null,
+  prochain: string | null,
+  phrase?: string,
+): Annonce => {
+  let annonce: Annonce = resultat ?? []
   // Le point reste dans le segment de la langue de base, jamais dans l'anglais.
-  return [...resultat, fr(`. ${annonceTour(prochain)}`)]
+  if (prochain !== null) {
+    annonce =
+      resultat === null
+        ? [fr(annonceTour(prochain))]
+        : [...resultat, fr(`. ${annonceTour(prochain)}`)]
+  }
+  if (phrase === undefined) return annonce
+  return annonce.length === 0 ? [fr(phrase)] : [...annonce, fr(`. ${phrase}`)]
 }
 
 /**
@@ -2459,12 +2473,21 @@ export const sousTitreOrdre = (
   }
 }
 
-/** Phrases d'ambiance pour les résumés — le côté apéro, hors saisie. */
+/**
+ * Phrases d'ambiance de la victoire — le côté apéro. Affichée sur les résumés
+ * **et** dite par la voix après *Valider la sortie* (lot `phrases-victoire`) :
+ * les deux tirent par `phraseVictoire(identifiant de la partie)`, donc la même.
+ */
 export const PHRASE_VICTOIRE = [
   'Ça se fête autour de la cible.',
   'Une tournée pour le vainqueur.',
   'Le tableau a parlé.',
   'Bien joué — on remet ça ?',
+  'Le vainqueur offre la prochaine tournée.',
+  'La cible a rendu son verdict.',
+  'Une victoire qui mérite un petit verre.',
+  'Pas mal pour un soir de semaine.',
+  'Les fléchettes ont encore frappé.',
 ] as const
 
 export const phraseVictoire = (graine: string): string => {

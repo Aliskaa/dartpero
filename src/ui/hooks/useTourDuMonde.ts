@@ -9,6 +9,7 @@ import {
   libelleAnnulation,
   libelleFlechetteTourDuMonde,
   nomJoueur,
+  phraseVictoire,
   TEXTE_CONFIRMATION_TOUR_DU_MONDE,
   titreConfirmationTourDuMonde,
 } from '@/ui/labels'
@@ -88,6 +89,11 @@ export const useTourDuMonde = (matchId: MatchId) => {
         // Le résultat, puis à qui c'est le tour. Une volée sans touche ne se
         // commente pas, mais elle passe quand même la main.
         const touches = resultat.visit.hits
+        // La phrase suit la **fin de partie** (une fois le tour de table fini),
+        // pas la fléchette qui boucle ; un nul (`winnerId` nul) n'en a pas.
+        const gagnee = resultat.milestones.some(
+          (jalon) => jalon.type === 'MatchFinished' && jalon.winnerId !== null,
+        )
         dire(
           annonceFinDeVolee(
             boucle
@@ -96,6 +102,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
                 ? [fr(`${touches} touché${touches > 1 ? 's' : ''}`)]
                 : null,
             prochainJoueur(resultat.state, profilsRef.current),
+            gagnee ? phraseVictoire(matchId) : undefined,
           ),
         )
       } catch (cause) {

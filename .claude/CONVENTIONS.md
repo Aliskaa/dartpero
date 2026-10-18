@@ -103,6 +103,14 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `useState` + `useEffect` qui raterait un changement entre rendu et abonnement. L'adapter pose
   ses écouteurs dans son constructeur, enveloppé de `try/catch`, et reçoit son `window` par le
   constructeur ; la garde `installationBoundary` interdit ses API ailleurs.
+- **Annonces vocales** (`Announcer`) : `say(Annonce)` reçoit des segments `{ texte, langue }` déjà
+  écrits (`Annonce`, `Langue`, `fr()` / `en()` de `labels.ts`) ; le port ne traduit rien. **Un seul
+  `say` par fin de volée** (l'adapter coupe l'énoncé en cours) : `annonceFinDeVolee(resultat,
+  prochain, phrase?)` compose résultat, tour, puis la phrase de victoire. Lot `phrases-victoire` : la
+  phrase (`phraseVictoire(matchId)`, même graine que le résumé, rien de stocké) n'est donnée que par
+  `enregistrer` du hook de mode, sur le jalon de victoire (X01 `MatchFinished`, jamais `LegWon` /
+  `SetWon` ; Cricket `gagnee` ; Tour du monde `MatchFinished` à `winnerId` non nul) — donc après
+  *Valider la sortie*, jamais sur un bust ni à l'entraînement.
 - Les ports ISP à plusieurs opérations (`ManagePlayers`, `ManageBackup`) ne regroupent que ce
   qui est vraiment une seule responsabilité ; une modification est toujours **partielle**
   (`PlayerChanges` aux champs tous optionnels), jamais un remplacement complet.

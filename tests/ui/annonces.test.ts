@@ -31,6 +31,21 @@ describe('Annonces vocales — segments typés par langue', () => {
     expect(annonceFinDeVolee(null, null)).toEqual([])
   })
 
+  it('la phrase de victoire suit le résultat, dans un seul énoncé (rétrocompatible sans)', () => {
+    expect(annonceFinDeVolee(annonceVolee(60, 'CHECKOUT'), null, 'Le tableau a parlé.')).toEqual([
+      en('Checkout'),
+      fr('. Le tableau a parlé.'),
+    ])
+    expect(annonceFinDeVolee([fr('Partie gagnée !')], null, 'Le tableau a parlé.')).toEqual([
+      fr('Partie gagnée !'),
+      fr('. Le tableau a parlé.'),
+    ])
+    expect(annonceFinDeVolee(null, null, 'Le tableau a parlé.')).toEqual([
+      fr('Le tableau a parlé.'),
+    ])
+    expect(annonceFinDeVolee(annonceVolee(60, 'CHECKOUT'), null)).toEqual([en('Checkout')])
+  })
+
   it('le Cricket reste en français, et une volée blanche ne dit rien', () => {
     expect(annonceCricket({ points: 40, fermees: 0, gagnee: false, cutThroat: false })).toEqual([
       fr('40'),

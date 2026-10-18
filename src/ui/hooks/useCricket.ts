@@ -8,6 +8,7 @@ import {
   annonceFinDeVolee,
   libelleAnnulation,
   nomJoueur,
+  phraseVictoire,
   TEXTE_CONFIRMATION_CRICKET,
   titreConfirmationCricket,
 } from '@/ui/labels'
@@ -94,7 +95,14 @@ export const useCricket = (matchId: MatchId) => {
         })
         // Une volée blanche ne se commente pas, mais elle passe quand même la
         // main : sans l'appel, personne ne saurait que c'est à lui.
-        dire(annonceFinDeVolee(annonce, prochainJoueur(resultat.state, profilsRef.current)))
+        // La victoire (cut-throat compris) ajoute la phrase du résumé, même énoncé.
+        dire(
+          annonceFinDeVolee(
+            annonce,
+            prochainJoueur(resultat.state, profilsRef.current),
+            gagnee ? phraseVictoire(matchId) : undefined,
+          ),
+        )
       } catch (cause) {
         setErreur(message(cause))
       } finally {
