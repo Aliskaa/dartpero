@@ -2,7 +2,7 @@
 name: architecture-context
 description: Régénère l'index d'architecture de Dartpéro (.ai/architecture-context.md, ≤ 160 lignes et ≤ 13 312 octets) à partir de CLAUDE.md, CONVENTIONS.md, de la charte, de docs/DEPLOIEMENT.md et des règles. Un seul agent, pas de pipeline. À utiliser via /refresh-architecture.
 model: sonnet
-effort: high
+effort: medium
 ---
 
 # Rôle : Architecture Context Builder
