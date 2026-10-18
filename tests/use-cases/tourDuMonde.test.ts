@@ -80,6 +80,55 @@ describe('PreviewTourDuMondeVisit (use case)', () => {
     expect(apercu.state.players[0]?.targetIndex).toBe(0)
   })
 
+  describe('completesTour (lot annulation-volee) : la fléchette à faire confirmer', () => {
+    it('vrai sur la fléchette qui boucle le parcours', async () => {
+      const id = await demarrer()
+      await services.playTourDuMonde.recordVisit(id, [
+        Dart.single(20),
+        Dart.single(19),
+        Dart.miss(),
+      ])
+      await services.playTourDuMonde.recordVisit(id, RATE)
+      const state = await services.playTourDuMonde.getState(id)
+
+      const apercu = services.previewTourDuMondeVisit.execute({ state, darts: [Dart.bull()] })
+
+      expect(apercu.completesTour).toBe(true)
+    })
+
+    it('faux à trois fléchettes sans bouclage, et sans fléchette', async () => {
+      const state = await services.playTourDuMonde.getState(await demarrer())
+
+      expect(services.previewTourDuMondeVisit.execute({ state, darts: RATE }).completesTour).toBe(
+        false,
+      )
+      expect(services.previewTourDuMondeVisit.execute({ state, darts: [] }).completesTour).toBe(
+        false,
+      )
+    })
+
+    it('faux sur la volée qui ne fait que finir le tour de table', async () => {
+      const id = await demarrer()
+      await services.playTourDuMonde.recordVisit(id, [
+        Dart.single(20),
+        Dart.single(19),
+        Dart.miss(),
+      ])
+      await services.playTourDuMonde.recordVisit(id, RATE)
+      await services.playTourDuMonde.recordVisit(id, [Dart.bull()])
+      const state = await services.playTourDuMonde.getState(id)
+      expect(state.lastRound).toBe(true)
+
+      // Julien joue la dernière volée du tour de table sans boucler : la partie
+      // se termine, mais rien n'est à confirmer.
+      const apercu = services.previewTourDuMondeVisit.execute({ state, darts: RATE })
+
+      expect(apercu.state.finished).toBe(true)
+      expect(apercu.complete).toBe(true)
+      expect(apercu.completesTour).toBe(false)
+    })
+  })
+
   it('n’écrit rien : l’aperçu est un calcul, pas un enregistrement', async () => {
     const id = await demarrer()
     const state = await services.playTourDuMonde.getState(id)
@@ -120,7 +169,7 @@ describe('PreviewTourDuMondeVisit (use case)', () => {
     expect(dernier.darts).toHaveLength(1)
     expect(dernier.darts[0]?.segment).toBe('BULL')
 
-    const revenu = await services.playTourDuMonde.undoLastVisit(id)
+    const { state: revenu } = await services.playTourDuMonde.undoLastVisit(id)
 
     expect(revenu.players[0]?.targetIndex).toBe(2)
     expect(revenu.players[0]?.dartsThrown).toBe(3)

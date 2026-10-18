@@ -84,7 +84,7 @@ describe('Entraînement au checkout (use case)', () => {
     const avant = (await services.playCheckoutPractice.getState(id)).current?.target
 
     await services.playCheckoutPractice.recordVisit(id, RATE)
-    const apresUndo = await services.playCheckoutPractice.undoLastVisit(id)
+    const { state: apresUndo } = await services.playCheckoutPractice.undoLastVisit(id)
 
     expect(apresUndo.current?.target).toBe(avant)
     expect(apresUndo.roundsPlayed).toBe(0)

@@ -187,6 +187,15 @@ feuille, le second fait ce qu'il faisait. Le texte décrit **les règles que Dar
 suit les réglages de la partie (la règle de ce soir en entier, l'autre en gris) et vit dans
 `labels.ts` (`reglesX01`…) ; **un lot qui change une règle met à jour sa rubrique**, dans le
 même lot. « Les règles en entier » de la fiche n'existe plus.
+- **Annulation fléchette par fléchette, sortie confirmée** (lot `annulation-volee`) : un appui sur
+« Annuler » retire la **dernière fléchette jouée**, quel que soit le joueur. La volée rouverte quitte
+le journal et ses fléchettes restantes reviennent en saisie (`ReopenedVisit`), **non persistées**
+comme toute volée en cours : aucun événement ni format nouveau. ⚠️ **Rien n'est écrit, dit ni célébré
+avant « Valider la sortie »** : la fléchette qui sort (X01, à chaque manche), qui gagne (Cricket, nom
+du **gagnant**, cut-throat compris) ou qui boucle le parcours (Tour du monde, `completesTour`) ouvre
+la boîte `BoiteConfirmation` (forme B de la planche). **Jamais sur un bust, jamais à l'entraînement.**
+Fermer sans choisir (retour, Échap, voile) vaut *Corriger*. Même mécanisme que la `Modale`
+(`useModaleAuRetour`, clé `confirmation`) ; pièges : CONVENTIONS § 9, 10.
 
 ---
 

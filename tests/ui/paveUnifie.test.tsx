@@ -208,7 +208,10 @@ describe('Pavé Tour du monde', () => {
 
     await utilisateur.click(await screen.findByRole('button', { name: '16' }))
 
-    expect(screen.getByRole('button', { name: 'Annuler 16' })).toBeInTheDocument()
+    // Le court sur la touche ; le joueur dans le nom accessible (lot `annulation-volee`).
+    expect(screen.getByRole('button', { name: 'Annuler 16 de Kevin' })).toHaveTextContent(
+      'Annuler 16',
+    )
     expect(screen.getByLabelText('Volée en cours')).toHaveTextContent('16——')
     expect(screen.getByLabelText('Volée en cours')).not.toHaveTextContent('S16')
   })

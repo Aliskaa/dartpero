@@ -29,7 +29,7 @@ describe('Cycle de vie d’un match', () => {
       await services.recordVisit.execute({ matchId, darts: [T20, T20, T20] })
       await services.recordVisit.execute({ matchId, darts: [T20, T20, T20] })
 
-      const apresAnnulation = await services.undoLastVisit.execute(matchId)
+      const { state: apresAnnulation } = await services.undoLastVisit.execute(matchId)
       expect(apresAnnulation.players[0]?.remaining).toBe(321)
 
       // Relu depuis le dépôt : l'annulation a bien été écrite.

@@ -2,6 +2,7 @@ import type { CheckoutPracticeConfig } from '../../../domain/games/checkout-prac
 import type { CheckoutPracticeState } from '../../../domain/games/checkout-practice/rules'
 import type { Dart } from '../../../domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
+import type { ReopenedVisit } from './ReopenedVisit'
 
 export type StartCheckoutPracticeCommand = {
   readonly playerId: PlayerId
@@ -27,5 +28,9 @@ export interface PlayCheckoutPractice {
   start(command: StartCheckoutPracticeCommand): Promise<MatchId>
   getState(matchId: MatchId): Promise<CheckoutPracticeState>
   recordVisit(matchId: MatchId, darts: readonly Dart[]): Promise<CheckoutPracticeResult>
-  undoLastVisit(matchId: MatchId): Promise<CheckoutPracticeState>
+  /**
+   * Retire la dernière fléchette jouée : la dernière volée quitte le journal et
+   * ses fléchettes restantes reviennent à la saisie (voir `ReopenedVisit`).
+   */
+  undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<CheckoutPracticeState>>
 }

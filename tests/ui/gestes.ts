@@ -20,6 +20,25 @@ export const flechette = async (
   await utilisateur.click(screen.getByRole('button', { name: cible }))
 }
 
+/**
+ * Valide la sortie dans la boîte de confirmation (lot `annulation-volee`) : la
+ * fléchette qui sort, gagne ou boucle n'est écrite qu'après *Valider la sortie*.
+ * Les tests qui jouent une partie jusqu'au bout le disent par ce geste.
+ */
+export const validerSortie = async (utilisateur: UserEvent) => {
+  await utilisateur.click(await screen.findByRole('button', { name: 'Valider la sortie' }))
+}
+
+/** Une fléchette qui sort (ou gagne, ou boucle), puis *Valider la sortie*. */
+export const flechetteDeSortie = async (
+  utilisateur: UserEvent,
+  cible: string,
+  multiplicateur?: 'Double' | 'Triple',
+) => {
+  await flechette(utilisateur, cible, multiplicateur)
+  await validerSortie(utilisateur)
+}
+
 let naviguer: NavigateFunction | null = null
 let location: Location | null = null
 

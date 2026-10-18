@@ -3,7 +3,14 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { CricketVisitResult } from '@/core/application/ports/driving/PlayCricket'
 import { type Dart, Dart as DartVO, type Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { annonceCricket, annonceFinDeVolee, libelleAnnulation, nomJoueur } from '@/ui/labels'
+import {
+  annonceCricket,
+  annonceFinDeVolee,
+  libelleAnnulation,
+  nomJoueur,
+  TEXTE_CONFIRMATION_CRICKET,
+  titreConfirmationCricket,
+} from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
 import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
@@ -97,9 +104,41 @@ export const useCricket = (matchId: MatchId) => {
     [services, matchId, queryClient, dire],
   )
 
+  /**
+   * La fléchette qui gagne la partie attend sa confirmation (lot
+   * `annulation-volee`) : lue sur l'aperçu, jamais sur une règle recopiée.
+   */
+  const sortieEnAttente = dartsEnCours.length > 0 && (apercu?.state.finished ?? false)
+
+  /**
+   * « Kevin gagne sur T20 ? ». En cut-throat, une fléchette de Julien peut faire
+   * gagner Kevin : le nom est celui du **gagnant** de l'aperçu.
+   */
+  const confirmation = useMemo(() => {
+    const flechette = dartsEnCours.at(-1)
+    const gagnant = apercu?.state.winnerId ?? null
+    if (!sortieEnAttente || !flechette || gagnant === null) return null
+    return {
+      titre: titreConfirmationCricket(
+        nomJoueur(profils.get(gagnant)?.name ?? null),
+        DartVO.label(flechette),
+      ),
+      texte: TEXTE_CONFIRMATION_CRICKET,
+    }
+  }, [sortieEnAttente, dartsEnCours, apercu, profils])
+
+  /** Retire la dernière fléchette en cours ; la dernière partie, la pause s'arme. */
+  const retirerFlechette = useCallback(() => {
+    if (dartsEnCours.length === 0) return
+    services.devices.haptics.tap()
+    setDartsEnCours((darts) => darts.slice(0, -1))
+    if (dartsEnCours.length === 1) armer()
+  }, [services, dartsEnCours.length, armer])
+
+  /** Rend `true` quand la fléchette gagne la partie : l'écran demande confirmation. */
   const ajouterFlechette = useCallback(
-    (dart: Dart) => {
-      if (!state || occupe || termine) return
+    (dart: Dart): boolean => {
+      if (!state || occupe || termine || sortieEnAttente) return false
 
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
@@ -112,29 +151,39 @@ export const useCricket = (matchId: MatchId) => {
       setMultiplicateur('SIMPLE')
 
       // La volée est close à trois fléchettes — ou dès celle qui gagne la
-      // partie : réclamer les deux suivantes n'aurait aucun sens.
-      if (services.previewCricketVisit.execute({ state, darts: suite }).complete) {
-        void enregistrer(suite)
-      }
+      // partie : réclamer les deux suivantes n'aurait aucun sens. Celle-là
+      // attend *Valider* avant d'être écrite.
+      const evaluation = services.previewCricketVisit.execute({ state, darts: suite })
+      if (!evaluation.complete) return false
+      if (evaluation.state.finished) return true
+      void enregistrer(suite)
+      return false
     },
-    [services, state, occupe, termine, dartsEnCours, enregistrer],
+    [services, state, occupe, termine, sortieEnAttente, dartsEnCours, enregistrer],
   )
 
+  /** *Corriger* : la fléchette gagnante est retirée, la volée reprend. */
+  const corrigerSortie = useCallback(() => {
+    if (!sortieEnAttente || occupe) return
+    retirerFlechette()
+  }, [sortieEnAttente, occupe, retirerFlechette])
+
+  /** *Valider la sortie* : la volée part au journal ; voix et haptique suivent. */
+  const validerSortie = useCallback(() => {
+    if (!sortieEnAttente || occupe) return
+    void enregistrer(dartsEnCours)
+  }, [sortieEnAttente, occupe, enregistrer, dartsEnCours])
+
   /**
-   * Un seul bouton, qui fait ce qu'on attend : retirer la fléchette qu'on vient
-   * de taper si la volée est en cours, sinon annuler la dernière volée
-   * enregistrée.
+   * Une fléchette par appui : la dernière en cours, sinon la dernière de la
+   * volée enregistrée juste avant, qui se rouvre (voir `useX01`).
    */
   const annuler = useCallback(async () => {
     if (occupe) return
     setErreur(null)
 
     if (dartsEnCours.length > 0) {
-      services.devices.haptics.tap()
-      setDartsEnCours((darts) => darts.slice(0, -1))
-      // La dernière fléchette vient de partir : un second appui réflexe ne doit
-      // pas défaire la volée d'un autre joueur (voir `usePauseAnnulation`).
-      if (dartsEnCours.length === 1) armer()
+      retirerFlechette()
       return
     }
     if (!ecoulee()) return
@@ -142,26 +191,47 @@ export const useCricket = (matchId: MatchId) => {
 
     setOccupe(true)
     try {
-      const revenu = await services.playCricket.undoLastVisit(matchId)
+      const { state: revenu, darts } = await services.playCricket.undoLastVisit(matchId)
       queryClient.setQueryData(['cricket', matchId], revenu)
+      setDartsEnCours(darts)
       setDerniereVolee(null)
       services.devices.haptics.tap()
+      if (darts.length === 0) armer()
     } catch (cause) {
       setErreur(message(cause))
     } finally {
       setOccupe(false)
     }
-  }, [services, state, matchId, dartsEnCours.length, queryClient, occupe, armer, ecoulee])
+  }, [
+    services,
+    state,
+    matchId,
+    dartsEnCours.length,
+    queryClient,
+    occupe,
+    armer,
+    ecoulee,
+    retirerFlechette,
+  ])
 
-  /** Ce que le bouton va défaire, écrit dessus — voir `libelleAnnulation`. */
+  /** Ce que le bouton va retirer, écrit dessus — voir `libelleAnnulation`. */
   const annulation = useMemo(() => {
     const derniereFlechette = dartsEnCours.at(-1)
-    if (derniereFlechette) return libelleAnnulation(DartVO.label(derniereFlechette), null)
+    if (derniereFlechette && joueurCourant) {
+      return libelleAnnulation(
+        DartVO.label(derniereFlechette),
+        nomJoueur(profils.get(joueurCourant.playerId)?.name ?? null),
+      )
+    }
 
     const volee = state?.history.at(-1)
-    if (!volee) return libelleAnnulation(null, null)
-    return libelleAnnulation(null, nomJoueur(profils.get(volee.playerId)?.name ?? null))
-  }, [dartsEnCours, state, profils])
+    const flechette = volee?.darts.at(-1)
+    if (!volee || !flechette) return libelleAnnulation(null, null)
+    return libelleAnnulation(
+      DartVO.label(flechette),
+      nomJoueur(profils.get(volee.playerId)?.name ?? null),
+    )
+  }, [dartsEnCours, joueurCourant, state, profils])
 
   return {
     state,
@@ -176,6 +246,10 @@ export const useCricket = (matchId: MatchId) => {
     setMultiplicateur,
     derniereVolee,
     ajouterFlechette,
+    sortieEnAttente,
+    confirmation,
+    corrigerSortie,
+    validerSortie,
     annuler,
     annulation,
     peutAnnuler: dartsEnCours.length > 0 || (!enPause && (state?.history.length ?? 0) > 0),

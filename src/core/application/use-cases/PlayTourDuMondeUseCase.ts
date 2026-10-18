@@ -13,6 +13,7 @@ import type {
   StartTourDuMondeCommand,
   TourDuMondeVisitResult,
 } from '../ports/driving/PlayTourDuMonde'
+import type { ReopenedVisit } from '../ports/driving/ReopenedVisit'
 import { loadMatch } from './loadMatch'
 import { nameField } from './nameField'
 import { shufflePlayers } from './shufflePlayers'
@@ -77,15 +78,20 @@ export class PlayTourDuMondeUseCase implements PlayTourDuMonde {
     return { state: apres, visit, milestones: apres.milestones.slice(avant.milestones.length) }
   }
 
-  async undoLastVisit(matchId: MatchId): Promise<TourDuMondeState> {
+  async undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<TourDuMondeState>> {
     const record = await loadMatch(this.matches, matchId)
 
+    // La dernière volée **projetée**, déjà coupée à la fléchette qui a bouclé.
+    const derniere = TourDuMondeRules.project(record.events).history.at(-1)
     // Le premier événement ouvre la partie : on n'y touche pas.
-    if (record.events.length <= 1) throw new DomainError('No visit to undo')
+    if (!derniere || record.events.length <= 1) throw new DomainError('No visit to undo')
 
     const events = record.events.slice(0, -1)
+    // Projeter AVANT d'écrire : un journal qui ne se rejoue pas n'est pas sauvé.
+    const state = TourDuMondeRules.project(events)
     await this.matches.save({ ...record, events, updatedAt: this.clock.now() })
 
-    return TourDuMondeRules.project(events)
+    // La volée se rouvre : ses fléchettes restantes reviennent à la saisie.
+    return { state, darts: derniere.darts.slice(0, -1) }
   }
 }

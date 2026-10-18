@@ -21,7 +21,7 @@ import {
   TITRE_BANDEAU_TOUR_DU_MONDE,
 } from '@/ui/labels'
 import { fakeServices } from '../fakes'
-import { flechette } from './gestes'
+import { flechette, flechetteDeSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
@@ -458,7 +458,7 @@ describe('Moment célébré — une rangée de 44 px', () => {
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await screen.findByLabelText('Cible de Kevin')
-    await flechette(utilisateur, '20')
+    await flechetteDeSortie(utilisateur, '20')
 
     // (<output> a aussi le rôle « status » : on part du texte du moment.)
     const moment = (await screen.findByText('Bouclé !')).closest('[role="status"]')
@@ -583,7 +583,7 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
   }
 
   // Mutation : la volée lue ailleurs que dans l'historique rechargé (état périmé après annulation).
-  it('annuler une volée entière : la ligne revient à la volée d’avant, avec son nom', async () => {
+  it('annuler fléchette par fléchette : la volée se rouvre, puis la ligne revient à la volée d’avant', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
     const { matchId } = await partie(services)
@@ -593,6 +593,12 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     expect(await screen.findByLabelText('Volée de Julien')).toHaveTextContent('S17S16S15')
 
+    // Lot `annulation-volee` : un appui retire S15 seul, la volée de Julien se rouvre.
+    await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
+    await waitFor(() =>
+      expect(screen.getByLabelText('Volée de Julien')).toHaveTextContent('S17S16—'),
+    )
+    await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
     await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
 
     expect(await screen.findByLabelText('Volée de Kevin')).toHaveTextContent('S20T19D18')
@@ -633,8 +639,12 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     const remonte = renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     expect(await screen.findByLabelText('Volée de Julien')).toHaveTextContent('S17S16S15')
 
+    // La volée de Julien se rouvre (S17, S16 en saisie) : elle a quitté le journal,
+    // et la volée rouverte n'est pas persistée (U9).
     await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
-    await screen.findByLabelText('Volée de Kevin')
+    await waitFor(() =>
+      expect(screen.getByLabelText('Volée de Julien')).toHaveTextContent('S17S16—'),
+    )
     remonte.unmount()
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })

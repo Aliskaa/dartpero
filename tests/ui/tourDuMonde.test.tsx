@@ -7,6 +7,7 @@ import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { fakeServices } from '../fakes'
+import { validerSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
 /** Un parcours court, pour que le test tienne en quelques clics : 20, 19, bulle. */
@@ -106,6 +107,7 @@ describe('Tour du monde — écran de jeu', () => {
     await utilisateur.click(screen.getByRole('button', { name: '20' }))
     await utilisateur.click(screen.getByRole('button', { name: '19' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    await validerSortie(utilisateur)
 
     // La partie n'est pas finie : Julien a droit à sa volée.
     expect(await screen.findByText('Dernier tour')).toBeInTheDocument()
@@ -157,6 +159,7 @@ describe('Tour du monde — écran de jeu', () => {
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
 
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    await validerSortie(utilisateur)
 
     // Un seul clic, et la main est déjà passée.
     await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
@@ -180,6 +183,7 @@ describe('Tour du monde — écran de jeu', () => {
 
     await utilisateur.click(screen.getByRole('button', { name: '19' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    await validerSortie(utilisateur)
 
     // Deux clics, pas trois.
     await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
@@ -205,6 +209,7 @@ describe('Tour du monde — écran de jeu', () => {
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
 
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    await validerSortie(utilisateur)
 
     // 3 au premier tour + celle qui boucle. Jamais 6.
     await waitFor(() => expect(ligneDe('Kevin')).toHaveTextContent('4 fléchettes'))
@@ -237,6 +242,7 @@ describe('Tour du monde — écran de jeu', () => {
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
 
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    await validerSortie(utilisateur)
 
     await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
     expect(ligneDe('Marie')).not.toHaveAttribute('aria-current')
@@ -245,8 +251,9 @@ describe('Tour du monde — écran de jeu', () => {
   })
 
   /**
-   * Le bouton d’annulation ne change pas de code, mais bien de comportement :
-   * après un bouclage anticipé, il n’y a plus de fléchette en cours à retirer.
+   * Après un bouclage anticipé, il n’y a plus de fléchette en cours : le bouton
+   * nomme la dernière fléchette de la volée enregistrée, qu’un appui rouvrirait
+   * (lot nnulation-volee).
    */
   it('bascule le bouton d’annulation sur la volée dès le bouclage', async () => {
     const utilisateur = userEvent.setup()
@@ -264,10 +271,9 @@ describe('Tour du monde — écran de jeu', () => {
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
 
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    await validerSortie(utilisateur)
 
-    expect(
-      await screen.findByRole('button', { name: 'Annuler la volée de Kevin' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Annuler 25 de Kevin' })).toBeInTheDocument()
   })
 
   /**
@@ -290,11 +296,10 @@ describe('Tour du monde — écran de jeu', () => {
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('Bulle'))
 
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    await validerSortie(utilisateur)
     await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
 
-    await utilisateur.click(
-      await screen.findByRole('button', { name: 'Annuler la volée de Kevin' }),
-    )
+    await utilisateur.click(await screen.findByRole('button', { name: 'Annuler 25 de Kevin' }))
 
     // Kevin retrouve sa bulle, ses 3 fléchettes, et la main.
     await waitFor(() => expect(cibleDe('Kevin').closest('[aria-current]')).not.toBeNull())

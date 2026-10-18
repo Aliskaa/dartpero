@@ -20,6 +20,7 @@ import type {
   PlayCheckoutPractice,
   StartCheckoutPracticeCommand,
 } from '../ports/driving/PlayCheckoutPractice'
+import type { ReopenedVisit } from '../ports/driving/ReopenedVisit'
 import { loadMatch } from './loadMatch'
 import { nameField } from './nameField'
 
@@ -104,18 +105,29 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
     return { state: CheckoutPracticeRules.project(events), outcome }
   }
 
-  async undoLastVisit(matchId: MatchId): Promise<CheckoutPracticeState> {
+  async undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<CheckoutPracticeState>> {
     const record = await loadMatch(this.matches, matchId)
 
+    // La dernière manche close **projetée** : ses fléchettes sont déjà coupées
+    // à celle qui a conclu (sortie ou bust).
+    const derniere = CheckoutPracticeRules.project(record.events)
+      .rounds.filter((round) => round.outcome !== null)
+      .at(-1)
+
     // On retire la volée ET la manche qu'elle a ouverte : sans ça, annuler
-    // laisserait une cible orpheline et la session avancerait toute seule.
+    // laisserait une cible orpheline et la session avancerait toute seule. Le
+    // `RoundStarted` de la manche rouverte, lui, reste : même reste à viser.
     const events = [...record.events]
     if (events.at(-1)?.type === 'RoundStarted') events.pop()
-    if (events.at(-1)?.type !== 'VisitRecorded') throw new DomainError('No visit to undo')
+    if (!derniere || events.at(-1)?.type !== 'VisitRecorded') {
+      throw new DomainError('No visit to undo')
+    }
     events.pop()
 
+    // Projeter AVANT d'écrire : un journal qui ne se rejoue pas n'est pas sauvé.
+    const state = CheckoutPracticeRules.project(events)
     await this.matches.save({ ...record, events, updatedAt: this.clock.now() })
 
-    return CheckoutPracticeRules.project(events)
+    return { state, darts: derniere.darts.slice(0, -1) }
   }
 }

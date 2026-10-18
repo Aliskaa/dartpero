@@ -73,7 +73,7 @@ describe('Cricket (use case)', () => {
     const id = await demarrer()
     await services.playCricket.recordVisit(id, [Dart.triple(20), Dart.triple(20)])
 
-    const revenu = await services.playCricket.undoLastVisit(id)
+    const { state: revenu } = await services.playCricket.undoLastVisit(id)
 
     expect(revenu.players[0]?.marks).toEqual([0, 0, 0])
     expect(revenu.players[0]?.score).toBe(0)

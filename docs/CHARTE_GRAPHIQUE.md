@@ -117,7 +117,7 @@ au pixel, devenues des tokens — **réservés à la feuille de règles et à so
 | Vert en texte | `vert-texte` | `#5BB27E` | `#1F6B41` | Succès de l'exemple |
 | Filets | `filet` / `filet-doux` | `#3A4A3F` / `#24332A` | `#C2BBA6` / `#E0D9C7` | Séparateurs de rubriques, tableau, questions |
 | Cadre de la croix | `chene-doux` | `#4A3825` | `#A38D6F` | Bordure du bouton « Fermer » |
-| Voile | `voile` | `rgb(4 8 5 / .62)` | `rgb(47 30 16 / .45)` | `::backdrop` en portrait (transparent en paysage) |
+| Voile | `voile` | `rgb(4 8 5 / .62)` | `rgb(47 30 16 / .45)` | `::backdrop` en portrait (transparent en paysage) ; aussi le `::backdrop` de `BoiteConfirmation` (lot `annulation-volee` : en clair, `feutre-nuit/65` n'atténuait presque rien — séparation `ardoise` / fond voilé 1,4:1, 3,2:1 avec `voile`) |
 
 ⚠️ `rouge-cible` / `vert-cible` restent des **fonds et des filets** : en texte sur l'ardoise
 sombre ils tombent à 2,8:1 et 3,2:1. Contrastes des tokens de texte (sur `feutre` · `feutre-nuit`
@@ -361,6 +361,7 @@ Toujours réutiliser `src/ui/composants/commun/` — **ne jamais** dupliquer une
 | `Etats` | `EmptyState` · `Skeleton` · `Spinner` / `SpinnerLigne` · `MessageErreur` · `EcranErreur` |
 | `LivreRegles` | Le livre ouvert (lot `regles-du-jeu`) : bouton 48 px, `BookOpen` 22 px `aria-hidden`, bordure `laiton-sombre`, icône `laiton-clair` ; **actif** (feuille ouverte) : fond `laiton`, icône `sur-laiton`. Nom accessible « Règles du <jeu> », `aria-haspopup="dialog"`, `aria-expanded`. Même mécanisme que la `Modale`, et lui seul : état dans l'historique par `useModaleAuRetour` (clé `regles`), boîte par `useDialogueNatif`, qui rend le focus au livre à la fermeture (même sans focus préalable, Safari). À droite de l'en-tête de l'étape 2 (`EnTeteEtape` `action`) et à l'extrême droite de `BandeauMatch` (prop **obligatoire** `regles`), hors `.grave` et hors capitales, en marges négatives (la rangée du bandeau reste à 40 px en portrait) |
 | `FeuilleRegles` | La feuille de règles : `<dialog>` natif (`showModal`), nommé par son titre, **monté en permanence** (contenu rendu seulement ouvert), aucune classe de `display` sur le `<dialog>` (la colonne vit dans un conteneur intérieur), discipline de `useDialogueNatif` partagée avec la `Modale`. Fermée par la croix, Échap, le retour **ou un appui à côté** (voile en portrait sur le match ; partie gauche, sous un voile transparent, en paysage) — ajout hors planche, décision de l'utilisateur (Révision 1, U1). Tête en `<div>` (jamais un `<header>` dans celui du bandeau), `feutre-nuit` (pictogramme 24 px `laiton-clair`, « RÈGLES DU X01 », « TELLES QUE DARTPÉRO LES APPLIQUE », croix 48 px `chene-doux`) ; corps qui défile (`overscroll-contain`), sans bande « Défiler pour la suite » : encadré « Ce soir » (`laiton-sombre`), « 1 En bref » toujours ouverts, puis rubriques repliables numérotées dès 2 (lignes de 48 px sous un `h3`, chevron, `aria-expanded`, **toutes repliées à chaque ouverture**, plusieurs ouvrables). Blocs : liste (lignes grises = l'autre réglage), paragraphe, pastilles (`rouge-texte` ce soir, `filet` / `craie-3-regles` l'autre), tableau d'exemple, questions, `dl` des réglages (ce soir en `laiton-clair`), grille du parcours. Disposition : étape 2 pleine hauteur (paysage : côté droit, 52 %) ; match à 210 px du haut, filet craie 3 px, voile `voile` (paysage : sous le bandeau, largeur de la colonne du pavé, filet gauche 3 px, sans voile). Tokens : § Palette, feuille de règles |
+| `BoiteConfirmation` (+ `hooks/useConfirmationSortie`) | La confirmation de la sortie (lot `annulation-volee`, forme B de la planche `annulation`) sur les écrans X01, Cricket et Tour du monde. `<dialog>` natif, **monté en permanence**, contenu rendu seulement ouvert, discipline de `useDialogueNatif` ; boîte centrée `bg-ardoise`, **filet haut 3 px `craie`** (sans autre bordure), largeur de l'écran moins 2 × 16 px bornée à **32 rem** (portrait comme paysage), voile `backdrop:bg-voile` (le jeton de la feuille de règles, élargi à la boîte : `rules/theme-colors.md`) ; titre `font-score text-xl` gras capitales `craie-vive` (« Kevin sort sur D10 ? » : nom et fléchette lus à distance), texte `text-sm` `craie-2` (« 40 → 0. La manche est gagnée dès que vous validez. ») ; deux boutons côte à côte de **52 px** : *Corriger* (filet 1 px `craie/45`, texte `craie`) et *Valider la sortie* (`bg-laiton`, `sur-laiton`), plats comme la planche (pas `Button` : pas de relief `laiton-poli`). Pas de ✕ : le focus d'ouverture va sur *Corriger*. Fermée par *Corriger*, *Valider*, Échap, retour **ou un appui sur le voile** — toute fermeture sans choix vaut *Corriger*. Après **toute** fermeture de la boîte (*Corriger*, *Valider*, retour, Échap, voile), le pavé ignore les appuis **500 ms** (`GARDE_APRES_FERMETURE_MS`, horloge des services) : les deux boutons recouvrent le pavé quelle que soit l'orientation (en paysage, *Valider* est le seul bouton au-dessus), et le second appui d'un double tap tombait sur le pavé découvert — une fléchette fantôme au joueur en cours ou au suivant (relecture à l'écran, Revue) ; le joueur suivant ne lance pas sa première fléchette en 500 ms. État dans l'historique (clé `confirmation`, valeur `sortie`) ; voir CONVENTIONS § 9 |
 | `CarteJoueur` (`composants/match/`) | Score géant, jetons de manches, volée en cours |
 
 La géométrie du plateau — ordre des secteurs, rayons des anneaux — vit dans `geometrieCible.ts`,
@@ -696,10 +697,22 @@ couleur du profil — jamais le liseré de la maquette —, nom en Oswald gras, 
 - Le pavé du **Cricket** n'a que les sept cibles (six numéros + la Bulle) ; celui du **Tour du
   monde** n'a pas de bascule S/D/T (elle ne changerait rien, et un contrôle sans effet induit en
   erreur).
-- ⚠️ **Le bouton « Annuler » a deux étiquettes** : `libelleAnnulation` rend un
-  `{ court, complet }` — le court s'affiche (« Annuler T20 »), le complet est le nom accessible
-  (« Annuler la volée de Julien »). Le court étant contenu mot pour mot dans le complet, la
-  règle « label in name » (WCAG 2.5.3) tient.
+- ⚠️ **Le bouton « Annuler » retire une fléchette par appui** (lot `annulation-volee`) : la
+  dernière jouée, quel que soit le joueur. Sans fléchette en cours, la dernière volée enregistrée
+  **se rouvre** : son joueur redevient actif, ses fléchettes restantes reviennent dans les cases,
+  le reste les suit (planche : 379 → 384 → 441 → 501). Deux étiquettes : `libelleAnnulation`
+  rend un `{ court, complet }` — le court s'affiche (« Annuler S5 »), le complet est le nom
+  accessible (« Annuler S5 de Kevin »). Le court étant contenu mot pour mot dans le complet, la
+  règle « label in name » (WCAG 2.5.3) tient. Rien à retirer : « Annuler », grisée. La pause
+  d'une seconde (`PAUSE_ANNULATION_MS`) suit le retrait de la dernière fléchette d'un joueur.
+  Même touche dans les quatre modes, entraînement compris.
+- ⚠️ **La sortie se confirme** (forme B de la planche `annulation`) : la fléchette qui sort
+  (X01, **chaque** manche), gagne la partie (Cricket, cut-throat compris : la boîte nomme le
+  **gagnant**) ou **boucle le parcours** (Tour du monde, la fin du tour de table ne se confirme
+  pas) ouvre `BoiteConfirmation` **avant toute écriture** : ni journal, ni voix, ni célébration
+  avant *Valider la sortie*. *Corriger* retire la fléchette ; fermer sans choisir (retour, Échap,
+  voile) aussi. Jamais sur un bust, jamais à l'entraînement. Pendant l'attente, le pavé est
+  inerte derrière la boîte, pas grisé.
 
 ---
 

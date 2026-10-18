@@ -103,7 +103,8 @@ describe('Frontière des thèmes', () => {
 
   /**
    * Les neuf jetons de la feuille de règles (lot `regles-du-jeu`, constat 6 de
-   * la Revue) sont **réservés** à la feuille : leurs noms sont génériques
+   * la Revue) sont **réservés** à la feuille (`voile` est élargi à la boîte de
+   * confirmation, voir plus bas, et n'est plus autorisé dans `LivreRegles`) : leurs noms sont génériques
    * (`filet`, `voile`, `rouge-texte`…), mais leurs valeurs n'ont été vérifiées
    * que sur les surfaces de la feuille — `rouge-texte` / `vert-texte` tombent
    * à 4,2 / 3,7:1 sur `feutre-nuit` en clair. `rules/theme-colors.md`
@@ -127,20 +128,36 @@ describe('Frontière des thèmes', () => {
     'voile',
   ]
   const UTILITAIRE_FEUILLE = utilitaires(JETONS_FEUILLE)
+  /**
+   * Le `voile` a sa propre entrée de garde, à part des autres jetons de la feuille (lot `annulation-volee`) : il
+   * dimme aussi l'écran sous la boîte de confirmation de la sortie. Il ne colore
+   * qu'un `::backdrop` — aucun texte ne s'y pose, le texte de la boîte reste sur
+   * son `ardoise` — et ses deux valeurs ont été relues sur l'écran de match.
+   */
+  const UTILITAIRE_FEUILLE_SANS_VOILE = utilitaires(
+    JETONS_FEUILLE.filter((jeton) => jeton !== 'voile'),
+  )
 
   /**
-   * Les jetons réservés, famille par famille : ceux de la feuille de règles,
-   * le vert de « Installée » (contraste vérifié sur l'ardoise seulement) et les
+   * Les jetons réservés, entrée par entrée : trois familles de sens (la feuille
+   * de règles, dont le `voile` a sa propre entrée depuis le lot
+   * `annulation-volee` — quatre entrées en tout), le vert de « Installée » (contraste vérifié sur l'ardoise seulement) et les
    * aperçus de thème, CONSTANTS à dessein (lot `reglages-par-usage`) — employés
-   * ailleurs, ils ne suivraient pas le thème. Chaque famille a son témoin : le
+   * ailleurs, ils ne suivraient pas le thème. Chaque entrée a son témoin : le
    * fichier qui l'emploie, et le nombre d'emplois au moins attendus.
    */
   const RESERVES = [
     {
       famille: 'feuille de règles',
-      motif: UTILITAIRE_FEUILLE,
+      motif: UTILITAIRE_FEUILLE_SANS_VOILE,
       fichiers: ['composants/commun/FeuilleRegles.tsx', 'composants/commun/LivreRegles.tsx'],
       temoin: 6,
+    },
+    {
+      famille: 'voile des boîtes du match',
+      motif: utilitaires(['voile']),
+      fichiers: ['composants/commun/FeuilleRegles.tsx', 'composants/commun/BoiteConfirmation.tsx'],
+      temoin: 1,
     },
     {
       famille: 'vert du voyant',

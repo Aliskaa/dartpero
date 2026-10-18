@@ -16,7 +16,7 @@ export class PreviewTourDuMondeVisitUseCase implements PreviewTourDuMondeVisit {
   }): TourDuMondePreview {
     // `applyVisit` refuse une volée vide : rien à prévoir tant qu'aucune
     // fléchette n'est plantée.
-    if (darts.length === 0) return { state, complete: false }
+    if (darts.length === 0) return { state, complete: false, completesTour: false }
 
     const apres = TourDuMondeRules.applyVisit(state, darts)
     const volee = apres.history.at(-1)
@@ -26,6 +26,6 @@ export class PreviewTourDuMondeVisitUseCase implements PreviewTourDuMondeVisit {
     // au Tour du monde on finit le tour de table, donc la partie continue après
     // un bouclage. Ce qui clôt la volée, c'est que **ce joueur** n'ait plus de
     // cible, pas que la partie s'arrête.
-    return { state: apres, complete: boucle || darts.length >= 3 }
+    return { state: apres, complete: boucle || darts.length >= 3, completesTour: boucle }
   }
 }

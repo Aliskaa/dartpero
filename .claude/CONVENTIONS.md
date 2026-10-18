@@ -187,7 +187,7 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   Statistiques (lot `statistiques-podium`) et feuille de règles (lot `regles-du-jeu`), un seul
   mécanisme. **L'état vit dans l'historique** (`useModaleAuRetour`) : l'ouverture empile une
   entrée **sur la même URL** (`location.state[cle]`, validé contre une liste fermée ; clés en
-  usage `parcours`, `liste`, `regles`), **seulement dans un gestionnaire de clic** (jamais dans
+  usage `parcours`, `liste`, `regles`, `confirmation`), **seulement dans un gestionnaire de clic** (jamais dans
   un effet, jamais `<Link>` vers l'emplacement courant, qui remplace) ; la fermeture — ✕, Échap,
   retour, appui à côté — recule **toujours** par `navigate(-1)`, jamais par un état local remis à
   faux (entrée orpheline) ni par `replace`. Garde « en vol » en `useRef` contre les doubles
@@ -199,6 +199,25 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   sur le `<dialog>`** (il s'afficherait fermé) : la mise en page vit dans un conteneur intérieur.
   Une tête de boîte est un `<div>`, jamais un `<header>` (le bandeau en est déjà un). Dette :
   `DialogueNouveauJoueur` ne suit pas encore ce modèle.
+- **La confirmation de la sortie** (lot `annulation-volee`, `BoiteConfirmation` +
+  `useConfirmationSortie`) suit le même mécanisme, clé `confirmation`, valeur `sortie`. En plus :
+  `demander()` est appelé **dans le gestionnaire de la fléchette**, quand `ajouterFlechette` rend
+  `true` ; la boîte s'affiche quand l'entrée est là **et** qu'une sortie attend (dérivé du hook
+  du mode) ; **toute fermeture sans choix vaut *Corriger*** — Échap et voile par `onCorriger`, le
+  retour du téléphone détecté au passage `'sortie'` → `null` tant qu'une sortie attend et que
+  *Valider* n'a pas été choisi (une ref) ; une entrée héritée d'un rechargement est dépilée **au
+  montage seulement** (une ref de plus contre le double effet de `StrictMode`) ; l'écran n'envoie
+  au résumé que `termine && auRepos` (aucune entrée `confirmation`), sinon le `replace`
+  écraserait l'entrée de la boîte. Pas de ✕ : la référence `croix` de `useDialogueNatif` porte le
+  focus sur *Corriger*. Après **toute** fermeture de la boîte (*Corriger*, *Valider*, retour, Échap,
+  voile), `pavePret()` est faux pendant `GARDE_APRES_FERMETURE_MS` (500 ms, `services.clock`) :
+  l'écran l'interroge en tête de `onFlechette` seulement (bascule S/D/T et Annuler non concernés).
+  Les deux boutons recouvrent le pavé, quelle que soit l'orientation : le second appui d'un double
+  tap y poserait une fléchette fantôme ; le joueur suivant, lui, ne lance pas en 500 ms. **Exception assumée** à « hors des branches de chargement » : le hook est
+  appelé au-dessus des retours de chargement, mais `<BoiteConfirmation>` vit dans la branche
+  chargée de l'écran. Sans risque d'entrée orpheline : la boîte ne s'ouvre que sur l'appui d'une
+  fléchette, donc partie chargée (`staleTime` infini, l'état ne repasse jamais en chargement), et
+  une entrée héritée d'un rechargement est dépilée par le hook, au-dessus des retours.
 - Les listes que l'étape 2 propose (`SCORES`, `LEGS`, `SETS`, `SORTIES`) et les bornes de joueurs
   (`MAX_JOUEURS`, `JOUEURS_ENTRAINEMENT`) vivent dans `src/ui/reglagesPossibles.ts`, module neutre
   lu par la fiche, le hook du parcours, la feuille et le filtre « Rejouer » (`ui/rejouer.ts`).
@@ -222,6 +241,20 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   (`HistoriqueEcran`) invalident les deux ; l'import (`ReglagesEcran`) invalide tout. ⚠️ Jamais
   une clé déclarée dans un écran chargé à la demande : l'Accueil, importé statiquement,
   l'importerait et le ferait revenir dans le chunk commun. `CLE_JOUEURS` reste dans `useJoueurs`.
+- **Annuler, une fléchette par appui** (lot `annulation-volee`) : sans fléchette en cours,
+  `annuler()` garde ses gardes (`occupe`, rien à retirer, `ecoulee()` de la pause), appelle le
+  use case d'annulation, qui rend un `ReopenedVisit` `{ state, darts }` ; le hook injecte
+  `state` dans le cache et **rend `darts` à la saisie** (`setDartsEnCours`), puis `armer()` si
+  la volée rouverte est vide. Le libellé (`libelleAnnulation(flechette, joueur)`) lit la
+  dernière fléchette en cours, sinon la dernière de la dernière volée **projetée** et son
+  `playerId` — jamais recalculé.
+- **La sortie en attente** (X01, Cricket, Tour du monde) : `sortieEnAttente` est **dérivé** de
+  l'aperçu des fléchettes en cours (X01 `outcome === 'CHECKOUT'`, Cricket `state.finished`, Tour
+  du monde `completesTour`), jamais stocké. `ajouterFlechette` rend `true` quand la fléchette la
+  met en attente (rien n'est envoyé) et refuse toute fléchette tant qu'elle attend ;
+  `corrigerSortie()` retire la fléchette (même chemin que le retrait d'une fléchette en cours) ;
+  `validerSortie()` appelle `enregistrer` — voix, haptique et célébration y vivent déjà, donc
+  arrivent après *Valider*. Le hook rend aussi `confirmation` `{ titre, texte }` (`labels.ts`).
 - Une valeur qui doit survivre aux rendus sans réarmer un callback passe par une **ref**
   resynchronisée à chaque rendu (`profilsRef.current = profils`) plutôt que par une dépendance.
 - Les erreurs `unknown` sont normalisées une seule fois, via un petit `message(erreur: unknown):
@@ -402,8 +435,9 @@ L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'e
 invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchangé au lot
 « accueil-parties-recentes » ; lot « regles-du-jeu » : 23 ports driving (`ShuffleOrder`,
 `GetCheckoutRange`) ; lot « rejouer » : 24 (`GetReplayableConfigurations`) ; lot
-« reglages-par-usage » : 25 (`GetDeviceContents`)
-(hors `MatchSummary.ts`, un type), 11 driven, 13 hooks (plus `tourDeTable.ts`, un utilitaire),
+« reglages-par-usage » : 25 (`GetDeviceContents`) ; lot « annulation-volee » : toujours 25, 27 fichiers
+(hors `MatchSummary.ts` et `ReopenedVisit.ts`, deux types), 11 driven, 14 hooks (plus `tourDeTable.ts`, un utilitaire ;
+`useConfirmationSortie` au lot « annulation-volee »),
 4 modes, 4 services transverses.
 
 ```
@@ -452,6 +486,7 @@ src/
 │  │                      l'ossature portrait/paysage ; CartePodium, CompteBatons et
 │  │                      Modale, la boîte refermée par le retour du téléphone ;
 │  │                      LivreRegles et FeuilleRegles, la feuille de règles ;
+│  │                      BoiteConfirmation, la confirmation de la sortie ;
 │  │                      Phrase, une phrase de labels.ts en segments typés ;
 │  │                      Voyant, VignetteTheme, ListeReglages / LigneReglage, les
 │  │                      briques des Réglages ;
@@ -476,9 +511,12 @@ src/
 │  │                        export validée : useDernierExport) ·
 │  │                      useStockagePersistant (protection des données) ·
 │  │                      useInstallation (invitation à installer) ·
-│  │                      usePauseAnnulation (la pause après le retrait d'une volée) ·
+│  │                      usePauseAnnulation (la pause après le retrait de la dernière
+│  │                        fléchette d'un joueur) ·
 │  │                      useModaleAuRetour (une boîte que le retour ferme : Modale,
-│  │                        feuille de règles) ·
+│  │                        feuille de règles, confirmation de la sortie) ·
+│  │                      useConfirmationSortie (la boîte « Kevin sort sur D10 ? » :
+│  │                        demander, Corriger, Valider, retour = Corriger) ·
 │  │                      useDialogueNatif (la discipline du <dialog>, partagée)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
 │     theme.ts (clair / sombre / système) ·

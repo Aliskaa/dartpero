@@ -43,14 +43,14 @@ Palette et rôles : `docs/CHARTE_GRAPHIQUE.md`.
 
 ## Jetons réservés
 
-Trois familles, chacune à ses fichiers ; la garde est une table
+Trois familles de sens, chacune à ses fichiers ; **quatre entrées** dans la garde (le `voile` a la sienne depuis le lot `annulation-volee`) ; la garde est une table
 jetons → fichiers (`themeBoundary.test.ts`, « les jetons réservés … ne
-servent qu'à leurs fichiers »), un témoin par famille.
+servent qu'à leurs fichiers »), un témoin par entrée (quatre).
 
 ### La feuille de règles
 
 Neuf jetons (lot `regles-du-jeu`) ne servent **qu'à** `FeuilleRegles.tsx`
-et `LivreRegles.tsx` : `craie-2-regles`, `craie-3-regles`, `laiton-texte`,
+et `LivreRegles.tsx` — sauf `voile`, que la garde autorise à `FeuilleRegles.tsx` et `BoiteConfirmation.tsx` et **plus** à `LivreRegles.tsx` (voir plus bas) : `craie-2-regles`, `craie-3-regles`, `laiton-texte`,
 `rouge-texte`, `vert-texte`, `filet`, `filet-doux`, `chene-doux`, `voile`
 (`src/index.css`, charte § Palette).
 
@@ -60,6 +60,14 @@ et `LivreRegles.tsx` : `craie-2-regles`, `craie-3-regles`, `laiton-texte`,
 - Ailleurs, prendre le jeton général (`craie-2`, `craie-3`, `laiton`,
   `border-craie/25`…). Les élargir = vérifier le contraste dans les deux
   thèmes sur la nouvelle surface, puis élargir la garde.
+- ⚠️ **`voile` est élargi** (lot `annulation-volee`, relecture à l'écran) :
+  il sert aussi le `::backdrop` de `BoiteConfirmation.tsx` — en clair,
+  `feutre-nuit/65` faisait un beige sur beige. Entrée à part dans la garde
+  (« voile des boîtes du match » : `FeuilleRegles.tsx` + `BoiteConfirmation.tsx`,
+  témoin `FeuilleRegles`). Aucun texte ne se pose sur le voile : le texte de
+  la boîte reste sur son `ardoise` (contrastes vérifiés : craie-vive 16,1 / 16,6:1,
+  `craie-2` 8,1 / 9,6:1, `craie` 13,3 / 12,9:1, `sur-laiton` sur `laiton` 7,7 / 4,6:1,
+  sombre / clair).
 
 ### Le voyant et les aperçus de thème (lot `reglages-par-usage`)
 

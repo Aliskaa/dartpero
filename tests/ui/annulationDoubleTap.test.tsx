@@ -37,6 +37,7 @@ type Saisie = {
   readonly annuler: () => Promise<void>
   readonly peutAnnuler: boolean
   readonly occupe: boolean
+  readonly dartsEnCours: readonly Dart[]
 }
 
 type Mode = {
@@ -152,7 +153,7 @@ describe.each(GAME_MODE_IDS)('Annuler, double appui — %s (écran)', (modeId) =
     expect(annuler()).toBeDisabled()
   })
 
-  it('critère 2 : après la pause, un appui annule la volée enregistrée', async () => {
+  it('critère 2 : après la pause, un appui rouvre la volée enregistrée, une fléchette en moins', async () => {
     const utilisateur = userEvent.setup()
     const { clock, services, matchId } = await rendreEcran(mode)
 
@@ -165,7 +166,10 @@ describe.each(GAME_MODE_IDS)('Annuler, double appui — %s (écran)', (modeId) =
     await waitFor(() => expect(annuler()).toBeEnabled(), { timeout: 3000 })
     await utilisateur.click(annuler())
 
+    // Lot `annulation-volee` : la volée quitte le journal, ses deux premières
+    // fléchettes reviennent en saisie (« Annuler 0 »).
     await waitFor(async () => expect(await mode.enregistrees(services, matchId)).toBe(0))
+    await waitFor(() => expect(annuler()).toHaveTextContent('Annuler 0'))
   }, 10_000)
 
   it('critère 3 : deux fléchettes en cours, deux appuis les retirent sans pause', async () => {
@@ -184,13 +188,16 @@ describe.each(GAME_MODE_IDS)('Annuler, double appui — %s (écran)', (modeId) =
     expect(await mode.enregistrees(services, matchId)).toBe(1)
   })
 
-  it('critère 4 : sans fléchette en cours, un seul appui annule la volée précédente', async () => {
+  it('critère 4 : sans fléchette en cours, un seul appui rouvre la volée précédente', async () => {
     const utilisateur = userEvent.setup()
     const { services, matchId } = await rendreEcran(mode)
 
     await utilisateur.click(annuler())
 
     await waitFor(async () => expect(await mode.enregistrees(services, matchId)).toBe(0))
+    // Une fléchette retirée, pas trois : il en reste deux à retirer.
+    await waitFor(() => expect(annuler()).toHaveTextContent('Annuler 0'))
+    expect(annuler()).toBeEnabled()
   })
 })
 
@@ -268,6 +275,8 @@ describe.each(GAME_MODE_IDS)('Annuler, double appui — %s (hook)', (modeId) => 
     clock.regler(clock.now() + PAUSE_ANNULATION_MS)
     await act(() => result.current.annuler())
     expect(await mode.enregistrees(services, matchId)).toBe(0)
+    // La volée rouverte rend ses deux premières fléchettes à la saisie.
+    expect(result.current.dartsEnCours).toHaveLength(2)
   })
 
   it('critère 5 : pendant une écriture en cours, annuler() ne lance aucune annulation', async () => {

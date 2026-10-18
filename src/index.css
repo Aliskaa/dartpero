@@ -45,7 +45,8 @@
 
   /* LA FEUILLE DE RÈGLES (lot `regles-du-jeu`) : les couleurs de la planche
      `regles-rubriques.html`, au pixel, devenues des tokens (charte § Palette).
-     Elles ne servent qu'à la feuille de règles et à son livre.
+     Elles ne servent qu'à la feuille de règles et à son livre — sauf `voile`,
+     élargi au `::backdrop` de la boîte de confirmation (lot `annulation-volee`).
      - `craie-2-regles` / `craie-3-regles` : le texte courant et les légendes de
        la feuille, un cran plus clairs que `craie-2` / `craie-3` en sombre ;
      - `laiton-texte` : les petits libellés (« CE SOIR », numéros, rubriques) ;
@@ -53,7 +54,8 @@
        un succès écrits EN TEXTE — `rouge-cible` / `vert-cible` sont des fonds
        et des filets, à 2,8:1 et 3,2:1 en texte sur l'ardoise sombre ;
      - `filet` / `filet-doux` : les séparateurs ; `chene-doux` : le cadre de la
-       croix ; `voile` : ce qui dimme l'écran sous la feuille (alpha compris). */
+       croix ; `voile` : ce qui dimme l'écran sous la feuille et sous la boîte de
+       confirmation de la sortie (alpha compris). */
   --color-craie-2-regles: #d6ccb9;
   --color-craie-3-regles: #aaa292;
   --color-laiton-texte: #c9a227;

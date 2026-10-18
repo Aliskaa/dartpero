@@ -2,8 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { X01Config } from '@/core/domain/games/x01/config'
+import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 import { BadgeBandeau, BandeauMatch } from '@/ui/composants/commun/BandeauMatch'
+import { BoiteConfirmation } from '@/ui/composants/commun/BoiteConfirmation'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
@@ -11,6 +13,7 @@ import { momentDepuisVoleeX01 } from '@/ui/composants/x01/momentVolee'
 import { PaveFlechettes } from '@/ui/composants/x01/PaveFlechettes'
 import { Tableau } from '@/ui/composants/x01/Tableau'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
+import { useConfirmationSortie } from '@/ui/hooks/useConfirmationSortie'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
 import { useX01 } from '@/ui/hooks/useX01'
@@ -81,9 +84,26 @@ export const X01Ecran = () => {
     enabled: state !== null,
   })
 
+  // La boîte « Kevin sort sur D10 ? » (lot `annulation-volee`) : au-dessus du
+  // chargement, comme toute boîte au retour (CONVENTIONS § 9).
+  const confirmation = useConfirmationSortie({
+    enAttente: match.sortieEnAttente,
+    corriger: match.corrigerSortie,
+    valider: match.validerSortie,
+  })
+  const onFlechette = (dart: Dart) => {
+    // Juste après la fermeture de la boîte (Corriger ou Valider), l'appui fantôme d'un double tap est ignoré.
+    if (!confirmation.pavePret()) return
+    // Synchrone, dans le gestionnaire de l'appui : jamais depuis un effet.
+    if (match.ajouterFlechette(dart)) confirmation.demander()
+  }
+
+  // Le résumé attend que l'entrée de la boîte soit dépilée : la remplacer
+  // laisserait la partie derrière elle dans l'historique.
+  const auRepos = confirmation.auRepos
   useEffect(() => {
-    if (termine) navigate(`/partie/${identifiant}/resume`, { replace: true })
-  }, [termine, identifiant, navigate])
+    if (termine && auRepos) navigate(`/partie/${identifiant}/resume`, { replace: true })
+  }, [termine, auRepos, identifiant, navigate])
 
   if (match.chargement) return <Spinner label="Chargement de la partie…" />
 
@@ -141,7 +161,7 @@ export const X01Ecran = () => {
         <PaveFlechettes
           multiplicateur={match.multiplicateur}
           onMultiplicateur={match.setMultiplicateur}
-          onFlechette={match.ajouterFlechette}
+          onFlechette={onFlechette}
           {...actions}
         />
       }
@@ -163,6 +183,14 @@ export const X01Ecran = () => {
       </div>
 
       {match.erreur && <MessageErreur>{match.erreur}</MessageErreur>}
+      <BoiteConfirmation
+        ouvert={confirmation.ouverte}
+        titre={match.confirmation?.titre ?? ''}
+        texte={match.confirmation?.texte ?? ''}
+        onCorriger={confirmation.surCorriger}
+        onValider={confirmation.surValider}
+        occupe={match.occupe}
+      />
     </DispositionPartie>
   )
 }

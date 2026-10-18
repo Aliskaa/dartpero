@@ -132,14 +132,19 @@ describe('Écran de match', () => {
     expect(screen.getByRole('button', { name: 'Annuler' })).toBeDisabled()
 
     await flechette(utilisateur, '20', 'Triple')
-    expect(screen.getByRole('button', { name: 'Annuler T20' })).toBeEnabled()
+    // Le court sur la touche, le joueur dans le nom accessible seulement.
+    const touche = screen.getByRole('button', { name: 'Annuler T20 de Kevin' })
+    expect(touche).toBeEnabled()
+    expect(touche).toHaveTextContent('Annuler T20')
+    expect(touche).not.toHaveTextContent('Kevin')
 
     await flechette(utilisateur, '20')
     await flechette(utilisateur, '20')
 
-    // La volée est enregistrée : le bouton nomme maintenant son auteur.
+    // La volée est enregistrée : le bouton nomme sa dernière fléchette, et son
+    // auteur dans le nom accessible (lot `annulation-volee`).
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Annuler la volée de Kevin' })).toBeEnabled(),
+      expect(screen.getByRole('button', { name: 'Annuler S20 de Kevin' })).toBeEnabled(),
     )
   })
 

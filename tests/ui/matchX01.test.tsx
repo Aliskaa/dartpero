@@ -11,7 +11,7 @@ import { Batons } from '@/ui/composants/commun/Batons'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { libelleSetEnCours, sousTitreBandeauX01, TITRE_BANDEAU_X01 } from '@/ui/labels'
 import { DepotSuspendu, fakeServices } from '../fakes'
-import { flechette } from './gestes'
+import { flechette, flechetteDeSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
 /**
@@ -175,7 +175,7 @@ describe('Moment célébré — hors du flux', () => {
     const utilisateur = userEvent.setup()
     await afficher({ startingScore: 40, legsToWin: 2 })
 
-    await flechette(utilisateur, '20', 'Double') // Kevin sort : manche gagnée
+    await flechetteDeSortie(utilisateur, '20', 'Double') // Kevin sort : manche gagnée
     const moment = (await screen.findByText('Manche !')).closest('[role="status"]')
     expect(moment).not.toBeNull()
     if (!moment) return
@@ -392,19 +392,21 @@ const MODES_CIBLES: readonly ModeCible[] = [
     demarrer: (services, [a, b]) =>
       services.playTourDuMonde.start({
         playerIds: [a, b],
-        config: TourDuMondeConfig.create({ targets: [20] }),
+        config: TourDuMondeConfig.create({ targets: [20, 19] }),
       }),
     enregistrees: async (services, matchId) =>
       (await services.playTourDuMonde.getState(matchId)).history.length,
     voleeComplete: ['20', '20', '20'],
     provoquer: async (utilisateur) => {
-      // Un parcours d'une seule cible : le 20 boucle le tour, la volée s'arrête là.
+      // Un parcours de deux cibles : le 19 boucle le tour, la volée s'arrête là
+      // et attend *Valider la sortie* (lot `annulation-volee`).
       await flechette(utilisateur, '20')
+      await flechetteDeSortie(utilisateur, '19')
     },
     titreMoment: 'Bouclé !',
     touche: '1',
-    // Le 20 boucle le parcours : la volée s'arrête là, les deux autres cases restent vides.
-    voleeEcrite: { etiquette: 'Dernière volée de Kevin', texte: '20——' },
+    // Trois 20 : le premier touche, les deux suivants manquent le 19 — pas de bouclage.
+    voleeEcrite: { etiquette: 'Dernière volée de Kevin', texte: '202020' },
   },
 ]
 

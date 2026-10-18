@@ -1,14 +1,17 @@
 import { Fragment, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { MARKS_TO_CLOSE } from '@/core/domain/games/cricket/config'
+import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { BandeauMatch } from '@/ui/composants/commun/BandeauMatch'
+import { BoiteConfirmation } from '@/ui/composants/commun/BoiteConfirmation'
 import { DispositionPartie } from '@/ui/composants/commun/DispositionPartie'
 import { EcranErreur, MessageErreur, Spinner } from '@/ui/composants/commun/Etats'
 import { MomentCelebratif } from '@/ui/composants/commun/MomentCelebratif'
 import { PaveCricket } from '@/ui/composants/cricket/PaveCricket'
 import { TableauCricket } from '@/ui/composants/cricket/TableauCricket'
 import { useWakeLock } from '@/ui/hooks/useAppareil'
+import { useConfirmationSortie } from '@/ui/hooks/useConfirmationSortie'
 import { useCricket } from '@/ui/hooks/useCricket'
 import { useProfils } from '@/ui/hooks/useJoueurs'
 import { useNomDePartie } from '@/ui/hooks/useNomDePartie'
@@ -32,9 +35,26 @@ export const CricketEcran = () => {
 
   useWakeLock(state !== null && !termine)
 
+  // La boîte « Kevin gagne sur T20 ? » (lot `annulation-volee`) : au-dessus du
+  // chargement, comme toute boîte au retour (CONVENTIONS § 9).
+  const confirmation = useConfirmationSortie({
+    enAttente: partie.sortieEnAttente,
+    corriger: partie.corrigerSortie,
+    valider: partie.validerSortie,
+  })
+  const onFlechette = (dart: Dart) => {
+    // Juste après la fermeture de la boîte (Corriger ou Valider), l'appui fantôme d'un double tap est ignoré.
+    if (!confirmation.pavePret()) return
+    // Synchrone, dans le gestionnaire de l'appui : jamais depuis un effet.
+    if (partie.ajouterFlechette(dart)) confirmation.demander()
+  }
+
+  // Le résumé attend que l'entrée de la boîte soit dépilée : la remplacer
+  // laisserait la partie derrière elle dans l'historique.
+  const auRepos = confirmation.auRepos
   useEffect(() => {
-    if (termine) navigate(`/partie/${identifiant}/resume`, { replace: true })
-  }, [termine, identifiant, navigate])
+    if (termine && auRepos) navigate(`/partie/${identifiant}/resume`, { replace: true })
+  }, [termine, auRepos, identifiant, navigate])
 
   if (partie.chargement) return <Spinner label="Chargement de la partie…" />
 
@@ -113,7 +133,7 @@ export const CricketEcran = () => {
           cibles={state.config.targets}
           multiplicateur={partie.multiplicateur}
           onMultiplicateur={partie.setMultiplicateur}
-          onFlechette={partie.ajouterFlechette}
+          onFlechette={onFlechette}
           onAnnuler={() => void partie.annuler()}
           peutAnnuler={partie.peutAnnuler}
           annulation={partie.annulation}
@@ -145,6 +165,14 @@ export const CricketEcran = () => {
         <MomentCelebratif moment={moment} />
       </div>
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}
+      <BoiteConfirmation
+        ouvert={confirmation.ouverte}
+        titre={partie.confirmation?.titre ?? ''}
+        texte={partie.confirmation?.texte ?? ''}
+        onCorriger={confirmation.surCorriger}
+        onValider={confirmation.surValider}
+        occupe={partie.occupe}
+      />
     </DispositionPartie>
   )
 }

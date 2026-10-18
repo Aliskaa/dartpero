@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import App from '@/App'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { fakeServices } from '../fakes'
-import { flechette } from './gestes'
+import { flechette, flechetteDeSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
 describe('Parcours complet', () => {
@@ -53,7 +53,7 @@ describe('Parcours complet', () => {
 
     await flechette(utilisateur, '20', 'Triple') // T20 → 81
     await flechette(utilisateur, '19', 'Triple') // T19 → 24
-    await flechette(utilisateur, '12', 'Double') // D12 → sortie
+    await flechetteDeSortie(utilisateur, '12', 'Double') // D12 → sortie, puis Valider
 
     // --- Résumé : l'écran de fin arrive tout seul ---
     expect(await screen.findByText('Vainqueur')).toBeInTheDocument()
@@ -72,7 +72,7 @@ describe('Parcours complet', () => {
 
     await waitFor(() => expect(score()).toHaveTextContent('501'))
     expect(screen.queryByText('Vainqueur')).not.toBeInTheDocument()
-  })
+  }, 15_000) // Tout un parcours, plus la confirmation de sortie : au-delà des 5 s par défaut sous charge.
 
   it('propose de reprendre une partie déjà commencée', async () => {
     const { services } = fakeServices()

@@ -78,7 +78,7 @@ export const annonceFinDeVolee = (resultat: Annonce | null, prochain: string | n
  * Ce que le bouton d'annulation va **vraiment** défaire.
  *
  * ⚠️ Deux formes, et c'est volontaire. Une touche de pavé fait une demi-largeur
- * d'écran : « Annuler la volée de Julien » n'y tient pas. Le `court` s'affiche,
+ * d'écran : « Annuler T20 de Julien » n'y tient pas toujours. Le `court` s'affiche,
  * le `complet` sert de nom accessible — et comme le court est contenu mot pour
  * mot dans le complet, la règle « label in name » (WCAG 2.5.3) est respectée.
  */
@@ -93,28 +93,48 @@ export type Annulation = {
 export const ANNULATION_NEUTRE: Annulation = { court: 'Annuler', complet: 'Annuler' }
 
 /**
- * Un seul bouton, deux comportements (la fléchette en cours, ou la dernière
- * volée enregistrée) : c'est la bonne ergonomie, mais une étiquette unique
- * laissait deviner lequel s'appliquerait. À trois autour d'un téléphone, dans
- * un garage, on ne devine pas — surtout quand le second cas peut dé-gagner un
- * leg sans prévenir.
+ * Un appui, une fléchette (lot `annulation-volee`) : la touche nomme toujours
+ * la fléchette qu'elle va retirer — celle du joueur en train de jouer, ou la
+ * dernière de la volée enregistrée juste avant, qui se rouvre.
+ *
+ * Le court (« Annuler S5 ») tient sur la touche ; le complet ajoute le joueur
+ * (« Annuler S5 de Kevin ») : à trois autour d'un téléphone, le lecteur
+ * d'écran doit savoir à qui l'on reprend la fléchette. Le joueur absent (ou
+ * rien à retirer) : le libellé neutre, touche grisée.
  */
-export const libelleAnnulation = (
-  flechette: string | null,
-  auteurDerniereVolee: string | null,
-): Annulation => {
-  // Une fléchette est plantée : c'est elle qu'on retire, et son nom tient sur
-  // la touche. C'est ce changement visible d'étiquette qui lève l'ambiguïté —
-  // « Annuler » tout court veut désormais dire « la dernière volée ».
-  if (flechette !== null) {
-    const libelle = `Annuler ${flechette}`
-    return { court: libelle, complet: libelle }
-  }
-  if (auteurDerniereVolee !== null) {
-    return { court: 'Annuler', complet: `Annuler la volée de ${auteurDerniereVolee}` }
-  }
-  return ANNULATION_NEUTRE
+export const libelleAnnulation = (flechette: string | null, joueur: string | null): Annulation => {
+  if (flechette === null) return ANNULATION_NEUTRE
+  const court = `Annuler ${flechette}`
+  return { court, complet: joueur === null ? court : `${court} de ${joueur}` }
 }
+
+/** Les deux boutons de la boîte de confirmation de la sortie (forme B). */
+export const LIBELLE_CORRIGER = 'Corriger'
+export const LIBELLE_VALIDER_SORTIE = 'Valider la sortie'
+
+/** X01, à chaque manche : « Kevin sort sur D10 ? » (planche `annulation`). */
+export const titreConfirmationX01 = (joueur: string, flechette: string): string =>
+  `${joueur} sort sur ${flechette} ?`
+
+/** « 40 → 0. La manche est gagnée dès que vous validez. » — le reste d'avant la volée. */
+export const texteConfirmationX01 = (resteAvant: number): string =>
+  `${resteAvant} → 0. La manche est gagnée dès que vous validez.`
+
+/**
+ * Cricket, à la fléchette qui gagne la partie : « Kevin gagne sur T20 ? ». En
+ * cut-throat, le nom est celui du **gagnant**, qui n'est pas toujours le lanceur.
+ */
+export const titreConfirmationCricket = (gagnant: string, flechette: string): string =>
+  `${gagnant} gagne sur ${flechette} ?`
+
+export const TEXTE_CONFIRMATION_CRICKET = 'La partie est gagnée dès que vous validez.'
+
+/** Tour du monde, à la fléchette qui boucle : la partie, elle, continue. */
+export const titreConfirmationTourDuMonde = (joueur: string, flechette: string): string =>
+  `${joueur} boucle le parcours sur ${flechette} ?`
+
+export const TEXTE_CONFIRMATION_TOUR_DU_MONDE =
+  'La partie continue jusqu’à la fin du tour de table.'
 
 /**
  * Ce que la voix dit d'une volée de Cricket — court, comme au X01.

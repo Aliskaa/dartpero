@@ -5,7 +5,7 @@ import App from '@/App'
 import type { Services } from '@/composition/container'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
 import { fakeServices } from '../fakes'
-import { flechette } from './gestes'
+import { flechette, validerSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
 /** Trois cibles, pour qu'une partie complète tienne en quelques clics. */
@@ -124,6 +124,8 @@ describe('Cricket — écran de jeu', () => {
     // La bulle en deux fléchettes : tout est fermé, la partie est jouée.
     await flechette(utilisateur, 'Bulle', 'Double')
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
+    // La fléchette qui gagne attend sa confirmation (lot `annulation-volee`).
+    await validerSortie(utilisateur)
 
     expect(await screen.findByText('Vainqueur')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Kevin' })).toBeInTheDocument()

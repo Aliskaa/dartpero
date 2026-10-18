@@ -9,6 +9,8 @@ import {
   libelleAnnulation,
   libelleFlechetteTourDuMonde,
   nomJoueur,
+  TEXTE_CONFIRMATION_TOUR_DU_MONDE,
+  titreConfirmationTourDuMonde,
 } from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
 import { prochainJoueur } from './tourDeTable'
@@ -105,9 +107,38 @@ export const useTourDuMonde = (matchId: MatchId) => {
     [services, matchId, queryClient, dire],
   )
 
+  /**
+   * La fléchette qui **boucle le parcours** attend sa confirmation (lot
+   * `annulation-volee`). Lue sur `completesTour`, jamais sur `state.finished` :
+   * la fin du tour de table, elle, ne se confirme pas.
+   */
+  const sortieEnAttente = dartsEnCours.length > 0 && (apercu?.completesTour ?? false)
+
+  /** « Kevin boucle le parcours sur 25 ? » — la partie, elle, continue. */
+  const confirmation = useMemo(() => {
+    const flechette = dartsEnCours.at(-1)
+    if (!sortieEnAttente || !joueurCourant || !flechette) return null
+    return {
+      titre: titreConfirmationTourDuMonde(
+        nomJoueur(profils.get(joueurCourant.playerId)?.name ?? null),
+        libelleFlechetteTourDuMonde(flechette),
+      ),
+      texte: TEXTE_CONFIRMATION_TOUR_DU_MONDE,
+    }
+  }, [sortieEnAttente, joueurCourant, dartsEnCours, profils])
+
+  /** Retire la dernière fléchette en cours ; la dernière partie, la pause s'arme. */
+  const retirerFlechette = useCallback(() => {
+    if (dartsEnCours.length === 0) return
+    services.devices.haptics.tap()
+    setDartsEnCours((darts) => darts.slice(0, -1))
+    if (dartsEnCours.length === 1) armer()
+  }, [services, dartsEnCours.length, armer])
+
+  /** Rend `true` quand la fléchette boucle le parcours : l'écran demande confirmation. */
   const ajouterFlechette = useCallback(
-    (dart: Dart) => {
-      if (!state || occupe || termine) return
+    (dart: Dart): boolean => {
+      if (!state || occupe || termine || sortieEnAttente) return false
 
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
@@ -115,29 +146,38 @@ export const useTourDuMonde = (matchId: MatchId) => {
       setDerniereVolee(null)
 
       // La volée est close à trois fléchettes — ou dès celle qui boucle le
-      // parcours : les suivantes n'auraient plus de cible.
-      if (services.previewTourDuMondeVisit.execute({ state, darts: suite }).complete) {
-        void enregistrer(suite)
-      }
+      // parcours : les suivantes n'auraient plus de cible. Celle-là attend
+      // *Valider* avant d'être écrite.
+      const evaluation = services.previewTourDuMondeVisit.execute({ state, darts: suite })
+      if (evaluation.completesTour) return true
+      if (evaluation.complete) void enregistrer(suite)
+      return false
     },
-    [services, state, occupe, termine, dartsEnCours, enregistrer],
+    [services, state, occupe, termine, sortieEnAttente, dartsEnCours, enregistrer],
   )
 
+  /** *Corriger* : la fléchette qui bouclait est retirée, la volée reprend. */
+  const corrigerSortie = useCallback(() => {
+    if (!sortieEnAttente || occupe) return
+    retirerFlechette()
+  }, [sortieEnAttente, occupe, retirerFlechette])
+
+  /** *Valider la sortie* : la volée part au journal ; voix et haptique suivent. */
+  const validerSortie = useCallback(() => {
+    if (!sortieEnAttente || occupe) return
+    void enregistrer(dartsEnCours)
+  }, [sortieEnAttente, occupe, enregistrer, dartsEnCours])
+
   /**
-   * Un seul bouton, qui fait ce qu'on attend : retirer la fléchette qu'on vient
-   * de taper si la volée est en cours, sinon annuler la dernière volée
-   * enregistrée.
+   * Une fléchette par appui : la dernière en cours, sinon la dernière de la
+   * volée enregistrée juste avant, qui se rouvre (voir `useX01`).
    */
   const annuler = useCallback(async () => {
     if (occupe) return
     setErreur(null)
 
     if (dartsEnCours.length > 0) {
-      services.devices.haptics.tap()
-      setDartsEnCours((darts) => darts.slice(0, -1))
-      // La dernière fléchette vient de partir : un second appui réflexe ne doit
-      // pas défaire la volée d'un autre joueur (voir `usePauseAnnulation`).
-      if (dartsEnCours.length === 1) armer()
+      retirerFlechette()
       return
     }
     if (!ecoulee()) return
@@ -145,27 +185,47 @@ export const useTourDuMonde = (matchId: MatchId) => {
 
     setOccupe(true)
     try {
-      const revenu = await services.playTourDuMonde.undoLastVisit(matchId)
+      const { state: revenu, darts } = await services.playTourDuMonde.undoLastVisit(matchId)
       queryClient.setQueryData(['tourDuMonde', matchId], revenu)
+      setDartsEnCours(darts)
       setDerniereVolee(null)
       services.devices.haptics.tap()
+      if (darts.length === 0) armer()
     } catch (cause) {
       setErreur(message(cause))
     } finally {
       setOccupe(false)
     }
-  }, [services, state, matchId, dartsEnCours.length, queryClient, occupe, armer, ecoulee])
+  }, [
+    services,
+    state,
+    matchId,
+    dartsEnCours.length,
+    queryClient,
+    occupe,
+    armer,
+    ecoulee,
+    retirerFlechette,
+  ])
 
-  /** Ce que le bouton va défaire, écrit dessus — voir `libelleAnnulation`. */
+  /** Ce que le bouton va retirer, écrit dessus — voir `libelleAnnulation`. */
   const annulation = useMemo(() => {
     const derniereFlechette = dartsEnCours.at(-1)
-    if (derniereFlechette)
-      return libelleAnnulation(libelleFlechetteTourDuMonde(derniereFlechette), null)
+    if (derniereFlechette && joueurCourant) {
+      return libelleAnnulation(
+        libelleFlechetteTourDuMonde(derniereFlechette),
+        nomJoueur(profils.get(joueurCourant.playerId)?.name ?? null),
+      )
+    }
 
     const volee = state?.history.at(-1)
-    if (!volee) return libelleAnnulation(null, null)
-    return libelleAnnulation(null, nomJoueur(profils.get(volee.playerId)?.name ?? null))
-  }, [dartsEnCours, state, profils])
+    const flechette = volee?.darts.at(-1)
+    if (!volee || !flechette) return libelleAnnulation(null, null)
+    return libelleAnnulation(
+      libelleFlechetteTourDuMonde(flechette),
+      nomJoueur(profils.get(volee.playerId)?.name ?? null),
+    )
+  }, [dartsEnCours, joueurCourant, state, profils])
 
   return {
     state,
@@ -178,6 +238,10 @@ export const useTourDuMonde = (matchId: MatchId) => {
     dartsEnCours,
     derniereVolee,
     ajouterFlechette,
+    sortieEnAttente,
+    confirmation,
+    corrigerSortie,
+    validerSortie,
     annuler,
     annulation,
     peutAnnuler: dartsEnCours.length > 0 || (!enPause && (state?.history.length ?? 0) > 0),

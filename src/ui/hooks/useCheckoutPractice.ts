@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { type Dart, Dart as DartVO, type Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { annonceIssue } from '@/ui/labels'
+import { annonceIssue, libelleAnnulation, nomJoueur } from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
 import { useVoix } from './useAppareil'
+import { useProfils } from './useJoueurs'
 import { usePauseAnnulation } from './usePauseAnnulation'
 
 const message = (erreur: unknown): string =>
@@ -23,6 +24,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
   const queryClient = useQueryClient()
   const dire = useVoix()
   const { enPause, armer, ecoulee } = usePauseAnnulation()
+  const profils = useProfils()
 
   const requete = useQuery({
     queryKey: ['checkoutPractice', matchId],
@@ -96,17 +98,36 @@ export const useCheckoutPractice = (matchId: MatchId) => {
     if (!ecoulee()) return
     if (!state || state.roundsPlayed === 0) return
 
+    // La manche se rouvre (lot `annulation-volee`) : même reste à viser, ses
+    // fléchettes restantes reviennent en saisie. Pas de confirmation ici.
     setOccupe(true)
     try {
-      const revenu = await services.playCheckoutPractice.undoLastVisit(matchId)
+      const { state: revenu, darts } = await services.playCheckoutPractice.undoLastVisit(matchId)
       queryClient.setQueryData(['checkoutPractice', matchId], revenu)
+      setDartsEnCours(darts)
       services.devices.haptics.tap()
+      if (darts.length === 0) armer()
     } catch (cause) {
       setErreur(message(cause))
     } finally {
       setOccupe(false)
     }
   }, [services, state, matchId, dartsEnCours.length, queryClient, occupe, armer, ecoulee])
+
+  /**
+   * Ce que le bouton va retirer, écrit dessus — voir `libelleAnnulation`. Seul,
+   * le joueur est toujours le même : celui de la séance.
+   */
+  const annulation = useMemo(() => {
+    const joueur = state ? nomJoueur(profils.get(state.playerId)?.name ?? null) : null
+    const flechette =
+      dartsEnCours.at(-1) ??
+      state?.rounds
+        .filter((round) => round.outcome !== null)
+        .at(-1)
+        ?.darts.at(-1)
+    return libelleAnnulation(flechette ? DartVO.label(flechette) : null, joueur)
+  }, [dartsEnCours, state, profils])
 
   return {
     state,
@@ -120,6 +141,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
     setMultiplicateur,
     ajouterFlechette,
     annuler,
+    annulation,
     peutAnnuler: dartsEnCours.length > 0 || (!enPause && (state?.roundsPlayed ?? 0) > 0),
     occupe,
     erreur,

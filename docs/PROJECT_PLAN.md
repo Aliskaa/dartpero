@@ -34,7 +34,13 @@ boucle 5 : valeur de voyant en gras, duo à 56 px ; GO en passe 2) — **1429 te
   au navigateur, U9) ;
 - **mesure** de la lecture de toute la base à l'ouverture des Réglages (01, Baseline : « Dev
   mesure ») : **non faite** ; repli `count()` dans les dépôts si une lenteur se voit.
-Dettes du lot (`03-plan-de-test.md`) : **D1** — `useDernierExport` sans test du hook isolé
+Lot `annulation-volee` (retours 8 et 3 des beta-testeurs : une fléchette par appui sur
+« Annuler », confirmation de la sortie, voir § 4 et § 6). **Relecture à l'écran faite dans
+Chrome** (port 5202 : portrait et paysage, sombre et clair, quatre modes, boîte à 360 px). Reste,
+**sur vrai téléphone**, les angles morts de `03-plan-de-test.md` : noms longs, parties à 3-4
+joueurs, cut-throat et bust d'entraînement à l'écran, appui fantôme en paysage (double tap sur
+*Corriger* ou *Valider*), focus rendu à la fermeture sous **Safari**, lecture par **VoiceOver**.
+Dettes du lot `reglages-par-usage` (`03-plan-de-test.md`) : **D1** — `useDernierExport` sans test du hook isolé
 (`renderHook` si un second lecteur apparaît) ; **N1** — garde de l'aperçu en liste noire (une
 couleur Tailwind par défaut passerait ; durcir en « toute couleur d'`Apercu` est `apercu-*` »).
 Vérifications **acceptées à la relecture** par l'utilisateur (`docs/lots/regles-du-jeu/05-revue.md`,
@@ -807,6 +813,13 @@ guide `#installer` sous la ligne, puis Affichage (`VignetteTheme`, `LigneReglage
 export : préférence `sauvegarde:dernier-export`, citée par la politique (mise à jour le
 17 octobre 2026). Jetons `vert-etat` et `apercu-*` réservés. Reste : vérifications sur appareil (§ 0).
 Détail § 6.
+### Lot « annulation-volee » (retours 8 et 3 des beta-testeurs)
+
+✅ **Fait — 1571 tests verts après rebase sur `vocabulaire-anglais`** (1552 avant ; Test boucle 1 : 1534 → 1545 ; relecture à l'écran : 1551 ; garde après Valider : 1552 ; Sécurité RAS sécu ; Revue : voir `docs/lots/annulation-volee/05-revue.md`). Annuler retire **une fléchette à la fois**, la dernière,
+quel que soit le joueur : la volée rouverte quitte le journal et ses fléchettes restantes reviennent
+en saisie (`ReopenedVisit`, quatre modes). La fléchette qui sort / gagne / boucle ouvre la boîte
+`BoiteConfirmation` (*Corriger* / *Valider la sortie*) avant toute écriture, voix et célébration.
+Aucun format persisté. Relecture à l'écran faite dans Chrome ; reste le vrai téléphone (§ 0). Détail § 6.
 
 ---
 
@@ -2233,3 +2246,33 @@ Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `hig
 - **Reste** : écoute de l'accent sur vrai téléphone (Android, iPhone ; segment `. À toi, X`
   éventuellement lu « point »). Hors lot : « MANCHE1/10 » et « RÉUSSIES0 » sans espace à
   l'entraînement ; le moment « Checkout ! » est inatteignable en X01.
+
+### Lot `annulation-volee` (retours 8 et 3 des beta-testeurs ; lots C et D de l'étude fondus)
+
+- **Annulation** : `UndoLastVisit` et les trois `undoLastVisit` rendent `ReopenedVisit<S> = { state,
+  darts }` ; le journal est tronqué comme avant (`slice(0, -1)` ; à l'entraînement, le `RoundStarted`
+  final puis le `VisitRecorded`), la projection est faite **avant** l'écriture, et les fléchettes de la
+  volée moins la dernière reviennent dans `dartsEnCours`. Les jalons (`LegWon`, `SetWon`,
+  `MatchFinished`) sont déduits de la projection, jamais écrits : rien d'autre à retirer. Aucun format
+  persisté, aucune migration, `backupSchema` intact.
+- **Confirmation (forme B de la planche)** : `sortieEnAttente` est dérivé de l'aperçu (X01
+  `outcome === 'CHECKOUT'` à chaque manche ; Cricket `state.finished`, nom du **gagnant**, y compris en
+  cut-throat ; Tour du monde `completesTour`, ajouté à `TourDuMondePreview`).
+  Jamais sur un bust, jamais à l'entraînement. `BoiteConfirmation` + `useConfirmationSortie` sur
+  `useModaleAuRetour('confirmation', ['sortie'])`. Fermer sans choisir (retour, Échap, voile) = *Corriger*.
+- **Libellé** : « Annuler S5 », nom accessible « Annuler S5 de Kevin » ; l'entraînement passe enfin
+  `annulation` au pavé. Pause d'1 s inchangée.
+- **Écarts à la planche** (Ajustements) : titre `text-xl`, texte `text-sm`, boutons `text-xs` (la garde
+  `typographieBoundary` interdit `text-[…]`) ; voile : d'abord `feutre-nuit/65`, remplacé par le jeton `voile` à la relecture (voir plus bas) ; boutons plats de 52 px sans `Button`.
+- **Boucle 1 (Test → Dev)** : l'entrée `confirmation` héritée d'un rechargement était dépilée deux fois
+  sous `<StrictMode>` (serveur de dev) ; ref `depilee` + test sous `StrictMode`.
+- **Acceptés** : volée rouverte et fléchette de sortie en attente perdues si l'app se ferme ; reste de
+  la manche suivante re-tiré à l'entraînement après correction ; **N-1** (échec d'écriture après
+  *Valider* : fléchette en attente, boîte non rouverte, seule « Annuler » débloque, aucune perte) accepté
+  tel quel.
+- **Relecture à l'écran** (port 5202, Chrome, vraies parties) : appui fantôme sur le pavé après *Corriger*
+  à 360×740 → garde `GARDE_APRES_FERMETURE_MS` = 500 ms (`pavePret()`), étendue à *Valider* à la
+  2e passe de Revue (fléchette fantôme au joueur suivant ; décision de l'utilisateur) ; voile beige sur beige en clair →
+  jeton `voile`, entrée à part de la garde `themeBoundary`. Acceptés : boîte centrée qui masque la ligne du
+  joueur en paysage ; appui hors de la boîte = *Corriger*.
+- **Travail en parallèle** avec les lots A et E (worktree, port 5202). **Rebase sur `vocabulaire-anglais`** (`f545419`) : conflits sur l'index (pris de main, régénéré), PLAN § 6 (les deux entrées gardées) et manches.test.tsx (imports) ; Announcer.say prend maintenant une Annonce (banc de test adapté) ; **1571 tests**, lint, typecheck, build verts. Le lot E (phrases-victoire) reste à fusionner.

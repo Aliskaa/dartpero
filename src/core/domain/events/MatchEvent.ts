@@ -15,9 +15,15 @@ import type { MatchName } from '../value-objects/MatchName'
  * jamais stockés.
  *
  * Pourquoi : c'est ce qui rend l'annulation exacte et sans piège. Annuler,
- * c'est `project(events.slice(0, -1))`. Si le journal contenait aussi les
- * conséquences, il faudrait retirer « la dernière volée ET les événements
- * qu'elle a déclenchés » — précisément la classe de bug qu'on veut éliminer.
+ * c'est projeter le journal privé de sa dernière volée — `events.slice(0, -1)`
+ * au X01, au Cricket et au Tour du monde ; à l'entraînement, le `RoundStarted`
+ * de la manche suivante part avec le `VisitRecorded`, s'il existe (deux
+ * événements, pas un) : la dernière volée quitte le journal,
+ * et depuis le lot `annulation-volee` ses fléchettes restantes (la dernière
+ * en moins) reviennent à la saisie, non persistées comme toute volée en cours
+ * — aucun événement nouveau. Si le journal contenait aussi les conséquences,
+ * il faudrait retirer « la dernière volée ET les événements qu'elle a
+ * déclenchés » — précisément la classe de bug qu'on veut éliminer.
  *
  * Corollaire : `VisitRecorded` ne porte pas de `playerId`. À qui est le tour se
  * déduit de la projection, donc le journal ne peut pas être en désaccord avec

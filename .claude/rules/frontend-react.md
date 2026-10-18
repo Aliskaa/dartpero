@@ -21,7 +21,10 @@ Patterns : `CONVENTIONS` § 9 et § 10.
 - `hooks/` : un hook par mode (`useX01`…), `useJoueurs`, `useAppareil`, `useStockagePersistant`, `useInstallation`, `useNouvellePartie`, `useNomDePartie`, `useModaleAuRetour`
   (une boîte refermée par le retour du téléphone : ouverture au clic seulement,
   fermeture toujours par `navigate(-1)`), `useDialogueNatif` (la discipline du `<dialog>`,
-  monté en permanence) — la `Modale` et la feuille de règles, un seul mécanisme (`CONVENTIONS` § 9).
+  monté en permanence), `useConfirmationSortie` (la boîte *Corriger* / *Valider la sortie*,
+  ouverte dans le gestionnaire de la fléchette ; toute fermeture sans choix vaut *Corriger*)
+  — la `Modale`, la feuille de règles et la confirmation de la sortie, un seul mécanisme
+  (`CONVENTIONS` § 9).
 - Les règles de jeu affichées (feuille de règles) : constructeurs `regles<Mode>` de `labels.ts`,
   écrits d'après `CLAUDE.md` § Règles du jeu ; un lot qui change une règle met sa rubrique à jour.
 - `labels.ts` : **tout** le français affiché, annonces vocales comprises.

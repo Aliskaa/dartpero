@@ -6,6 +6,7 @@ import type {
 } from '../../../domain/games/tour-du-monde/rules'
 import type { Dart } from '../../../domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
+import type { ReopenedVisit } from './ReopenedVisit'
 
 export type StartTourDuMondeCommand = {
   readonly playerIds: readonly PlayerId[]
@@ -47,5 +48,9 @@ export interface PlayTourDuMonde {
   start(command: StartTourDuMondeCommand): Promise<MatchId>
   getState(matchId: MatchId): Promise<TourDuMondeState>
   recordVisit(matchId: MatchId, darts: readonly Dart[]): Promise<TourDuMondeVisitResult>
-  undoLastVisit(matchId: MatchId): Promise<TourDuMondeState>
+  /**
+   * Retire la dernière fléchette jouée : la dernière volée quitte le journal et
+   * ses fléchettes restantes reviennent à la saisie (voir `ReopenedVisit`).
+   */
+  undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<TourDuMondeState>>
 }

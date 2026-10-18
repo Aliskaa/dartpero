@@ -7,7 +7,7 @@ import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { libelleFormat, libelleLegs, libelleLegsCourt, libelleMancheEnCours } from '@/ui/labels'
 import { FakeAnnouncer, fakeDependencies, fakeServices } from '../fakes'
-import { flechette } from './gestes'
+import { flechetteDeSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
 /** « leg » ou « legs », mot entier, quelle que soit la casse. */
@@ -136,7 +136,7 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await screen.findByLabelText('Score restant de Kevin')
 
-    await flechette(utilisateur, '20', 'Double') // Kevin sort : manche gagnée
+    await flechetteDeSortie(utilisateur, '20', 'Double') // Kevin sort : manche gagnée
     expect(await screen.findByText('Manche !')).toBeInTheDocument()
     expect(screen.getByText('Manche 2')).toBeInTheDocument()
 

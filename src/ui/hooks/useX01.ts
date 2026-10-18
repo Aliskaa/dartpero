@@ -3,7 +3,14 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { RecordVisitResult } from '@/core/application/ports/driving/RecordVisit'
 import { type Dart, Dart as DartVO, type Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
-import { annonceFinDeVolee, annonceVolee, libelleAnnulation, nomJoueur } from '@/ui/labels'
+import {
+  annonceFinDeVolee,
+  annonceVolee,
+  libelleAnnulation,
+  nomJoueur,
+  texteConfirmationX01,
+  titreConfirmationX01,
+} from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
 import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
@@ -119,9 +126,47 @@ export const useX01 = (matchId: MatchId) => {
     [services, matchId, queryClient, dire],
   )
 
+  /**
+   * La fléchette qui sort attend sa confirmation (lot `annulation-volee`) :
+   * l'aperçu des fléchettes en cours est une sortie, et rien n'est encore écrit,
+   * dit ni célébré. Dérivé, jamais stocké : retirer la fléchette suffit à
+   * l'éteindre.
+   */
+  const sortieEnAttente = !termine && dartsEnCours.length > 0 && apercu?.outcome === 'CHECKOUT'
+
+  /** Ce que la boîte demande : « Kevin sort sur D10 ? », « 40 → 0. … ». */
+  const confirmation = useMemo(() => {
+    const flechette = dartsEnCours.at(-1)
+    if (!sortieEnAttente || !joueurCourant || !flechette) return null
+    return {
+      titre: titreConfirmationX01(
+        nomJoueur(profils.get(joueurCourant.playerId)?.name ?? null),
+        DartVO.label(flechette),
+      ),
+      texte: texteConfirmationX01(joueurCourant.remaining),
+    }
+  }, [sortieEnAttente, joueurCourant, dartsEnCours, profils])
+
+  /**
+   * Retire la dernière fléchette en cours. La dernière partie, la pause s'arme :
+   * un second appui réflexe ne doit pas défaire la volée d'un autre joueur
+   * (voir `usePauseAnnulation`).
+   */
+  const retirerFlechette = useCallback(() => {
+    if (dartsEnCours.length === 0) return
+    services.devices.haptics.tap()
+    setDartsEnCours((darts) => darts.slice(0, -1))
+    if (dartsEnCours.length === 1) armer()
+  }, [services, dartsEnCours.length, armer])
+
+  /**
+   * Ajoute une fléchette ; rend `true` quand elle **met une sortie en attente** :
+   * la volée n'est pas envoyée, l'écran ouvre la boîte de confirmation. Toute
+   * nouvelle fléchette est refusée tant que la sortie attend.
+   */
   const ajouterFlechette = useCallback(
-    (dart: Dart) => {
-      if (!state || !joueurCourant || occupe || termine) return
+    (dart: Dart): boolean => {
+      if (!state || !joueurCourant || occupe || termine || sortieEnAttente) return false
 
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
@@ -140,26 +185,41 @@ export const useX01 = (matchId: MatchId) => {
         hasOpened: joueurCourant.hasOpened,
         darts: suite,
       })
-      if (evaluation.complete) void enregistrer(suite)
+      if (!evaluation.complete) return false
+      // La sortie attend *Valider* : ni journal, ni voix, ni célébration avant.
+      if (evaluation.outcome === 'CHECKOUT') return true
+      // Le bust, lui, n'est jamais confirmé.
+      void enregistrer(suite)
+      return false
     },
-    [services, state, joueurCourant, occupe, termine, dartsEnCours, enregistrer],
+    [services, state, joueurCourant, occupe, termine, sortieEnAttente, dartsEnCours, enregistrer],
   )
 
+  /** *Corriger* : la fléchette de sortie est retirée, la volée reprend. */
+  const corrigerSortie = useCallback(() => {
+    if (!sortieEnAttente || occupe) return
+    retirerFlechette()
+  }, [sortieEnAttente, occupe, retirerFlechette])
+
+  /** *Valider la sortie* : la volée part au journal ; voix et célébration suivent. */
+  const validerSortie = useCallback(() => {
+    if (!sortieEnAttente || occupe) return
+    void enregistrer(dartsEnCours)
+  }, [sortieEnAttente, occupe, enregistrer, dartsEnCours])
+
   /**
-   * Un seul bouton d'annulation, qui fait ce qu'on attend : retirer la
-   * fléchette qu'on vient de taper si la volée est en cours, sinon annuler la
-   * dernière volée enregistrée (même si elle avait gagné un leg).
+   * Un seul bouton d'annulation, une fléchette par appui (lot
+   * `annulation-volee`) : la dernière en cours, sinon la dernière de la volée
+   * enregistrée juste avant — même si elle avait gagné une manche. Cette volée
+   * quitte le journal et se rouvre : ses fléchettes restantes reviennent en
+   * saisie, le reste les suit.
    */
   const annuler = useCallback(async () => {
     if (occupe) return
     setErreur(null)
 
     if (dartsEnCours.length > 0) {
-      services.devices.haptics.tap()
-      setDartsEnCours((darts) => darts.slice(0, -1))
-      // La dernière fléchette vient de partir : un second appui réflexe ne doit
-      // pas défaire la volée d'un autre joueur (voir `usePauseAnnulation`).
-      if (dartsEnCours.length === 1) armer()
+      retirerFlechette()
       return
     }
     if (!ecoulee()) return
@@ -167,30 +227,52 @@ export const useX01 = (matchId: MatchId) => {
 
     setOccupe(true)
     try {
-      const revenu = await services.undoLastVisit.execute(matchId)
+      const { state: revenu, darts } = await services.undoLastVisit.execute(matchId)
       queryClient.setQueryData(['match', matchId], revenu)
+      setDartsEnCours(darts)
       setDerniereVolee(null)
       services.devices.haptics.tap()
+      // Plus rien en main : la pause protège la volée du joueur d'avant.
+      if (darts.length === 0) armer()
     } catch (cause) {
       setErreur(message(cause))
     } finally {
       setOccupe(false)
     }
-  }, [services, state, matchId, dartsEnCours.length, queryClient, occupe, armer, ecoulee])
+  }, [
+    services,
+    state,
+    matchId,
+    dartsEnCours.length,
+    queryClient,
+    occupe,
+    armer,
+    ecoulee,
+    retirerFlechette,
+  ])
 
   /**
-   * Ce que le bouton va défaire, écrit dessus. L'auteur de la dernière volée
-   * se lit sur la **projection** (`Visit.playerId`), jamais recalculé ici :
-   * l'UI ne rejoue aucune règle, elle lit ce que le domaine a déduit.
+   * Ce que le bouton va retirer, écrit dessus : la fléchette, et son joueur
+   * dans le nom accessible. L'auteur de la dernière volée se lit sur la
+   * **projection** (`Visit.playerId`), jamais recalculé ici.
    */
   const annulation = useMemo(() => {
     const derniereFlechette = dartsEnCours.at(-1)
-    if (derniereFlechette) return libelleAnnulation(DartVO.label(derniereFlechette), null)
+    if (derniereFlechette && joueurCourant) {
+      return libelleAnnulation(
+        DartVO.label(derniereFlechette),
+        nomJoueur(profils.get(joueurCourant.playerId)?.name ?? null),
+      )
+    }
 
     const volee = state?.history.at(-1)
-    if (!volee) return libelleAnnulation(null, null)
-    return libelleAnnulation(null, nomJoueur(profils.get(volee.playerId)?.name ?? null))
-  }, [dartsEnCours, state, profils])
+    const flechette = volee?.darts.at(-1)
+    if (!volee || !flechette) return libelleAnnulation(null, null)
+    return libelleAnnulation(
+      DartVO.label(flechette),
+      nomJoueur(profils.get(volee.playerId)?.name ?? null),
+    )
+  }, [dartsEnCours, joueurCourant, state, profils])
 
   return {
     state,
@@ -207,6 +289,10 @@ export const useX01 = (matchId: MatchId) => {
     multiplicateur,
     setMultiplicateur,
     ajouterFlechette,
+    sortieEnAttente,
+    confirmation,
+    corrigerSortie,
+    validerSortie,
     annuler,
     annulation,
     peutAnnuler: dartsEnCours.length > 0 || (!enPause && (state?.history.length ?? 0) > 0),

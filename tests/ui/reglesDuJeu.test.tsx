@@ -411,7 +411,7 @@ describe('Le livre ouvert, sur le match', () => {
     await retourTelephone()
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(scoreDe('Kevin')).toHaveTextContent('461')
-    expect(screen.getByRole('button', { name: 'Annuler S20' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Annuler S20 de Kevin' })).toBeEnabled()
     expect(locationCourante().pathname).toBe(`/partie/${matchId}`)
   })
 

@@ -6,6 +6,7 @@ import type {
 } from '../../../domain/games/cricket/rules'
 import type { Dart } from '../../../domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
+import type { ReopenedVisit } from './ReopenedVisit'
 
 export type StartCricketCommand = {
   readonly playerIds: readonly PlayerId[]
@@ -47,5 +48,9 @@ export interface PlayCricket {
   start(command: StartCricketCommand): Promise<MatchId>
   getState(matchId: MatchId): Promise<CricketState>
   recordVisit(matchId: MatchId, darts: readonly Dart[]): Promise<CricketVisitResult>
-  undoLastVisit(matchId: MatchId): Promise<CricketState>
+  /**
+   * Retire la dernière fléchette jouée : la dernière volée quitte le journal et
+   * ses fléchettes restantes reviennent à la saisie (voir `ReopenedVisit`).
+   */
+  undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<CricketState>>
 }

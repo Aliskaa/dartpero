@@ -12,6 +12,13 @@ export type TourDuMondePreview = {
   readonly state: TourDuMondeState
   /** La volée est close : trois fléchettes, ou celle qui boucle le parcours. */
   readonly complete: boolean
+  /**
+   * La dernière fléchette **boucle le parcours** de ce joueur (lot
+   * `annulation-volee`) : c'est elle que l'écran fait confirmer. `complete` ne
+   * suffit pas, il mêle « trois fléchettes » et « bouclage » ; et
+   * `state.finished` non plus, qui dit la fin du tour de table.
+   */
+  readonly completesTour: boolean
 }
 
 /**
