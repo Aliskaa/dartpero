@@ -2210,3 +2210,26 @@ Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `hig
   gardés ; index repris de `main` puis régénéré. **1497 tests**. Préexistant sur `main` : le test
   « crée une partie depuis l'accueil… » (`parcours.test.tsx`) dépasse ses 5 s en suite complète,
   vert seul.
+
+### Lot `vocabulaire-anglais` (lot A des retours des beta-testeurs)
+
+- **Voix** : le port `Announcer.say` prend une `Annonce`, suite de segments `{ texte, langue }`
+  (`Langue` = `'fr-FR' | 'en-US'`). « Bust » et « checkout » se disent en `en-US` au milieu d'une
+  phrase française ; la langue vient de `labels.ts` (`fr()`, `en()`, `LANGUE_DE_BASE`), jamais de
+  l'adapter, pour que l'i18n annoncée change la langue de base sans refaire le mécanisme.
+- **`SpeechAnnouncer`** : un seul `cancel()` par annonce, un énoncé par segment dans l'ordre,
+  `rate = 1.1` ; voix par `lang` exact (le `_` d'Android normalisé), puis préfixe, puis voix `fr`,
+  puis `voices[0]` ; cache par langue vidé sur `voiceschanged`, liste vide jamais figée ; segments
+  vides ignorés ; sans voix `en-US`, l'annonce se dit quand même.
+- **Écran** : « Sortie » devient « Checkout » partout (règles, entraînement, réglages, cartes,
+  récaps) ; rail X01 « Checkout libre » / « Checkout sur un double » (`LIBELLE_CHOIX_SORTIE`),
+  l'Entrée garde « Libre » / « Sur un double » ; « le premier qui fait le checkout gagne ».
+  Statistiques : « Hors » à la place de « 0 » (`BlocCible`, affichage seul). Identifiants et clés
+  persistées inchangés (`SortieRules`, `entrainement:sorties`…). Gravé dans `CLAUDE.md`.
+- **Débordements** (relecture à l'écran) : « Checkout » plus long que « Sortie » ; interlettrage
+  réduit dans `LigneJoueur` et `CartePartie`, police inchangée (plancher de la charte).
+- **Tests : 1497 → 1516** (adaptateur aux fausses `speechSynthesis`, annonces par langue, « Hors »).
+  Préexistant sur `main` : `parcours.test.tsx` dépasse ses 5 s en suite complète, vert seul.
+- **Reste** : écoute de l'accent sur vrai téléphone (Android, iPhone ; segment `. À toi, X`
+  éventuellement lu « point »). Hors lot : « MANCHE1/10 » et « RÉUSSIES0 » sans espace à
+  l'entraînement ; le moment « Checkout ! » est inatteignable en X01.
