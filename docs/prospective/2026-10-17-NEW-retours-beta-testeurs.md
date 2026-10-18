@@ -55,6 +55,20 @@ Constat sur le code : la volée est enregistrée toute seule à la 3ᵉ fléchet
 
 La planche montre la forme A en plus de la B : seule la **B** est retenue.
 
+### Planche « Hors » (2026-10-18, à valider)
+
+`C:\Users\kevin\Documents\Flechettes\docs\maquettes\hors\hors.html`, publiée :
+<https://claude.ai/artifact/3NiEtCXcC6xaFmEFd1qFkB>. Deux sujets :
+- la **couleur de la touche « Hors »** (le retour dit « d'une autre couleur » sans préciser laquelle) : quatre pistes dans les deux thèmes (rouge, laiton, touche pleine, pictogramme) ;
+- la **moyenne de « Hors » par partie** dans le bloc cible de Statistiques : trois dispositions.
+
+Constats sur le code : le compte « hors cible » vit dans `BlocCible` (`StatistiquesEcran.tsx`), `PlayerCareer.matchesPlayed` donne le dénominateur, les statistiques ne comptent que le X01. À zéro, la colonne affiche le mot « Hors » (lot A) sous la légende « hors cible » : à décider avec la moyenne.
+
+**Validé par l'utilisateur le 2026-10-18 (lot B `hors-statistique`) :**
+1. Touche « Hors » : **piste 1, rouge** (texte et bordure). À vérifier au lot : contraste ≥ 4,5:1 dans les deux thèmes, distinction avec la Bulle (fond plein rouge).
+2. Moyenne par partie : **disposition 3** : la colonne « hors cible » ne change pas, une ligne dédiée dessous (« Hors cible par partie 2,6 sur 16 parties »).
+3. Total à zéro : s'écrit **« 0 »** (plus le mot « Hors » du lot A, qui lisait mal le retour 5), et la ligne dit « 0,0 par partie ».
+
 ## Lots proposés
 
 | Lot | Retours | Niveau pressenti | Point d'attention |
