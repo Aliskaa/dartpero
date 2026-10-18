@@ -36,6 +36,9 @@
   --color-craie-decor: #52584d;
   --color-rouge-cible: #c1272d;
   --color-vert-cible: #2e7d4f;
+  /* Le rouge de la touche « Hors » (lot `hors-statistique`) : texte et bordure,
+     jamais un fond. 7,9:1 sur `feutre` (le fond du pavé) en sombre. */
+  --color-rouge-touche: #ff8a8f;
 
   /* Le texte posé SUR une surface de laiton pleine (le CTA, le curseur du
      rail). Il doit suivre le thème : encre sombre sur laiton vif, papier
@@ -236,6 +239,8 @@ html[data-theme="clair"] {
      calibrés pour être vus sur du feutre. */
   --color-rouge-cible: #a81f25;
   --color-vert-cible: #1f6b41;
+  /* « Hors », en clair : 5,2:1 sur `feutre` (le fond du pavé). */
+  --color-rouge-touche: #a81f25;
 
   --color-sur-laiton: #fbf7ec;
 
@@ -578,6 +583,13 @@ html[data-theme="clair"] {
   .touche-bulle {
     background-color: color-mix(in srgb, var(--color-rouge-cible) 25%, transparent);
     border-color: color-mix(in srgb, var(--color-rouge-cible) 70%, transparent);
+  }
+
+  /* « Hors » : la bordure rouge (le texte passe par `--texte-touche`). Dans la
+     couche `components`, comme `.touche-bulle`, pour que l'inversion de l'appui
+     garde la main sur le fond ; la bordure reste rouge sur le fond craie. */
+  .touche-hors {
+    border-color: var(--color-rouge-touche);
   }
 
   /* Le multiplicateur ARMÉ, lisible du coin de l'œil : tant que Double ou

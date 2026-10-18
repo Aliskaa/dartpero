@@ -154,7 +154,7 @@ export const PaveSaisie = ({
           type="button"
           /* Une fléchette manquée n'a ni double ni triple : elle ignore la bascule. */
           onClick={() => onFlechette(Dart.miss())}
-          className="touche col-span-1 min-h-[3.25rem] font-score text-base font-bold uppercase tracking-widest [--texte-touche:var(--color-craie-3)] paysage:min-h-12"
+          className="touche touche-hors col-span-1 min-h-[3.25rem] font-score text-base font-bold uppercase tracking-widest [--texte-touche:var(--color-rouge-touche)] paysage:min-h-12"
         >
           {LIBELLE_HORS}
         </button>

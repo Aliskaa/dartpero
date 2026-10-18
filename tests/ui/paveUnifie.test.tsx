@@ -131,6 +131,9 @@ describe('Pavé Cricket', () => {
       expect(screen.getByRole('button', { name: '20' })).toHaveClass('touche-armee')
       expect(screen.getByRole('button', { name: 'Bulle' })).toHaveClass('touche-armee')
       expect(screen.getByRole('button', { name: 'Hors' })).not.toHaveClass('touche-armee')
+      // « Hors » porte la bordure rouge ; la Bulle ne la porte pas.
+      expect(screen.getByRole('button', { name: 'Hors' })).toHaveClass('touche-hors')
+      expect(screen.getByRole('button', { name: 'Bulle' })).not.toHaveClass('touche-hors')
       expect(screen.getByRole('button', { name: 'Annuler' })).not.toHaveClass('touche-armee')
     },
   )

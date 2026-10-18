@@ -84,7 +84,7 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     )
   })
 
-  it('« Hors » remplace le 0 des fléchettes hors cible ; un nombre non nul reste affiché', async () => {
+  it('un total à zéro s’écrit « 0 », jamais le mot « Hors » ; un nombre non nul reste affiché', async () => {
     const { services, dependencies, julien } = await troisJoueurs()
     const derniereCase = () =>
       cible().then((plateau) => {
@@ -92,15 +92,56 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
         return cases[cases.length - 1]?.textContent
       })
 
-    // Kevin n'a rien manqué : le mot, jamais « 0 ».
+    // Kevin n'a rien manqué : la colonne écrit « 0 » (jamais un mot à la place).
     const { unmount } = renderWithServices(<App />, { services, route: '/statistiques' })
-    expect(await derniereCase()).toBe('Horshors cible')
+    expect(await derniereCase()).toBe('0hors cible')
     unmount()
 
     // Julien a manqué 9 fléchettes : le nombre.
     dependencies.devices.preferences.write(CLE, julien.id)
     renderWithServices(<App />, { services, route: '/statistiques' })
     expect(await derniereCase()).toBe('9hors cible')
+  })
+
+  it('la ligne « Hors cible par partie » : 0,0 à zéro, 9,0 pour 9 sur 1 partie (singulier)', async () => {
+    const { services, dependencies, julien } = await troisJoueurs()
+    const ligne = () => screen.findByText('Hors cible par partie').then((l) => l.closest('p'))
+
+    const { unmount } = renderWithServices(<App />, { services, route: '/statistiques' })
+    expect((await ligne())?.textContent).toBe('Hors cible par partie0,0sur 1 partie')
+    unmount()
+
+    dependencies.devices.preferences.write(CLE, julien.id)
+    renderWithServices(<App />, { services, route: '/statistiques' })
+    expect((await ligne())?.textContent).toBe('Hors cible par partie9,0sur 1 partie')
+  })
+
+  it('la moyenne suit la période : numérateur et nombre de parties filtrés ensemble', async () => {
+    const utilisateur = userEvent.setup()
+    const horloge = new SettableClock(new Date(2026, 9, 15, 21).getTime())
+    const { services } = fakeServices({ clock: horloge })
+    const kevin = await services.managePlayers.create('Kevin')
+
+    // Une vieille partie : 3 hors cible. Une partie de ce soir : 0, puis une autre : 1.
+    horloge.regler(new Date(2026, 6, 3, 20).getTime())
+    await partie(services, [kevin.id], [RIEN])
+    horloge.regler(new Date(2026, 9, 15, 20).getTime())
+    await partie(services, [kevin.id], [S20])
+    await partie(services, [kevin.id], [[Dart.single(20), Dart.single(20), Dart.miss()]])
+    horloge.regler(new Date(2026, 9, 15, 21).getTime())
+    renderWithServices(<App />, { services, route: '/statistiques' })
+
+    const ligne = () => screen.findByText('Hors cible par partie').then((l) => l.closest('p'))
+    // Tout : 4 hors cible sur 3 parties.
+    await utilisateur.click(screen.getByRole('button', { name: 'Tout' }))
+    await waitFor(async () =>
+      expect((await ligne())?.textContent).toBe('Hors cible par partie1,3sur 3 parties'),
+    )
+    // Aujourd'hui : 1 hors cible sur 2 parties.
+    await utilisateur.click(screen.getByRole('button', { name: "Aujourd'hui" }))
+    await waitFor(async () =>
+      expect((await ligne())?.textContent).toBe('Hors cible par partie0,5sur 2 parties'),
+    )
   })
 
   it('à l’ouverture, montre le dernier joueur consulté', async () => {
@@ -168,7 +209,7 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
       within(plateau.closest('figure') as HTMLElement)
         .getAllByRole('listitem')
         .map((c) => c.textContent)
-    expect(cases()).toEqual(['S209 fois', 'Horshors cible'])
+    expect(cases()).toEqual(['S209 fois', '0hors cible'])
     const cartes = () =>
       ['Moyenne 3 fl., Moyenne 3 fléchettes', 'Victoires', 'Grosses volées', 'Finitions'].map(
         (nom) => screen.getByRole('region', { name: nom }).textContent,
@@ -186,7 +227,7 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
       within(apres.closest('figure') as HTMLElement)
         .getAllByRole('listitem')
         .map((c) => c.textContent),
-    ).toEqual(['S53 fois', 'Horshors cible'])
+    ).toEqual(['S53 fois', '0hors cible'])
     expect(within(ruban()).getByRole('button', { name: 'Sarah' })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -215,7 +256,7 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     const cases = within(plateau.closest('figure') as HTMLElement)
       .getAllByRole('listitem')
       .map((c) => c.textContent)
-    expect(cases).toEqual(['Bulle 502 fois', 'Bulle 251 fois', 'Horshors cible'])
+    expect(cases).toEqual(['Bulle 502 fois', 'Bulle 251 fois', '0hors cible'])
   })
 })
 
@@ -582,7 +623,7 @@ describe('Statistiques — cas de bord à l’écran (T-M6)', () => {
     const cases = within(vide.closest('figure') as HTMLElement)
       .getAllByRole('listitem')
       .map((c) => c.textContent)
-    expect(cases).toEqual(['Horshors cible'])
+    expect(cases).toEqual(['0hors cible'])
   })
 })
 

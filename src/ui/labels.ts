@@ -940,6 +940,29 @@ export const libelleZone = (dart: Dart): string =>
 export const foisTouchee = (fois: number): string => `${nombre(fois)} fois`
 export const LIBELLE_HORS_CIBLE = 'hors cible'
 
+/**
+ * Une moyenne par partie, à une décimale fixe et à la virgule : « 2,6 », « 0,0 ».
+ * ⚠️ Aucune partie jouée : « 0,0 », jamais une division par zéro (`NaN`, `Infinity`).
+ */
+export const moyenneParPartie = (total: number, parties: number): string =>
+  (parties > 0 ? total / parties : 0).toLocaleString('fr-FR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+
+/**
+ * La ligne « Hors cible par partie » de la cible d'un joueur, en trois morceaux
+ * (planche `hors`) : le libellé, la moyenne, la base (« sur 16 parties »).
+ */
+export const horsCibleParPartie = (
+  missed: number,
+  parties: number,
+): { readonly libelle: string; readonly moyenne: string; readonly base: string } => ({
+  libelle: 'Hors cible par partie',
+  moyenne: moyenneParPartie(missed, parties),
+  base: `sur ${nombre(parties)} ${parties > 1 ? 'parties' : 'partie'}`,
+})
+
 /** Les trois mesures de la carte Moyenne : le titre de la carte suit la bascule. */
 export const MESURES_MOYENNE = ['MOYENNE', 'FIRST_9', 'VOLEE'] as const
 export type MesureMoyenne = (typeof MESURES_MOYENNE)[number]

@@ -289,6 +289,34 @@ describe('Frontière des thèmes', () => {
     }
   })
 
+  /**
+   * Le rouge de la touche « Hors » (lot `hors-statistique`) : un jeton général,
+   * défini dans les deux thèmes, et qui n'est pas un fond. Sa valeur claire doit
+   * tenir 4,5:1 sur `feutre` (le fond réel du pavé) : mesuré à 5,2:1 pour #a81f25.
+   */
+  it('rouge-touche est défini dans les deux thèmes et sert la touche Hors', () => {
+    const css = readFileSync(resolve(RACINE, 'src/index.css'), 'utf8')
+    const valeur = (depuis: string, jeton: string): string | undefined => {
+      const debut = css.indexOf(depuis)
+      expect(debut).toBeGreaterThan(-1)
+      const fin = css.indexOf('\n}', debut)
+      return css
+        .slice(debut, fin)
+        .match(new RegExp(`--color-${jeton}:\\s*([^;]+);`))?.[1]
+        ?.trim()
+    }
+    expect(valeur('@theme {', 'rouge-touche')).toBe('#ff8a8f')
+    expect(valeur('html[data-theme="clair"] {', 'rouge-touche')).toBe('#a81f25')
+
+    const pave = readFileSync(resolve(UI, 'composants/commun/PaveSaisie.tsx'), 'utf8')
+    expect(pave).toContain('[--texte-touche:var(--color-rouge-touche)]')
+    // La classe est posée sur le bouton rendu : voir tests/ui/paveUnifie.test.tsx.
+    const regle = css.match(/\.touche-hors\s*\{([^}]*)\}/)?.[1]
+    expect(regle).toBeDefined()
+    expect(regle).toMatch(/border-color:\s*var\(--color-rouge-touche\)/)
+    expect(regle).not.toMatch(/background/)
+  })
+
   it('le motif des jetons réservés attrape leurs utilitaires et laisse passer les voisins', () => {
     const attrape = (chaine: string) => chaine.match(UTILITAIRE_FEUILLE) !== null
     for (const reserve of [

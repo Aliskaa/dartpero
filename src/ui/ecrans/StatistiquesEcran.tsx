@@ -37,12 +37,12 @@ import {
   descriptionPeriodeVide,
   flechettesLancees,
   foisTouchee,
+  horsCibleParPartie,
   LEGENDE_BASCULE_FINITIONS,
   LEGENDE_BASCULE_GROSSES_VOLEES,
   LEGENDE_BASCULE_MOYENNE,
   LEGENDE_JOUEUR_CIBLE,
   LEGENDE_PERIODE,
-  LIBELLE_HORS,
   LIBELLE_HORS_CIBLE,
   LIBELLE_PERIODE,
   libelleZone,
@@ -290,6 +290,7 @@ const OngletsJoueurs = ({
 const BlocCible = ({ joueur }: { readonly joueur: PlayerCareer }) => {
   const nom = nomJoueur(joueur.name)
   const sommet = DartboardHits.top(joueur.hits, 3)
+  const parPartie = horsCibleParPartie(joueur.hits.missed, joueur.matchesPlayed)
 
   return (
     <figure className="mx-auto flex w-full max-w-sm flex-col gap-2">
@@ -318,11 +319,16 @@ const BlocCible = ({ joueur }: { readonly joueur: PlayerCareer }) => {
             }`}
           >
             <span className="chiffres text-xl leading-tight font-bold text-craie">
-              {joueur.hits.missed === 0 ? LIBELLE_HORS : nombre(joueur.hits.missed)}
+              {nombre(joueur.hits.missed)}
             </span>
             <span className="text-etiquette text-craie-3">{LIBELLE_HORS_CIBLE}</span>
           </li>
         </ul>
+        <p className="flex items-baseline justify-between gap-2 px-1 pt-2 font-score text-etiquette uppercase tracking-wide text-craie-3">
+          <span>{parPartie.libelle}</span>
+          <b className="chiffres text-lg font-bold text-craie">{parPartie.moyenne}</b>
+          <span>{parPartie.base}</span>
+        </p>
       </figcaption>
     </figure>
   )

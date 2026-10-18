@@ -128,6 +128,13 @@ sombre ils tombent à 2,8:1 et 3,2:1. Contrastes des tokens de texte (sur `feutr
 `vert-texte` 4,6 · **3,7** · 5,8 · 6,4 — rouge et vert ne se posent que sur l'`ardoise` de la
 feuille, jamais sur son en-tête `feutre-nuit`.
 
+**Rouge de la touche « Hors »** (lot `hors-statistique`) : `rouge-touche`, jeton **général**
+(pas réservé), `#FF8A8F` en sombre, `#A81F25` en clair. Il colore le **texte** (variable
+`--texte-touche`) et la **bordure** (`.touche-hors`) de la touche « Hors » du pavé, jamais un
+fond (`rouge-cible` reste le fond translucide de la Bulle). Contrastes mesurés sur `feutre`, le
+fond réel du pavé (`feutre-tapis`) : sombre 7,9:1, clair 5,2:1. Sur `feutre-nuit` : 8,5:1 et
+**4,2:1** — le jeton ne se pose pas sur cette surface. Sur `ardoise` : 7,1 · 6,5.
+
 **Voyant et aperçus de thème** (lot `reglages-par-usage`) : deux familles de plus, **réservées**
 chacune à un composant (garde `themeBoundary`, `rules/theme-colors.md` § Jetons réservés) :
 
@@ -475,7 +482,8 @@ charte, c'est de la donnée.
   **Statistiques**, une seule cible en grand (`PlateauImpacts`, bornée à `max-w-sm`) derrière
   des onglets de joueurs, puis une rangée de cases : les trois zones favorites (« S20 / 160 fois »,
   la bulle en toutes lettres : « Bulle 25 », « Bulle 50 ») et le hors cible (`craie`). La
-  comparaison y est portée par les cartes du podium. Le sélecteur ne pilote **que** la cible ;
+  comparaison y est portée par les cartes du podium. Sous la colonne « hors cible » (qui écrit « 0 »
+  à zéro) vient une ligne dédiée « Hors cible par partie · 2,6 · sur 16 parties » (« 0,0 » à zéro). Le sélecteur ne pilote **que** la cible ;
   le dernier joueur consulté est mémorisé (`statistiques:joueur`, cité par la politique).
 
 ---
@@ -663,7 +671,8 @@ couleur du profil — jamais le liseré de la maquette —, nom en Oswald gras, 
 - **Tailles** : touches `min-h-[3.25rem]` (52 px), `paysage:min-h-12` (48) ; chiffres 20 px
   (`text-xl`, 18 px en paysage) ; **mots** (Bulle, Hors) en 16 px majuscules, interlettrage 0,1 em ;
   **Annuler en 12 px** (`text-etiquette`) majuscules, icône 16 px, `craie`. Écarts de 6 px (4 en
-  paysage). La Bulle garde son rouge ; « Hors » est en `craie-3`.
+  paysage). La Bulle et « Hors » sont en rouge : « Hors » en `rouge-touche` (texte via `--texte-touche`,
+  bordure `.touche-hors`, § Palette).
 - **Bulle** (plus de touche « 25 », plus de touche « Bull » séparée) : `BULL_SIMPLE` en Simple,
   `BULL_DOUBLE` en Double, **grisée** en Triple (opacité des `disabled`, sans trait) plutôt que de
   refuser le coup après l'avoir accepté. Exposant : « 25 » en `craie-3` en Simple (X01,

@@ -41,6 +41,14 @@ Palette et rôles : `docs/CHARTE_GRAPHIQUE.md`.
    1,84:1 sur papier avant correction).
 3. Consommer le token depuis le composant — jamais l'inverse.
 
+## Jeton général récent : `rouge-touche`
+
+Lot `hors-statistique` : le rouge de la touche « Hors » (texte via `--texte-touche`, bordure via
+`.touche-hors`, jamais un fond). Jeton **général**, hors garde des réservés. Sombre `#ff8a8f`,
+clair `#a81f25`, mesurés sur `feutre` (fond réel du pavé) : 7,9 / 5,2:1. Sur `feutre-nuit` en
+clair il tombe à 4,2:1 : ne pas l'y poser. `rouge-texte` reste réservé à la feuille de règles.
+Garde : `themeBoundary` (défini dans les deux blocs, consommé par `PaveSaisie`).
+
 ## Jetons réservés
 
 Trois familles de sens, chacune à ses fichiers ; **quatre entrées** dans la garde (le `voile` a la sienne depuis le lot `annulation-volee`) ; la garde est une table
