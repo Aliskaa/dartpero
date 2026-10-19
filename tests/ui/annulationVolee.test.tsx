@@ -307,7 +307,7 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
     expect(locationCourante().pathname).toBe('/')
   })
 
-  it('une entrée héritée d’un rechargement est dépilée au montage', async () => {
+  it('une entrée héritée d’un rechargement, sans sortie en attente, est dépilée une fois la volée relue', async () => {
     const { services } = banc()
     const matchId = await x01(services)
     renderWithServices(<App />, {
@@ -452,8 +452,12 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
 
 describe('La boîte de confirmation — tour de correction (Test → Dev)', () => {
   /**
-   * I-1 : sous `StrictMode`, l'effet de montage est rejoué ; sans garde, l'entrée
-   * héritée était dépilée deux fois et l'on quittait l'écran de partie.
+   * I-1 : sous `StrictMode`, les effets sont rejoués au montage ; une entrée
+   * héritée dépilée deux fois ferait quitter l'écran de partie. Depuis le lot
+   * `volee-partielle`, ce qui protège ici est que `pret` est faux au montage :
+   * la réconciliation n'a lieu qu'au rendu où la volée en cours est relue, que
+   * `StrictMode` ne rejoue pas. La ref `reconciliee` n'est pas ce que ce test
+   * observe (Q-T3).
    */
   it('StrictMode : une entrée héritée n’est dépilée qu’une fois, l’écran reste', async () => {
     const { services } = banc()

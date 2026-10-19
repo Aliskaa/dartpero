@@ -44,7 +44,12 @@ const liste = (valeur: unknown, champ: string): readonly unknown[] => {
 
 const MULTIPLICATEURS: readonly Multiplier[] = ['SIMPLE', 'DOUBLE', 'TRIPLE']
 
-const versDart = (valeur: unknown): Dart => {
+/**
+ * Une fléchette venue du disque, revalidée. Exportée pour le brouillon de volée
+ * (lot `volee-partielle`) : il se relit avec **la même** validation que
+ * l'import, une seule règle pour tout ce qui revient d'un stockage.
+ */
+export const versDart = (valeur: unknown): Dart => {
   if (!estObjet(valeur)) throw new DomainError('dart must be an object')
 
   const { segment, multiplier } = valeur

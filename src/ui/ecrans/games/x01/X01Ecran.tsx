@@ -87,6 +87,7 @@ export const X01Ecran = () => {
   // La boîte « Kevin sort sur D10 ? » (lot `annulation-volee`) : au-dessus du
   // chargement, comme toute boîte au retour (CONVENTIONS § 9).
   const confirmation = useConfirmationSortie({
+    pret: match.pret,
     enAttente: match.sortieEnAttente,
     corriger: match.corrigerSortie,
     valider: match.validerSortie,

@@ -9,6 +9,7 @@ import { MatchName } from '@/core/domain/value-objects/MatchName'
 import { PLAYER_COLORS } from '@/core/domain/value-objects/PlayerColor'
 import { DexieMatchRepository } from '@/infrastructure/dexie/DexieMatchRepository'
 import { DexiePlayerRepository } from '@/infrastructure/dexie/DexiePlayerRepository'
+import { DexieVisitDraftRepository } from '@/infrastructure/dexie/DexieVisitDraftRepository'
 import { createDatabase, type DartperoDatabase } from '@/infrastructure/dexie/database'
 import { fakeServices } from '../fakes'
 import { lancer, ouverture } from '../use-cases/lancerPartie'
@@ -135,6 +136,44 @@ describe('Adapters Dexie (IndexedDB)', () => {
     })
   })
 
+  /** Lot `volee-partielle` : la volée en cours, une ligne par partie, hors du journal. */
+  describe('DexieVisitDraftRepository', () => {
+    const PARTIE = MatchId.of('partie-1')
+    const AUTRE = MatchId.of('partie-2')
+
+    it('restitue le brouillon à l’identique, une ligne par partie, sans clé en trop', async () => {
+      const repository = new DexieVisitDraftRepository(db)
+      const brouillon = { matchId: PARTIE, visitCount: 3, darts: [Dart.triple(20), Dart.miss()] }
+
+      await repository.save(brouillon)
+      await repository.save({ matchId: AUTRE, visitCount: 0, darts: [Dart.bullseye()] })
+
+      expect(await repository.findById(PARTIE)).toEqual(brouillon)
+      expect(await db.visitDrafts.count()).toBe(2)
+      // Ce que le disque garde vraiment : trois clés, aucune `undefined`, aucun horodatage.
+      const brut = await db.visitDrafts.get(PARTIE)
+      expect(Object.keys(brut ?? {}).sort()).toEqual(['darts', 'matchId', 'visitCount'])
+      for (const flechette of brut?.darts ?? []) {
+        expect(Object.keys(flechette).sort()).toEqual(['multiplier', 'segment'])
+      }
+    })
+
+    it('écrase le brouillon de la partie, efface, et rend null pour un absent', async () => {
+      const repository = new DexieVisitDraftRepository(db)
+      await repository.save({ matchId: PARTIE, visitCount: 0, darts: [Dart.single(1)] })
+      await repository.save({ matchId: PARTIE, visitCount: 1, darts: [Dart.single(2)] })
+
+      expect(await db.visitDrafts.count()).toBe(1)
+      expect((await repository.findById(PARTIE))?.visitCount).toBe(1)
+
+      await repository.delete(PARTIE)
+      expect(await repository.findById(PARTIE)).toBeNull()
+      // Effacer un absent est sans effet.
+      await repository.delete(AUTRE)
+      expect(await repository.findById(AUTRE)).toBeNull()
+    })
+  })
+
   /**
    * Le moment où l'on casse tout sans s'en rendre compte : la mise à jour de
    * l'application sur un téléphone qui a déjà des profils. Sans migration, ces
@@ -165,6 +204,63 @@ describe('Adapters Dexie (IndexedDB)', () => {
       }
       // Deux joueurs, deux couleurs : personne ne se retrouve en double.
       expect(new Set(profils.map((profil) => profil.color)).size).toBe(2)
+
+      migree.close()
+    })
+  })
+
+  /**
+   * Lot `volee-partielle` : `db.version(3)` n'ajoute que la table `visitDrafts`,
+   * sans `upgrade` et sans redéclarer `matches` ni `players`. Ce test prouve que
+   * Dexie 4 garde les tables non redéclarées : rien de ce que la v2 avait écrit
+   * ne doit bouger.
+   */
+  describe('Migration v2 → v3', () => {
+    it('garde profils et parties à l’identique, et ouvre une table de brouillons vide', async () => {
+      const nom = `dartpero-migration-v3-${compteurBase}`
+      const joueur = { id: 'kevin', name: 'Kevin', color: 'brique', createdAt: 1000 }
+      const partie = {
+        id: 'partie-1',
+        createdAt: 1000,
+        updatedAt: 2000,
+        events: record('partie-1', 2000).events,
+      }
+
+      // Une base telle que la laissait le lot 4 : version 2, deux tables.
+      const ancienne = new Dexie(nom)
+      ancienne.version(1).stores({ matches: 'id, updatedAt', players: 'id, name' })
+      ancienne.version(2).stores({})
+      await ancienne.open()
+      expect(ancienne.verno).toBe(2)
+      await ancienne.table('players').add(joueur)
+      await ancienne.table('matches').add(partie)
+      ancienne.close()
+
+      const migree = createDatabase(nom)
+      await migree.open()
+
+      expect(migree.verno).toBe(3)
+      expect(migree.tables.map((table) => table.name).sort()).toEqual([
+        'matches',
+        'players',
+        'visitDrafts',
+      ])
+      expect(await migree.players.toArray()).toEqual([joueur])
+      expect(await migree.matches.toArray()).toEqual([partie])
+      // Les index des parties ont survécu : le tri par date marche toujours.
+      expect((await new DexieMatchRepository(migree).listRecent()).map((m) => m.id)).toEqual([
+        'partie-1',
+      ])
+      expect(await migree.visitDrafts.count()).toBe(0)
+
+      const brouillons = new DexieVisitDraftRepository(migree)
+      const brouillon = {
+        matchId: MatchId.of('partie-1'),
+        visitCount: 1,
+        darts: [Dart.single(20)],
+      }
+      await brouillons.save(brouillon)
+      expect(await brouillons.findById(brouillon.matchId)).toEqual(brouillon)
 
       migree.close()
     })

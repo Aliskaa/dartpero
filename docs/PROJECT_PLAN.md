@@ -817,6 +817,21 @@ quel que soit le joueur : la volée rouverte quitte le journal et ses fléchette
 en saisie (`ReopenedVisit`, quatre modes). La fléchette qui sort / gagne / boucle ouvre la boîte
 `BoiteConfirmation` (*Corriger* / *Valider la sortie*) avant toute écriture, voix et célébration.
 Aucun format persisté. Relecture à l'écran faite dans Chrome ; reste le vrai téléphone (§ 0). Détail § 6.
+(Limite « volée rouverte perdue si l'app se ferme » **levée** par le lot `volee-partielle`, ci-dessous.)
+
+### Lot « volee-partielle » (lot 13 de la refonte de la charte)
+
+🟡 **Implémenté, relecture sur téléphone à faire — 1685 tests verts (+ les correctifs de Revue, voir
+`docs/lots/volee-partielle/`).** La volée en cours (0 à 3 fléchettes, sortie en attente comprise)
+survit à un rechargement : table Dexie `visitDrafts` (v3, sans `upgrade`), une ligne par partie, **hors du
+journal**, jamais exportée ; port `VisitDraftRepository`, `ManageVisitDraft` ; mécanisme unique
+`useVoleeEnCours` dans les quatre hooks ; clé de cohérence = `visitCount` de l'état affiché ; effacé à
+l'enregistrement, à la suppression et à l'import qui remplace la partie (option A : la restauration
+fusionne). La boîte de sortie se rouvre après un rechargement (`useConfirmationSortie`, exception documentée
+au « seulement dans un clic »). Reprise silencieuse. Politique `/confidentialite` inchangée (texte et date).
+Acceptés par l'utilisateur : R1 (ABA de `visitCount`), R3 (deux onglets), C1, mutations de T1-T6 non faites
+d'abord. Reste, sur téléphone : R2 (Chrome peut sauter l'entrée empilée), `history.state` d'iOS, bref spinner.
+Effet visible : la volée survit aussi à un aller-retour par l'Accueil.
 
 ### Lot « nouveaux-modes » — *à cadrer* (proposé le 19 octobre 2026)
 
@@ -2284,7 +2299,8 @@ Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `hig
   `typographieBoundary` interdit `text-[…]`) ; voile : d'abord `feutre-nuit/65`, remplacé par le jeton `voile` à la relecture (voir plus bas) ; boutons plats de 52 px sans `Button`.
 - **Boucle 1 (Test → Dev)** : l'entrée `confirmation` héritée d'un rechargement était dépilée deux fois
   sous `<StrictMode>` (serveur de dev) ; ref `depilee` + test sous `StrictMode`.
-- **Acceptés** : volée rouverte et fléchette de sortie en attente perdues si l'app se ferme ; reste de
+- **Acceptés** : volée rouverte et fléchette de sortie en attente perdues si l'app se ferme (**levé** par le
+  lot `volee-partielle`, brouillon de volée) ; reste de
   la manche suivante re-tiré à l'entraînement après correction ; **N-1** (échec d'écriture après
   *Valider* : fléchette en attente, boîte non rouverte, seule « Annuler » débloque, aucune perte) accepté
   tel quel.
@@ -2312,3 +2328,40 @@ Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `hig
   vert à vide, *Corriger* muet.
 - **Reste, vrai téléphone** : écoute du « — » et du « ? » de « Bien joué — on remet ça ? », du « . » en
   tête de segment `fr` après un segment `en`, durée de la phrase après « Checkout ».
+
+### Décisions du lot « volee-partielle » (lot 13 de la refonte de la charte)
+
+`high` (format persisté, décision gravée d'`annulation-volee`). Détail : `docs/lots/volee-partielle/`.
+
+- **Un brouillon à part, pas un événement.** Table Dexie `visitDrafts` (v3, **sans `upgrade`** : une table
+  neuve, `matches` et `players` non redéclarées, prouvé par le test de migration v2 → v3), une ligne par
+  partie `{ matchId, visitCount, darts }`, hors du journal et de `backupSchema`, **jamais exportée**
+  (`BACKUP_VERSION` inchangé). Choix de l'utilisateur à l'intake : brouillon, quatre modes, jamais exporté,
+  reprise silencieuse.
+- **Clé de cohérence = `visitCount` de l'état affiché**, jamais relu à l'écriture : une écriture lancée
+  avant l'enregistrement ne peut pas estampiller d'anciennes fléchettes avec le journal d'après (elles
+  seraient rendues au joueur suivant). À la lecture, triple égalité (brouillon, journal, état chargé),
+  fléchettes revalidées par `versDart` (exporté de `backupSchema.ts`, format inchangé), partie non terminée,
+  même mode ; sinon écarté et effacé.
+- **Un seul mécanisme** : `useVoleeEnCours` (`poser`, `pret`, `evaluer`) dans les quatre hooks, file
+  d'écriture ordonnée, échecs avalés (le pavé ne grise jamais). Le brouillon n'est effacé qu'**après** un
+  enregistrement réussi.
+- **La restauration fusionne** (elle ne remplace pas la base) : **option A** de l'utilisateur, seul le
+  brouillon d'une partie remplacée est effacé, avant l'écriture de son journal et après la validation de
+  l'entrée. **Q-T2** : si l'effacement échoue, l'import écarte la partie et la suppression refuse (choix de
+  l'utilisateur, figé par deux tests).
+- **Boîte de sortie rouverte après un rechargement** : `useConfirmationSortie` se réconcilie **une fois,
+  quand `pret`**, et appelle `demander()` depuis un effet (exception documentée, CONVENTIONS § 9). Rien
+  n'est dit, vibré ni célébré à la reprise.
+- **Politique `/confidentialite`** : texte et date inchangés (relu phrase par phrase par Sécurité et Revue).
+- **Faits à retenir** : le vieil onglet en v2 **n'échoue pas** en v3 (Dexie 4.4.4, vérifié ; erratum de
+  `01-architecture.md`, `docs/DEPLOIEMENT.md`). La volée survit aussi à un aller-retour par l'Accueil.
+  `enregistrer` ne liste pas `state` dans les dépendances de son `useCallback` : ne lire que
+  `resultat.state`.
+- **Acceptés par l'utilisateur (2026-10-19)** : R1 (ABA de `visitCount`), R3 (deux onglets), C1 (effacement
+  du brouillon puis échec d'écriture de la partie à l'import) ; mutations manuelles de T1-T6 non faites.
+- **Chaîne** : `archi-authority` (scout et designer sautés), `dev` (3 lancements), `test`, `sec`, `review`,
+  tous en `opus` ; plafonds de tours atteints sans rapport pour `archi-authority` (40), `sec` (30) et
+  `review` (40), rapports obtenus par relance. 1602 → **1691 tests verts**.
+- **Reste, vrai téléphone** : R2 (Chrome peut sauter l'entrée d'historique empilée sans geste), `history.state`
+  d'iOS au rechargement, bref spinner en revenant sur une partie en cache, latence réelle d'IndexedDB.

@@ -1,6 +1,7 @@
 import type { Clock } from '../ports/driven/Clock'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
+import type { VisitDraftRepository } from '../ports/driven/VisitDraftRepository'
 import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
@@ -14,9 +15,11 @@ export class ManageBackupUseCase implements ManageBackup {
   constructor(
     private readonly matches: MatchRepository,
     private readonly players: PlayerRepository,
+    private readonly drafts: VisitDraftRepository,
     private readonly clock: Clock,
   ) {}
 
+  /** Le brouillon de volée n'est jamais exporté (lot `volee-partielle`) : seuls profils et journaux partent. */
   async exportAll(): Promise<Backup> {
     const [profils, records] = await Promise.all([this.players.listAll(), this.matches.listAll()])
 
@@ -44,6 +47,12 @@ export class ManageBackupUseCase implements ManageBackup {
    * s'ajoute, et rien n'est effacé. Se tromper de fichier ne doit pas coûter
    * une soirée de parties.
    *
+   * ⚠️ Seule exception (lot `volee-partielle`) : la volée en cours d'une partie
+   * **que le fichier remplace** est effacée — elle prolongeait un journal qui
+   * n'est plus là. Effacée après la validation de l'entrée, avant l'écriture de
+   * son journal : une entrée illisible garde son brouillon, et une partie absente
+   * du fichier garde le sien.
+   *
    * Les entrées illisibles sont comptées puis ignorées — une partie corrompue
    * n'emporte pas les cinquante autres avec elle.
    */
@@ -65,7 +74,9 @@ export class ManageBackupUseCase implements ManageBackup {
     let matchesSkipped = 0
     for (const brut of matches) {
       try {
-        await this.matches.save(versMatchRecord(brut))
+        const record = versMatchRecord(brut)
+        await this.drafts.delete(record.id)
+        await this.matches.save(record)
         matchesImported += 1
       } catch {
         matchesSkipped += 1

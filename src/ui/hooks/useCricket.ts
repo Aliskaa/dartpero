@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { CricketVisitResult } from '@/core/application/ports/driving/PlayCricket'
+import type { CricketState } from '@/core/domain/games/cricket/rules'
 import { type Dart, Dart as DartVO, type Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import {
@@ -17,6 +18,7 @@ import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
 import { useProfils } from './useJoueurs'
 import { usePauseAnnulation } from './usePauseAnnulation'
+import { type EtatVolee, useVoleeEnCours } from './useVoleeEnCours'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -32,6 +34,9 @@ const message = (erreur: unknown): string =>
  * fléchette qui gagne la partie, et l'écran ne peut pas le deviner seul.
  * En revanche le multiplicateur compte ici (il vaut une, deux ou trois
  * marques), donc la bascule S/D/T du X01 revient — **momentanée**, elle aussi.
+ *
+ * La volée en cours reste hors du journal, doublée du brouillon de volée
+ * (`useVoleeEnCours`, lot `volee-partielle`) qui la fait survivre à un rechargement.
  */
 export const useCricket = (matchId: MatchId) => {
   const services = useServices()
@@ -52,7 +57,24 @@ export const useCricket = (matchId: MatchId) => {
   })
 
   const state = requete.data ?? null
-  const [dartsEnCours, setDartsEnCours] = useState<readonly Dart[]>([])
+
+  /**
+   * La volée est close à trois fléchettes — ou dès celle qui gagne la partie,
+   * qui attend *Valider*. Lu sur `PreviewCricketVisit`, jamais recopié.
+   */
+  const evaluer = useCallback(
+    (base: CricketState, darts: readonly Dart[]): EtatVolee => {
+      const evaluation = services.previewCricketVisit.execute({ state: base, darts })
+      if (!evaluation.complete) return 'ouverte'
+      if (evaluation.state.finished) return 'en-attente'
+      return 'close'
+    },
+    [services],
+  )
+  const volee = useVoleeEnCours(matchId, state, evaluer)
+  const dartsEnCours = volee.darts
+  const poser = volee.poser
+
   const [multiplicateur, setMultiplicateur] = useState<Multiplier>('SIMPLE')
   const [derniereVolee, setDerniereVolee] = useState<CricketVisitResult | null>(null)
   const [occupe, setOccupe] = useState(false)
@@ -81,7 +103,7 @@ export const useCricket = (matchId: MatchId) => {
       try {
         const resultat = await services.playCricket.recordVisit(matchId, darts)
         queryClient.setQueryData(['cricket', matchId], resultat.state)
-        setDartsEnCours([])
+        poser([], resultat.state)
         setDerniereVolee(resultat)
 
         const gagnee = resultat.milestones.some((jalon) => jalon.type === 'MatchFinished')
@@ -109,7 +131,7 @@ export const useCricket = (matchId: MatchId) => {
         setOccupe(false)
       }
     },
-    [services, matchId, queryClient, dire],
+    [services, matchId, queryClient, dire, poser],
   )
 
   /**
@@ -137,11 +159,11 @@ export const useCricket = (matchId: MatchId) => {
 
   /** Retire la dernière fléchette en cours ; la dernière partie, la pause s'arme. */
   const retirerFlechette = useCallback(() => {
-    if (dartsEnCours.length === 0) return
+    if (dartsEnCours.length === 0 || !state) return
     services.devices.haptics.tap()
-    setDartsEnCours((darts) => darts.slice(0, -1))
+    poser(dartsEnCours.slice(0, -1), state)
     if (dartsEnCours.length === 1) armer()
-  }, [services, dartsEnCours.length, armer])
+  }, [services, dartsEnCours, state, poser, armer])
 
   /** Rend `true` quand la fléchette gagne la partie : l'écran demande confirmation. */
   const ajouterFlechette = useCallback(
@@ -150,7 +172,7 @@ export const useCricket = (matchId: MatchId) => {
 
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
-      setDartsEnCours(suite)
+      poser(suite, state)
       setDerniereVolee(null)
 
       // Le multiplicateur retombe sur SIMPLE après chaque fléchette : il ne
@@ -161,13 +183,17 @@ export const useCricket = (matchId: MatchId) => {
       // La volée est close à trois fléchettes — ou dès celle qui gagne la
       // partie : réclamer les deux suivantes n'aurait aucun sens. Celle-là
       // attend *Valider* avant d'être écrite.
-      const evaluation = services.previewCricketVisit.execute({ state, darts: suite })
-      if (!evaluation.complete) return false
-      if (evaluation.state.finished) return true
-      void enregistrer(suite)
-      return false
+      switch (evaluer(state, suite)) {
+        case 'ouverte':
+          return false
+        case 'en-attente':
+          return true
+        case 'close':
+          void enregistrer(suite)
+          return false
+      }
     },
-    [services, state, occupe, termine, sortieEnAttente, dartsEnCours, enregistrer],
+    [services, state, occupe, termine, sortieEnAttente, dartsEnCours, poser, evaluer, enregistrer],
   )
 
   /** *Corriger* : la fléchette gagnante est retirée, la volée reprend. */
@@ -201,7 +227,7 @@ export const useCricket = (matchId: MatchId) => {
     try {
       const { state: revenu, darts } = await services.playCricket.undoLastVisit(matchId)
       queryClient.setQueryData(['cricket', matchId], revenu)
-      setDartsEnCours(darts)
+      poser(darts, revenu)
       setDerniereVolee(null)
       services.devices.haptics.tap()
       if (darts.length === 0) armer()
@@ -220,6 +246,7 @@ export const useCricket = (matchId: MatchId) => {
     armer,
     ecoulee,
     retirerFlechette,
+    poser,
   ])
 
   /** Ce que le bouton va retirer, écrit dessus — voir `libelleAnnulation`. */
@@ -245,7 +272,10 @@ export const useCricket = (matchId: MatchId) => {
     state,
     /** Le tableau à afficher : l'état réel augmenté de la volée en cours. */
     affiche,
-    chargement: requete.isPending,
+    // La partie est là, mais sa volée en cours n'a pas encore été relue.
+    chargement: requete.isPending || (state !== null && !volee.pret),
+    /** Le brouillon de volée a été relu : `useConfirmationSortie` peut rouvrir la boîte. */
+    pret: volee.pret,
     erreurChargement: requete.error,
     joueurCourant,
     termine,

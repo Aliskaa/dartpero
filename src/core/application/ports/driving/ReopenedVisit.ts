@@ -11,9 +11,11 @@ import type { Dart } from '../../../domain/value-objects/Dart'
  *   qu'une. Leur aperçu n'est **jamais** complet : privée de sa dernière
  *   fléchette, une volée ne conclut pas.
  *
- * ⚠️ Aucun format nouveau : la volée rouverte n'est pas persistée, exactement
- * comme une volée en cours. Si l'app se ferme, ces fléchettes sont perdues et
- * le journal reste cohérent.
+ * ⚠️ Aucun événement nouveau : la volée rouverte reste hors du journal,
+ * exactement comme une volée en cours. Depuis le lot `volee-partielle`, ses
+ * fléchettes vivent dans le brouillon de volée (`ManageVisitDraft`), estampillé
+ * avec l'état rouvert : elles survivent à un rechargement, et le journal reste
+ * cohérent.
  */
 export type ReopenedVisit<S> = {
   readonly state: S

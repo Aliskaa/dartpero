@@ -113,6 +113,17 @@ phrase : c'est le voyant Application, en tête des Réglages, qui porte l'action
 ⚠️ Protégé ne veut pas dire sauvegardé : désinstaller l'app ou vider les données du site efface
 toujours la base. L'export JSON reste le filet.
 
+### Mise à jour du schéma Dexie avec un onglet resté ouvert
+
+Le lot `volee-partielle` a porté la base en **v3** (table `visitDrafts`, sans `upgrade`). Un onglet
+ou une PWA restée ouverte sur l'ancien bundle (v2) **n'échoue pas** : Dexie 4.4.4 ferme sa connexion
+au `versionchange` sans bloquer l'ouverture en v3, l'ancien code rouvre la base à sa prochaine
+opération, et la vérification de schéma ignore une table en trop (vérifié dans
+`node_modules/dexie`, lot `volee-partielle`). Seule conséquence : ce vieil onglet ne connaît pas
+`visitDrafts`, donc une partie qu'il supprime laisse un brouillon orphelin (jamais relu) et un
+import fait depuis lui laisse un brouillon périmé (rendu seulement si `visitCount` coïncide). Le
+rechargement de l'onglet règle tout.
+
 ## Installation et manifeste
 
 L'app invite à s'installer (lot `installation-guidee`) : port `AppInstallation`, seul l'adapter

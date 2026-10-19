@@ -53,14 +53,17 @@ export type ImportReport = {
 /**
  * Export / import JSON de toute la base — le filet de sécurité obligatoire des
  * profils locaux : sans compte ni serveur, c'est la seule façon de changer de
- * téléphone sans repartir de zéro.
+ * téléphone sans repartir de zéro. Profils et journaux seulement : le brouillon
+ * de volée (lot `volee-partielle`) ne part jamais dans le fichier.
  */
 export interface ManageBackup {
   exportAll(): Promise<Backup>
   /**
    * Fusionne dans la base existante : un identifiant déjà connu est écrasé, un
    * inconnu s'ajoute. Jamais d'effacement — on ne perd pas des parties parce
-   * qu'on s'est trompé de fichier.
+   * qu'on s'est trompé de fichier. Sauf le brouillon de volée (lot
+   * `volee-partielle`) d'une partie que le fichier remplace : sa volée en cours
+   * prolongeait le journal écrasé, elle est effacée avec lui.
    */
   importFrom(contenu: unknown): Promise<ImportReport>
 }

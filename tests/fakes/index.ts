@@ -22,6 +22,7 @@ import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import { NullScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import { InMemoryMatchRepository } from '@/infrastructure/memory/InMemoryMatchRepository'
 import { InMemoryPlayerRepository } from '@/infrastructure/memory/InMemoryPlayerRepository'
+import { InMemoryVisitDraftRepository } from '@/infrastructure/memory/InMemoryVisitDraftRepository'
 
 /** Horloge déterministe qui avance d'un pas à chaque lecture. */
 export class TickingClock implements Clock {
@@ -84,6 +85,11 @@ export class CyclingRandomSource implements RandomSource {
     const valeur = this.appel % max
     this.appel += 1
     return valeur
+  }
+
+  /** Le nombre de tirages faits : prouve qu'une reprise ne re-tire rien. */
+  get tirages(): number {
+    return this.appel
   }
 }
 
@@ -190,6 +196,101 @@ export class DepotSuspendu extends InMemoryMatchRepository {
     await super.save(record)
   }
 }
+
+/** Un dépôt de parties qui compte ses lectures : prouve qu'une écriture ne relit pas le journal. */
+export class DepotCompteur extends InMemoryMatchRepository {
+  lectures = 0
+
+  override async findById(
+    id: Parameters<InMemoryMatchRepository['findById']>[0],
+  ): ReturnType<InMemoryMatchRepository['findById']> {
+    this.lectures += 1
+    return super.findById(id)
+  }
+}
+
+/**
+ * Un dépôt de parties dont l'écriture tombe en panne à la demande : `panne`
+ * vrai, chaque `save` rejette (une volée qui n'arrive pas au journal).
+ */
+export class DepotEnPanne extends InMemoryMatchRepository {
+  panne = false
+
+  override async save(record: Parameters<InMemoryMatchRepository['save']>[0]): Promise<void> {
+    if (this.panne) throw new Error('disque plein')
+    await super.save(record)
+  }
+}
+
+/** Un dépôt de brouillons qu'on ne relit plus : chaque `findById` rejette, le reste marche. */
+export class BrouillonsIllisibles extends InMemoryVisitDraftRepository {
+  override async findById(): ReturnType<InMemoryVisitDraftRepository['findById']> {
+    throw new Error('disque illisible')
+  }
+}
+
+/** Un dépôt de brouillons qui lit et écrit, mais dont chaque effacement rejette. */
+export class BrouillonsIndelebiles extends InMemoryVisitDraftRepository {
+  override async delete(): Promise<void> {
+    throw new Error('disque plein')
+  }
+}
+
+/** Un dépôt de brouillons hors service : chaque écriture et chaque effacement rejettent. */
+export class BrouillonsEnPanne extends InMemoryVisitDraftRepository {
+  override async save(): Promise<void> {
+    throw new Error('disque plein')
+  }
+
+  override async delete(): Promise<void> {
+    throw new Error('disque plein')
+  }
+}
+
+/**
+ * Un dépôt de brouillons dont les écritures (`save` et `delete`) peuvent être
+ * suspendues, comme `DepotSuspendu`. `ecritures` compte les appels, suspendus
+ * compris ; `lectures` compte les `findById`.
+ */
+export class BrouillonsSuspendus extends InMemoryVisitDraftRepository {
+  ecritures = 0
+  lectures = 0
+  private porte: Promise<void> | null = null
+  private ouvrir: (() => void) | null = null
+
+  suspendre(): void {
+    this.porte = new Promise<void>((resolve) => {
+      this.ouvrir = resolve
+    })
+  }
+
+  liberer(): void {
+    this.ouvrir?.()
+    this.porte = null
+  }
+
+  override async save(draft: Parameters<InMemoryVisitDraftRepository['save']>[0]): Promise<void> {
+    this.ecritures += 1
+    if (this.porte) await this.porte
+    await super.save(draft)
+  }
+
+  override async delete(
+    matchId: Parameters<InMemoryVisitDraftRepository['delete']>[0],
+  ): Promise<void> {
+    this.ecritures += 1
+    if (this.porte) await this.porte
+    await super.delete(matchId)
+  }
+
+  override async findById(
+    matchId: Parameters<InMemoryVisitDraftRepository['findById']>[0],
+  ): ReturnType<InMemoryVisitDraftRepository['findById']> {
+    this.lectures += 1
+    return super.findById(matchId)
+  }
+}
+
 /** La voix en mémoire : garde les annonces (segments typés par langue) telles que reçues. */
 export class FakeAnnouncer implements Announcer {
   readonly annonces: Annonce[] = []
@@ -212,6 +313,7 @@ export class FakeAnnouncer implements Announcer {
 export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Dependencies => ({
   matches: new InMemoryMatchRepository(),
   players: new InMemoryPlayerRepository(),
+  visitDrafts: new InMemoryVisitDraftRepository(),
   clock: new TickingClock(),
   ids: new SequentialIdGenerator(),
   random: new CyclingRandomSource(),

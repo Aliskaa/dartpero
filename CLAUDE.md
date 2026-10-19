@@ -189,9 +189,11 @@ suit les réglages de la partie (la règle de ce soir en entier, l'autre en gris
 même lot. « Les règles en entier » de la fiche n'existe plus.
 - **Annulation fléchette par fléchette, sortie confirmée** (lot `annulation-volee`) : un appui sur
 « Annuler » retire la **dernière fléchette jouée**, quel que soit le joueur. La volée rouverte quitte
-le journal et ses fléchettes restantes reviennent en saisie (`ReopenedVisit`), **non persistées**
-comme toute volée en cours : aucun événement ni format nouveau. ⚠️ **Rien n'est écrit, dit ni célébré
-avant « Valider la sortie »** : la fléchette qui sort (X01, à chaque manche), qui gagne (Cricket, nom
+le journal et ses fléchettes restantes reviennent en saisie (`ReopenedVisit`), **hors du journal**
+comme toute volée en cours, gardées dans le brouillon de volée (lot `volee-partielle`, ci-dessous) :
+aucun événement nouveau. ⚠️ **Rien n'entre au journal, rien n'est dit ni célébré
+avant « Valider la sortie »** (la fléchette en attente, elle, est déjà au brouillon : ne pas
+« réparer » cette écriture, elle rouvre la boîte après un rechargement) : la fléchette qui sort (X01, à chaque manche), qui gagne (Cricket, nom
 du **gagnant**, cut-throat compris) ou qui boucle le parcours (Tour du monde, `completesTour`) ouvre
 la boîte `BoiteConfirmation` (forme B de la planche). **Jamais sur un bust, jamais à l'entraînement.**
 Fermer sans choisir (retour, Échap, voile) vaut *Corriger*. Même mécanisme que la `Modale`
@@ -202,6 +204,20 @@ Fermer sans choisir (retour, Échap, voile) vaut *Corriger*. Même mécanisme qu
   seulement (pas de phrase à la manche ni au set) ; Cricket : la fléchette qui gagne ; Tour du monde :
   la **fin de partie**, jamais en nul, « Tour bouclé ! » gardé à la fléchette qui boucle. Jamais sur un
   bust, jamais à l'entraînement. CONVENTIONS § 5.
+- **Brouillon de volée** (lot `volee-partielle`) : les fléchettes de la volée en cours (0 à 3, la
+  fléchette de sortie en attente comprise) survivent à un rechargement. Table Dexie `visitDrafts`
+  (v3, sans `upgrade`), **une ligne par partie** : `matchId`, `visitCount`, `darts` — noms
+  persistés, **jamais renommés**. ⚠️ **Hors du journal** : aucun événement, `MatchEvent` et
+  `backupSchema` inchangés, **jamais exporté**, jamais de `localStorage`. La clé de cohérence est
+  le `visitCount` de l'état **affiché**, jamais relu à l'écriture : à la lecture, un brouillon dont
+  le compte, le mode ou les fléchettes (revalidées par `versDart`) ne concordent pas avec le
+  journal est **écarté et effacé**. Effacé à l'enregistrement de la volée, à la suppression de la
+  partie et à l'import qui **remplace** cette partie (la restauration fusionne : une partie
+  absente du fichier garde le sien). Reprise **silencieuse** (ni voix, ni vibration, ni message) ;
+  la boîte de sortie se rouvre si une sortie attend. La bascule S/D/T n'est jamais gardée. Un
+  échec d'écriture du brouillon ne bloque jamais la saisie ; un effacement qui échoue à l'import
+  ou à la suppression **refuse** (partie écartée, partie conservée). Mécanisme unique :
+  `useVoleeEnCours` ; pièges : CONVENTIONS § 9, 10.
 
 ---
 

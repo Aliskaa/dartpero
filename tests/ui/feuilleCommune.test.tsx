@@ -627,7 +627,7 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
   // Mutation : la volée vient d'un état local au lieu du journal -> vide / mauvais nom après remontage.
   it('rejeu à froid : l’écran remonté depuis le dépôt dit la même chose, avant et après annulation', async () => {
     const utilisateur = userEvent.setup()
-    const { services } = fakeServices()
+    const { services, dependencies } = fakeServices()
     const { matchId } = await partie(services)
     await services.playCricket.recordVisit(matchId, VOLEE_KEVIN)
     await services.playCricket.recordVisit(matchId, VOLEE_JULIEN)
@@ -639,17 +639,20 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     const remonte = renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     expect(await screen.findByLabelText('Volée de Julien')).toHaveTextContent('S17S16S15')
 
-    // La volée de Julien se rouvre (S17, S16 en saisie) : elle a quitté le journal,
-    // et la volée rouverte n'est pas persistée (U9).
+    // La volée de Julien se rouvre (S17, S16 en saisie) : elle a quitté le journal.
+    // Depuis le lot `volee-partielle`, elle vit dans le brouillon de volée et
+    // survit au remontage (la limite U9 « perdue si l'app se ferme » est levée).
     await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
     await waitFor(() =>
       expect(screen.getByLabelText('Volée de Julien')).toHaveTextContent('S17S16—'),
     )
+    await waitFor(async () =>
+      expect((await dependencies.visitDrafts.findById(matchId))?.darts).toHaveLength(2),
+    )
     remonte.unmount()
 
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
-    expect(await screen.findByLabelText('Volée de Kevin')).toHaveTextContent('S20T19D18')
-    expect(screen.queryByLabelText('Volée de Julien')).toBeNull()
+    expect(await screen.findByLabelText('Volée de Julien')).toHaveTextContent('S17S16—')
   })
 
   // Mutation : `nomJoueur(...)` retiré -> « Volée de undefined » / ligne vide.

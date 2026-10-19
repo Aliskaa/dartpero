@@ -38,6 +38,7 @@ export const CricketEcran = () => {
   // La boîte « Kevin gagne sur T20 ? » (lot `annulation-volee`) : au-dessus du
   // chargement, comme toute boîte au retour (CONVENTIONS § 9).
   const confirmation = useConfirmationSortie({
+    pret: partie.pret,
     enAttente: partie.sortieEnAttente,
     corriger: partie.corrigerSortie,
     valider: partie.validerSortie,

@@ -9,7 +9,7 @@ import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { MatchId } from '@/core/domain/value-objects/ids'
-import { fakeServices } from '../fakes'
+import { BrouillonsIndelebiles, fakeServices } from '../fakes'
 import { lancer, ouverture } from './lancerPartie'
 
 /** Une base peuplée : deux joueurs, une partie entamée. */
@@ -450,5 +450,144 @@ describe('Sauvegarde JSON — le nom de partie', () => {
     await lancer(services, 'X01', [kevin], 'Finale')
 
     expect((await services.manageBackup.exportAll()).version).toBe(1)
+  })
+})
+
+/**
+ * Lot `volee-partielle` : le brouillon de volée ne part jamais dans le fichier,
+ * et la restauration (une fusion) n'efface que celui d'une partie qu'elle
+ * remplace (option A de Q1).
+ */
+describe('Sauvegarde JSON — le brouillon de volée', () => {
+  const S1 = Dart.single(1)
+
+  /** Une partie entamée avec deux fléchettes en cours. */
+  const avecBrouillon = async () => {
+    const outils = fakeServices()
+    const { matchId } = await baseGarnie(outils.services)
+    const base = await outils.services.getMatchState.execute(matchId)
+    await outils.services.manageVisitDraft.save({ matchId, base, darts: [S1, S1] })
+    expect(await outils.dependencies.visitDrafts.findById(matchId)).not.toBeNull()
+    return { ...outils, matchId }
+  }
+
+  it('l’export est identique avec ou sans brouillon : il n’en contient aucun', async () => {
+    const { services, dependencies, matchId } = await avecBrouillon()
+    const avec = await services.manageBackup.exportAll()
+    await dependencies.visitDrafts.delete(matchId)
+    const sans = await services.manageBackup.exportAll()
+
+    const { exportedAt: _a, ...corpsAvec } = avec
+    const { exportedAt: _b, ...corpsSans } = sans
+    expect(corpsAvec).toEqual(corpsSans)
+    expect(Object.keys(avec).sort()).toEqual([
+      'exportedAt',
+      'format',
+      'matches',
+      'players',
+      'version',
+    ])
+    expect(JSON.stringify(avec)).not.toContain('visitCount')
+  })
+
+  it('un import qui remplace la partie efface son brouillon ; une partie absente du fichier garde le sien', async () => {
+    const { services, dependencies, matchId } = await avecBrouillon()
+    const sauvegarde = JSON.parse(JSON.stringify(await services.manageBackup.exportAll()))
+    // Une seconde partie, absente du fichier, avec sa volée en cours.
+    const kevin = (await services.managePlayers.create('Marie')).id
+    const autre = await lancer(services, 'X01', [kevin])
+    const baseAutre = await services.getMatchState.execute(autre)
+    await services.manageVisitDraft.save({ matchId: autre, base: baseAutre, darts: [S1] })
+
+    const rapport = await services.manageBackup.importFrom(sauvegarde)
+
+    expect(rapport.matchesImported).toBe(1)
+    expect(await dependencies.visitDrafts.findById(matchId)).toBeNull()
+    expect(await dependencies.visitDrafts.findById(autre)).toEqual({
+      matchId: autre,
+      visitCount: 0,
+      darts: [S1],
+    })
+  })
+
+  it('une entrée invalide du fichier garde le brouillon de sa partie', async () => {
+    const { services, dependencies, matchId } = await avecBrouillon()
+    const sauvegarde = JSON.parse(JSON.stringify(await services.manageBackup.exportAll()))
+    sauvegarde.matches[0].events.push({
+      type: 'VisitRecorded',
+      darts: [{ segment: 'BULL', multiplier: 'TRIPLE' }],
+    })
+
+    const rapport = await services.manageBackup.importFrom(sauvegarde)
+
+    expect(rapport.matchesSkipped).toBe(1)
+    expect((await dependencies.visitDrafts.findById(matchId))?.darts).toEqual([S1, S1])
+  })
+
+  /**
+   * Q-T2, tranchée par l'utilisateur : l'effacement du brouillon passe avant
+   * l'écriture du journal. S'il échoue, la partie est écartée et celle de
+   * l'appareil reste intacte — refuser plutôt qu'un brouillon sur un journal remplacé.
+   */
+  it('un brouillon impossible à effacer : la partie est écartée, son journal n’est pas écrit', async () => {
+    const { services, dependencies } = fakeServices({ visitDrafts: new BrouillonsIndelebiles() })
+    const { matchId } = await baseGarnie(services)
+    const sauvegarde = JSON.parse(JSON.stringify(await services.manageBackup.exportAll()))
+    // La partie avance sur l'appareil après l'export : le fichier la remplacerait.
+    await services.recordVisit.execute({ matchId, darts: [S1, S1, S1] })
+    const avant = await dependencies.matches.findById(matchId)
+    // Précondition : le journal du fichier diffère de celui de l'appareil.
+    expect(avant?.events).toHaveLength(sauvegarde.matches[0].events.length + 1)
+
+    const rapport = await services.manageBackup.importFrom(sauvegarde)
+
+    expect(rapport).toMatchObject({ matchesImported: 0, matchesSkipped: 1 })
+    expect(await dependencies.matches.findById(matchId)).toEqual(avant)
+  })
+
+  it('une sauvegarde v1 écrite à la main s’importe avec les mêmes compteurs', async () => {
+    const neuf = fakeServices()
+    // Un brouillon laissé sur l'appareil sous l'identifiant de la partie du fichier :
+    // l'import l'efface (sans lui, l'assertion finale serait vraie d'avance).
+    const remplacee = MatchId.of('partie-0')
+    await neuf.dependencies.visitDrafts.save({ matchId: remplacee, visitCount: 0, darts: [S1] })
+    expect(await neuf.dependencies.visitDrafts.findById(remplacee)).not.toBeNull()
+
+    const rapport = await neuf.services.manageBackup.importFrom({
+      format: 'dartpero-backup',
+      version: 1,
+      exportedAt: 1,
+      players: [{ id: 'kevin', name: 'Kevin', color: 'brique', createdAt: 1 }],
+      matches: [
+        {
+          id: 'partie-0',
+          createdAt: 1_700_000_000_000,
+          updatedAt: 1_700_000_000_000,
+          events: [
+            {
+              type: 'MatchStarted',
+              config: {
+                startingScore: 501,
+                legsToWin: 2,
+                setsToWin: 1,
+                doubleIn: false,
+                doubleOut: true,
+              },
+              playerIds: ['kevin'],
+              startingPlayerIndex: 0,
+            },
+            { type: 'VisitRecorded', darts: [{ segment: 20, multiplier: 'TRIPLE' }] },
+          ],
+        },
+      ],
+    })
+
+    expect(rapport).toEqual({
+      playersImported: 1,
+      matchesImported: 1,
+      playersSkipped: 0,
+      matchesSkipped: 0,
+    })
+    expect(await neuf.dependencies.visitDrafts.findById(remplacee)).toBeNull()
   })
 })

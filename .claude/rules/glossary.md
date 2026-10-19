@@ -27,6 +27,7 @@ ce que lit le joueur, la deuxième ce qu'écrit le code.
 | nom de partie | `MatchName` | Nom **tapé** (≤ 30 caractères, espaces autour retirés), seul écrit, dans l'événement d'ouverture. À défaut, « Jour tranche » recalculé depuis la date de création, jamais écrit — la nuit (0-5 h) au nom du jour du calendrier. |
 | partie en cours | `GetOngoingMatch` | La partie non terminée **modifiée le plus récemment**, parmi les 20 dernières. Épinglée en tête de l'Accueil, seule carte qui porte « Reprendre ». |
 | abandonnée | `'ABANDONED'` / `matchStatus` | Partie non terminée qui n'est **pas** la partie en cours. Dérivée, jamais écrite ; toujours reprenable ; même statut à l'Accueil et dans Parties, jamais calculée contre une liste filtrée. |
+| volée en cours (brouillon) | `VisitDraft` / `visitDrafts` | Les 0 à 3 fléchettes déjà saisies d'une volée non enregistrée, gardées hors du journal (une ligne par partie, jamais exportée) pour survivre à un rechargement. Effacée à l'enregistrement ; reprise **silencieuse**. |
 | manches jouées | `legsPlayed` | X01 : manches gagnées, tous sets confondus. Dérivé du journal (`LegWon`), jamais écrit. |
 | joueur / profil | `Player` | Profil **local** (pseudo + couleur), pas un compte. |
 | oche | — | La ligne de lancer. Contexte d'usage, pas un objet du code. |

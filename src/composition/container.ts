@@ -9,6 +9,7 @@ import type { PlayerRepository } from '@/core/application/ports/driven/PlayerRep
 import type { Preferences } from '@/core/application/ports/driven/Preferences'
 import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
+import type { VisitDraftRepository } from '@/core/application/ports/driven/VisitDraftRepository'
 import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
 import type { GetCheckoutRange } from '@/core/application/ports/driving/GetCheckoutRange'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
@@ -23,6 +24,7 @@ import type { GetPlayerStats } from '@/core/application/ports/driving/GetPlayerS
 import type { GetReplayableConfigurations } from '@/core/application/ports/driving/GetReplayableConfigurations'
 import type { ManageBackup } from '@/core/application/ports/driving/ManageBackup'
 import type { ManagePlayers } from '@/core/application/ports/driving/ManagePlayers'
+import type { ManageVisitDraft } from '@/core/application/ports/driving/ManageVisitDraft'
 import type { PlayCheckoutPractice } from '@/core/application/ports/driving/PlayCheckoutPractice'
 import type { PlayCricket } from '@/core/application/ports/driving/PlayCricket'
 import type { PlayTourDuMonde } from '@/core/application/ports/driving/PlayTourDuMonde'
@@ -48,6 +50,7 @@ import { GetPlayerStatsUseCase } from '@/core/application/use-cases/GetPlayerSta
 import { GetReplayableConfigurationsUseCase } from '@/core/application/use-cases/GetReplayableConfigurationsUseCase'
 import { ManageBackupUseCase } from '@/core/application/use-cases/ManageBackupUseCase'
 import { ManagePlayersUseCase } from '@/core/application/use-cases/ManagePlayersUseCase'
+import { ManageVisitDraftUseCase } from '@/core/application/use-cases/ManageVisitDraftUseCase'
 import { PlayCheckoutPracticeUseCase } from '@/core/application/use-cases/PlayCheckoutPracticeUseCase'
 import { PlayCricketUseCase } from '@/core/application/use-cases/PlayCricketUseCase'
 import { PlayTourDuMondeUseCase } from '@/core/application/use-cases/PlayTourDuMondeUseCase'
@@ -67,6 +70,7 @@ import { VibrationHaptics } from '@/infrastructure/device/VibrationHaptics'
 import { WakeLockScreenLock } from '@/infrastructure/device/WakeLockScreenLock'
 import { DexieMatchRepository } from '@/infrastructure/dexie/DexieMatchRepository'
 import { DexiePlayerRepository } from '@/infrastructure/dexie/DexiePlayerRepository'
+import { DexieVisitDraftRepository } from '@/infrastructure/dexie/DexieVisitDraftRepository'
 import { createDatabase } from '@/infrastructure/dexie/database'
 import { CryptoIdGenerator } from '@/infrastructure/system/CryptoIdGenerator'
 import { CryptoRandomSource } from '@/infrastructure/system/CryptoRandomSource'
@@ -98,6 +102,8 @@ export type Devices = {
 export type Dependencies = {
   readonly matches: MatchRepository
   readonly players: PlayerRepository
+  /** La volée en cours de chaque partie, hors du journal (lot `volee-partielle`). */
+  readonly visitDrafts: VisitDraftRepository
   readonly clock: Clock
   readonly ids: IdGenerator
   readonly random: RandomSource
@@ -137,6 +143,11 @@ export type Services = {
   readonly deleteMatch: DeleteMatch
   readonly managePlayers: ManagePlayers
   readonly manageBackup: ManageBackup
+  /**
+   * La volée en cours, écrite à chaque fléchette et relue à l'ouverture de la
+   * partie (lot `volee-partielle`) : elle survit à un rechargement.
+   */
+  readonly manageVisitDraft: ManageVisitDraft
   /** Le second mode de jeu. Voir la couture `GameModes` côté domaine. */
   readonly playTourDuMonde: PlayTourDuMonde
   /** Le Cricket, standard ou cut-throat selon la configuration de la partie. */
@@ -162,6 +173,7 @@ export type Services = {
 export const createServices = ({
   matches,
   players,
+  visitDrafts,
   clock,
   ids,
   random,
@@ -200,9 +212,10 @@ export const createServices = ({
     getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
     getPlayerStats: new GetPlayerStatsUseCase(matches, players, clock),
     getDeviceContents: new GetDeviceContentsUseCase(matches, players),
-    deleteMatch: new DeleteMatchUseCase(matches),
+    deleteMatch: new DeleteMatchUseCase(matches, visitDrafts),
     managePlayers: new ManagePlayersUseCase(players, ids, clock),
-    manageBackup: new ManageBackupUseCase(matches, players, clock),
+    manageBackup: new ManageBackupUseCase(matches, players, visitDrafts, clock),
+    manageVisitDraft: new ManageVisitDraftUseCase(matches, visitDrafts),
     playTourDuMonde,
     playCricket,
     playCheckoutPractice,
@@ -221,6 +234,7 @@ export const createBrowserDependencies = (): Dependencies => {
   return {
     matches: new DexieMatchRepository(db),
     players: new DexiePlayerRepository(db),
+    visitDrafts: new DexieVisitDraftRepository(db),
     clock: new SystemClock(),
     ids: new CryptoIdGenerator(),
     random: new CryptoRandomSource(),

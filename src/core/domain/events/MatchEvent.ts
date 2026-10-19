@@ -20,8 +20,9 @@ import type { MatchName } from '../value-objects/MatchName'
  * de la manche suivante part avec le `VisitRecorded`, s'il existe (deux
  * événements, pas un) : la dernière volée quitte le journal,
  * et depuis le lot `annulation-volee` ses fléchettes restantes (la dernière
- * en moins) reviennent à la saisie, non persistées comme toute volée en cours
- * — aucun événement nouveau. Si le journal contenait aussi les conséquences,
+ * en moins) reviennent à la saisie, hors du journal comme toute volée en cours
+ * (dans le brouillon de volée depuis le lot `volee-partielle`) — aucun
+ * événement nouveau. Si le journal contenait aussi les conséquences,
  * il faudrait retirer « la dernière volée ET les événements qu'elle a
  * déclenchés » — précisément la classe de bug qu'on veut éliminer.
  *

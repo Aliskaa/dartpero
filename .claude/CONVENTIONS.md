@@ -196,7 +196,8 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   mécanisme. **L'état vit dans l'historique** (`useModaleAuRetour`) : l'ouverture empile une
   entrée **sur la même URL** (`location.state[cle]`, validé contre une liste fermée ; clés en
   usage `parcours`, `liste`, `regles`, `confirmation`), **seulement dans un gestionnaire de clic** (jamais dans
-  un effet, jamais `<Link>` vers l'emplacement courant, qui remplace) ; la fermeture — ✕, Échap,
+  un effet, jamais `<Link>` vers l'emplacement courant, qui remplace ; **une seule exception**, la
+  réouverture de la boîte de sortie après un rechargement, ci-dessous) ; la fermeture — ✕, Échap,
   retour, appui à côté — recule **toujours** par `navigate(-1)`, jamais par un état local remis à
   faux (entrée orpheline) ni par `replace`. Garde « en vol » en `useRef` contre les doubles
   reculs. Jamais `window.history`. **La boîte suit `useDialogueNatif`** : le `<dialog>` est
@@ -213,8 +214,14 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `true` ; la boîte s'affiche quand l'entrée est là **et** qu'une sortie attend (dérivé du hook
   du mode) ; **toute fermeture sans choix vaut *Corriger*** — Échap et voile par `onCorriger`, le
   retour du téléphone détecté au passage `'sortie'` → `null` tant qu'une sortie attend et que
-  *Valider* n'a pas été choisi (une ref) ; une entrée héritée d'un rechargement est dépilée **au
-  montage seulement** (une ref de plus contre le double effet de `StrictMode`) ; l'écran n'envoie
+  *Valider* n'a pas été choisi (une ref) ; **après un rechargement**, le hook se réconcilie **une
+  seule fois, quand `pret`** (le brouillon de volée est relu, asynchrone ; une ref contre le double
+  effet de `StrictMode`) : entrée héritée sans sortie en attente → dépilée ; entrée héritée avec
+  sortie en attente → rien, la boîte s'affiche ; **pas d'entrée mais une sortie en attente →
+  `demander()` depuis l'effet** (exception au « seulement dans un clic », appelée une fois, gardée
+  par la ref et `enVol`). Résiduel R2 : Chrome peut sauter une entrée empilée sans geste préalable,
+  le retour quitte alors la partie au lieu de *Corriger* (rien n'est écrit, la boîte revient à la
+  réouverture) ; l'écran n'envoie
   au résumé que `termine && auRepos` (aucune entrée `confirmation`), sinon le `replace`
   écraserait l'entrée de la boîte. Pas de ✕ : la référence `croix` de `useDialogueNatif` porte le
   focus sur *Corriger*. Après **toute** fermeture de la boîte (*Corriger*, *Valider*, retour, Échap,
@@ -224,8 +231,9 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   tap y poserait une fléchette fantôme ; le joueur suivant, lui, ne lance pas en 500 ms. **Exception assumée** à « hors des branches de chargement » : le hook est
   appelé au-dessus des retours de chargement, mais `<BoiteConfirmation>` vit dans la branche
   chargée de l'écran. Sans risque d'entrée orpheline : la boîte ne s'ouvre que sur l'appui d'une
-  fléchette, donc partie chargée (`staleTime` infini, l'état ne repasse jamais en chargement), et
-  une entrée héritée d'un rechargement est dépilée par le hook, au-dessus des retours.
+  fléchette ou après la lecture du brouillon (`pret`), donc partie chargée (`staleTime` infini,
+  l'état ne repasse jamais en chargement), et une entrée héritée d'un rechargement est réconciliée
+  par le hook, au-dessus des retours.
 - Les listes que l'étape 2 propose (`SCORES`, `LEGS`, `SETS`, `SORTIES`) et les bornes de joueurs
   (`MAX_JOUEURS`, `JOUEURS_ENTRAINEMENT`) vivent dans `src/ui/reglagesPossibles.ts`, module neutre
   lu par la fiche, le hook du parcours, la feuille et le filtre « Rejouer » (`ui/rejouer.ts`).
@@ -252,7 +260,8 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
 - **Annuler, une fléchette par appui** (lot `annulation-volee`) : sans fléchette en cours,
   `annuler()` garde ses gardes (`occupe`, rien à retirer, `ecoulee()` de la pause), appelle le
   use case d'annulation, qui rend un `ReopenedVisit` `{ state, darts }` ; le hook injecte
-  `state` dans le cache et **rend `darts` à la saisie** (`setDartsEnCours`), puis `armer()` si
+  `state` dans le cache et **rend `darts` à la saisie** (`poser(darts, revenu)`, estampillé avec
+  l'état **rouvert**, jamais l'ancien), puis `armer()` si
   la volée rouverte est vide. Le libellé (`libelleAnnulation(flechette, joueur)`) lit la
   dernière fléchette en cours, sinon la dernière de la dernière volée **projetée** et son
   `playerId` — jamais recalculé.
@@ -263,6 +272,17 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   `corrigerSortie()` retire la fléchette (même chemin que le retrait d'une fléchette en cours) ;
   `validerSortie()` appelle `enregistrer` — voix, haptique et célébration y vivent déjà, donc
   arrivent après *Valider*. Le hook rend aussi `confirmation` `{ titre, texte }` (`labels.ts`).
+- **La volée en cours survit à un rechargement** (lot `volee-partielle`, `useVoleeEnCours`) :
+  chaque hook de mode (X01, Cricket, Tour du monde, entraînement) range ses fléchettes par ce
+  mécanisme unique, jamais par un `useState` à lui. `useVoleeEnCours(matchId, state, evaluer)` rend
+  `{ darts, poser, pret }` ; `evaluer(state, darts)` rend `'ouverte' | 'en-attente' | 'close'` (la
+  même fonction sert la saisie et le jugement d'un brouillon relu) ; `poser(darts, base)` met à jour
+  la saisie **et** écrit le brouillon (jamais dans un updater : `StrictMode` le doublerait) ;
+  `pret` passe à vrai une fois le brouillon lu, et `chargement` l'attend. Les écritures passent
+  par **une file** par instance (ordre garanti, échecs avalés : la saisie ne grise jamais le
+  pavé). Le brouillon n'est effacé qu'**après** un enregistrement réussi (`poser([], resultat.state)`).
+  Port `ManageVisitDraft` ; la clé de cohérence est le `visitCount` de l'état affiché.
+  Un mode nouveau (CONVENTIONS § 13) l'utilise et passe `pret` à `useConfirmationSortie`.
 - Une valeur qui doit survivre aux rendus sans réarmer un callback passe par une **ref**
   resynchronisée à chaque rendu (`profilsRef.current = profils`) plutôt que par une dépendance.
 - Les erreurs `unknown` sont normalisées une seule fois, via un petit `message(erreur: unknown):
@@ -275,6 +295,11 @@ raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il d
   boucle sur les valeurs plutôt que d'en renvoyer une fixe** — un aléa figé masquerait un bug de
   tirage. `fakeServices(surcharges)` enveloppe le **vrai** `createServices` autour d'adapters en
   mémoire : ne jamais réimplémenter le composition root dans un test.
+- **Simuler un rechargement** (lot `volee-partielle`) : démonter l'écran, puis le rendre à neuf avec
+  **les mêmes services** et un **nouveau `QueryClient`** — c'est la base (donc le brouillon) qui
+  survit, pas le cache. Fakes de panne, sous-classes de test : `BrouillonsEnPanne`,
+  `BrouillonsSuspendus`, `BrouillonsIllisibles`, `BrouillonsIndelebiles`, `DepotEnPanne`,
+  `DepotCompteur`. Tout test d'absence affirme d'abord sa précondition (le brouillon existe).
 - Chaque suite de domaine a son `helpers.ts` (`tests/domain/helpers.ts`) avec des verbes
   français courts qui s'appuient sur la vraie projection : `journal(...)` construit le journal,
   `jouer(...)` le projette, `joueur(state, id)`, `derniereVolee(state)`, `courant(state)`. Le
@@ -394,6 +419,12 @@ aiguillage de `games/index.ts`, un dossier `ui/composants/<mode>/`, un écran de
 résumé. Rien d'autre ne bouge — vérifié trois fois de suite (Tour du monde, Cricket,
 entraînement).
 
+⚠️ **Depuis le lot « volee-partielle »**, le hook du mode range ses fléchettes en cours par
+`useVoleeEnCours` (§ 10), avec son `evaluer` (`'ouverte' | 'en-attente' | 'close'`), et passe `pret` à
+`useConfirmationSortie` s'il confirme une sortie. `tests/ui/voleePartielle.test.tsx` type sa liste de modes
+par `satisfies Record<GameModeId, …>` : un mode nouveau fait échouer la compilation tant qu'il n'y a pas
+son entrée.
+
 ⚠️ **Depuis le lot « cartes-partie »**, un mode doit aussi aux cartes : ses constructeurs
 `reglesCarte*` / `detailCarte*` / `parle*` dans `labels.ts`, sa branche dans `vueCarte`
 (`src/ui/cartesPartie.ts` : détail, unité, règles, jauge, chiffre, phrase) et dans
@@ -445,7 +476,8 @@ invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchang�
 `GetCheckoutRange`) ; lot « rejouer » : 24 (`GetReplayableConfigurations`) ; lot
 « reglages-par-usage » : 25 (`GetDeviceContents`) ; lot « annulation-volee » : toujours 25, 27 fichiers
 (hors `MatchSummary.ts` et `ReopenedVisit.ts`, deux types), 11 driven, 14 hooks (plus `tourDeTable.ts`, un utilitaire ;
-`useConfirmationSortie` au lot « annulation-volee »),
+`useConfirmationSortie` au lot « annulation-volee ») ; lot « volee-partielle » : 26 ports driving
+(`ManageVisitDraft`), 12 driven (`VisitDraftRepository`), 15 hooks (`useVoleeEnCours`),
 4 modes, 4 services transverses.
 
 ```
@@ -525,6 +557,8 @@ src/
 │  │                        feuille de règles, confirmation de la sortie) ·
 │  │                      useConfirmationSortie (la boîte « Kevin sort sur D10 ? » :
 │  │                        demander, Corriger, Valider, retour = Corriger) ·
+│  │                      useVoleeEnCours (la volée en cours gardée dans le brouillon :
+│  │                        poser, pret, file d'écriture ; commun aux quatre modes) ·
 │  │                      useDialogueNatif (la discipline du <dialog>, partagée)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
 │     theme.ts (clair / sombre / système) ·

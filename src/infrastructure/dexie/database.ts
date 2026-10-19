@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { MatchEvent } from '@/core/domain/events/MatchEvent'
+import type { Dart } from '@/core/domain/value-objects/Dart'
 import { PLAYER_COLORS } from '@/core/domain/value-objects/PlayerColor'
 
 export type StoredMatch = {
@@ -16,9 +17,21 @@ export type StoredPlayer = {
   createdAt: number
 }
 
+/**
+ * La volée en cours d'une partie (lot `volee-partielle`), hors du journal.
+ * `darts` a la forme de `VisitRecorded.darts`. Aucun horodatage : rien à
+ * expirer, rien de plus à garder que ce qui se rend à l'écran.
+ */
+export type StoredVisitDraft = {
+  matchId: string
+  visitCount: number
+  darts: Dart[]
+}
+
 export type DartperoDatabase = Dexie & {
   matches: EntityTable<StoredMatch, 'id'>
   players: EntityTable<StoredPlayer, 'id'>
+  visitDrafts: EntityTable<StoredVisitDraft, 'matchId'>
 }
 
 /**
@@ -61,6 +74,18 @@ export const createDatabase = (name = 'dartpero'): DartperoDatabase => {
         if (!joueur.createdAt) joueur.createdAt = maintenant
       })
   })
+
+  /**
+   * v3 — le brouillon de volée (lot `volee-partielle`) : une table de plus,
+   * une ligne par partie, clé `matchId`, sans index.
+   *
+   * **Sans `upgrade`** : la table naît vide et rien d'existant n'est transformé.
+   * `matches` et `players` ne sont pas redéclarées : Dexie garde le schéma
+   * d'une table que la nouvelle version ne mentionne pas (prouvé par le test de
+   * migration v2 → v3). Les redéclarer à l'identique ne changerait rien ; les
+   * redéclarer **autrement** toucherait aux index des parties.
+   */
+  db.version(3).stores({ visitDrafts: 'matchId' })
 
   return db
 }

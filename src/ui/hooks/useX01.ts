@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { RecordVisitResult } from '@/core/application/ports/driving/RecordVisit'
+import type { X01State } from '@/core/domain/games/x01/rules'
 import { type Dart, Dart as DartVO, type Multiplier } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import {
@@ -17,6 +18,7 @@ import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
 import { useProfils } from './useJoueurs'
 import { usePauseAnnulation } from './usePauseAnnulation'
+import { type EtatVolee, useVoleeEnCours } from './useVoleeEnCours'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -28,9 +30,11 @@ const message = (erreur: unknown): string =>
  * enregistrée renvoie déjà le nouvel état, qu'on injecte directement dans le
  * cache. Aucun aller-retour de rechargement entre le tap et le score affiché.
  *
- * La volée **en cours de saisie** n'est pas persistée : elle vit en état local
- * et n'est envoyée au use case qu'une fois complète (3 fléchettes, bust ou
- * sortie) — c'est le port `PreviewVisit` qui le détermine.
+ * La volée **en cours de saisie** n'entre pas au journal : elle vit en état
+ * local, doublée du brouillon de volée (`useVoleeEnCours`, lot
+ * `volee-partielle`) qui la fait survivre à un rechargement, et n'est envoyée
+ * au use case qu'une fois complète (3 fléchettes, bust ou sortie) — c'est le
+ * port `PreviewVisit` qui le détermine.
  */
 export const useX01 = (matchId: MatchId) => {
   const services = useServices()
@@ -52,7 +56,33 @@ export const useX01 = (matchId: MatchId) => {
   })
 
   const state = requete.data ?? null
-  const [dartsEnCours, setDartsEnCours] = useState<readonly Dart[]>([])
+
+  /**
+   * Où en est une volée, d'après `PreviewVisit` (aucune règle recopiée) : la
+   * sortie attend *Valider* quand sa fléchette est la dernière de la volée.
+   */
+  const evaluer = useCallback(
+    (base: X01State, darts: readonly Dart[]): EtatVolee => {
+      const joueur = base.players[base.currentPlayerIndex]
+      if (!joueur) return 'close'
+      const evaluation = services.previewVisit.execute({
+        config: base.config,
+        remaining: joueur.remaining,
+        hasOpened: joueur.hasOpened,
+        darts,
+      })
+      if (!evaluation.complete) return 'ouverte'
+      if (evaluation.outcome === 'CHECKOUT' && evaluation.dartsUsed === darts.length) {
+        return 'en-attente'
+      }
+      return 'close'
+    },
+    [services],
+  )
+  const volee = useVoleeEnCours(matchId, state, evaluer)
+  const dartsEnCours = volee.darts
+  const poser = volee.poser
+
   const [multiplicateur, setMultiplicateur] = useState<Multiplier>('SIMPLE')
   const [derniereVolee, setDerniereVolee] = useState<RecordVisitResult | null>(null)
   const [occupe, setOccupe] = useState(false)
@@ -104,7 +134,8 @@ export const useX01 = (matchId: MatchId) => {
       try {
         const resultat = await services.recordVisit.execute({ matchId, darts })
         queryClient.setQueryData(['match', matchId], resultat.state)
-        setDartsEnCours([])
+        // La volée est au journal : son brouillon s'efface, après sa dernière écriture (file).
+        poser([], resultat.state)
         setDerniereVolee(resultat)
 
         if (resultat.visit.outcome === 'BUSTED') services.devices.haptics.error()
@@ -128,7 +159,7 @@ export const useX01 = (matchId: MatchId) => {
         setOccupe(false)
       }
     },
-    [services, matchId, queryClient, dire],
+    [services, matchId, queryClient, dire, poser],
   )
 
   /**
@@ -158,11 +189,11 @@ export const useX01 = (matchId: MatchId) => {
    * (voir `usePauseAnnulation`).
    */
   const retirerFlechette = useCallback(() => {
-    if (dartsEnCours.length === 0) return
+    if (dartsEnCours.length === 0 || !state) return
     services.devices.haptics.tap()
-    setDartsEnCours((darts) => darts.slice(0, -1))
+    poser(dartsEnCours.slice(0, -1), state)
     if (dartsEnCours.length === 1) armer()
-  }, [services, dartsEnCours.length, armer])
+  }, [services, dartsEnCours, state, poser, armer])
 
   /**
    * Ajoute une fléchette ; rend `true` quand elle **met une sortie en attente** :
@@ -175,7 +206,7 @@ export const useX01 = (matchId: MatchId) => {
 
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
-      setDartsEnCours(suite)
+      poser(suite, state)
       // La célébration du leg précédent ne doit pas survivre à la reprise du jeu.
       setDerniereVolee(null)
 
@@ -184,20 +215,30 @@ export const useX01 = (matchId: MatchId) => {
       // pour que la règle tienne quelle que soit la façon de saisir.
       setMultiplicateur('SIMPLE')
 
-      const evaluation = services.previewVisit.execute({
-        config: state.config,
-        remaining: joueurCourant.remaining,
-        hasOpened: joueurCourant.hasOpened,
-        darts: suite,
-      })
-      if (!evaluation.complete) return false
-      // La sortie attend *Valider* : ni journal, ni voix, ni célébration avant.
-      if (evaluation.outcome === 'CHECKOUT') return true
-      // Le bust, lui, n'est jamais confirmé.
-      void enregistrer(suite)
-      return false
+      switch (evaluer(state, suite)) {
+        case 'ouverte':
+          return false
+        // La sortie attend *Valider* : ni journal, ni voix, ni célébration avant.
+        case 'en-attente':
+          return true
+        // Le bust, lui, n'est jamais confirmé.
+        case 'close':
+          void enregistrer(suite)
+          return false
+      }
     },
-    [services, state, joueurCourant, occupe, termine, sortieEnAttente, dartsEnCours, enregistrer],
+    [
+      services,
+      state,
+      joueurCourant,
+      occupe,
+      termine,
+      sortieEnAttente,
+      dartsEnCours,
+      poser,
+      evaluer,
+      enregistrer,
+    ],
   )
 
   /** *Corriger* : la fléchette de sortie est retirée, la volée reprend. */
@@ -234,7 +275,8 @@ export const useX01 = (matchId: MatchId) => {
     try {
       const { state: revenu, darts } = await services.undoLastVisit.execute(matchId)
       queryClient.setQueryData(['match', matchId], revenu)
-      setDartsEnCours(darts)
+      // Estampillée avec l'état **rouvert** : la volée rouverte survit à un rechargement.
+      poser(darts, revenu)
       setDerniereVolee(null)
       services.devices.haptics.tap()
       // Plus rien en main : la pause protège la volée du joueur d'avant.
@@ -254,6 +296,7 @@ export const useX01 = (matchId: MatchId) => {
     armer,
     ecoulee,
     retirerFlechette,
+    poser,
   ])
 
   /**
@@ -281,7 +324,10 @@ export const useX01 = (matchId: MatchId) => {
 
   return {
     state,
-    chargement: requete.isPending,
+    // La partie est là, mais sa volée en cours n'a pas encore été relue.
+    chargement: requete.isPending || (state !== null && !volee.pret),
+    /** Le brouillon de volée a été relu : `useConfirmationSortie` peut rouvrir la boîte. */
+    pret: volee.pret,
     erreurChargement: requete.error,
     joueurCourant,
     termine,

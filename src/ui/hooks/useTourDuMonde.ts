@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { TourDuMondeVisitResult } from '@/core/application/ports/driving/PlayTourDuMonde'
+import type { TourDuMondeState } from '@/core/domain/games/tour-du-monde/rules'
 import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import {
@@ -18,6 +19,7 @@ import { prochainJoueur } from './tourDeTable'
 import { useVoix } from './useAppareil'
 import { useProfils } from './useJoueurs'
 import { usePauseAnnulation } from './usePauseAnnulation'
+import { type EtatVolee, useVoleeEnCours } from './useVoleeEnCours'
 
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
@@ -33,6 +35,9 @@ const message = (erreur: unknown): string =>
  * c'est atteindre le secteur », et la volée se clôt dès la fléchette qui boucle
  * le parcours — réclamer les suivantes fausserait le départage, qui se joue au
  * nombre de fléchettes.
+ *
+ * La volée en cours reste hors du journal, doublée du brouillon de volée
+ * (`useVoleeEnCours`, lot `volee-partielle`) qui la fait survivre à un rechargement.
  */
 export const useTourDuMonde = (matchId: MatchId) => {
   const services = useServices()
@@ -53,7 +58,24 @@ export const useTourDuMonde = (matchId: MatchId) => {
   })
 
   const state = requete.data ?? null
-  const [dartsEnCours, setDartsEnCours] = useState<readonly Dart[]>([])
+
+  /**
+   * La volée est close à trois fléchettes — ou dès celle qui boucle le
+   * parcours, qui attend *Valider*. Lu sur `PreviewTourDuMondeVisit`.
+   */
+  const evaluer = useCallback(
+    (base: TourDuMondeState, darts: readonly Dart[]): EtatVolee => {
+      const evaluation = services.previewTourDuMondeVisit.execute({ state: base, darts })
+      if (evaluation.completesTour) return 'en-attente'
+      if (evaluation.complete) return 'close'
+      return 'ouverte'
+    },
+    [services],
+  )
+  const volee = useVoleeEnCours(matchId, state, evaluer)
+  const dartsEnCours = volee.darts
+  const poser = volee.poser
+
   const [derniereVolee, setDerniereVolee] = useState<TourDuMondeVisitResult | null>(null)
   const [occupe, setOccupe] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -80,7 +102,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
       try {
         const resultat = await services.playTourDuMonde.recordVisit(matchId, darts)
         queryClient.setQueryData(['tourDuMonde', matchId], resultat.state)
-        setDartsEnCours([])
+        poser([], resultat.state)
         setDerniereVolee(resultat)
 
         const boucle = resultat.milestones.some((jalon) => jalon.type === 'TourCompleted')
@@ -111,7 +133,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
         setOccupe(false)
       }
     },
-    [services, matchId, queryClient, dire],
+    [services, matchId, queryClient, dire, poser],
   )
 
   /**
@@ -136,11 +158,11 @@ export const useTourDuMonde = (matchId: MatchId) => {
 
   /** Retire la dernière fléchette en cours ; la dernière partie, la pause s'arme. */
   const retirerFlechette = useCallback(() => {
-    if (dartsEnCours.length === 0) return
+    if (dartsEnCours.length === 0 || !state) return
     services.devices.haptics.tap()
-    setDartsEnCours((darts) => darts.slice(0, -1))
+    poser(dartsEnCours.slice(0, -1), state)
     if (dartsEnCours.length === 1) armer()
-  }, [services, dartsEnCours.length, armer])
+  }, [services, dartsEnCours, state, poser, armer])
 
   /** Rend `true` quand la fléchette boucle le parcours : l'écran demande confirmation. */
   const ajouterFlechette = useCallback(
@@ -149,18 +171,23 @@ export const useTourDuMonde = (matchId: MatchId) => {
 
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
-      setDartsEnCours(suite)
+      poser(suite, state)
       setDerniereVolee(null)
 
       // La volée est close à trois fléchettes — ou dès celle qui boucle le
       // parcours : les suivantes n'auraient plus de cible. Celle-là attend
       // *Valider* avant d'être écrite.
-      const evaluation = services.previewTourDuMondeVisit.execute({ state, darts: suite })
-      if (evaluation.completesTour) return true
-      if (evaluation.complete) void enregistrer(suite)
-      return false
+      switch (evaluer(state, suite)) {
+        case 'ouverte':
+          return false
+        case 'en-attente':
+          return true
+        case 'close':
+          void enregistrer(suite)
+          return false
+      }
     },
-    [services, state, occupe, termine, sortieEnAttente, dartsEnCours, enregistrer],
+    [services, state, occupe, termine, sortieEnAttente, dartsEnCours, poser, evaluer, enregistrer],
   )
 
   /** *Corriger* : la fléchette qui bouclait est retirée, la volée reprend. */
@@ -194,7 +221,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     try {
       const { state: revenu, darts } = await services.playTourDuMonde.undoLastVisit(matchId)
       queryClient.setQueryData(['tourDuMonde', matchId], revenu)
-      setDartsEnCours(darts)
+      poser(darts, revenu)
       setDerniereVolee(null)
       services.devices.haptics.tap()
       if (darts.length === 0) armer()
@@ -213,6 +240,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     armer,
     ecoulee,
     retirerFlechette,
+    poser,
   ])
 
   /** Ce que le bouton va retirer, écrit dessus — voir `libelleAnnulation`. */
@@ -238,7 +266,10 @@ export const useTourDuMonde = (matchId: MatchId) => {
     state,
     /** Le tableau à afficher : l'état réel augmenté de la volée en cours. */
     affiche,
-    chargement: requete.isPending,
+    // La partie est là, mais sa volée en cours n'a pas encore été relue.
+    chargement: requete.isPending || (state !== null && !volee.pret),
+    /** Le brouillon de volée a été relu : `useConfirmationSortie` peut rouvrir la boîte. */
+    pret: volee.pret,
     erreurChargement: requete.error,
     joueurCourant,
     termine,
