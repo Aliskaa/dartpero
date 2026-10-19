@@ -19,32 +19,29 @@ résumé transposé, trois finitions, thème clair. Puis **trois lots post-audit
 Lot `regles-du-jeu` (lot 11 de la refonte : règles au livre ouvert, sortie libre gravée, voir
 § 4 et § 6), rebasé sur `statistiques-podium` puis Révision 1 : **1340 tests verts**.
 Lot `rejouer` (lot 10 de la refonte : « Rejouer » à l'étape 1 de Nouvelle partie, voir § 4 et § 6) :
-**fait, 1408 tests verts** ; **relecture à l'écran en attente** (portrait, paysage, 360 px, deux thèmes).
+**fait, 1408 tests verts** ; relecture à l'écran (portrait, paysage, 360 px, deux thèmes) **faite sur téléphone** (19 octobre 2026).
 **Suites hors lot** : (1) `backupSchema` ne contrôle pas le type de `doubleOut` / `doubleIn` d'une partie
 importée (le filtre de « Rejouer » les écarte côté UI, mais l'import les laisse entrer) ; (2) un journal
 importé non projetable fait échouer la lecture de l'historique (constat 11 de l'index).
 Lot `reglages-par-usage` (lot 12 de la refonte : Réglages en une page, deux voyants, date du
 dernier export, voir § 4 et § 6) : passé par Test (boucle 1), Sécurité (PASS) et Revue (NO-GO en passe 1,
-boucle 5 : valeur de voyant en gras, duo à 56 px ; GO en passe 2) — **1429 tests verts**, **1497** après rebase sur `rejouer`. Reste, sur appareil :
-- **relecture à l'écran** sur le téléphone, portrait et paysage, sombre et clair ;
-- **360 px et police système au maximum** (l'étiquette « Dernier export » n'est vérifiée qu'à
-  125 % dans Chromium) ;
-- **contraste réel** des vignettes de thème et du vert `vert-etat` (« Installée ») ;
-- **iPhone réel** : « Comment ? » et guide `#installer`, export (« export réussi » = fichier remis
-  au navigateur, U9) ;
-- **mesure** de la lecture de toute la base à l'ouverture des Réglages (01, Baseline : « Dev
-  mesure ») : **non faite** ; repli `count()` dans les dépôts si une lenteur se voit.
+boucle 5 : valeur de voyant en gras, duo à 56 px ; GO en passe 2) — **1429 tests verts**, **1497** après rebase sur `rejouer`.
+**Vérifications sur appareil faites** (19 octobre 2026) : relecture à l'écran (portrait, paysage, sombre,
+clair), 360 px et police système au maximum, contraste des vignettes de thème et du vert `vert-etat`,
+iPhone réel (« Comment ? », guide `#installer`, export). Reste, sans échéance : **mesure** de la lecture
+de toute la base à l'ouverture des Réglages (01, Baseline : « Dev mesure »), **non faite** ; repli
+`count()` dans les dépôts si une lenteur se voit.
 Lot `annulation-volee` (retours 8 et 3 des beta-testeurs : une fléchette par appui sur
 « Annuler », confirmation de la sortie, voir § 4 et § 6). **Relecture à l'écran faite dans
-Chrome** (port 5202 : portrait et paysage, sombre et clair, quatre modes, boîte à 360 px). Reste,
-**sur vrai téléphone**, les angles morts de `03-plan-de-test.md` : noms longs, parties à 3-4
-joueurs, cut-throat et bust d'entraînement à l'écran, appui fantôme en paysage (double tap sur
-*Corriger* ou *Valider*), focus rendu à la fermeture sous **Safari**, lecture par **VoiceOver**.
+Chrome** (port 5202 : portrait et paysage, sombre et clair, quatre modes, boîte à 360 px). Les
+angles morts de `03-plan-de-test.md` (noms longs, parties à 3-4 joueurs, cut-throat et bust
+d'entraînement, appui fantôme en paysage, focus sous **Safari**, **VoiceOver**) ont été **vérifiés sur
+vrai téléphone** (19 octobre 2026).
 Dettes du lot `reglages-par-usage` (`03-plan-de-test.md`) : **D1** — `useDernierExport` sans test du hook isolé
 (`renderHook` si un second lecteur apparaît) ; **N1** — garde de l'aperçu en liste noire (une
 couleur Tailwind par défaut passerait ; durcir en « toute couleur d'`Apercu` est `apercu-*` »).
 Vérifications **acceptées à la relecture** par l'utilisateur (`docs/lots/regles-du-jeu/05-revue.md`,
-passe 2), sur son téléphone, au plus tard au prochain déploiement :
+passe 2), **toutes faites sur son téléphone le 19 octobre 2026** (liste gardée pour mémoire) :
 - **défilement du corps de la feuille** (colonne `flex h-full flex-col`, nouvelle depuis la
   Révision 1) : la dernière rubrique atteignable à l'étape 2, sur le match en portrait (210 px)
   et en paysage ;
@@ -820,6 +817,27 @@ quel que soit le joueur : la volée rouverte quitte le journal et ses fléchette
 en saisie (`ReopenedVisit`, quatre modes). La fléchette qui sort / gagne / boucle ouvre la boîte
 `BoiteConfirmation` (*Corriger* / *Valider la sortie*) avant toute écriture, voix et célébration.
 Aucun format persisté. Relecture à l'écran faite dans Chrome ; reste le vrai téléphone (§ 0). Détail § 6.
+
+### Lot « nouveaux-modes » — *à cadrer* (proposé le 19 octobre 2026)
+
+Cinq modes de plus derrière la couture `GameMode` (`src/core/domain/games/index.ts`) :
+**Killer**, **Shanghai**, **Around the Clock**, **Baseball**, **entraînement au scoring**
+(volées libres sur le triple 20, moyenne par séance).
+
+⚠️ **Aucune règle n'est écrite ici, à dessein** : `rules/response-policy.md` interdit d'improviser une
+règle de jeu. Chaque mode passe par `/intake`, qui fixe ses règles avec l'utilisateur avant que
+`CLAUDE.md` ne les grave (§ Règles de…). Killer et Shanghai étaient jusqu'ici « hors périmètre v1 » :
+`CLAUDE.md` § Décisions structurantes et § Décisions ouvertes 3 sont à mettre à jour à la validation.
+
+Points à trancher à l'`/intake` :
+- **Un lot ou plusieurs** : cinq modes dans un seul lot, c'est un commit unique et une revue très large
+  (un dossier, un événement d'ouverture et l'aiguillage par mode, plus `backupSchema` et le test de
+  sauvegarde « une partie de chaque mode »). Découpage conseillé : un lot par mode, ou deux (jeux de
+  groupe d'abord, entraînement ensuite).
+- **Around the Clock** recoupe le Tour du monde : mode distinct ou variante de réglage de l'existant.
+- **Entraînement au scoring** : hors statistiques comme l'entraînement au checkout, ou cumulé.
+- Pour chacun : joueurs min/max, fin de partie, départage, écran de match (portrait et paysage),
+  rubrique de la feuille de règles (`labels.ts`), annonces vocales.
 
 ---
 
