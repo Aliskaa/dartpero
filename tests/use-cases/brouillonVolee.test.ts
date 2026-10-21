@@ -65,6 +65,9 @@ const jouer = async (
     case 'CRICKET':
       await services.playCricket.recordVisit(id, darts)
       return
+    case 'KILLER':
+      await services.playKiller.recordVisit(id, darts)
+      return
     case 'CHECKOUT_PRACTICE':
       await services.playCheckoutPractice.recordVisit(id, darts)
       return
@@ -83,6 +86,8 @@ const annulerVolee = (
       return services.playTourDuMonde.undoLastVisit(id)
     case 'CRICKET':
       return services.playCricket.undoLastVisit(id)
+    case 'KILLER':
+      return services.playKiller.undoLastVisit(id)
     case 'CHECKOUT_PRACTICE':
       return services.playCheckoutPractice.undoLastVisit(id)
   }

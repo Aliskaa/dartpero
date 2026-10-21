@@ -1,5 +1,6 @@
 import type { CheckoutPracticeConfig } from '../../../domain/games/checkout-practice/config'
 import type { CricketConfig } from '../../../domain/games/cricket/config'
+import type { KillerConfig } from '../../../domain/games/killer/config'
 import type { TourDuMondeConfig } from '../../../domain/games/tour-du-monde/config'
 import type { X01Config } from '../../../domain/games/x01/config'
 import type { PlayerId } from '../../../domain/value-objects/ids'
@@ -21,6 +22,7 @@ export type ReplayableConfiguration = Commun &
     | { readonly mode: 'X01'; readonly config: X01Config }
     | { readonly mode: 'CRICKET'; readonly config: CricketConfig }
     | { readonly mode: 'TOUR_DU_MONDE'; readonly config: TourDuMondeConfig }
+    | { readonly mode: 'KILLER'; readonly config: KillerConfig }
     | { readonly mode: 'CHECKOUT_PRACTICE'; readonly config: CheckoutPracticeConfig }
   )
 

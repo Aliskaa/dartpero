@@ -4,6 +4,7 @@ import { type MatchEvent, nameOf } from '@/core/domain/events/MatchEvent'
 import { GameModes } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
+import { KillerConfig } from '@/core/domain/games/killer/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
@@ -46,6 +47,18 @@ const OUVERTURES: readonly (readonly [string, readonly MatchEvent[]])[] = [
         config: CricketConfig.create(),
         playerIds: [kevin, julien],
         startingPlayerIndex: 1,
+      },
+    ],
+  ],
+  [
+    'Killer',
+    [
+      {
+        type: 'KillerStarted',
+        config: KillerConfig.create(),
+        playerIds: [kevin, julien],
+        numbers: [8, 14],
+        startingPlayerIndex: 0,
       },
     ],
   ],

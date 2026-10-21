@@ -20,6 +20,28 @@ const importsDe = (fichier: string): string[] => {
   return [...source.matchAll(IMPORT)].map((correspondance) => correspondance[1] ?? '')
 }
 
+/** Les sous-dossiers réels : un mode ajouté entre dans la garde sans la relire. */
+const dossiersDe = (dossier: string): string[] =>
+  readdirSync(dossier, { withFileTypes: true })
+    .filter((entree) => entree.isDirectory())
+    .map((entree) => entree.name)
+
+/**
+ * Le chemin visé par un import, qu'il soit relatif (`../x01/rules`) ou en alias
+ * (`@/ui/composants/x01/…`) : comparer des chaînes laisserait passer le relatif.
+ */
+const cibleDe = (fichier: string, specifier: string): string | null => {
+  if (specifier.startsWith('.')) return resolve(dirname(fichier), specifier)
+  if (specifier.startsWith('@/')) return resolve(SRC, specifier.slice(2))
+  return null
+}
+
+const dansDossier = (cible: string | null, dossier: string): boolean => {
+  if (cible === null) return false
+  const chemin = relative(dossier, cible)
+  return chemin === '' || !(chemin.startsWith('..') || resolve(chemin) === chemin)
+}
+
 const enSrc = (chemin: string) => relative(SRC, chemin).replaceAll('\\', '/')
 
 describe('Frontière hexagonale', () => {
@@ -91,7 +113,10 @@ describe('Frontière hexagonale', () => {
    * connaît tous — c'est précisément son rôle d'aiguilleur.
    */
   it('un mode de jeu n’importe jamais un autre mode', () => {
-    const MODES = ['x01', 'tour-du-monde']
+    const MODES = dossiersDe(resolve(SRC, 'core/domain/games'))
+    // Plancher : une lecture vide rendrait la garde verte à vide.
+    expect(MODES.length).toBeGreaterThanOrEqual(5)
+    expect(MODES).toContain('killer')
     const fautes: string[] = []
 
     for (const mode of MODES) {
@@ -99,7 +124,10 @@ describe('Frontière hexagonale', () => {
 
       for (const fichier of fichiers(resolve(SRC, 'core/domain/games', mode))) {
         for (const specifier of importsDe(fichier)) {
-          if (autres.some((autre) => specifier.includes(`games/${autre}`))) {
+          const cible = cibleDe(fichier, specifier)
+          if (
+            autres.some((autre) => dansDossier(cible, resolve(SRC, 'core/domain/games', autre)))
+          ) {
             fautes.push(`${enSrc(fichier)} → ${specifier}`)
           }
         }
@@ -110,7 +138,11 @@ describe('Frontière hexagonale', () => {
   })
 
   it('les écrans d’un mode n’empruntent pas les composants d’un autre', () => {
-    const MODES = ['x01', 'tour-du-monde']
+    const MODES = dossiersDe(resolve(SRC, 'ui/composants')).filter(
+      (dossier) => dossier !== 'commun',
+    )
+    expect(MODES.length).toBeGreaterThanOrEqual(5)
+    expect(MODES).toContain('killer')
     const fautes: string[] = []
 
     for (const mode of MODES) {
@@ -118,7 +150,8 @@ describe('Frontière hexagonale', () => {
 
       for (const fichier of fichiers(resolve(SRC, 'ui/composants', mode))) {
         for (const specifier of importsDe(fichier)) {
-          if (autres.some((autre) => specifier.includes(`composants/${autre}`))) {
+          const cible = cibleDe(fichier, specifier)
+          if (autres.some((autre) => dansDossier(cible, resolve(SRC, 'ui/composants', autre)))) {
             fautes.push(`${enSrc(fichier)} → ${specifier}`)
           }
         }

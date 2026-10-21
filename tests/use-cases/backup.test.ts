@@ -5,6 +5,7 @@ import { DomainError } from '@/core/domain/DomainError'
 import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
+import { KillerConfig } from '@/core/domain/games/killer/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
@@ -245,6 +246,178 @@ describe('Sauvegarde JSON', () => {
 
     expect(rapport.matchesImported).toBe(0)
     expect(rapport.matchesSkipped).toBe(1)
+  })
+})
+
+/** Lot `killer` : une partie de Killer part et revient ; un journal incohérent est refusé. */
+describe('Sauvegarde JSON — le Killer', () => {
+  const killer = (surcharge: Record<string, unknown> = {}, volees: unknown[] = []) => ({
+    format: 'dartpero-backup',
+    version: 1,
+    exportedAt: 1,
+    players: [],
+    matches: [
+      {
+        id: 'k',
+        createdAt: 1,
+        updatedAt: 2,
+        events: [
+          {
+            type: 'KillerStarted',
+            config: { startingLives: 3, selfHitCostsLives: false },
+            playerIds: ['kevin', 'julien'],
+            numbers: [8, 14],
+            startingPlayerIndex: 0,
+            ...surcharge,
+          },
+          ...volees.map((darts) => ({ type: 'VisitRecorded', darts })),
+        ],
+      },
+    ],
+  })
+
+  it('s’exporte et s’importe à l’identique, numéros et variante compris', async () => {
+    const { services } = fakeServices()
+    const kevin = (await services.managePlayers.create('Kevin')).id
+    const julien = (await services.managePlayers.create('Julien')).id
+    const id = await services.playKiller.start({
+      playerIds: [kevin, julien],
+      config: KillerConfig.create({ startingLives: 5, selfHitCostsLives: true }),
+      numbers: [8, 14],
+    })
+    await services.playKiller.recordVisit(id, [Dart.double(8), Dart.single(14)])
+
+    const neuf = fakeServices().services
+    const rapport = await neuf.manageBackup.importFrom(
+      JSON.parse(JSON.stringify(await services.manageBackup.exportAll())),
+    )
+
+    expect(rapport.matchesImported).toBe(1)
+    expect(await neuf.playKiller.getState(id)).toEqual(await services.playKiller.getState(id))
+  })
+
+  it('accepte un journal Killer cohérent', async () => {
+    const rapport = await fakeServices().services.manageBackup.importFrom(
+      killer({}, [[{ segment: 8, multiplier: 'DOUBLE' }]]),
+    )
+    expect(rapport).toMatchObject({ matchesImported: 1, matchesSkipped: 0 })
+  })
+
+  it.each([
+    ['un seul joueur', { playerIds: ['kevin'], numbers: [8] }],
+    [
+      'sept joueurs',
+      { playerIds: ['a', 'b', 'c', 'd', 'e', 'f', 'g'], numbers: [1, 2, 3, 4, 5, 6, 7] },
+    ],
+    ['un joueur en double', { playerIds: ['kevin', 'kevin'] }],
+    ['un numéro en double', { numbers: [8, 8] }],
+    ['le numéro 0', { numbers: [0, 14] }],
+    ['le numéro 21', { numbers: [8, 21] }],
+    ['la bulle comme numéro', { numbers: ['BULL', 14] }],
+    ['un numéro décimal', { numbers: [8.5, 14] }],
+    ['des longueurs différentes', { numbers: [8] }],
+    ['pas de numéros', { numbers: undefined }],
+    ['4 vies', { config: { startingLives: 4, selfHitCostsLives: false } }],
+    ['une variante mal typée', { config: { startingLives: 3, selfHitCostsLives: 'oui' } }],
+  ])('refuse sans planter : %s', async (_, surcharge) => {
+    const rapport = await fakeServices().services.manageBackup.importFrom(killer(surcharge))
+    expect(rapport).toMatchObject({ matchesImported: 0, matchesSkipped: 1 })
+  })
+
+  it('refuse un journal qui ne se rejoue pas : une volée après la fin, un RoundStarted', async () => {
+    const { services } = fakeServices()
+    const finie = killer({}, [
+      [
+        { segment: 8, multiplier: 'DOUBLE' },
+        { segment: 14, multiplier: 'TRIPLE' },
+      ],
+      [{ segment: 'MISS', multiplier: 'SIMPLE' }],
+    ])
+    expect(await services.manageBackup.importFrom(finie)).toMatchObject({ matchesSkipped: 1 })
+
+    const avecManche = killer()
+    avecManche.matches[0]?.events.push({ type: 'RoundStarted', target: 40 } as never)
+    expect(await services.manageBackup.importFrom(avecManche)).toMatchObject({
+      matchesSkipped: 1,
+    })
+  })
+})
+
+/** Lot `killer` : le genre du profil, facultatif, `BACKUP_VERSION` inchangé. */
+describe('Sauvegarde JSON — le genre du profil', () => {
+  const fichier = (players: readonly Record<string, unknown>[]) => ({
+    format: 'dartpero-backup',
+    version: 1,
+    exportedAt: 1,
+    players,
+    matches: [],
+  })
+
+  it('n’exporte la clé `gender` que si le genre a été choisi', async () => {
+    const { services } = fakeServices()
+    await services.managePlayers.create('Kevin')
+    await services.managePlayers.create('Sarah', undefined, 'FEMININE')
+
+    const sauvegarde = await services.manageBackup.exportAll()
+    const kevin = sauvegarde.players.find((p) => p.name === 'Kevin')
+    const sarah = sauvegarde.players.find((p) => p.name === 'Sarah')
+
+    expect(sauvegarde.version).toBe(1)
+    expect('gender' in (kevin ?? {})).toBe(false)
+    expect(sarah?.gender).toBe('FEMININE')
+  })
+
+  it('fait l’aller-retour à l’identique', async () => {
+    const { services } = fakeServices()
+    await services.managePlayers.create('Sarah', undefined, 'FEMININE')
+    await services.managePlayers.create('Julien', undefined, 'MASCULINE')
+    await services.managePlayers.create('Kevin')
+
+    const neuf = fakeServices().services
+    await neuf.manageBackup.importFrom(
+      JSON.parse(JSON.stringify(await services.manageBackup.exportAll())),
+    )
+
+    expect(await neuf.managePlayers.listAll()).toEqual(await services.managePlayers.listAll())
+  })
+
+  it('une vieille sauvegarde sans genre s’importe en « non précisé »', async () => {
+    const { services } = fakeServices()
+    const rapport = await services.manageBackup.importFrom(
+      fichier([{ id: 'k', name: 'Kevin', color: 'brique', createdAt: 1 }]),
+    )
+
+    expect(rapport.playersImported).toBe(1)
+    expect('gender' in ((await services.managePlayers.listAll())[0] ?? {})).toBe(false)
+  })
+
+  it('refuse un genre invalide sans planter : le profil est ignoré et compté', async () => {
+    const { services } = fakeServices()
+    const rapport = await services.manageBackup.importFrom(
+      fichier([
+        { id: 'a', name: 'A', color: 'brique', createdAt: 1, gender: 'X' },
+        { id: 'b', name: 'B', color: 'brique', createdAt: 1, gender: 42 },
+        { id: 'c', name: 'C', color: 'brique', createdAt: 1, gender: null },
+        { id: 'd', name: 'D', color: 'brique', createdAt: 1, gender: 'feminine' },
+        { id: 'e', name: 'E', color: 'brique', createdAt: 1, gender: 'UNSPECIFIED' },
+        { id: 'f', name: 'F', color: 'brique', createdAt: 1, gender: 'FEMININE' },
+      ]),
+    )
+
+    expect(rapport.playersSkipped).toBe(5)
+    expect(rapport.playersImported).toBe(1)
+    expect((await services.managePlayers.listAll()).map((p) => p.name)).toEqual(['F'])
+  })
+
+  it('réimporter un vieux fichier remet un profil existant à « non précisé »', async () => {
+    const { services } = fakeServices()
+    const sarah = await services.managePlayers.create('Sarah', undefined, 'FEMININE')
+
+    await services.manageBackup.importFrom(
+      fichier([{ id: sarah.id, name: 'Sarah', color: sarah.color, createdAt: sarah.createdAt }]),
+    )
+
+    expect('gender' in ((await services.managePlayers.listAll())[0] ?? {})).toBe(false)
   })
 })
 

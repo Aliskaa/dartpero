@@ -3,6 +3,7 @@ import type { MatchEvent } from '../events/MatchEvent'
 import type { PlayerId } from '../value-objects/ids'
 import { CheckoutPracticeRules, type CheckoutPracticeState } from './checkout-practice/rules'
 import { CricketRules, type CricketState } from './cricket/rules'
+import { KillerRules, type KillerState } from './killer/rules'
 import { TourDuMondeRules, type TourDuMondeState } from './tour-du-monde/rules'
 import { X01Rules, type X01State } from './x01/rules'
 
@@ -18,13 +19,32 @@ import { X01Rules, type X01State } from './x01/rules'
  *
  * Le troisième mode (l'entraînement au checkout, lot 5b) a coûté exactement ce
  * qui était annoncé : un dossier, un événement d'ouverture, trois lignes ici.
+ *
+ * ⚠️ Lot `killer` : chaque aiguillage se termine par un `default` typé `never`.
+ * Avant lui, un mode oublié tombait en silence dans la branche X01 (un journal
+ * Killer aurait été rejoué par `X01Rules`) : TypeScript ne le voyait pas.
  */
-export const GAME_MODE_IDS = ['X01', 'TOUR_DU_MONDE', 'CRICKET', 'CHECKOUT_PRACTICE'] as const
+export const GAME_MODE_IDS = [
+  'X01',
+  'TOUR_DU_MONDE',
+  'CRICKET',
+  'KILLER',
+  'CHECKOUT_PRACTICE',
+] as const
 
 export type GameModeId = (typeof GAME_MODE_IDS)[number]
 
 /** L'état d'une partie, quel que soit son mode. */
-export type AnyMatchState = X01State | TourDuMondeState | CricketState | CheckoutPracticeState
+export type AnyMatchState =
+  | X01State
+  | TourDuMondeState
+  | CricketState
+  | KillerState
+  | CheckoutPracticeState
+
+const impossible = (valeur: never): never => {
+  throw new DomainError(`Unknown game mode: ${String(valeur)}`)
+}
 
 /**
  * Le mode se lit sur le **premier événement du journal**, jamais sur un champ
@@ -37,6 +57,8 @@ export const modeOf = (events: readonly MatchEvent[]): GameModeId => {
       return 'TOUR_DU_MONDE'
     case 'CricketStarted':
       return 'CRICKET'
+    case 'KillerStarted':
+      return 'KILLER'
     case 'CheckoutPracticeStarted':
       return 'CHECKOUT_PRACTICE'
     case 'MatchStarted':
@@ -50,15 +72,20 @@ export const GameModes = {
   modeOf,
 
   project: (events: readonly MatchEvent[]): AnyMatchState => {
-    switch (modeOf(events)) {
+    const mode = modeOf(events)
+    switch (mode) {
+      case 'X01':
+        return X01Rules.project(events)
       case 'TOUR_DU_MONDE':
         return TourDuMondeRules.project(events)
       case 'CRICKET':
         return CricketRules.project(events)
+      case 'KILLER':
+        return KillerRules.project(events)
       case 'CHECKOUT_PRACTICE':
         return CheckoutPracticeRules.project(events)
       default:
-        return X01Rules.project(events)
+        return impossible(mode)
     }
   },
 
@@ -70,8 +97,12 @@ export const GameModes = {
         return TourDuMondeRules.isFinished(state)
       case 'CRICKET':
         return CricketRules.isFinished(state)
-      default:
+      case 'KILLER':
+        return KillerRules.isFinished(state)
+      case 'CHECKOUT_PRACTICE':
         return CheckoutPracticeRules.isFinished(state)
+      default:
+        return impossible(state)
     }
   },
 
@@ -83,9 +114,13 @@ export const GameModes = {
         return TourDuMondeRules.currentPlayer(state).playerId
       case 'CRICKET':
         return CricketRules.currentPlayer(state).playerId
-      default:
+      case 'KILLER':
+        return KillerRules.currentPlayer(state).playerId
+      case 'CHECKOUT_PRACTICE':
         // Exercice solo : il n'y a jamais qu'un joueur.
         return state.playerId
+      default:
+        return impossible(state)
     }
   },
 

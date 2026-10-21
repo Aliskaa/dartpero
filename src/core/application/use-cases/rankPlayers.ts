@@ -1,5 +1,6 @@
 import type {
   CricketSummary,
+  KillerSummary,
   MatchSummary,
   TourDuMondeSummary,
   X01Summary,
@@ -18,6 +19,8 @@ import type {
  *   de cibles fermées ;
  * - Tour du monde : ceux qui ont bouclé, le moins de fléchettes d'abord, puis la
  *   cible la plus avancée ;
+ * - Killer : le rang du domaine (gagnant, vivants par vies, éliminés dans
+ *   l'ordre inverse d'élimination) ;
  * - entraînement : un seul joueur, l'ordre tel quel.
  *
  * Égalité parfaite : l'ordre de jeu reste (tri stable), aucun départage inventé.
@@ -70,6 +73,13 @@ const comparateurTourDuMonde: Comparateur<TourDuMondeSummary['players'][number]>
   return b.targetIndex - a.targetIndex
 }
 
+/**
+ * Killer : le rang est déjà calculé par le domaine (`KillerRules.ranking`,
+ * porté par le résumé) — il n'est pas recalculé ici. Deux vivants à vies
+ * égales partagent leur rang : le tri stable les garde dans l'ordre de jeu.
+ */
+const comparateurKiller: Comparateur<KillerSummary['players'][number]> = (a, b) => a.rank - b.rank
+
 /** Le comparateur du mode, ou `null` quand l'ordre de jeu fait foi (entraînement). */
 const comparateurDe = (partie: MatchSummary): Comparateur<unknown> | null => {
   switch (partie.mode) {
@@ -79,6 +89,8 @@ const comparateurDe = (partie: MatchSummary): Comparateur<unknown> | null => {
       return comparateurCricket(partie) as Comparateur<unknown>
     case 'TOUR_DU_MONDE':
       return comparateurTourDuMonde as Comparateur<unknown>
+    case 'KILLER':
+      return comparateurKiller as Comparateur<unknown>
     case 'CHECKOUT_PRACTICE':
       return null
     default: {

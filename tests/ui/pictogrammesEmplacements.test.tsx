@@ -29,14 +29,14 @@ const svgsDe = (largeur: number, racine: ParentNode = document) =>
   [...racine.querySelectorAll('svg')].filter((svg) => svg.getAttribute('width') === String(largeur))
 
 describe('Pictogrammes — leurs emplacements', () => {
-  it('étape 1 : un pictogramme de 40 px, décoratif, sur chacune des quatre cartes', async () => {
+  it('étape 1 : un pictogramme de 40 px, décoratif, sur chacune des cinq cartes', async () => {
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/nouvelle-partie' })
 
     const cartes = await screen.findAllByRole('link')
-    expect(cartes).toHaveLength(4)
+    expect(cartes).toHaveLength(5)
     const svgs = svgsDe(40)
-    expect(svgs).toHaveLength(4)
+    expect(svgs).toHaveLength(5)
     for (const svg of svgs) expect(svg.getAttribute('aria-hidden')).toBe('true')
     // Un par carte : le mode se reconnaît à sa forme.
     for (const carte of cartes) expect(svgsDe(40, carte)).toHaveLength(1)
@@ -46,6 +46,7 @@ describe('Pictogrammes — leurs emplacements', () => {
         TRACES_ATTENDUS.x01,
         TRACES_ATTENDUS.cricket,
         TRACES_ATTENDUS['tour-du-monde'],
+        TRACES_ATTENDUS.killer,
         TRACES_ATTENDUS.entrainement,
       ].sort(),
     )

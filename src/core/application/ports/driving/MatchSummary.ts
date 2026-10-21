@@ -1,7 +1,9 @@
 import type { CheckoutPracticeConfig } from '../../../domain/games/checkout-practice/config'
 import type { CricketConfig } from '../../../domain/games/cricket/config'
+import type { KillerConfig } from '../../../domain/games/killer/config'
 import type { TourDuMondeConfig } from '../../../domain/games/tour-du-monde/config'
 import type { X01Config } from '../../../domain/games/x01/config'
+import type { SegmentNumber } from '../../../domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '../../../domain/value-objects/ids'
 import type { MatchName } from '../../../domain/value-objects/MatchName'
 
@@ -28,6 +30,19 @@ export type CricketSummaryPlayer = SummaryPlayer & {
    * place dans un aperçu : ce qu'on veut savoir, c'est qui est près de finir. */
   readonly closedTargets: number
   readonly score: number
+}
+
+export type KillerSummaryPlayer = SummaryPlayer & {
+  /** Son numéro, de 1 à 20. */
+  readonly number: SegmentNumber
+  readonly lives: number
+  readonly killer: boolean
+  readonly eliminated: boolean
+  /**
+   * Le rang lu sur `KillerRules.ranking` (règle 9) : partagé entre vivants à
+   * vies égales en cours de partie, distinct une fois la partie finie.
+   */
+  readonly rank: number
 }
 
 type BaseSummary = {
@@ -70,6 +85,13 @@ export type CricketSummary = BaseSummary & {
   readonly players: readonly CricketSummaryPlayer[]
 }
 
+/** Une partie de Killer (lot `killer`). Les joueurs restent dans l'ordre de jeu. */
+export type KillerSummary = BaseSummary & {
+  readonly mode: 'KILLER'
+  readonly config: KillerConfig
+  readonly players: readonly KillerSummaryPlayer[]
+}
+
 /**
  * Un exercice solo : pas d'adversaire, donc pas de vainqueur — `winnerId` y
  * vaut toujours `null`. Ce qui compte, c'est le taux de réussite.
@@ -104,4 +126,5 @@ export type MatchSummary =
   | X01Summary
   | TourDuMondeSummary
   | CricketSummary
+  | KillerSummary
   | CheckoutPracticeSummary

@@ -85,3 +85,42 @@ describe('ManagePlayers', () => {
     expect(await services.managePlayers.listAll()).toEqual([])
   })
 })
+
+/** Lot `killer` : le genre, facultatif, clé absente pour « non précisé ». */
+describe('ManagePlayers — le genre du profil', () => {
+  let services: Services
+
+  beforeEach(() => {
+    services = fakeServices().services
+  })
+
+  it('un profil créé sans genre n’a pas de clé `gender`', async () => {
+    const kevin = await services.managePlayers.create('Kevin')
+
+    expect('gender' in kevin).toBe(false)
+    expect('gender' in ((await services.managePlayers.listAll())[0] ?? {})).toBe(false)
+  })
+
+  it('un profil créé avec un genre le garde', async () => {
+    const sarah = await services.managePlayers.create('Sarah', undefined, 'FEMININE')
+
+    expect(sarah.gender).toBe('FEMININE')
+    expect((await services.managePlayers.listAll())[0]?.gender).toBe('FEMININE')
+  })
+
+  it('modifie le genre sans toucher à l’ancienneté, et `null` retire la clé', async () => {
+    const sarah = await services.managePlayers.create('Sarah')
+
+    const feminin = await services.managePlayers.update(sarah.id, { gender: 'FEMININE' })
+    expect(feminin.gender).toBe('FEMININE')
+    expect(feminin.createdAt).toBe(sarah.createdAt)
+
+    // Ne changer que le pseudo garde le genre.
+    const renomme = await services.managePlayers.update(sarah.id, { name: 'Sarah B.' })
+    expect(renomme.gender).toBe('FEMININE')
+
+    const nonPrecise = await services.managePlayers.update(sarah.id, { gender: null })
+    expect('gender' in nonPrecise).toBe(false)
+    expect(nonPrecise.createdAt).toBe(sarah.createdAt)
+  })
+})

@@ -1,6 +1,7 @@
 import { nameOf } from '../../domain/events/MatchEvent'
 import { GameModes } from '../../domain/games'
 import { MARKS_TO_CLOSE } from '../../domain/games/cricket/config'
+import { KillerRules } from '../../domain/games/killer/rules'
 import type { PlayerId } from '../../domain/value-objects/ids'
 import type { MatchRecord } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
@@ -86,6 +87,25 @@ export const summarize = (
         name: names.get(player.playerId) ?? null,
         closedTargets: player.marks.filter((marks) => marks >= MARKS_TO_CLOSE).length,
         score: player.score,
+      })),
+    }
+  }
+
+  if (state.mode === 'KILLER') {
+    // Le rang vient du domaine : une seule implémentation de la règle 9.
+    const rangs = new Map(KillerRules.ranking(state).map((r) => [r.playerId, r.rank]))
+    return {
+      ...commun,
+      mode: 'KILLER',
+      config: state.config,
+      players: state.players.map((player) => ({
+        playerId: player.playerId,
+        name: names.get(player.playerId) ?? null,
+        number: player.number,
+        lives: player.lives,
+        killer: player.killer,
+        eliminated: player.eliminated,
+        rank: rangs.get(player.playerId) ?? state.players.length,
       })),
     }
   }

@@ -35,9 +35,18 @@ const groupKey = (summary: MatchSummary): string => {
       )
     case 'TOUR_DU_MONDE':
       return ['TOUR_DU_MONDE', summary.config.targets.join(','), players].join('|')
+    case 'KILLER': {
+      // Ni les numéros, ni l'ordre, ni le nom : « Rejouer » en tire de nouveaux.
+      const { startingLives, selfHitCostsLives } = summary.config
+      return ['KILLER', startingLives, selfHitCostsLives, players].join('|')
+    }
     case 'CHECKOUT_PRACTICE': {
       const { rounds, minTarget, maxTarget } = summary.config
       return ['CHECKOUT_PRACTICE', rounds, minTarget, maxTarget, players].join('|')
+    }
+    default: {
+      const jamais: never = summary
+      return jamais
     }
   }
 }

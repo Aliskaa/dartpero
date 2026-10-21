@@ -29,7 +29,12 @@ ce que lit le joueur, la deuxième ce qu'écrit le code.
 | abandonnée | `'ABANDONED'` / `matchStatus` | Partie non terminée qui n'est **pas** la partie en cours. Dérivée, jamais écrite ; toujours reprenable ; même statut à l'Accueil et dans Parties, jamais calculée contre une liste filtrée. |
 | volée en cours (brouillon) | `VisitDraft` / `visitDrafts` | Les 0 à 3 fléchettes déjà saisies d'une volée non enregistrée, gardées hors du journal (une ligne par partie, jamais exportée) pour survivre à un rechargement. Effacée à l'enregistrement ; reprise **silencieuse**. |
 | manches jouées | `legsPlayed` | X01 : manches gagnées, tous sets confondus. Dérivé du journal (`LegWon`), jamais écrit. |
-| joueur / profil | `Player` | Profil **local** (pseudo + couleur), pas un compte. |
+| joueur / profil | `Player` | Profil **local** (pseudo + couleur + genre facultatif), pas un compte. |
+| genre | `PlayerGender` | `MASCULINE` ou `FEMININE` ; clé absente = « non précisé » (forme masculine). Sert **uniquement** à accorder « éliminé / éliminée » au Killer ; jamais lu ailleurs, jamais montré au repos. |
+| Killer | `killer` / `KillerStarted` | 5e mode : 2 à 6 joueurs, un numéro (1-20, bulle exclue) et des vies chacun. |
+| vie | `lives` | Killer : 3 par défaut, 5 au choix ; simple 1, double 2, triple 3 retirés, jamais sous 0. |
+| killer (statut) | `killer` | Joueur qui a touché le **double de son numéro** : il peut retirer des vies. Les fléchettes suivantes de la même volée comptent tout de suite. |
+| éliminé | `eliminated` / `eliminations` | Killer : joueur à 0 vie, sauté au tour de table ; « Éliminé(e) par X » se lit sur le journal. Classement par ordre d'élimination. |
 | oche | — | La ligne de lancer. Contexte d'usage, pas un objet du code. |
 
 Prose en français. Symboles et types TypeScript déjà en anglais : les

@@ -3,6 +3,7 @@ import type { MatchId } from '../../domain/value-objects/ids'
 import type { MatchRepository } from '../ports/driven/MatchRepository'
 import type { PlayCheckoutPractice } from '../ports/driving/PlayCheckoutPractice'
 import type { PlayCricket } from '../ports/driving/PlayCricket'
+import type { PlayKiller } from '../ports/driving/PlayKiller'
 import type { PlayTourDuMonde } from '../ports/driving/PlayTourDuMonde'
 import type { RestartMatch } from '../ports/driving/RestartMatch'
 import type { StartMatch } from '../ports/driving/StartMatch'
@@ -37,6 +38,7 @@ export class RestartMatchUseCase implements RestartMatch {
     private readonly tourDuMonde: PlayTourDuMonde,
     private readonly cricket: PlayCricket,
     private readonly practice: PlayCheckoutPractice,
+    private readonly killer: PlayKiller,
   ) {}
 
   async execute(matchId: MatchId): Promise<MatchId> {
@@ -61,6 +63,16 @@ export class RestartMatchUseCase implements RestartMatch {
 
       case 'CricketStarted':
         return this.cricket.start({
+          playerIds: ouverture.playerIds,
+          config: ouverture.config,
+          startingPlayerIndex: ouverture.startingPlayerIndex,
+          name: ouverture.name,
+        })
+
+      case 'KillerStarted':
+        // ⚠️ Sans `numbers` : « On remet ça » tire de **nouveaux** numéros
+        // (décision de l'utilisateur, lot `killer`).
+        return this.killer.start({
           playerIds: ouverture.playerIds,
           config: ouverture.config,
           startingPlayerIndex: ouverture.startingPlayerIndex,

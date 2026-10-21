@@ -26,7 +26,7 @@ Patterns : `CONVENTIONS` § 9 et § 10.
   d'un rechargement ; toute fermeture sans choix vaut *Corriger*)
   — la `Modale`, la feuille de règles et la confirmation de la sortie, un seul mécanisme
   (`CONVENTIONS` § 9) — et `useVoleeEnCours` (la volée en cours gardée dans le brouillon, commune
-  aux quatre hooks de mode : jamais un `useState` de fléchettes dans un hook de mode,
+  aux cinq hooks de mode (dont `useKiller`) : jamais un `useState` de fléchettes dans un hook de mode,
   `CONVENTIONS` § 10).
 - Les règles de jeu affichées (feuille de règles) : constructeurs `regles<Mode>` de `labels.ts`,
   écrits d'après `CLAUDE.md` § Règles du jeu ; un lot qui change une règle met sa rubrique à jour.

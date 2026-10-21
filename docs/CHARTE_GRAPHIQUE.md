@@ -655,6 +655,31 @@ couleur du profil — jamais le liseré de la maquette —, nom en Oswald gras, 
   ou 390) à 2, 3 et 4 joueurs dans les trois jeux ; le Tour du monde à quatre joueurs tient
   (865 → 844 px) ; touches ≥ 48 px ; « MAXENCE » entier, 7 px d'air au plus serré (Cricket).
 
+### L'écran du Killer (lot `killer`)
+
+Planche suivie : `docs/maquettes/killer/killer.html` (2 à 6 joueurs, portrait et paysage, deux thèmes). Une
+ligne par joueur sur la **feuille commune** (`FeuilleMatch` et son repère qui glisse) : colonnes
+JOUEUR · N° · VIES · STATUT (104 / 84 / 1fr / 80 px en portrait, 128 / 84 / 1fr / 92 px en paysage).
+
+- **Le numéro est ce qu'on lit de loin** (c'est lui qu'on vise) : 72 / 65 / 50 / 42 / 38 px en portrait et
+  68 / 52 / 42 / 36 / 32 px en paysage pour 2 / 3 / 4 / 5 / 6 joueurs, en classes **statiques**
+  (`Record<2|3|4|5|6, string>`). ⚠️ 38 et 32 px sont **sous l'échelle X01** : écart accepté par l'utilisateur,
+  à confirmer à 2-3 m sur téléphone. Arrondis aux paliers existants (64,8 et 49,6 px) ; 42, 38 et 32 px par
+  les jetons `--text-numero-m/s/xs` (`typographieBoundary` interdit `text-[…]`).
+- **Vies** : carrés de 15 px (12 px au mini tableau), pleins ou en tirets ; **le statut** : badge « KILLER »
+  laiton ou « VISE D14 » en tirets. **Éliminé** : fond `feutre`, nom et numéro barrés en `craie-3`, carré de
+  profil en niveaux de gris. **Perte de vie** (« −N », effet « éliminé ») : `rouge-touche`, jamais
+  `rouge-texte`. La **ligne de volée** a trois cases avec l'effet sous chaque fléchette ; l'état affiché inclut la
+  volée en cours.
+- **Bandeau** : viseur, « Killer », « N vies · N joueurs », compteur « N en vie », livre des règles.
+- **Étape 2** : bloc Numéros sous la fiche (tuiles de 72 × 48 px, grille ≥ 52 px, numéros libres seulement,
+  pastille du propriétaire, la grille se referme après un choix) ; consigne et « Continuer » désactivé sous
+  2 joueurs ; étape Ordre grisée.
+- **Genre du profil** (planche `docs/maquettes/genre-profil/`) : à la création, une ligne « Genre » **repliée**
+  (« Non précisé · Modifier ▾ », 48 px) qui s'ouvre sur trois boutons **jointifs** ≥ 48 px, laiton plein pour la
+  valeur choisie ; à la modification, les mêmes trois boutons sous la palette. Le genre n'est **jamais** montré
+  sur la carte au repos.
+
 ### Saisie
 
 - Bascule S/D/T **momentanée** : elle retombe sur Simple après chaque fléchette. Un

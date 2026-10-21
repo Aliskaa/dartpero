@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { GameModeId } from '@/core/domain/games'
 
 /**
- * Les douze pictogrammes maison : quatre modes, huit moments. Le mode se
+ * Les treize pictogrammes maison : cinq modes, huit moments. Le mode se
  * reconnaît à sa forme, plus seulement à sa couleur (charte § Identité).
  * Les huit moments n'ont pas encore tous un emploi : leurs lots les attendent.
  */
@@ -10,6 +10,7 @@ export const PICTOGRAMMES = [
   'x01',
   'cricket',
   'tour-du-monde',
+  'killer',
   'entrainement',
   '180',
   'bust',
@@ -28,6 +29,7 @@ export const PICTOGRAMME_PAR_MODE: Record<GameModeId, NomPictogramme> = {
   X01: 'x01',
   CRICKET: 'cricket',
   TOUR_DU_MONDE: 'tour-du-monde',
+  KILLER: 'killer',
   CHECKOUT_PRACTICE: 'entrainement',
 }
 
@@ -75,6 +77,14 @@ const TRACES: Record<NomPictogramme, ReactNode> = {
     <>
       <circle cx="12" cy="12" r="9.5" />
       <path d="M7.5 7.5 L16.5 16.5 M16.5 7.5 L7.5 16.5" />
+    </>
+  ),
+  // Le viseur du Killer (planche `killer`, tracé exact).
+  killer: (
+    <>
+      <circle cx="12" cy="12" r="7.5" />
+      <path d="M12 1.5 V6 M12 18 V22.5 M1.5 12 H6 M18 12 H22.5" />
+      <circle cx="12" cy="12" r="1.8" {...APLAT} />
     </>
   ),
   'tour-du-monde': (

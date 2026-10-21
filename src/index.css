@@ -130,6 +130,13 @@
   /* Le nom d'un joueur sur la feuille dès trois joueurs (planche : 15 px au lieu
      de 16) : « MAXENCE » doit tenir en entier dans la colonne JOUEUR. */
   --text-nom-serre: 0.9375rem;
+  /* Le numéro du Killer à 4-6 joueurs (planche `killer`) : 42, 38 puis 32 px en
+     paysage. Sous l'échelle X01, le prix de six lignes sans défilement (écart
+     accepté par l'utilisateur, à confirmer à 2-3 m sur téléphone). Au-dessus,
+     le numéro reprend les paliers `score-*`. */
+  --text-numero-m: 2.625rem;
+  --text-numero-s: 2.375rem;
+  --text-numero-xs: 2rem;
 
   /* Mouvement : court, sec, sans rebond. Tout est neutralisé plus bas si
      l'utilisateur a demandé moins d'animations. */

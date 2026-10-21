@@ -8,12 +8,14 @@ import type { Services } from '@/composition/container'
 import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
+import { KillerConfig } from '@/core/domain/games/killer/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { useCheckoutPractice } from '@/ui/hooks/useCheckoutPractice'
 import { useCricket } from '@/ui/hooks/useCricket'
+import { useKiller } from '@/ui/hooks/useKiller'
 import { PAUSE_ANNULATION_MS } from '@/ui/hooks/usePauseAnnulation'
 import { useTourDuMonde } from '@/ui/hooks/useTourDuMonde'
 import { useX01 } from '@/ui/hooks/useX01'
@@ -101,6 +103,24 @@ const MODES: Record<GameModeId, Mode> = {
       (await services.playTourDuMonde.getState(matchId)).history.length,
     bouton: '20',
     hook: useTourDuMonde,
+  },
+  KILLER: {
+    preparer: async (services) => {
+      const kevin = await services.managePlayers.create('Kevin')
+      const julien = await services.managePlayers.create('Julien')
+      // Numéros 1 et 2 : le 20 ne touche personne, la volée ne conclut rien.
+      const matchId = await services.playKiller.start({
+        playerIds: [kevin.id, julien.id],
+        config: KillerConfig.create(),
+        numbers: [1, 2],
+      })
+      await services.playKiller.recordVisit(matchId, RATE)
+      return matchId
+    },
+    enregistrees: async (services, matchId) =>
+      (await services.playKiller.getState(matchId)).history.length,
+    bouton: '20',
+    hook: useKiller,
   },
   CHECKOUT_PRACTICE: {
     preparer: async (services) => {

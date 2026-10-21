@@ -9,6 +9,7 @@ import type { Announcer } from '@/core/application/ports/driven/Announcer'
 import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
+import { KillerConfig } from '@/core/domain/games/killer/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
@@ -163,6 +164,26 @@ const PAR_MODE = {
       expect(screen.getByLabelText('Reste pour le checkout')).toHaveTextContent(String(cible - 3))
     },
     // Le reste tiré vaut au moins 41 : trois simples 1 ne le finissent pas.
+    clore: ['1', '1', '1'],
+  },
+  KILLER: {
+    nom: 'Killer',
+    demarrer: async (services: Services) =>
+      services.playKiller.start({
+        playerIds: await joueurs(services),
+        config: KillerConfig.create(),
+        numbers: [17, 8],
+      }),
+    attendre: () => screen.findByLabelText('Numéro de Kevin'),
+    poser: async (utilisateur: Utilisateur) => {
+      await flechette(utilisateur, '17', 'Double')
+      await flechette(utilisateur, '8')
+    },
+    derniere: 'Annuler S8 de Kevin',
+    // Killer au D17, puis Julien touché tout de suite : l'effet revient avec la volée.
+    affiche: async () =>
+      expect(screen.getByLabelText('Volée de Kevin')).toHaveTextContent('D17 Killer !S8 Julien −1'),
+    // 1 n'est le numéro de personne : trois fléchettes sans effet.
     clore: ['1', '1', '1'],
   },
 } satisfies Record<GameModeId, Mode>

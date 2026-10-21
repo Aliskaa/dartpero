@@ -88,7 +88,7 @@ export const NouvellePartieEcran = () => {
                   selection={partie.selection(mode)}
                   max={partie.max(mode)}
                   onBasculer={(id) => partie.basculer(mode, id)}
-                  onCreer={(nom) => partie.creerJoueur(mode, nom)}
+                  onCreer={(nom, genre) => partie.creerJoueur(mode, nom, genre)}
                 />
               )}
             </AvecJeu>

@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Services } from '@/composition/container'
 import { REPLAY_WINDOW } from '@/core/application/use-cases/GetReplayableConfigurationsUseCase'
+import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
+import { KillerConfig } from '@/core/domain/games/killer/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import { configurationsAffichees } from '@/ui/rejouer'
 import { fakeServices, SettableClock } from '../fakes'
 
 describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
@@ -41,6 +44,45 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
 
   it('rend une liste vide sur une base vide', async () => {
     expect(await lire()).toEqual([])
+  })
+
+  /** Lot `killer` : la configuration = vies + variante + joueurs ; ni numéros, ni ordre, ni nom. */
+  it('Killer : fusionne malgré d’autres numéros, un autre ordre ou un nom ; sépare vies et variante', async () => {
+    const paul = (await services.managePlayers.create('Paul')).id
+    const lea = (await services.managePlayers.create('Léa')).id
+    const marc = (await services.managePlayers.create('Marc')).id
+    const six = [kevin, julien, sarah, paul, lea, marc]
+    const killer = (
+      joueurs: readonly PlayerId[],
+      numbers: readonly (1 | 2 | 3 | 4 | 5 | 6 | 8 | 14)[],
+      config = KillerConfig.create(),
+      name?: string,
+    ) => {
+      horloge.regler(horloge.now() + 60_000)
+      return services.playKiller.start({
+        playerIds: joueurs,
+        config,
+        numbers,
+        ...(name === undefined ? {} : { name }),
+      })
+    }
+
+    await killer([kevin, julien], [8, 14])
+    await killer([julien, kevin], [1, 2], KillerConfig.create(), 'Revanche')
+    await killer([kevin, julien], [8, 14], KillerConfig.create({ startingLives: 5 }))
+    await killer([kevin, julien], [8, 14], KillerConfig.create({ selfHitCostsLives: true }))
+    await killer(six, [1, 2, 3, 4, 5, 6])
+
+    const configurations = await lire()
+    expect(configurations.map((c) => [c.mode, c.count, c.playerIds.length])).toEqual([
+      ['KILLER', 1, 6],
+      ['KILLER', 1, 2],
+      ['KILLER', 1, 2],
+      ['KILLER', 2, 2],
+    ])
+    expect(
+      configurations.every((c) => !c.key.includes('8,14') && !c.key.includes('Revanche')),
+    ).toBe(true)
   })
 
   it('fusionne les parties identiques et compte « N fois », la plus récente en tête', async () => {
@@ -136,6 +178,50 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
       'X01',
     ])
     for (const configuration of configurations) expect(configuration.playerIds).toEqual([kevin])
+  })
+
+  /**
+   * Constat #31 : un mode nouveau ne passe plus inaperçu. Le `Record` force à dire
+   * comment le lancer ; chaque mode est soit rejouable (rendu ET reproductible par
+   * le parcours), soit écarté explicitement dans `ECARTES`.
+   */
+  const ECARTES: readonly GameModeId[] = []
+  const LANCER: Record<GameModeId, () => Promise<MatchId>> = {
+    X01: () => x01([kevin, julien]),
+    TOUR_DU_MONDE: () =>
+      services.playTourDuMonde.start({
+        playerIds: [kevin, julien],
+        config: TourDuMondeConfig.create(),
+      }),
+    CRICKET: () =>
+      services.playCricket.start({ playerIds: [kevin, julien], config: CricketConfig.create() }),
+    KILLER: () =>
+      services.playKiller.start({
+        playerIds: [kevin, julien],
+        config: KillerConfig.create(),
+        numbers: [8, 14],
+      }),
+    CHECKOUT_PRACTICE: () =>
+      services.playCheckoutPractice.start({
+        playerId: kevin,
+        config: CheckoutPracticeConfig.create(),
+      }),
+  }
+
+  it.each(GAME_MODE_IDS)('%s : rejouable, ou écarté explicitement', async (mode) => {
+    await LANCER[mode]()
+
+    const configurations = await lire()
+    // Précondition : la partie a bien été lancée dans le mode voulu.
+    const historique = await services.getMatchHistory.execute()
+    expect(historique).toHaveLength(1)
+
+    if (ECARTES.includes(mode)) {
+      expect(configurationsAffichees(configurations)).toEqual([])
+      return
+    }
+    expect(configurations.map((c) => c.mode)).toEqual([mode])
+    expect(configurationsAffichees(configurations).map((c) => c.mode)).toEqual([mode])
   })
 
   it('compte les parties terminées, abandonnées et en cours', async () => {

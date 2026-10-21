@@ -55,9 +55,20 @@ un serveur de fichiers statiques, il ne met pas un octet de SDK dans le bundle. 
 dans `SECTIONS_CONFIDENTIALITE`, `src/ui/labels.ts`). Toute capacité réseau, permission, cookie
 ou donnée stockée nouvelle se livre **avec** la mise à jour de ce texte et de sa date. Seul le
 réseau a un fil-piège (`tests/architecture/reseauBoundary.test.ts`) ; le reste, c'est la relecture.
-- **Les joueurs sont des profils LOCAUX**, pas des comptes : pseudo + couleur, créés en 2
-secondes, portant leurs stats **sur cet appareil**. Filet de sécurité obligatoire :
-**export / import JSON** de toute la base (lot 4).
+- **Les joueurs sont des profils LOCAUX**, pas des comptes : pseudo + couleur (+ un **genre**
+facultatif, lot `killer`), créés en 2 secondes, portant leurs stats **sur cet appareil**. Filet de
+sécurité obligatoire : **export / import JSON** de toute la base (lot 4).
+⚠️ **Le genre** (`Player.gender`, `PlayerGender` : `MASCULINE` ou `FEMININE`, **jamais renommés**) :
+clé **absente** = « non précisé », forme masculine, valeur de tout profil ancien et de tout profil créé
+sans y toucher (jamais `gender: undefined`). Il se choisit à la création depuis l'étape 2 de Nouvelle
+partie (ligne « Genre » repliée de « Nouveau joueur ») et à la modification (carte de profil en
+édition ; **pas** à la création par le champ en ligne de l'onglet Joueurs), et ne sert **qu'à**
+accorder « éliminé / éliminée » aux textes du Killer (pastille, case de volée, résumé, boîte de sortie,
+lecteurs d'écran, voix). Jamais lu ailleurs (garde `tests/architecture/genreBoundary.test.ts`), jamais
+montré au repos, jamais dans une statistique ni un classement. Pas de `db.version` (champ non indexé),
+`BACKUP_VERSION` inchangé ; un genre invalide dans un fichier fait ignorer **le profil** (compté dans
+`playersSkipped`). La politique `/confidentialite` le dit (lignes de `labels.ts` : 438, 448, 457, date du
+21 octobre 2026) : donnée stockée nouvelle = texte **et** date.
 - **Le match est une liste d'événements** (`MatchEvent[]`), l'état affiché est une
 **projection** rejouée depuis ces événements. C'est le choix qui rend l'**annulation**
 triviale et fiable (on se trompe de saisie très souvent en pleine partie).
@@ -71,10 +82,10 @@ cause, pas par oubli — ne pas la « restaurer » en croyant réparer un accide
 l'incident `61b60ac` plus bas, qui lui en était un). Tout le code est parti avec :
 `PaveRapide`, le port `BuildVisitFromScore`, son use case, `x01/scoring.ts` (`composeVisit`)
 et `findExactScore`. Récupérable dans l'historique à `d531a7e` si l'envie revenait.
-- **Modes de jeu : X01 et Tour du monde** (lot 5a), **entraînement solo** (lot 5b), puis
-**Cricket** (lot 5c). Killer et Shanghai restent **hors périmètre v1** — la couture
-`GameMode` (`src/core/domain/games/index.ts`) les accueillera sans refonte, elle l'a
-maintenant prouvé deux fois.
+- **Modes de jeu : X01 et Tour du monde** (lot 5a), **entraînement solo** (lot 5b), **Cricket**
+(lot 5c), puis **Killer** (lot `killer`). Shanghai reste **hors périmètre v1** — la couture
+`GameMode` (`src/core/domain/games/index.ts`) l'accueillera sans refonte, elle l'a maintenant
+prouvé quatre fois.
 - **Réglages X01 proposés à la création** (étape 2 de Nouvelle partie, mémorisés par
 `usePreference`) : **501**, **2 manches à gagner**, **1 set** (pas de sets), **double out
 désactivé**, **double in** désactivé.
@@ -145,7 +156,7 @@ Accueil seulement) ; entrée complète dans les Réglages : voyant Application e
 autre navigateur iOS et navigateur sans invite — là où mène la ligne de l'Accueil). Jamais sur
 un écran de partie, jamais ouverte d'elle-même.
 - **Nom de partie** (lot `nom-de-partie`) : seul un nom **tapé** s'écrit — champ facultatif
-`name` de l'événement d'ouverture des quatre modes, 30 caractères au plus, espaces autour
+`name` de l'événement d'ouverture des cinq modes, 30 caractères au plus, espaces autour
 retirés (`MatchName.of`). Le nom par défaut (« Dimanche soir » ; nuit de 0 h à 5 h, au nom
 du jour du calendrier : dimanche 1 h → « Dimanche nuit ») est un **libellé recalculé à
 l'affichage** depuis `createdAt` (`labels.ts`) : ne jamais l'écrire, ni « compléter » les
@@ -157,7 +168,8 @@ réglages), plus à l'étape 1 (lot `nouvelle-partie-parcours`) ; la règle ci-d
 (`BarreEtapes`, `1 · JEU`, `2 · JOUEURS`, `3 · ORDRE` ; deux segments à l'entraînement ; Ordre
 grisé seul en piste) en tête de chaque étape, **non interactive** (on revient par le retour) ;
 étape 1 en tuiles 2 × 2 (sans configuration à rejouer ; sinon « Rejouer » puis une rangée
-compacte, lot `rejouer`) ; étape 2 en fiche de réglages par jeu. ⚠️ **« Tirer au sort » est un
+compacte, lot `rejouer`), **passée à 5 jeux par le lot `killer`** (option B : l'entraînement en pleine
+largeur) ; étape 2 en fiche de réglages par jeu. ⚠️ **« Tirer au sort » est un
 mélange visible** à l'étape Ordre : port driving `ShuffleOrder` (`ShuffleOrderUseCase`, même
 `RandomSource` que les lancements), vrai hasard (le tirage peut redonner l'ordre d'avant, aucune
 relance), bref mouvement de la feuille, ordre écrit dans `partie:joueurs` comme un déplacement à
@@ -177,7 +189,7 @@ comptées (terminées, abandonnées, en cours). Une configuration dont un profil
 les réglages mémorisés (`partie:*`, `entrainement:*`), puis ≥ 2 joueurs → étape **Ordre**, solo →
 lancement direct. ⚠️ **Le nom n'est jamais repris**. Détail : CHARTE § Parcours.
 - **Règles au livre ouvert** (lot `regles-du-jeu`) : un livre (`LivreRegles`, 48 px) à droite de
-l'en-tête de l'étape 2 et du bandeau de match des quatre modes ouvre une feuille de règles
+l'en-tête de l'étape 2 et du bandeau de match des cinq modes ouvre une feuille de règles
 **par-dessus** l'écran (`FeuilleRegles`, `<dialog>` natif), **jamais une route** : la volée en
 cours survit. ⚠️ **Même mécanisme que la `Modale` des Statistiques, et lui seul** :
 `useModaleAuRetour` (clé `regles`) pour l'état, une entrée d'historique sur la même URL qu'on
@@ -194,7 +206,8 @@ comme toute volée en cours, gardées dans le brouillon de volée (lot `volee-pa
 aucun événement nouveau. ⚠️ **Rien n'entre au journal, rien n'est dit ni célébré
 avant « Valider la sortie »** (la fléchette en attente, elle, est déjà au brouillon : ne pas
 « réparer » cette écriture, elle rouvre la boîte après un rechargement) : la fléchette qui sort (X01, à chaque manche), qui gagne (Cricket, nom
-du **gagnant**, cut-throat compris) ou qui boucle le parcours (Tour du monde, `completesTour`) ouvre
+du **gagnant**, cut-throat compris ; Killer, nom du **gagnant**, auto-élimination de la variante comprise, lot
+`killer`) ou qui boucle le parcours (Tour du monde, `completesTour`) ouvre
 la boîte `BoiteConfirmation` (forme B de la planche). **Jamais sur un bust, jamais à l'entraînement.**
 Fermer sans choisir (retour, Échap, voile) vaut *Corriger*. Même mécanisme que la `Modale`
 (`useModaleAuRetour`, clé `confirmation`) ; pièges : CONVENTIONS § 9, 10.
@@ -218,6 +231,21 @@ Fermer sans choisir (retour, Échap, voile) vaut *Corriger*. Même mécanisme qu
   échec d'écriture du brouillon ne bloque jamais la saisie ; un effacement qui échoue à l'import
   ou à la suppression **refuse** (partie écartée, partie conservée). Mécanisme unique :
   `useVoleeEnCours` ; pièges : CONVENTIONS § 9, 10.
+- **Killer** (lot `killer`, règles : § Règles du Killer) : cinquième mode par la couture `GameMode`
+  (`games/killer/`, événement d'ouverture `KillerStarted` ; les volées sont des `VisitRecorded`). ⚠️ **Les
+  numéros sont dans l'ouverture (`KillerStarted.numbers`, indexés comme `playerIds`), jamais dans la config** :
+  « Rejouer » (configuration = mode + vies + variante + ensemble de joueurs, **sans les numéros**) et « On remet
+  ça » **tirent de nouveaux numéros** ; `GAME_MODE_IDS` met `KILLER` avant `CHECKOUT_PRACTICE`. Tirage fait **à
+  l'arrivée de l'étape 2** (`DrawKillerNumbers`, port synchrone, même `RandomSource`), gardé en mémoire
+  (`useState` de `useNouvellePartie`, aucune clé de préférence), modifiable parmi les numéros libres, complété
+  au lancement s'il en manque. Préférences `partie:killer-vies` (3 ou 5) et `partie:killer-variante`, jamais
+  renommées. ⚠️ **La sélection de joueurs est coupée à la limite du jeu au changement de jeu** (4 pour X01,
+  Cricket, Tour du monde ; 6 pour le Killer ; coupe **écrite** dans `partie:joueurs` : les 5e et 6e joueurs d'un
+  Killer à 6 sont perdus en passant au X01). `useKiller` est le **cinquième utilisateur** de `useVoleeEnCours`
+  (la fléchette qui rend killer ou retire des vies est visible tout de suite, la volée en cours est projetée
+  par `PreviewKillerVisit` avec **la même** `applyVisit` que le rejeu). L'import projette le journal de **tous**
+  les modes avant d'écrire : un journal qui ne se rejoue pas est refusé et compté. La tuile du Killer est la
+  seule à porter « 2 à 6 joueurs » ; l'entraînement passe en pleine largeur (option B).
 
 ---
 
@@ -293,6 +321,37 @@ monde, **on ne finit pas le tour de table** : la condition de victoire du Cricke
 d'être devant aux points, donc celui qui la remplit a mérité son avance.
 
 ---
+
+## Règles du Killer (référence — NE PAS improviser)
+
+Cinquième mode, lot `killer` : on joue à plusieurs, chaque joueur a un numéro et des vies, on devient
+« killer » puis on retire les vies des autres. L'utilisateur ne connaissait pas le jeu : ce sont les règles
+« les plus courantes », proposées et validées par lui (`docs/lots/killer/request.md`, règles 1 à 14).
+
+- **2 à 6 joueurs**, pas de solo. **Un numéro de 1 à 20 par joueur**, tous différents, **bulle exclue**.
+  Les numéros sont **tirés au sort** (à l'étape 2, déjà tirés à l'arrivée) et modifiables à la main, parmi les
+  numéros libres ; ils sont **écrits dans le journal** (`KillerStarted.numbers`, `numbers[i]` = numéro de
+  `playerIds[i]`), jamais dans la config : « Rejouer » et « On remet ça » **tirent de nouveaux numéros**.
+- **Vies** : 3 par défaut, 5 au choix (liste fermée `KILLER_LIVES`).
+- **Devenir killer** : toucher le **double de son propre numéro** ; un simple ou un triple de son numéro ne le
+  rend pas killer. Les fléchettes suivantes de la **même volée** comptent tout de suite.
+- **Frapper un adversaire** : seulement une fois killer, en touchant son numéro ; **simple 1 vie, double 2,
+  triple 3**, jamais sous 0. Un non-killer qui touche le numéro d'un adversaire : aucun effet. `MISS`, bulle,
+  numéro non attribué (moins de 6 joueurs) et numéro d'un éliminé : aucun effet.
+- **Son propre numéro, une fois killer** : sans effet par défaut. **Variante** (« Son propre numéro coûte des
+  vies », désactivée par défaut, réglable à l'étape 2) : le killer perd des vies **au même barème** ; à 0 vie
+  il est **éliminé** et **sa volée s'arrête**. S'il ne restait que lui et un adversaire, l'**adversaire gagne**
+  (une fléchette ne touche qu'un numéro : pas de double élimination, donc **pas de nul**).
+- **Élimination** à 0 vie : le joueur est **sauté** au tour de table, son numéro ne vaut plus rien.
+- **Victoire** : le **dernier survivant**. La volée s'arrête sur la fléchette qui élimine le dernier adversaire ;
+  elle ouvre la `BoiteConfirmation` « Valider la sortie » **au nom du gagnant** (forme « variante » si c'est une
+  auto-élimination). Rien n'est écrit, dit ni célébré avant.
+- **Classement** : par ordre d'élimination, le gagnant 1er et le dernier éliminé 2e (`KillerRules.ranking`).
+  Le résumé dit « Éliminé(e) par X » pour chaque éliminé (le lanceur de la fléchette éliminante, **déduit du
+  journal**, `KillerState.eliminations { playerId, by }`), « Éliminé(e) » seul pour une auto-élimination.
+- **Hors statistiques de carrière.** Voix : « X devient killer », « Y est éliminé(e) », « À toi, Z » après une
+  volée non finale, la phrase de victoire à la victoire (sans « À toi »), **muette jusqu'à « Valider la
+  sortie »**, un seul `say` par fin de volée.
 
 ## Règles de l'entraînement (référence — NE PAS improviser)
 
@@ -463,8 +522,8 @@ jeu). Le pattern « comment ajouter un mode de jeu » (la couture `GameMode`) vi
 2. ~~**Mode paysage « tableau »** (téléphone à plat sur une table).~~ **Tranchée au lot 5c** :
    la bascule est automatique, portée par `DispositionPartie`, et conditionnée à la hauteur
    plutôt qu'à la seule orientation.
-3. ~~**Cricket**~~ **livré au lot 5c.** Restent les autres jeux fun (Around the Clock, Killer,
-   Shanghai) — hors v1, la couture `GameMode` les accueillera.
+3. ~~**Cricket**~~ **livré au lot 5c**, ~~**Killer**~~ **livré au lot `killer`.** Restent les autres
+   jeux fun (Around the Clock, Shanghai) — hors v1, la couture `GameMode` les accueillera.
 4. **Sync cloud / classement entre potes** — hors v1 (lot 6 hypothétique). L'export/import
    JSON du lot 4 est le palliatif.
 5. **i18n** : FR seul pour l'instant (aucun besoin identifié).

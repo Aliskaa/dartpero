@@ -134,6 +134,43 @@ describe('Adapters Dexie (IndexedDB)', () => {
       expect(await repository.findById(KEVIN)).toBeNull()
       expect(await repository.listAll()).toHaveLength(1)
     })
+
+    /** Lot `killer` : le genre, champ non indexé, sans `db.version`. */
+    it('relit une ligne brute sans genre comme « non précisé », sans clé', async () => {
+      await db.players.put({ id: KEVIN, name: 'Kevin', color: 'brique', createdAt: 1000 })
+
+      const relu = await new DexiePlayerRepository(db).findById(KEVIN)
+
+      expect(relu).toEqual({ id: KEVIN, name: 'Kevin', color: 'brique', createdAt: 1000 })
+      expect('gender' in (relu ?? {})).toBe(false)
+    })
+
+    it('écrit le genre choisi, et le retour à « non précisé » retire la clé de la ligne', async () => {
+      const repository = new DexiePlayerRepository(db)
+      await repository.save({
+        id: JULIEN,
+        name: 'Sarah',
+        color: 'sapin',
+        createdAt: 2000,
+        gender: 'FEMININE',
+      })
+
+      expect((await db.players.get(JULIEN))?.gender).toBe('FEMININE')
+      expect((await repository.findById(JULIEN))?.gender).toBe('FEMININE')
+
+      await repository.save({ id: JULIEN, name: 'Sarah', color: 'sapin', createdAt: 2000 })
+
+      const brute = await db.players.get(JULIEN)
+      expect(brute).toBeDefined()
+      expect('gender' in (brute ?? {})).toBe(false)
+    })
+
+    it('un profil créé sans genre n’écrit aucune clé `gender` en base', async () => {
+      const { services } = fakeServices({ players: new DexiePlayerRepository(db) })
+      const kevin = await services.managePlayers.create('Kevin')
+
+      expect('gender' in ((await db.players.get(kevin.id)) ?? {})).toBe(false)
+    })
   })
 
   /** Lot `volee-partielle` : la volée en cours, une ligne par partie, hors du journal. */

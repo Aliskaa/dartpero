@@ -12,6 +12,11 @@ type Props = {
   readonly alerte?: boolean
   /** Dès trois joueurs : 15 px et interlettrage resserré, pour tenir dans la colonne. */
   readonly serre?: boolean
+  /**
+   * Éliminé (Killer) : nom en `craie-3` barré, carré de profil en niveaux de
+   * gris — un effet, pas une couleur (planche `killer`).
+   */
+  readonly elimine?: boolean
 }
 
 /**
@@ -22,7 +27,15 @@ type Props = {
  *
  * Craie atténuée au repos, craie vive pour celui qui lance.
  */
-export const NomJoueurFeuille = ({ nom, couleur, actif, vainqueur, alerte, serre }: Props) => {
+export const NomJoueurFeuille = ({
+  nom,
+  couleur,
+  actif,
+  vainqueur,
+  alerte,
+  serre,
+  elimine = false,
+}: Props) => {
   const teinte = couleurJoueur(couleur)
 
   return (
@@ -30,12 +43,18 @@ export const NomJoueurFeuille = ({ nom, couleur, actif, vainqueur, alerte, serre
       <span
         aria-hidden="true"
         style={{ backgroundColor: alerte ? undefined : teinte.fond }}
-        className={`size-3 shrink-0 ${alerte ? 'bg-rouge-cible' : ''}`}
+        className={`size-3 shrink-0 ${alerte ? 'bg-rouge-cible' : ''} ${elimine ? 'grayscale' : ''}`}
       />
       <span
         className={`truncate font-score font-bold uppercase ${
           serre ? 'text-nom-serre tracking-[0.02em]' : 'text-base tracking-[0.08em]'
-        } ${actif ? 'text-craie-vive' : 'text-craie-2'}`}
+        } ${
+          elimine
+            ? 'text-craie-3 line-through decoration-2'
+            : actif
+              ? 'text-craie-vive'
+              : 'text-craie-2'
+        }`}
       >
         {nom}
       </span>

@@ -412,12 +412,27 @@ contrôle sans effet induit en erreur. Les fléchettes enregistrées sont donc d
 doubles : ces mesures n'ont pas de sens au Tour du monde ni au Cricket, qui sont écartés du
 cumul plutôt que d'y injecter des zéros trompeurs.
 
-**Pour ajouter un mode futur** (Killer, Shanghai, Around the Clock — hors périmètre v1, voir
+**Pour ajouter un mode futur** (Shanghai, Around the Clock — hors périmètre v1, voir
 `CLAUDE.md` § Décisions ouvertes) : un dossier `domain/games/<mode>/`, un événement
 d'ouverture, un module de règles avec son `mode` discriminant, trois lignes dans chaque
 aiguillage de `games/index.ts`, un dossier `ui/composants/<mode>/`, un écran de jeu et un
-résumé. Rien d'autre ne bouge — vérifié trois fois de suite (Tour du monde, Cricket,
-entraînement).
+résumé. Rien d'autre ne bouge — vérifié quatre fois de suite (Tour du monde, Cricket,
+entraînement, Killer).
+
+⚠️ **Depuis le lot « killer »** (quatre pièges, trouvés en le branchant) : (1) `GameModes.project`,
+`isFinished` et `currentPlayerId` finissent par un `default` **typé `never`** : un mode non listé n'est plus
+rejoué par le X01 ; **`PartieEcran.tsx` aussi** (son `switch` finissait par `default: return x01` : un journal
+d'un mode non câblé ouvrait l'écran X01) ; (2) le **maximum de joueurs est propre au mode** :
+`useNouvellePartie.max(mode)` et `rejouer.maxJoueurs` sont des `switch` exhaustifs (le Killer va à 6), sinon
+« Rejouer » écarte en silence toute configuration au-delà de 4 ; le `switch` de `rejouer` de
+`useNouvellePartie` a un `default` typé `never` ; (3) `tests/use-cases/lancerPartie.ts` lance un mode à son
+**minimum de joueurs** (2 pour le Killer : pas de solo), et `tests/domain/matchName.test.ts` liste à la main
+les ouvertures (`OUVERTURES`) ; (4) la garde `hexagonalBoundary` lit les vrais dossiers de
+`src/core/domain/games` et `src/ui/composants` (plancher de 5 modes) et résout les imports **relatifs** : un
+import `../x01/…` depuis un autre mode la fait échouer. Une donnée **par joueur** de la partie (les numéros du
+Killer) se range dans l'événement d'ouverture, indexée comme `playerIds`, **hors de la config** (sinon elle
+entre dans la configuration rejouable) ; l'état de chaque joueur au fil des fléchettes est **déduit** du journal,
+jamais stocké, et un « qui a éliminé qui » se lit sur le rejeu (`KillerState.eliminations`).
 
 ⚠️ **Depuis le lot « volee-partielle »**, le hook du mode range ses fléchettes en cours par
 `useVoleeEnCours` (§ 10), avec son `evaluer` (`'ouverte' | 'en-attente' | 'close'`), et passe `pret` à
@@ -477,8 +492,9 @@ invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchang�
 « reglages-par-usage » : 25 (`GetDeviceContents`) ; lot « annulation-volee » : toujours 25, 27 fichiers
 (hors `MatchSummary.ts` et `ReopenedVisit.ts`, deux types), 11 driven, 14 hooks (plus `tourDeTable.ts`, un utilitaire ;
 `useConfirmationSortie` au lot « annulation-volee ») ; lot « volee-partielle » : 26 ports driving
-(`ManageVisitDraft`), 12 driven (`VisitDraftRepository`), 15 hooks (`useVoleeEnCours`),
-4 modes, 4 services transverses.
+(`ManageVisitDraft`), 12 driven (`VisitDraftRepository`), 15 hooks (`useVoleeEnCours`) ; lot « killer » :
+29 ports driving (`PlayKiller`, `PreviewKillerVisit`, `DrawKillerNumbers`), 12 driven, 16 hooks (`useKiller`),
+`PlayerGender` (value object), 5 modes, 4 services transverses.
 
 ```
 src/
@@ -557,6 +573,7 @@ src/
 │  │                        feuille de règles, confirmation de la sortie) ·
 │  │                      useConfirmationSortie (la boîte « Kevin sort sur D10 ? » :
 │  │                        demander, Corriger, Valider, retour = Corriger) ·
+│  │                      useKiller (cinquième mode : numéros, vies, killer, éliminés) ·
 │  │                      useVoleeEnCours (la volée en cours gardée dans le brouillon :
 │  │                        poser, pret, file d'écriture ; commun aux quatre modes) ·
 │  │                      useDialogueNatif (la discipline du <dialog>, partagée)

@@ -3,6 +3,7 @@ import type { MatchEvent } from '@/core/domain/events/MatchEvent'
 import type { GameModeId } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
+import { KillerConfig } from '@/core/domain/games/killer/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
@@ -37,6 +38,13 @@ export const lancer = (
       return services.playCricket.start({
         playerIds: joueurs,
         config: CricketConfig.create(),
+        ...name,
+      })
+    case 'KILLER':
+      // ⚠️ Pas de solo au Killer : les appelants lui passent au moins 2 joueurs.
+      return services.playKiller.start({
+        playerIds: joueurs,
+        config: KillerConfig.create(),
         ...name,
       })
     case 'CHECKOUT_PRACTICE': {

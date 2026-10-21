@@ -20,6 +20,11 @@ export const TRACES_ATTENDUS: Record<(typeof PICTOGRAMMES)[number], string> = {
   cricket:
     '<circle cx="12" cy="12" r="9.5"></circle>' +
     '<path d="M7.5 7.5 L16.5 16.5 M16.5 7.5 L7.5 16.5"></path>',
+  // Planche `killer` : le viseur, tracé exact.
+  killer:
+    '<circle cx="12" cy="12" r="7.5"></circle>' +
+    '<path d="M12 1.5 V6 M12 18 V22.5 M1.5 12 H6 M18 12 H22.5"></path>' +
+    '<circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"></circle>',
   'tour-du-monde':
     '<path d="M16.25 4.64 A8.5 8.5 0 1 1 6.54 5.49"></path>' +
     '<path d="M4.61 3.19 L9.29 3.17 L8.46 7.79 Z" fill="currentColor" stroke="none"></path>' +

@@ -4,13 +4,16 @@ import type { GameModeId } from '@/core/domain/games'
 import { DEFAUT as DEFAUT_ENTRAINEMENT } from '@/core/domain/games/checkout-practice/config'
 import { CRICKET_VARIANTS } from '@/core/domain/games/cricket/config'
 import { ChoixSegmente } from '@/ui/composants/commun/ChoixSegmente'
+import { LigneReglage } from '@/ui/composants/commun/LigneReglage'
 import { Phrase } from '@/ui/composants/commun/Phrase'
 import { PICTOGRAMME_PAR_MODE, Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import type { ReglagesNouvellePartie } from '@/ui/hooks/useNouvellePartie'
 import {
   AIDE_SORTIE,
+  AIDE_VARIANTE_KILLER,
   aideManches,
   aideSorties,
+  aideVies,
   CARTES_CRICKET,
   CHOIX_ENTREE_SORTIE,
   type ChoixEntreeSortie,
@@ -23,25 +26,29 @@ import {
   LEGENDE_SCORE_DEPART,
   LEGENDE_SETS_A_GAGNER,
   LEGENDE_SORTIE,
+  LEGENDE_VIES_DEPART,
   LIBELLE_CHOIX_ENTREE_SORTIE,
   LIBELLE_CHOIX_SORTIE,
   LIBELLE_NON_REGLABLE,
   LIBELLE_PLUS_DE_REGLAGES,
   LIBELLE_SANS_SETS,
   LIBELLE_VARIANTE_CRICKET,
+  LIBELLE_VARIANTE_KILLER,
   RECAP_TOUR_DU_MONDE,
   REGLE_ENTRAINEMENT,
+  REGLE_KILLER,
   REGLE_TOUR_DU_MONDE,
   REGLE_X01,
   type RecapReglages,
   recapCricket,
   recapEntrainementFiche,
+  recapKiller,
   recapX01,
   regleCricket,
   type Segment,
   TITRE_FICHE_REGLAGES,
 } from '@/ui/labels'
-import { LEGS, SCORES, SETS, SORTIES } from '@/ui/reglagesPossibles'
+import { LEGS, SCORES, SETS, SORTIES, VIES } from '@/ui/reglagesPossibles'
 
 /** Une phrase écrite dans `labels.ts` : ses mots forts en `craie`. */
 const PhraseFiche = ({ segments }: { readonly segments: readonly Segment[] }) => (
@@ -251,6 +258,34 @@ export const ReglagesJeu = ({ mode, reglages, joueurs }: Props) => {
           recap: RECAP_TOUR_DU_MONDE,
           corps: null,
           regle: REGLE_TOUR_DU_MONDE,
+        }
+      case 'KILLER':
+        return {
+          recap: recapKiller(reglages.vies, joueurs, reglages.varianteKiller),
+          corps: (
+            <>
+              <ChoixSegmente
+                legende={LEGENDE_VIES_DEPART}
+                valeurs={VIES}
+                valeur={reglages.vies}
+                onChange={reglages.setVies}
+                aide={aideVies(reglages.vies)}
+              />
+              {/* La ligne à bascule des Réglages (46 × 26), désactivée par défaut. */}
+              <ul className="-mx-3 -mb-3 border-t border-craie/10">
+                <LigneReglage
+                  titre={LIBELLE_VARIANTE_KILLER}
+                  aide={AIDE_VARIANTE_KILLER}
+                  action={{
+                    type: 'bascule',
+                    active: reglages.varianteKiller,
+                    onClick: () => reglages.setVarianteKiller(!reglages.varianteKiller),
+                  }}
+                />
+              </ul>
+            </>
+          ),
+          regle: REGLE_KILLER,
         }
       case 'CHECKOUT_PRACTICE':
         return {

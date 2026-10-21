@@ -21,7 +21,16 @@ const enUi = (chemin: string) => relative(UI, chemin).replaceAll('\\', '/')
  * Le motif lit les imports `lucide-react` (une ou plusieurs lignes) et cherche
  * ces noms, entiers, dans la liste importée.
  */
-const REMPLACEES = ['Crown', 'Handshake', 'Target', 'ChevronsDown', 'Grid3x3', 'Globe2']
+const REMPLACEES = [
+  'Crown',
+  'Handshake',
+  'Target',
+  'ChevronsDown',
+  'Grid3x3',
+  'Globe2',
+  // Le viseur du Killer (lot `killer`).
+  'Crosshair',
+]
 
 const IMPORT_LUCIDE = /import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*['"]lucide-react['"]/g
 

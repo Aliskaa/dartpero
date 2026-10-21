@@ -48,6 +48,9 @@ Lot `hors-statistique` : le rouge de la touche « Hors » (texte via `--texte-to
 clair `#a81f25`, mesurés sur `feutre` (fond réel du pavé) : 7,9 / 5,2:1. Sur `feutre-nuit` en
 clair il tombe à 4,2:1 : ne pas l'y poser. `rouge-texte` reste réservé à la feuille de règles.
 Garde : `themeBoundary` (défini dans les deux blocs, consommé par `PaveSaisie`).
+Lot `killer` : sert aussi la perte de vie (« −N », effet « éliminé ») de `FeuilleKiller`, sur `ardoise` (7,13 /
+6,51:1) et sur le repère de la ligne active (laiton 12 % sur `ardoise` : 5,81 / 5,63:1, calcul, non mesuré sur
+écran). Toujours un jeton **général** : ne pas l'ajouter aux réservés.
 
 ## Jetons réservés
 

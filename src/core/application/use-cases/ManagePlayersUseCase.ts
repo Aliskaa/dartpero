@@ -2,6 +2,7 @@ import { DomainError } from '../../domain/DomainError'
 import { Player } from '../../domain/entities/Player'
 import { PlayerId } from '../../domain/value-objects/ids'
 import { PlayerColor } from '../../domain/value-objects/PlayerColor'
+import type { PlayerGender } from '../../domain/value-objects/PlayerGender'
 import type { Clock } from '../ports/driven/Clock'
 import type { IdGenerator } from '../ports/driven/IdGenerator'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
@@ -22,13 +23,19 @@ export class ManagePlayersUseCase implements ManagePlayers {
    * Le pseudo est unique (sans tenir compte de la casse) : deux « Diego » à
    * l'oche, c'est deux profils qu'on ne distingue plus à 3 mètres.
    */
-  async create(name: string, color?: PlayerColor): Promise<Player> {
+  async create(name: string, color?: PlayerColor, gender?: PlayerGender): Promise<Player> {
     const existants = await this.players.listAll()
     const propre = Player.cleanName(name)
     assurerPseudoLibre(propre, existants)
     const couleur = color ?? PlayerColor.nextAvailable(existants.map((joueur) => joueur.color))
 
-    const player = Player.create(PlayerId.of(this.ids.newId()), propre, couleur, this.clock.now())
+    const player = Player.create(
+      PlayerId.of(this.ids.newId()),
+      propre,
+      couleur,
+      this.clock.now(),
+      gender,
+    )
     await this.players.save(player)
     return player
   }
@@ -44,11 +51,14 @@ export class ManagePlayersUseCase implements ManagePlayers {
 
     // `createdAt` ne bouge jamais : c'est l'ancienneté du profil, pas sa
     // dernière modification.
+    // Genre : absent = inchangé, `null` = « non précisé » (la clé disparaît).
+    const genre = changes.gender === undefined ? existant.gender : (changes.gender ?? undefined)
     const modifie = Player.create(
       existant.id,
       nom,
       changes.color ?? existant.color,
       existant.createdAt,
+      genre,
     )
     await this.players.save(modifie)
     return modifie

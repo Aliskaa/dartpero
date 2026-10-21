@@ -11,9 +11,9 @@ const rendre = (nom: (typeof PICTOGRAMMES)[number], taille: 20 | 24 | 32 | 40 | 
 }
 
 describe('Pictogramme', () => {
-  it('compte les douze pictogrammes de la planche', () => {
-    expect(PICTOGRAMMES).toHaveLength(12)
-    expect(new Set(PICTOGRAMMES).size).toBe(12)
+  it('compte les treize pictogrammes des planches (le viseur du Killer compris)', () => {
+    expect(PICTOGRAMMES).toHaveLength(13)
+    expect(new Set(PICTOGRAMMES).size).toBe(13)
   })
 
   it.each(PICTOGRAMMES)('« %s » : un svg décoratif en grille 24, trait vif', (nom) => {

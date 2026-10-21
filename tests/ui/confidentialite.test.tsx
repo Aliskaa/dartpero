@@ -81,7 +81,32 @@ describe('Confidentialité — en accès direct', () => {
     ouvrir('/confidentialite')
     await titre()
 
-    expect(screen.getAllByText('Mise à jour le 17 octobre 2026')).toHaveLength(1)
+    expect(screen.getAllByText('Mise à jour le 21 octobre 2026')).toHaveLength(1)
+  })
+
+  it('cite le genre du profil, stocké sur l’appareil et exporté (lot killer)', async () => {
+    ouvrir('/confidentialite')
+    await titre()
+
+    expect(
+      screen.getByText(
+        /Vos profils \(pseudo, couleur, date de création et, si vous l’avez choisi, le genre — masculin ou féminin — qui sert seulement à accorder « éliminé \/ éliminée » au Killer\)/,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /vos profils \(pseudos, couleurs, dates de création et genres choisis\) et vos parties/,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('dit que la voix en ligne reçoit le mot accordé selon le genre', async () => {
+    ouvrir('/confidentialite')
+    await titre()
+
+    expect(
+      screen.getByText(/« éliminé » ou « éliminée » y est accordé selon le genre choisi/),
+    ).toBeInTheDocument()
   })
 
   it('cite la date du dernier export, gardée dans le stockage local', async () => {

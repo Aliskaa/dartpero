@@ -1,6 +1,7 @@
 import { DomainError } from '../DomainError'
 import type { PlayerId } from '../value-objects/ids'
 import type { PlayerColor } from '../value-objects/PlayerColor'
+import type { PlayerGender } from '../value-objects/PlayerGender'
 
 /**
  * Un joueur est un profil **local** : pas de compte, pas de mot de passe.
@@ -15,14 +16,33 @@ export type Player = {
   readonly name: string
   readonly color: PlayerColor
   readonly createdAt: number
+  /**
+   * Facultatif (lot `killer`) : sert seulement à accorder « éliminé /
+   * éliminée » au Killer. ⚠️ « Non précisé » = **clé absente**, jamais
+   * `gender: undefined` (le clonage d'IndexedDB garderait la clé).
+   */
+  readonly gender?: PlayerGender
 }
 
 /** Un pseudo lu à 3 mètres dans une liste : au-delà, c'est tronqué de toute façon. */
 const LONGUEUR_MAX = 20
 
 export const Player = {
-  create(id: PlayerId, name: string, color: PlayerColor, createdAt: number): Player {
-    return { id, name: Player.cleanName(name), color, createdAt }
+  create(
+    id: PlayerId,
+    name: string,
+    color: PlayerColor,
+    createdAt: number,
+    gender?: PlayerGender,
+  ): Player {
+    // Étalement conditionnel : sans genre, la clé n'existe pas.
+    return {
+      id,
+      name: Player.cleanName(name),
+      color,
+      createdAt,
+      ...(gender !== undefined ? { gender } : {}),
+    }
   },
 
   /** Seul point de validation du pseudo : appelé à la création comme au renommage. */

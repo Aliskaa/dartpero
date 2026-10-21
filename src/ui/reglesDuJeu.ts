@@ -6,6 +6,7 @@ import {
   type CricketConfig,
   type CricketVariant,
 } from '@/core/domain/games/cricket/config'
+import type { KillerConfig } from '@/core/domain/games/killer/config'
 import {
   TOUR_DU_MONDE_TARGETS,
   type TourDuMondeConfig,
@@ -19,6 +20,7 @@ import {
   type PlageSorties,
   reglesCricket,
   reglesEntrainement,
+  reglesKiller,
   reglesTourDuMonde,
   reglesX01,
 } from '@/ui/labels'
@@ -44,6 +46,7 @@ export type ReglesDeLaPartie =
       readonly cibles: readonly Segment[]
     }
   | { readonly mode: 'TOUR_DU_MONDE'; readonly cibles: readonly Segment[] }
+  | { readonly mode: 'KILLER'; readonly vies: number; readonly variante: boolean }
   | {
       readonly mode: 'CHECKOUT_PRACTICE'
       readonly sorties: number
@@ -74,6 +77,8 @@ export const contenuRegles = (regles: ReglesDeLaPartie, sorties: SortiesDuJeu): 
       return reglesCricket(regles)
     case 'TOUR_DU_MONDE':
       return reglesTourDuMonde(regles)
+    case 'KILLER':
+      return reglesKiller(regles)
     case 'CHECKOUT_PRACTICE':
       return reglesEntrainement(regles)
     default: {
@@ -102,6 +107,8 @@ export const reglesDeLaFiche = (
       return { mode, variante: reglages.variante, cibles: CRICKET_TARGETS }
     case 'TOUR_DU_MONDE':
       return { mode, cibles: TOUR_DU_MONDE_TARGETS }
+    case 'KILLER':
+      return { mode, vies: reglages.vies, variante: reglages.varianteKiller }
     case 'CHECKOUT_PRACTICE':
       return {
         mode,
@@ -137,6 +144,12 @@ export const reglesDeLaConfigCricket = (config: CricketConfig): ReglesDeLaPartie
 export const reglesDeLaConfigTourDuMonde = (config: TourDuMondeConfig): ReglesDeLaPartie => ({
   mode: 'TOUR_DU_MONDE',
   cibles: config.targets,
+})
+
+export const reglesDeLaConfigKiller = (config: KillerConfig): ReglesDeLaPartie => ({
+  mode: 'KILLER',
+  vies: config.startingLives,
+  variante: config.selfHitCostsLives,
 })
 
 export const reglesDeLaConfigEntrainement = (config: CheckoutPracticeConfig): ReglesDeLaPartie => ({

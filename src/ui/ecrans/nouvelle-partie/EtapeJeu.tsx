@@ -19,6 +19,7 @@ import {
   LIBELLE_MODE,
   LIBELLE_MODE_COURT,
   PHRASE_TUILE,
+  PLAGE_JOUEURS_KILLER,
   RETOUR_ACCUEIL,
   resumeRejouer,
   TITRE_AUTRE_JEU,
@@ -36,29 +37,51 @@ import { EnTeteEtape } from './EnTeteEtape'
  * présélectionnée se lirait comme un choix en attente, alors qu'ici toucher
  * une tuile, c'est avancer.
  */
-const JEUX: readonly GameModeId[] = ['X01', 'CRICKET', 'TOUR_DU_MONDE', 'CHECKOUT_PRACTICE']
+const JEUX: readonly GameModeId[] = [
+  'X01',
+  'CRICKET',
+  'TOUR_DU_MONDE',
+  'KILLER',
+  'CHECKOUT_PRACTICE',
+]
 
-const TuileJeu = ({ mode }: { readonly mode: GameModeId }) => (
-  <li>
-    <Link
-      to={cheminNouvellePartie(mode)}
-      state={ETAT_PARCOURS}
-      // Le liseré : le laiton, pour tous les jeux (le jeu se dit par son pictogramme).
-      className={[
-        'flex h-full min-h-[150px] flex-col gap-2 border-t-4 border-laiton bg-ardoise px-3 pb-3 pt-3.5',
-        'transition-colors duration-150 active:bg-chene/30',
-      ].join(' ')}
-    >
-      <span className="text-laiton-clair">
-        <Pictogramme nom={PICTOGRAMME_PAR_MODE[mode]} taille={40} />
-      </span>
-      <span className="font-score text-lg font-bold uppercase leading-tight text-craie-vive">
-        {LIBELLE_MODE[mode]}
-      </span>
-      <span className="text-sm leading-snug text-craie-2">{PHRASE_TUILE[mode]}</span>
-    </Link>
-  </li>
-)
+/**
+ * Une tuile. L'entraînement, seul jeu solo, prend **toute la largeur** sous la
+ * grille 2 × 2 des jeux à plusieurs (planche `killer`, option B). La plage de
+ * joueurs n'est écrite que sur la tuile Killer (réponse 5).
+ */
+const TuileJeu = ({ mode }: { readonly mode: GameModeId }) => {
+  const large = mode === 'CHECKOUT_PRACTICE'
+  return (
+    <li className={large ? 'col-span-2' : undefined}>
+      <Link
+        to={cheminNouvellePartie(mode)}
+        state={ETAT_PARCOURS}
+        // Le liseré : le laiton, pour tous les jeux (le jeu se dit par son pictogramme).
+        className={[
+          'flex h-full border-t-4 border-laiton bg-ardoise px-3 pb-3 pt-3.5',
+          large ? 'min-h-12 items-center gap-3.5' : 'min-h-[150px] flex-col gap-2',
+          'transition-colors duration-150 active:bg-chene/30',
+        ].join(' ')}
+      >
+        <span className="shrink-0 text-laiton-clair">
+          <Pictogramme nom={PICTOGRAMME_PAR_MODE[mode]} taille={40} />
+        </span>
+        <span className={large ? 'flex min-w-0 flex-1 flex-col gap-1' : 'contents'}>
+          <span className="font-score text-lg font-bold uppercase leading-tight text-craie-vive">
+            {LIBELLE_MODE[mode]}
+          </span>
+          <span className="text-sm leading-snug text-craie-2">{PHRASE_TUILE[mode]}</span>
+          {mode === 'KILLER' && (
+            <span className="mt-auto font-score text-etiquette uppercase tracking-[0.12em] text-laiton-clair">
+              {PLAGE_JOUEURS_KILLER}
+            </span>
+          )}
+        </span>
+      </Link>
+    </li>
+  )
+}
 
 /** « Ou un autre jeu » : le même lien que la tuile, en rangée compacte (pictogramme + nom). */
 const JeuCompact = ({ mode }: { readonly mode: GameModeId }) => (
@@ -75,7 +98,7 @@ const JeuCompact = ({ mode }: { readonly mode: GameModeId }) => (
       <span className="text-laiton-clair">
         <Pictogramme nom={PICTOGRAMME_PAR_MODE[mode]} taille={24} />
       </span>
-      {/* Quatre cases serrées : l'entraînement s'y dit « Solo », comme au filtre de Parties. */}
+      {/* Cinq cases serrées : l'entraînement s'y dit « Solo », comme au filtre de Parties. */}
       {mode === 'CHECKOUT_PRACTICE' ? LIBELLE_MODE_COURT[mode] : LIBELLE_MODE[mode]}
     </Link>
   </li>
@@ -135,7 +158,8 @@ const LigneRejouer = ({
 /**
  * Étape 1 — le jeu. Avec un historique : « Rejouer » (les trois configurations
  * récentes) puis « Ou un autre jeu » en rangée compacte. Sans aucune
- * configuration à rejouer : les quatre tuiles 2 × 2. Tant que l'historique ou
+ * configuration à rejouer : les tuiles 2 × 2, l'entraînement en pleine largeur
+ * dessous. Tant que l'historique ou
  * les profils chargent : **rien** sous la barre d'étapes — ni rangée ni tuiles,
  * sans quoi la mise en page basculerait sous le doigt et un appui serait perdu.
  *
@@ -194,7 +218,8 @@ export const EtapeJeu = ({ partie }: { readonly partie: NouvellePartie }) => {
             <h2 className="font-score text-etiquette font-bold uppercase tracking-[0.2em] text-laiton-clair">
               {TITRE_AUTRE_JEU}
             </h2>
-            <ul className="grid grid-cols-4 gap-1.5">
+            {/* La rangée existante, une case de plus (réponses 6 et 7). */}
+            <ul className="grid grid-cols-5 gap-1.5">
               {JEUX.map((mode) => (
                 <JeuCompact key={mode} mode={mode} />
               ))}

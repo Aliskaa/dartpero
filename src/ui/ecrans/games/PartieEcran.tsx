@@ -26,6 +26,12 @@ const CricketEcran = lazy(() =>
 const ResumeCricketEcran = lazy(() =>
   import('./cricket/ResumeCricketEcran').then((m) => ({ default: m.ResumeCricketEcran })),
 )
+const KillerEcran = lazy(() =>
+  import('./killer/KillerEcran').then((m) => ({ default: m.KillerEcran })),
+)
+const ResumeKillerEcran = lazy(() =>
+  import('./killer/ResumeKillerEcran').then((m) => ({ default: m.ResumeKillerEcran })),
+)
 const EntrainementEcran = lazy(() =>
   import('./checkout-practice/EntrainementEcran').then((m) => ({
     default: m.EntrainementEcran,
@@ -62,12 +68,14 @@ const Aiguillage = ({
   x01,
   tourDuMonde,
   cricket,
+  killer,
   entrainement,
 }: {
   readonly matchId: MatchId
   readonly x01: React.ReactNode
   readonly tourDuMonde: React.ReactNode
   readonly cricket: React.ReactNode
+  readonly killer: React.ReactNode
   readonly entrainement: React.ReactNode
 }) => {
   const mode = useMode(matchId)
@@ -89,16 +97,25 @@ const Aiguillage = ({
     )
   }
 
+  // ⚠️ Un `case` par mode et un `default` typé `never` (lot `killer`) : avant,
+  // tout mode non listé ouvrait l'écran X01.
   const ecran = (() => {
-    switch (mode.data) {
+    const id = mode.data
+    switch (id) {
+      case 'X01':
+        return x01
       case 'TOUR_DU_MONDE':
         return tourDuMonde
       case 'CRICKET':
         return cricket
       case 'CHECKOUT_PRACTICE':
         return entrainement
-      default:
-        return x01
+      case 'KILLER':
+        return killer
+      default: {
+        const jamais: never = id
+        return jamais
+      }
     }
   })()
 
@@ -113,6 +130,7 @@ export const PartieEcran = () => {
       x01={<X01Ecran />}
       tourDuMonde={<TourDuMondeEcran />}
       cricket={<CricketEcran />}
+      killer={<KillerEcran />}
       entrainement={<EntrainementEcran />}
     />
   )
@@ -126,6 +144,7 @@ export const ResumePartieEcran = () => {
       x01={<ResumeX01Ecran />}
       tourDuMonde={<ResumeTourDuMondeEcran />}
       cricket={<ResumeCricketEcran />}
+      killer={<ResumeKillerEcran />}
       entrainement={<ResumeEntrainementEcran />}
     />
   )

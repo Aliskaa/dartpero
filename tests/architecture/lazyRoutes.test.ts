@@ -53,7 +53,7 @@ const ECRANS_ROUTES = [
   'ResumePartieEcran',
 ]
 
-// Les 8 écrans de mode de PartieEcran.tsx — un par mode, jeu + résumé.
+// Les 10 écrans de mode de PartieEcran.tsx — un par mode, jeu + résumé (Killer : lot `killer`).
 const ECRANS_MODE = [
   'X01Ecran',
   'ResumeX01Ecran',
@@ -61,6 +61,8 @@ const ECRANS_MODE = [
   'ResumeTourDuMondeEcran',
   'CricketEcran',
   'ResumeCricketEcran',
+  'KillerEcran',
+  'ResumeKillerEcran',
   'EntrainementEcran',
   'ResumeEntrainementEcran',
 ]
@@ -98,7 +100,7 @@ describe('Découpage par route (bundle-par-route)', () => {
     expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(8)
   })
 
-  it('PartieEcran.tsx n’importe jamais statiquement un des 8 écrans de mode', () => {
+  it('PartieEcran.tsx n’importe jamais statiquement un des 10 écrans de mode', () => {
     const source = readFileSync(PARTIE_ECRAN, 'utf8')
     const noms = nomsImportesStatiquement(source)
     const fautes = ECRANS_MODE.filter((ecran) => noms.includes(ecran))
@@ -106,9 +108,9 @@ describe('Découpage par route (bundle-par-route)', () => {
     expect(fautes).toEqual([])
   })
 
-  it('PartieEcran.tsx déclare au moins 8 lazy(() => import(', () => {
+  it('PartieEcran.tsx déclare au moins 10 lazy(() => import(', () => {
     const source = readFileSync(PARTIE_ECRAN, 'utf8')
 
-    expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(8)
+    expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(10)
   })
 })

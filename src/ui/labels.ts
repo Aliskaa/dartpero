@@ -5,6 +5,7 @@ import type { ReplayableConfiguration } from '@/core/application/ports/driving/G
 import type { VisitOutcome } from '@/core/domain/entities/Visit'
 import type { GameModeId } from '@/core/domain/games'
 import { Dart } from '@/core/domain/value-objects/Dart'
+import type { PlayerGender } from '@/core/domain/value-objects/PlayerGender'
 import { LEGS, SCORES, SETS, SORTIES } from '@/ui/reglagesPossibles'
 import type { Theme } from '@/ui/theme'
 import type { DureeSauvegarde, EtatGuideInstallation } from '@/ui/voyants'
@@ -187,6 +188,7 @@ export const LIBELLE_MODE: Record<GameModeId, string> = {
   X01: 'X01',
   TOUR_DU_MONDE: 'Tour du monde',
   CRICKET: 'Cricket',
+  KILLER: 'Killer',
   CHECKOUT_PRACTICE: 'Entraînement',
 }
 
@@ -201,6 +203,7 @@ export const LIBELLE_MODE_COURT: Record<GameModeId, string> = {
   X01: 'X01',
   TOUR_DU_MONDE: 'Monde',
   CRICKET: 'Cricket',
+  KILLER: 'Killer',
   CHECKOUT_PRACTICE: 'Solo',
 }
 
@@ -410,7 +413,7 @@ export const TITRE_CONFIDENTIALITE = 'Confidentialité'
 export const SOUS_TITRE_CONFIDENTIALITE = 'Politique et mentions légales'
 
 /** Chaîne française littérale : jamais recalculée depuis une date ISO. */
-export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 17 octobre 2026'
+export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 21 octobre 2026'
 
 export const RETOUR_REGLAGES = 'Retour aux réglages'
 
@@ -432,7 +435,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
   {
     titre: 'Sur votre appareil',
     paragraphes: [
-      'Vos profils (pseudo, couleur, date de création) et vos parties (le nom que vous leur avez donné, s’il y en a un, et chaque fléchette saisie, avec ses dates) sont enregistrés dans la base de données du navigateur (IndexedDB), sur ce téléphone seulement.',
+      'Vos profils (pseudo, couleur, date de création et, si vous l’avez choisi, le genre — masculin ou féminin — qui sert seulement à accorder « éliminé / éliminée » au Killer) et vos parties (le nom que vous leur avez donné, s’il y en a un, et chaque fléchette saisie, avec ses dates) sont enregistrés dans la base de données du navigateur (IndexedDB), sur ce téléphone seulement.',
       'Les préférences de l’appareil vont dans le stockage local du navigateur (localStorage) : le thème, l’annonce vocale, les réglages de la dernière partie, les derniers joueurs choisis (leurs identifiants internes), le dernier joueur consulté dans Statistiques (son identifiant interne), le « Plus tard » de l’invitation à installer et la date du dernier export. Au démarrage, une valeur de test y est écrite puis effacée aussitôt.',
       'Si une mise à jour de l’application ne parvient pas à se charger, un marqueur technique est posé dans le stockage de session (sessionStorage), pour ne recharger la page qu’une seule fois.',
       'Une copie des fichiers de l’application est gardée en cache par le navigateur, pour qu’elle fonctionne hors ligne.',
@@ -442,7 +445,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
   {
     titre: 'Garder la main',
     paragraphes: [
-      'Exporter : Réglages → Sauvegarde crée un fichier JSON qui contient vos profils (pseudos, couleurs) et vos parties. Ce que vous faites ensuite de ce fichier ne passe pas par Dartpéro.',
+      'Exporter : Réglages → Sauvegarde crée un fichier JSON qui contient vos profils (pseudos, couleurs, dates de création et genres choisis) et vos parties. Ce que vous faites ensuite de ce fichier ne passe pas par Dartpéro.',
       'Importer : le fichier choisi est lu sur le téléphone et vérifié, puis ses profils et ses parties s’ajoutent à la base. Ceux qui y figurent déjà (même identifiant) sont remplacés par la version du fichier ; le reste de la base n’est pas touché.',
       'Effacer : vous pouvez supprimer un profil (ses parties passées restent dans l’historique, sous « Joueur supprimé ») ou supprimer une partie. Pour tout effacer, effacez les données de ce site dans les réglages de votre navigateur.',
     ],
@@ -451,7 +454,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
     titre: 'Fonctions du téléphone',
     paragraphes: [
       'Pendant une partie, Dartpéro garde l’écran allumé et peut faire vibrer le téléphone (pas sur iPhone). Il n’utilise jamais la caméra, le micro, la localisation, les contacts ni les notifications.',
-      'L’annonce vocale lit les scores et le pseudo du joueur suivant avec une voix fournie par le navigateur. Selon le navigateur, cette voix peut être synthétisée en ligne par son fournisseur, qui reçoit alors le texte annoncé, pseudos compris. Pour l’éviter, coupez « Annoncer les volées » dans Réglages → Affichage.',
+      'L’annonce vocale lit les scores et le pseudo du joueur suivant avec une voix fournie par le navigateur. Selon le navigateur, cette voix peut être synthétisée en ligne par son fournisseur, qui reçoit alors le texte annoncé, pseudos compris — au Killer, « éliminé » ou « éliminée » y est accordé selon le genre choisi pour le profil. Pour l’éviter, coupez « Annoncer les volées » dans Réglages → Affichage.',
     ],
   },
   {
@@ -665,6 +668,7 @@ export const UNITE_CARTE: Record<GameModeId, string> = {
   X01: 'reste',
   CRICKET: 'pts',
   TOUR_DU_MONDE: 'fl.',
+  KILLER: 'vies',
   CHECKOUT_PRACTICE: 'checkouts',
 }
 
@@ -698,6 +702,10 @@ export const parleReste = (reste: number, avecUnite: boolean): string =>
 
 export const parlePoints = (points: number, avecUnite: boolean): string =>
   avecUnite ? pluriel(points, 'point') : String(points)
+
+/** Killer : les vies restantes d'un joueur, dites au lecteur d'écran. */
+export const parleVies = (vies: number, avecUnite: boolean): string =>
+  avecUnite ? pluriel(vies, 'vie') : String(vies)
 
 export const parleFlechettes = (flechettes: number, avecUnite: boolean): string =>
   avecUnite ? pluriel(flechettes, 'fléchette') : String(flechettes)
@@ -1109,6 +1117,7 @@ export const PHRASE_TUILE: Record<GameModeId, string> = {
   X01: 'Décompter 301, 501 ou 701 jusqu’à zéro pile.',
   CRICKET: 'Fermer du 20 au 15 et la bulle avant les autres.',
   TOUR_DU_MONDE: 'Du 20 au 1, puis la bulle.',
+  KILLER: 'Un numéro, des vies : le dernier en vie gagne.',
   CHECKOUT_PRACTICE: 'Seul : faire le checkout d’un reste tiré au sort.',
 }
 
@@ -1161,10 +1170,19 @@ export const titreRejouer = (configuration: ReplayableConfiguration): string => 
       return `${LIBELLE_MODE.CRICKET} · ${LIBELLE_VARIANTE_CRICKET[configuration.config.variant]}`
     case 'TOUR_DU_MONDE':
       return LIBELLE_MODE.TOUR_DU_MONDE
+    case 'KILLER':
+      return `${LIBELLE_MODE.KILLER} · ${libelleVies(configuration.config.startingLives)}`
     case 'CHECKOUT_PRACTICE':
       return LIBELLE_MODE.CHECKOUT_PRACTICE
   }
 }
+
+/**
+ * Killer : la variante, sur la ligne Rejouer **seulement quand elle est activée**
+ * (décision de l'utilisateur) — sans elle, deux lignes « Killer · 3 vies »
+ * paraîtraient identiques.
+ */
+export const LIBELLE_VARIANTE_KILLER_REJOUER = 'son propre numéro coûte'
 
 /**
  * La date de la dernière fois, courte et **sans heure** : « aujourd'hui », « hier »,
@@ -1214,6 +1232,9 @@ export const resumeRejouer = (
         return [pluriel(configuration.config.targets.length, 'cible')]
       case 'TOUR_DU_MONDE':
         return ['20 → 1, puis la bulle']
+      // Les vies sont au titre ; la variante n'apparaît qu'activée.
+      case 'KILLER':
+        return [configuration.config.selfHitCostsLives ? LIBELLE_VARIANTE_KILLER_REJOUER : null]
       case 'CHECKOUT_PRACTICE':
         return [pluriel(configuration.config.rounds, 'checkout')]
     }
@@ -1245,6 +1266,11 @@ export const ariaRejouer = (
         return `${LIBELLE_MODE.CRICKET} ${LIBELLE_VARIANTE_CRICKET[configuration.config.variant]}`
       case 'TOUR_DU_MONDE':
         return LIBELLE_MODE.TOUR_DU_MONDE
+      case 'KILLER': {
+        const { startingLives, selfHitCostsLives } = configuration.config
+        const vies = `${LIBELLE_MODE.KILLER} ${libelleVies(startingLives)}`
+        return selfHitCostsLives ? `${vies} ${LIBELLE_VARIANTE_KILLER_REJOUER}` : vies
+      }
       case 'CHECKOUT_PRACTICE':
         return `${LIBELLE_MODE.CHECKOUT_PRACTICE} ${pluriel(configuration.config.rounds, 'checkout')}`
     }
@@ -1438,6 +1464,7 @@ export const TITRE_REGLES: Record<GameModeId, string> = {
   X01: 'Règles du X01',
   CRICKET: 'Règles du Cricket',
   TOUR_DU_MONDE: 'Règles du Tour du monde',
+  KILLER: 'Règles du Killer',
   CHECKOUT_PRACTICE: 'Règles de l’entraînement',
 }
 export const SOUS_TITRE_REGLES = 'Telles que Dartpéro les applique'
@@ -2441,6 +2468,303 @@ export const reglesEntrainement = ({
   }
 }
 
+/* ------------------------------------------------------------------------
+ * Killer (lot `killer`) : la rubrique de la feuille de règles, écrite
+ * d'après les règles validées (`request.md`, règles 1 à 12). La variante
+ * désactivée se lit en gris, comme les autres réglages de la partie.
+ * ---------------------------------------------------------------------- */
+
+/** Le libellé de la variante (planche `killer`, choix de l'utilisateur). */
+export const LIBELLE_VARIANTE_KILLER = 'Son propre numéro coûte des vies'
+
+/** « 3 vies » : le réglage principal, au fil du texte et sur les cartes. */
+export const libelleVies = (vies: number): string => pluriel(vies, 'vie')
+
+/* Killer, le parcours Nouvelle partie (planche `killer`, étapes 1 et 2). */
+
+/** La plage de joueurs, sur la seule tuile Killer de l'étape 1. */
+export const PLAGE_JOUEURS_KILLER = '2 à 6 joueurs'
+
+/** La tête de la fiche : « 3 vies · 4 joueurs », la variante dessous. */
+export const recapKiller = (vies: number, joueurs: number, variante: boolean): RecapReglages => ({
+  principal: `${libelleVies(vies)} · ${pluriel(joueurs, 'joueur')}`,
+  secondaire: variante ? LIBELLE_VARIANTE_KILLER : 'Son propre numéro : sans effet',
+})
+export const LEGENDE_VIES_DEPART = 'Vies de départ'
+export const aideVies = (vies: number): string =>
+  `Chacun commence avec ${libelleVies(vies)} ; à 0, il est éliminé.`
+export const AIDE_VARIANTE_KILLER =
+  'Un killer qui touche son propre numéro perd des vies, comme pour un adversaire. À 0 vie, il est éliminé.'
+export const REGLE_KILLER: readonly Segment[] = [
+  'On devient ',
+  { fort: 'killer' },
+  ' en touchant le ',
+  { fort: 'double de son numéro' },
+  '. Un killer retire 1, 2 ou 3 vies (simple, double, triple) à qui il touche. Le ',
+  { fort: 'dernier en vie' },
+  ' gagne.',
+]
+
+/** Le bloc « Numéros » de l'étape 2. */
+export const TITRE_NUMEROS = 'Numéros'
+export const etatNumeros = (attribues: number, joueurs: number): string =>
+  `${attribues} sur ${joueurs} attribués · tous différents`
+export const LIBELLE_TIRER_NUMEROS = 'Tirer au sort'
+export const ARIA_TIRER_NUMEROS = 'Tirer au sort les numéros'
+export const titreGrilleNumero = (nom: string): string => `Numéro de ${nom}`
+export const ariaTuileNumero = (nom: string, numero: number | undefined): string =>
+  numero === undefined ? `Numéro de ${nom}` : `Numéro de ${nom} : ${numero}, changer`
+export const LIBELLE_NUMERO_ACTUEL = 'actuel'
+export const ariaNumeroPris = (numero: number, nom: string): string => `${numero}, pris par ${nom}`
+export const NOTE_NUMEROS =
+  'Touchez un numéro pour le changer : ceux déjà pris sont grisés. Chaque joueur a son numéro, la bulle n’en est pas un.'
+/** Sous 2 joueurs : la même consigne à 0 et à 1 joueur (réponse 13). */
+export const CONSIGNE_JOUEURS_KILLER =
+  'Le Killer se joue de 2 à 6 joueurs. Ajoutez au moins un joueur : les numéros seront tirés tout de suite.'
+
+/* Le genre d'un profil (planche `genre-profil`, piste B). */
+export const LEGENDE_GENRE = 'Genre'
+export const LIBELLE_GENRE = {
+  MASCULINE: 'Masculin',
+  FEMININE: 'Féminin',
+  NON_PRECISE: 'Non précisé',
+} as const
+export const AIDE_GENRE = 'Sert à accorder « éliminé / éliminée » dans le Killer. Facultatif.'
+export const LIBELLE_MODIFIER = 'Modifier'
+
+/* Killer, l'écran de partie et son résumé (planche `killer`). */
+
+export const TITRE_BANDEAU_KILLER = 'Killer'
+
+/** « 3 vies · 6 joueurs » : la variante n'y figure pas, comme sur la planche. */
+export const sousTitreBandeauKiller = (vies: number, joueurs: number): string =>
+  `${libelleVies(vies)} · ${pluriel(joueurs, 'joueur')}`
+
+/** Le compteur du bandeau : le chiffre en grand, « en vie » dessous. */
+export const LIBELLE_EN_VIE = 'en vie'
+export const LIBELLE_JOUEURS_EN_VIE = 'Joueurs en vie'
+/** « 4 en vie » : l'état du mini tableau d'une partie en cours. */
+export const libelleEnVie = (vivants: number): string => `${vivants} ${LIBELLE_EN_VIE}`
+
+/** Les en-têtes de la feuille : JOUEUR · N° · VIES · STATUT. */
+export const LIBELLE_NUMERO_COURT = 'N°'
+export const LIBELLE_VIES = 'Vies'
+export const LIBELLE_STATUT = 'Statut'
+/** Sous le numéro, au résumé. */
+export const LIBELLE_NUMERO = 'Numéro'
+
+/** Le badge laiton de qui peut frapper. */
+export const LIBELLE_BADGE_KILLER = 'Killer'
+/** « Vise D14 » : ce qui rend killer, tant qu'on ne l'est pas. */
+export const LIBELLE_VISE = 'Vise'
+export const libelleDoubleVise = (numero: number): string => `D${numero}`
+
+/**
+ * L'accord d'« éliminé » (règle 13) : le genre est celui du joueur **éliminé**,
+ * jamais celui de qui l'élimine. Seul `FEMININE` accorde au féminin ; « non
+ * précisé » (genre absent) et un profil supprimé s'écrivent au masculin.
+ * « Dernier en vie » ne s'accorde pas (réponse R1.2).
+ */
+export const accordElimine = (genre: PlayerGender | undefined): string =>
+  genre === 'FEMININE' ? 'éliminée' : 'éliminé'
+
+const capitale = (texte: string): string => texte.charAt(0).toUpperCase() + texte.slice(1)
+
+/** La pastille du statut sur la feuille (« ÉLIMINÉE », en capitales par le style). */
+export const pastilleElimine = (genre: PlayerGender | undefined): string =>
+  capitale(accordElimine(genre))
+
+/** Les effets écrits sous chaque fléchette de la ligne de volée. */
+export const EFFET_AUCUN = 'sans effet'
+export const EFFET_KILLER = 'Killer !'
+/** « Julien −1 » : les vies **réellement** perdues (réponse 10). */
+export const effetPerte = (nom: string, vies: number): string => `${nom} ${perteDeVies(vies)}`
+/** « Sarah éliminée ». */
+export const effetElimination = (nom: string, genre: PlayerGender | undefined): string =>
+  `${nom} ${accordElimine(genre)}`
+
+/** « −2 » sous les carrés de vie, en rouge. */
+export const perteDeVies = (vies: number): string => `−${vies}`
+
+/** Les phrases des lecteurs d'écran d'une ligne de la feuille. */
+export const etiquetteNumeroDe = (nom: string): string => `Numéro de ${nom}`
+export const etiquetteViesDe = (nom: string): string => `Vies de ${nom}`
+export const lisibleVies = (vies: number, perdues: number): string =>
+  perdues > 0
+    ? `${libelleVies(vies)}, ${perdues} perdue${perdues > 1 ? 's' : ''}`
+    : libelleVies(vies)
+
+/** Au résumé, sous le nom (règle 14) : « Éliminée par Julien », « Éliminé » seul pour soi-même. */
+export const sousLigneElimination = (
+  genre: PlayerGender | undefined,
+  par: string | null,
+): string =>
+  par === null ? capitale(accordElimine(genre)) : `${capitale(accordElimine(genre))} par ${par}`
+
+/** Le gagnant, au résumé : ses vies **restantes** (réponse 12). */
+export const sousLigneDernierEnVie = (vies: number): string =>
+  `Dernier en vie · ${libelleVies(vies)}`
+
+/** Le surtitre du résumé : « Killer · 3 vies ». */
+export const surtitreResumeKiller = (vies: number): string =>
+  `${TITRE_BANDEAU_KILLER} · ${libelleVies(vies)}`
+
+/** La boîte de sortie : « Kevin gagne sur D8 ? ». */
+export const titreConfirmationKiller = (gagnant: string, flechette: string): string =>
+  `${gagnant} gagne sur ${flechette} ?`
+
+/** Variante : le dernier adversaire s'élimine lui-même, « Kevin gagne ? ». */
+export const titreConfirmationKillerVariante = (gagnant: string): string => `${gagnant} gagne ?`
+
+const finConfirmationKiller = (gagnant: string): string =>
+  `${gagnant} est le dernier en vie : la partie est gagnée dès que vous validez.`
+
+/** « Julien est éliminé. Kevin est le dernier en vie : … » — accordé (réponse R1.2). */
+export const texteConfirmationKiller = (
+  elimine: string,
+  genre: PlayerGender | undefined,
+  gagnant: string,
+): string => `${elimine} est ${accordElimine(genre)}. ${finConfirmationKiller(gagnant)}`
+
+/** « Julien touche son propre numéro (S8) et est éliminé. Kevin est le dernier en vie : … » */
+export const texteConfirmationKillerVariante = (
+  elimine: string,
+  genre: PlayerGender | undefined,
+  flechette: string,
+  gagnant: string,
+): string =>
+  `${elimine} touche son propre numéro (${flechette}) et est ${accordElimine(genre)}. ${finConfirmationKiller(gagnant)}`
+
+/** Un jalon de la volée, tel que la voix le dit : genre de l'éliminé pour l'accord. */
+export type JalonKiller =
+  | { readonly type: 'KILLER'; readonly nom: string }
+  | { readonly type: 'ELIMINE'; readonly nom: string; readonly genre: PlayerGender | undefined }
+
+/**
+ * Ce que la voix dit d'une volée de Killer (règle 11) : « Kevin devient
+ * killer », « Sarah est éliminée ». Rien d'autre — ni les vies perdues, ni
+ * « Partie gagnée ! » (réponse 11) : la victoire ajoute seulement la phrase.
+ * `null` : rien à dire, la main passe quand même (`annonceFinDeVolee`).
+ */
+export const annonceKiller = (jalons: readonly JalonKiller[]): Annonce | null => {
+  if (jalons.length === 0) return null
+  const phrases = jalons.map((jalon) =>
+    jalon.type === 'KILLER'
+      ? `${jalon.nom} devient killer`
+      : `${jalon.nom} est ${accordElimine(jalon.genre)}`,
+  )
+  return [fr(phrases.join('. '))]
+}
+
+export const reglesKiller = ({
+  vies,
+  variante,
+}: {
+  readonly vies: number
+  readonly variante: boolean
+}): ContenuRegles => ({
+  titre: TITRE_REGLES.KILLER,
+  ceSoir: `${libelleVies(vies)} · ${variante ? LIBELLE_VARIANTE_KILLER.toLowerCase() : 'son propre numéro sans effet'}`,
+  enBref: [
+    'Chacun son ',
+    fort('numéro'),
+    ' et ses ',
+    fort(libelleVies(vies)),
+    '. Le ',
+    fort('double'),
+    ' de son numéro rend killer ; un killer retire des vies en touchant le numéro des autres. Le ',
+    fort('dernier en vie'),
+    ' gagne.',
+  ],
+  rubriques: [
+    {
+      titre: RUBRIQUE_MARQUER,
+      blocs: [
+        liste(
+          ligne(
+            'De 2 à 6 joueurs. Chacun a un numéro de ',
+            fort('1 à 20'),
+            ', tous différents, tiré au sort avant la partie et modifiable à la main. La bulle n’est jamais un numéro.',
+          ),
+          ligne(
+            'On devient ',
+            fort('killer'),
+            ' en touchant le ',
+            fort('double'),
+            ' de son propre numéro. Un simple ou un triple de son numéro ne rend pas killer.',
+          ),
+          ligne('Les fléchettes suivantes de la même volée comptent ', fort('tout de suite'), '.'),
+          ligne(
+            'Un killer qui touche le numéro d’un adversaire lui retire ',
+            fort('1 vie'),
+            ' au simple, ',
+            fort('2'),
+            ' au double, ',
+            fort('3'),
+            ' au triple, sans descendre sous 0.',
+          ),
+          ligne('Tant qu’on n’est pas killer, toucher le numéro d’un adversaire ne fait rien.'),
+        ),
+      ],
+    },
+    {
+      titre: RUBRIQUE_GAGNER,
+      blocs: [
+        liste(
+          ligne(
+            'À ',
+            fort('0 vie'),
+            ', un joueur est éliminé : il est sauté au tour de table et son numéro ne vaut plus rien.',
+          ),
+          ligne(
+            'Le ',
+            fort('dernier survivant'),
+            ' gagne. La volée s’arrête sur la fléchette qui élimine le dernier adversaire. Pas de match nul.',
+          ),
+          ligne('Classement : par ordre d’élimination, le ', fort('dernier éliminé'), ' est 2e.'),
+        ),
+      ],
+    },
+    {
+      titre: RUBRIQUE_CAS_PARTICULIERS,
+      blocs: [
+        liste(
+          ligne(
+            'Une fléchette hors cible, la bulle, un numéro que personne n’a ou celui d’un éliminé : ',
+            fort('aucun effet'),
+            '.',
+          ),
+          ligneSi(variante, 'Son propre numéro, une fois killer : ', fort('sans effet'), '.'),
+          ligneSi(
+            !variante,
+            `${LIBELLE_VARIANTE_KILLER} : un killer qui touche son numéro perd 1, 2 ou 3 vies, au même barème. À 0 vie, il est éliminé et sa volée s’arrête ; s’il ne restait que lui et un adversaire, l’adversaire gagne.`,
+          ),
+          ligne('Ni manche, ni set, ni bust : on joue jusqu’au dernier survivant.'),
+        ),
+      ],
+    },
+    {
+      titre: RUBRIQUE_REGLAGES,
+      blocs: [
+        {
+          type: 'reglages',
+          reglages: [
+            { terme: 'Vies', options: options([3, 5], vies, (v) => libelleVies(v)) },
+            {
+              terme: LIBELLE_VARIANTE_KILLER,
+              options: [
+                { libelle: 'Non', ceSoir: !variante, suite: ' : son numéro est sans effet' },
+                { libelle: 'Oui', ceSoir: variante, suite: ' : il coûte des vies' },
+              ],
+            },
+          ],
+        },
+        paragraphe(REGLAGES_FIGES),
+      ],
+    },
+  ],
+})
+
 /* Étape 3 — l'ordre de jeu. */
 export const LEGENDE_ORDRE = 'Ordre de passage'
 export const AIDE_POIGNEE = 'Glissez, ou flèches haut et bas'
@@ -2465,6 +2789,9 @@ export const sousTitreOrdre = (
       return `${LIBELLE_MODE.CRICKET} · ${LIBELLE_VARIANTE_CRICKET[reglages.variante]}`
     case 'TOUR_DU_MONDE':
     case 'CHECKOUT_PRACTICE':
+      return LIBELLE_MODE[mode]
+    // « Killer » seul (réponse R1.10) : les vies se lisent sur l'étape 2.
+    case 'KILLER':
       return LIBELLE_MODE[mode]
     default: {
       const jamais: never = mode

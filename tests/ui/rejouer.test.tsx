@@ -67,13 +67,13 @@ const preference = (dependencies: Dependencies, cle: string) =>
   dependencies.devices.preferences.read(cle, undefined)
 
 describe('Nouvelle partie — étape 1, « Rejouer »', () => {
-  it('sans aucune partie : les quatre tuiles, pas de section Rejouer', async () => {
+  it('sans aucune partie : les cinq tuiles, pas de section Rejouer', async () => {
     const { services } = await base()
     ouvrir(services)
     // Les tuiles gardent « Entraînement » : « Solo » est propre à la rangée compacte.
     expect(await screen.findByRole('link', { name: /^Entraînement/ })).toBeInTheDocument()
 
-    expect(await screen.findAllByRole('link')).toHaveLength(4)
+    expect(await screen.findAllByRole('link')).toHaveLength(5)
     await waitFor(() =>
       expect(screen.getByText('Décompter 301, 501 ou 701 jusqu’à zéro pile.')).toBeInTheDocument(),
     )
@@ -91,7 +91,7 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
     expect(screen.queryByRole('heading', { name: 'Rejouer' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ou un autre jeu' })).not.toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Rejouer' })).toBeInTheDocument()
-    expect(screen.getAllByRole('link')).toHaveLength(4)
+    expect(screen.getAllByRole('link')).toHaveLength(5)
   })
 
   it('pendant le chargement, base vide : aucun lien ; puis les tuiles 2 × 2, sans bascule', async () => {
@@ -100,7 +100,7 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
 
     expect(screen.queryAllByRole('link')).toHaveLength(0)
     expect(await screen.findByText(/zéro pile/)).toBeInTheDocument()
-    expect(screen.getAllByRole('link')).toHaveLength(4)
+    expect(screen.getAllByRole('link')).toHaveLength(5)
   })
 
   it('trois configurations jouées 4, 1 et 2 fois : trois lignes, la plus récente en tête, le bon « N fois »', async () => {
@@ -155,7 +155,7 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
     expect(items[0]).toHaveTextContent('X01 · 301')
   })
 
-  it('range les quatre jeux sous « Ou un autre jeu », vers l’étape 2', async () => {
+  it('range les cinq jeux sous « Ou un autre jeu », vers l’étape 2', async () => {
     const { services, x01 } = await base()
     await x01(['Kevin', 'Julien'])
     ouvrir(services)
@@ -170,7 +170,7 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
       '/nouvelle-partie/entrainement',
     )
     expect(screen.queryByRole('link', { name: /Entraînement/ })).not.toBeInTheDocument()
-    expect(screen.getAllByRole('link')).toHaveLength(4)
+    expect(screen.getAllByRole('link')).toHaveLength(5)
   })
 
   it('▶ à deux joueurs ou plus : ouvre l’Ordre avec l’ordre de la dernière fois, les réglages repris, puis « Commencer » lance sans nom', async () => {
@@ -373,7 +373,7 @@ describe('Nouvelle partie — « Rejouer », les autres modes et les cas écart�
     ouvrir(services)
 
     expect(await screen.findByText(/zéro pile/)).toBeInTheDocument()
-    expect(screen.getAllByRole('link')).toHaveLength(4)
+    expect(screen.getAllByRole('link')).toHaveLength(5)
     expect(screen.queryByRole('heading', { name: 'Rejouer' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ou un autre jeu' })).not.toBeInTheDocument()
   })

@@ -3,14 +3,23 @@ import { useState } from 'react'
 import type { Player } from '@/core/domain/entities/Player'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { PLAYER_COLORS, type PlayerColor } from '@/core/domain/value-objects/PlayerColor'
+import type { PlayerGender } from '@/core/domain/value-objects/PlayerGender'
 import { Avatar } from '@/ui/composants/commun/Avatar'
 import { Button } from '@/ui/composants/commun/Button'
+import { ChoixGenre } from '@/ui/composants/commun/ChoixGenre'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
 import { EmptyState, MessageErreur, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { COULEURS, NOM_COULEUR } from '@/ui/couleurs'
 import { useJoueurs, useRafraichirJoueurs } from '@/ui/hooks/useJoueurs'
 import { dateCourte } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
+
+/** Ce que la carte en édition enregistre. `gender: null` retire le genre. */
+type ChangementsProfil = {
+  readonly name: string
+  readonly color: PlayerColor
+  readonly gender: PlayerGender | null
+}
 
 /** La palette, en pastilles : on choisit une couleur en la voyant, pas en la lisant. */
 const ChoixCouleur = ({
@@ -51,17 +60,20 @@ const CarteProfil = ({
   onSupprimer,
 }: {
   readonly joueur: Player
-  readonly onEnregistrer: (changes: { name: string; color: PlayerColor }) => Promise<void>
+  readonly onEnregistrer: (changes: ChangementsProfil) => Promise<void>
   readonly onSupprimer: () => Promise<void>
 }) => {
   const [edition, setEdition] = useState(false)
   const [nom, setNom] = useState(joueur.name)
   const [couleur, setCouleur] = useState<PlayerColor>(joueur.color)
+  // Le genre ne se montre qu'en édition (planche `genre-profil`) : la carte au repos ne change pas.
+  const [genre, setGenre] = useState<PlayerGender | undefined>(joueur.gender)
   const [confirmeSuppression, setConfirmeSuppression] = useState(false)
 
   const ouvrir = () => {
     setNom(joueur.name)
     setCouleur(joueur.color)
+    setGenre(joueur.gender)
     setConfirmeSuppression(false)
     setEdition(true)
   }
@@ -105,11 +117,14 @@ const CarteProfil = ({
 
       <ChoixCouleur valeur={couleur} onChange={setCouleur} />
 
+      <ChoixGenre valeur={genre} onChange={setGenre} />
+
       <div className="grid grid-cols-[1fr_auto_auto] gap-2">
         <Button
           disabled={nom.trim() === ''}
           onClick={async () => {
-            await onEnregistrer({ name: nom, color: couleur })
+            // `null` = repasser à « non précisé » : la clé est retirée.
+            await onEnregistrer({ name: nom, color: couleur, gender: genre ?? null })
             setEdition(false)
           }}
         >
@@ -184,7 +199,7 @@ export const JoueursEcran = () => {
     }
   }
 
-  const enregistrer = async (id: PlayerId, changes: { name: string; color: PlayerColor }) => {
+  const enregistrer = async (id: PlayerId, changes: ChangementsProfil) => {
     setErreur(null)
     try {
       await services.managePlayers.update(id, changes)

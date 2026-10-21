@@ -69,7 +69,20 @@ const CARTE: Record<GameModeId, RegExp> = {
   X01: /^X01/,
   CRICKET: /^Cricket/,
   TOUR_DU_MONDE: /^Tour du monde/,
+  KILLER: /^Killer/,
   CHECKOUT_PRACTICE: /^Entraînement/,
+}
+
+/**
+ * Lance depuis l'étape 2. Le Killer ne se joue pas seul : il passe par
+ * l'étape Ordre (deux joueurs retenus avant l'ouverture, `deuxJoueurs`).
+ */
+const commencer = async (utilisateur: ReturnType<typeof userEvent.setup>, mode: GameModeId) => {
+  if (mode === 'KILLER') {
+    await utilisateur.click(await screen.findByRole('button', { name: 'Continuer' }))
+    await screen.findByRole('heading', { level: 1, name: 'Ordre de jeu' })
+  }
+  await utilisateur.click(await screen.findByRole('button', { name: 'Commencer' }))
 }
 
 const derniere = async (services: Services) => {
@@ -174,13 +187,14 @@ describe('Nom de la partie — lancement, les quatre jeux', () => {
   /** Critères 4 et 5. */
   it.each(GAME_MODE_IDS)('%s : enregistre le nom tapé, sans les espaces autour', async (mode) => {
     const utilisateur = userEvent.setup()
-    const { services, dependencies } = await base()
+    const { services, dependencies, deuxJoueurs } = await base()
+    if (mode === 'KILLER') deuxJoueurs()
     ouvrir(services)
 
     await utilisateur.click(await screen.findByRole('link', { name: CARTE[mode] }))
     await utilisateur.clear(await screen.findByLabelText(/^Nom de la partie/))
     await utilisateur.type(champNom(), '  Finale des potes  ')
-    await utilisateur.click(await screen.findByRole('button', { name: 'Commencer' }))
+    await commencer(utilisateur, mode)
 
     const partie = await derniere(services)
     expect(partie.mode).toBe(mode)
@@ -195,14 +209,15 @@ describe('Nom de la partie — lancement, les quatre jeux', () => {
     ),
   )('%s, champ %s : n’écrit aucun nom', async (mode, saisie) => {
     const utilisateur = userEvent.setup()
-    const { services, dependencies } = await base()
+    const { services, dependencies, deuxJoueurs } = await base()
+    if (mode === 'KILLER') deuxJoueurs()
     ouvrir(services)
 
     await utilisateur.click(await screen.findByRole('link', { name: CARTE[mode] }))
     const champ = await screen.findByLabelText(/^Nom de la partie/)
     if (saisie !== 'intact') await utilisateur.clear(champ)
     if (saisie === 'espaces') await utilisateur.type(champ, '    ')
-    await utilisateur.click(await screen.findByRole('button', { name: 'Commencer' }))
+    await commencer(utilisateur, mode)
 
     const partie = await derniere(services)
     expect(partie.name).toBeNull()

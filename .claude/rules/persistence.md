@@ -26,6 +26,15 @@ paths:
   comme `visitDrafts` en v3, n'en a pas besoin) — et un test de migration
   (v1 → v2, v2 → v3 comme modèles). Une migration ne jette pas de données
   sans filet.
+- **Un champ facultatif d'un profil** (`Player.gender`, lot `killer`) : clé **absente** quand « non précisé »
+  (étalement conditionnel à l'écriture, à la lecture et à l'export, jamais `gender: undefined`) ; un champ
+  **non indexé** ne demande ni `db.version` ni `upgrade` (preuve : `color` et `createdAt`, la v2 sans
+  `.stores()`) ; `BACKUP_VERSION` ne change pas ; une valeur invalide dans un fichier fait **ignorer le profil**
+  (compté dans `playersSkipped`), jamais planter. Les valeurs persistées (`MASCULINE`, `FEMININE`) ne se
+  renomment pas.
+- **Une donnée par joueur d'une partie** (les numéros du Killer, `KillerStarted.numbers`) se range dans
+  l'événement d'ouverture, indexée comme `playerIds`, **hors de la config** ; l'import **projette** le journal de
+  tout mode avant d'écrire (un journal qui ne se rejoue pas est refusé et compté).
 - **Le brouillon de volée** (`visitDrafts`, lot `volee-partielle`) vit hors
   du journal : jamais exporté, jamais dans `backupSchema`, effacé à
   l'enregistrement de la volée, à la suppression de la partie et à l'import

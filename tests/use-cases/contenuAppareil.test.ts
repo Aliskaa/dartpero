@@ -26,10 +26,18 @@ describe('GetDeviceContents — ce que contient ce téléphone', () => {
   it.each(GAME_MODE_IDS)('une partie de %s compte, entraînement compris', async (mode) => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
+    // Pas de solo au Killer : deux joueurs au moins.
+    const joueurs =
+      mode === 'KILLER'
+        ? [kevin.id, (await services.managePlayers.create('Julien')).id]
+        : [kevin.id]
 
-    await lancer(services, mode, [kevin.id])
+    await lancer(services, mode, joueurs)
 
-    expect(await services.getDeviceContents.execute()).toEqual({ matches: 1, players: 1 })
+    expect(await services.getDeviceContents.execute()).toEqual({
+      matches: 1,
+      players: joueurs.length,
+    })
   })
 
   it('compte au-delà des 20 parties que lit la partie en cours, en cours comme abandonnées', async () => {

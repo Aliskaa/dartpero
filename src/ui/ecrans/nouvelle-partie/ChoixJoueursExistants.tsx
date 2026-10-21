@@ -20,7 +20,7 @@ import {
   TITRE_JOUEURS_EXISTANTS,
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
-import { DialogueNouveauJoueur } from './DialogueNouveauJoueur'
+import { type CreerJoueur, DialogueNouveauJoueur } from './DialogueNouveauJoueur'
 import { EnTeteEtape, useRetour } from './EnTeteEtape'
 
 type Props = {
@@ -30,7 +30,7 @@ type Props = {
   readonly selection: readonly PlayerId[]
   readonly max: number
   readonly onBasculer: (id: PlayerId) => void
-  readonly onCreer: (nom: string) => Promise<void>
+  readonly onCreer: CreerJoueur
 }
 
 /**

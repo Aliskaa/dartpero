@@ -15,6 +15,13 @@ export type StoredPlayer = {
   name: string
   color: string
   createdAt: number
+  /**
+   * Facultatif (lot `killer`) : `MASCULINE` ou `FEMININE`, clé absente pour
+   * « non précisé ». Champ **non indexé** : pas de `db.version` (comme `color`
+   * et `createdAt`, absents des `.stores()`) ; un profil ancien sans la clé
+   * reste valide tel quel, il n'y a rien à compléter.
+   */
+  gender?: string
 }
 
 /**

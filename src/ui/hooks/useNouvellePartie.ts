@@ -13,20 +13,25 @@ import {
   CricketConfig,
   type CricketVariant,
 } from '@/core/domain/games/cricket/config'
+import { KillerConfig } from '@/core/domain/games/killer/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
+import type { SegmentNumber } from '@/core/domain/value-objects/Dart'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
+import type { PlayerGender } from '@/core/domain/value-objects/PlayerGender'
 import { cheminOrdre, ETAT_PARCOURS } from '@/ui/chemins'
 import { CLE_HISTORIQUE, CLE_MATCH_EN_COURS } from '@/ui/clesRequetes'
 import { ERREUR_DEMARRAGE, nomParDefaut } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 import {
   JOUEURS_ENTRAINEMENT,
+  JOUEURS_KILLER,
   LEGS,
   MAX_JOUEURS,
   SCORES,
   SETS,
   SORTIES,
+  VIES,
 } from '@/ui/reglagesPossibles'
 import { usePreference } from './useAppareil'
 import { CLE_JOUEURS, useJoueurs } from './useJoueurs'
@@ -58,6 +63,12 @@ const CLE_SELECTION = 'partie:joueurs'
 /** Un joueur à part pour l'entraînement : il se joue seul, la sélection de groupe reste intacte. */
 const CLE_ENTRAINEMENT_JOUEUR = 'entrainement:joueur'
 const CLE_ENTRAINEMENT_SORTIES = 'entrainement:sorties'
+/** Killer : les vies de départ (3 ou 5) et la variante (booléen). Jamais renommées. */
+const CLE_KILLER_VIES = 'partie:killer-vies'
+const CLE_KILLER_VARIANTE = 'partie:killer-variante'
+
+/** Les numéros de Killer choisis à l'étape 2, par joueur. Jamais mémorisés d'une partie à l'autre. */
+export type NumerosKiller = ReadonlyMap<PlayerId, SegmentNumber>
 
 /** Une valeur mémorisée hors de la liste (vieille version, stockage abîmé) retombe sur le défaut. */
 const dansLaListe = <T>(liste: readonly T[], valeur: unknown, defaut: T): T =>
@@ -88,6 +99,9 @@ type Lancement = {
   doubleIn: boolean
   variante: CricketVariant
   sorties: number
+  vies: number
+  varianteKiller: boolean
+  numeros: NumerosKiller
   name: { readonly name?: string }
 }
 
@@ -126,7 +140,12 @@ export const useNouvellePartie = () => {
     DEFAUT_ENTRAINEMENT.rounds as (typeof SORTIES)[number],
   )
 
+  const [viesBrutes, setVies] = usePreference<(typeof VIES)[number]>(CLE_KILLER_VIES, 3)
+  const [varianteKillerBrute, setVarianteKiller] = usePreference(CLE_KILLER_VARIANTE, false)
+
   const variante = dansLaListe(CRICKET_VARIANTS, varianteBrute, 'STANDARD')
+  const vies = dansLaListe(VIES, viesBrutes, 3)
+  const varianteKiller = booleen(varianteKillerBrute, false)
   const score = dansLaListe(SCORES, scoreBrut, 501)
   const legs = dansLaListe(LEGS, legsBruts, 2)
   const sets = dansLaListe(SETS, setsBruts, 1)
@@ -150,6 +169,13 @@ export const useNouvellePartie = () => {
 
   const [erreur, setErreur] = useState<string | null>(null)
   const [occupe, setOccupe] = useState(false)
+
+  /**
+   * Les numéros de Killer, par joueur : un état du parcours, jamais une
+   * préférence (un nouveau passage, un nouveau tirage). Un joueur retiré garde
+   * son entrée, mais seule compte celle des joueurs retenus.
+   */
+  const [numeros, setNumeros] = useState<NumerosKiller>(() => new Map())
 
   // L'échec d'un démarrage ne concerne que l'étape où il a eu lieu : changer
   // d'étape (retour, autre jeu) l'efface, sans quoi il suivrait le joueur.
@@ -175,11 +201,41 @@ export const useNouvellePartie = () => {
       ? [joueurEntrainement]
       : []
 
-  const selection = (mode: GameModeId): readonly PlayerId[] =>
-    mode === 'CHECKOUT_PRACTICE' ? selectionEntrainement : selectionGroupe
+  const max = (mode: GameModeId): number => {
+    switch (mode) {
+      case 'X01':
+      case 'CRICKET':
+      case 'TOUR_DU_MONDE':
+        return MAX_JOUEURS
+      case 'KILLER':
+        return JOUEURS_KILLER
+      case 'CHECKOUT_PRACTICE':
+        return JOUEURS_ENTRAINEMENT
+      default: {
+        const jamais: never = mode
+        return jamais
+      }
+    }
+  }
 
-  const max = (mode: GameModeId): number =>
-    mode === 'CHECKOUT_PRACTICE' ? JOUEURS_ENTRAINEMENT : MAX_JOUEURS
+  /**
+   * La sélection du jeu, jamais au-delà de sa limite. La coupe est aussi
+   * **écrite** à l'arrivée à l'étape 2 (`couperSelection`, réponse R1.4) : un
+   * Killer à 6 suivi d'un X01 perd les 5e et 6e joueurs. La tranche ici ne sert
+   * qu'au rendu qui précède cette écriture.
+   */
+  const selection = (mode: GameModeId): readonly PlayerId[] =>
+    mode === 'CHECKOUT_PRACTICE' ? selectionEntrainement : selectionGroupe.slice(0, max(mode))
+
+  /**
+   * Écrit la coupe de la sélection de groupe à la limite du jeu. Idempotente :
+   * rien n'est écrit si la sélection tient déjà (sûr sous `StrictMode`).
+   * Attend les profils, sans quoi la sélection dérivée vaut `[]`.
+   */
+  const couperSelection = (mode: GameModeId): void => {
+    if (mode === 'CHECKOUT_PRACTICE' || !joueurs.data) return
+    if (selectionGroupe.length > max(mode)) setMemorisee(selectionGroupe.slice(0, max(mode)))
+  }
 
   /** Les profils retenus, dans l'ordre de passage. */
   const joueursRetenus = (mode: GameModeId): readonly Player[] =>
@@ -195,7 +251,7 @@ export const useNouvellePartie = () => {
   const retirer = (mode: GameModeId, id: PlayerId) => {
     if (mode === 'CHECKOUT_PRACTICE') {
       if (joueurEntrainement === id) setJoueurEntrainement(null)
-    } else setMemorisee(selectionGroupe.filter((autre) => autre !== id))
+    } else setMemorisee(selection(mode).filter((autre) => autre !== id))
   }
 
   const basculer = (mode: GameModeId, id: PlayerId) => {
@@ -210,9 +266,16 @@ export const useNouvellePartie = () => {
    * une place. Lève l'erreur du domaine (pseudo pris, vide…) : la boîte de
    * dialogue la traduit et reste ouverte.
    */
-  const creerJoueur = async (mode: GameModeId, nom: string): Promise<void> => {
+  const creerJoueur = async (
+    mode: GameModeId,
+    nom: string,
+    genre?: PlayerGender,
+  ): Promise<void> => {
     const base = selection(mode)
-    const joueur = await services.managePlayers.create(nom)
+    // Sans genre choisi, rien ne part : la clé reste absente (« non précisé »).
+    const joueur = genre
+      ? await services.managePlayers.create(nom, undefined, genre)
+      : await services.managePlayers.create(nom)
     await queryClient.invalidateQueries({ queryKey: CLE_JOUEURS })
     ajouter(mode, joueur.id, base)
   }
@@ -231,6 +294,66 @@ export const useNouvellePartie = () => {
     return ordre
   }
 
+  /**
+   * Donne un numéro à chaque joueur retenu qui n'en a pas (ou dont le numéro est
+   * déjà pris par un joueur placé avant lui), tiré parmi les numéros libres.
+   * Rend la **même** table si rien ne manque : l'appelant n'écrit alors rien.
+   */
+  const completer = (table: NumerosKiller, ids: readonly PlayerId[]): NumerosKiller => {
+    const pris = new Set<SegmentNumber>()
+    const manquants: PlayerId[] = []
+    for (const id of ids) {
+      const numero = table.get(id)
+      if (numero !== undefined && !pris.has(numero)) pris.add(numero)
+      else manquants.push(id)
+    }
+    if (manquants.length === 0) return table
+    const tires = services.drawKillerNumbers.execute({
+      count: manquants.length,
+      excluded: [...pris],
+    })
+    const suite = new Map(table)
+    manquants.forEach((id, rang) => {
+      const numero = tires[rang]
+      if (numero !== undefined) suite.set(id, numero)
+    })
+    return suite
+  }
+
+  /**
+   * À l'arrivée à l'étape 2 et à chaque joueur ajouté : le tirage est déjà fait.
+   * Appelé depuis un effet : idempotent (sous `StrictMode`, le second passage
+   * peut retirer, mais les invariants tiennent — tous numérotés, tous différents).
+   */
+  const completerNumeros = (): void => {
+    const suite = completer(numeros, selection('KILLER'))
+    if (suite !== numeros) setNumeros(suite)
+  }
+
+  /** « Tirer au sort » : un nouveau tirage pour tous les joueurs retenus. À appeler depuis un geste. */
+  const tirerNumeros = (ids: readonly PlayerId[] = selection('KILLER')): NumerosKiller => {
+    const tires = services.drawKillerNumbers.execute({ count: ids.length })
+    const suite = new Map(numeros)
+    ids.forEach((id, rang) => {
+      const numero = tires[rang]
+      if (numero !== undefined) suite.set(id, numero)
+    })
+    setNumeros(suite)
+    return suite
+  }
+
+  /** Change le numéro d'un joueur. Un numéro déjà pris par un autre joueur retenu est ignoré. */
+  const choisirNumero = (id: PlayerId, numero: SegmentNumber): void => {
+    const pris = selection('KILLER').some((autre) => autre !== id && numeros.get(autre) === numero)
+    if (pris) return
+    const suite = new Map(numeros)
+    suite.set(id, numero)
+    setNumeros(suite)
+  }
+
+  /** Le numéro d'un joueur retenu, ou `undefined` avant la complétion. */
+  const numeroDe = (id: PlayerId): SegmentNumber | undefined => numeros.get(id)
+
   /** Les valeurs de la partie à lancer : celles du rendu courant, ou celles d'une configuration rejouée. */
   const courants = (mode: GameModeId): Lancement => ({
     playerIds: selection(mode),
@@ -241,6 +364,9 @@ export const useNouvellePartie = () => {
     doubleIn,
     variante,
     sorties,
+    vies,
+    varianteKiller,
+    numeros,
     name: nomTape(saisieNom, proposition),
   })
 
@@ -280,6 +406,24 @@ export const useNouvellePartie = () => {
           config: TourDuMondeConfig.create(),
           ...name,
         })
+      case 'KILLER': {
+        // Les numéros choisis à l'étape 2 ; un joueur sans numéro (arrivé par un
+        // lien profond, par exemple) en reçoit un libre ici.
+        const table = completer(valeurs.numeros, playerIds)
+        const numbers = playerIds.flatMap((id) => {
+          const numero = table.get(id)
+          return numero === undefined ? [] : [numero]
+        })
+        return services.playKiller.start({
+          playerIds,
+          config: KillerConfig.create({
+            startingLives: valeurs.vies,
+            selfHitCostsLives: valeurs.varianteKiller,
+          }),
+          numbers,
+          ...name,
+        })
+      }
       case 'CHECKOUT_PRACTICE': {
         const [playerId] = playerIds
         if (!playerId) return Promise.reject(new Error('No player selected'))
@@ -359,6 +503,25 @@ export const useNouvellePartie = () => {
         break
       case 'TOUR_DU_MONDE':
         break
+      case 'KILLER': {
+        const { startingLives, selfHitCostsLives } = configuration.config
+        setVies(startingLives)
+        setVarianteKiller(selfHitCostsLives)
+        // Rejouer = **nouveau tirage** des numéros (réponse 3), jamais ceux d'avant.
+        const tirage = tirerNumeros(playerIds)
+        valeurs = {
+          ...valeurs,
+          vies: startingLives,
+          varianteKiller: selfHitCostsLives,
+          numeros: tirage,
+        }
+        break
+      }
+      default: {
+        // Un mode oublié ne compile pas.
+        const jamais: never = configuration
+        throw new Error(`Unknown mode ${String(jamais)}`)
+      }
     }
 
     if (mode === 'CHECKOUT_PRACTICE') setJoueurEntrainement(playerIds[0] ?? null)
@@ -385,6 +548,13 @@ export const useNouvellePartie = () => {
     reordonner,
     creerJoueur,
     tirerAuSort,
+    couperSelection,
+    numeros: {
+      numeroDe,
+      completer: completerNumeros,
+      tirer: () => void tirerNumeros(),
+      choisir: choisirNumero,
+    },
     demarrer,
     erreur,
     occupe,
@@ -404,6 +574,10 @@ export const useNouvellePartie = () => {
       setVariante,
       sorties,
       setSorties,
+      vies,
+      setVies,
+      varianteKiller,
+      setVarianteKiller,
     },
   } as const
 }

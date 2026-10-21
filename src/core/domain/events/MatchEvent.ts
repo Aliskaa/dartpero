@@ -1,8 +1,9 @@
 import type { CheckoutPracticeConfig } from '../games/checkout-practice/config'
 import type { CricketConfig } from '../games/cricket/config'
+import type { KillerConfig } from '../games/killer/config'
 import type { TourDuMondeConfig } from '../games/tour-du-monde/config'
 import type { X01Config } from '../games/x01/config'
-import type { Dart } from '../value-objects/Dart'
+import type { Dart, SegmentNumber } from '../value-objects/Dart'
 import type { PlayerId } from '../value-objects/ids'
 import type { MatchName } from '../value-objects/MatchName'
 
@@ -93,6 +94,29 @@ export type CheckoutPracticeStarted = {
 }
 
 /**
+ * L'ouverture d'une partie de Killer (lot `killer`).
+ *
+ * ⚠️ Les numéros sont **tirés au sort puis écrits** ici, jamais recalculés au
+ * rejeu : `numbers[i]` est le numéro de `playerIds[i]`. Ils vivent hors de
+ * `config` : une configuration rejouable (mode + réglages + ensemble de
+ * joueurs) ne les compte pas, et « Rejouer » en tire de nouveaux.
+ *
+ * Aucun autre événement : devenir killer, perdre des vies, être éliminé, la
+ * victoire — tout se **déduit** des volées.
+ */
+export type KillerStarted = {
+  readonly type: 'KillerStarted'
+  readonly config: KillerConfig
+  readonly playerIds: readonly PlayerId[]
+  /** Un numéro de 1 à 20 par joueur, tous différents, dans l'ordre de `playerIds`. */
+  readonly numbers: readonly SegmentNumber[]
+  /** Qui commence la partie (index dans `playerIds`). */
+  readonly startingPlayerIndex: number
+  /** Le nom tapé à la création, s'il y en a un (voir `MatchName`). */
+  readonly name?: MatchName
+}
+
+/**
  * Une manche s'ouvre sur un reste **tiré au sort**.
  *
  * ⚠️ Le tirage est **stocké**, jamais rejoué : l'aléa vient du port
@@ -121,6 +145,7 @@ export type MatchEvent =
   | TourDuMondeStarted
   | CricketStarted
   | CheckoutPracticeStarted
+  | KillerStarted
   | RoundStarted
   | VisitRecorded
 
@@ -145,6 +170,7 @@ export const nameOf = (events: readonly MatchEvent[]): MatchName | null => {
     case 'TourDuMondeStarted':
     case 'CricketStarted':
     case 'CheckoutPracticeStarted':
+    case 'KillerStarted':
       return ouverture.name ?? null
     case 'RoundStarted':
     case 'VisitRecorded':

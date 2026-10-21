@@ -70,32 +70,38 @@ const focaliser = (element: HTMLElement) =>
   })
 
 describe('Nouvelle partie — étape 1, le jeu', () => {
-  it('propose quatre jeux dans un ordre fixe, X01 en tête', async () => {
+  it('propose cinq jeux dans un ordre fixe, X01 en tête', async () => {
     const { services } = await base([])
     ouvrir(services)
 
     const cartes = await screen.findAllByRole('link')
-    const jeux = ['X01', 'Cricket', 'Tour du monde', 'Entraînement']
-    expect(cartes).toHaveLength(4)
+    const jeux = ['X01', 'Cricket', 'Tour du monde', 'Killer', 'Entraînement']
+    expect(cartes).toHaveLength(5)
     cartes.forEach((carte, rang) => {
       expect(carte.textContent?.startsWith(jeux[rang] ?? '?')).toBe(true)
     })
     expect(titre()).toHaveTextContent('Nouvelle partie')
   })
 
-  /** Critère 3 : quatre tuiles, un seul lien chacune, une seule phrase, plus de champ nom. */
-  it('pose les quatre jeux en tuiles 2 × 2, chacune un seul lien, sans champ nom', async () => {
+  /**
+   * Critère 3 : les jeux à plusieurs en tuiles 2 × 2, l'entraînement en pleine
+   * largeur dessous (planche `killer`, option B), un seul lien chacune, une seule
+   * phrase, plus de champ nom.
+   */
+  it('pose les jeux en tuiles 2 × 2 et l’entraînement en pleine largeur, sans champ nom', async () => {
     const { services } = await base([])
     ouvrir(services)
 
     const tuiles = await screen.findAllByRole('link')
-    expect(tuiles).toHaveLength(4)
+    expect(tuiles).toHaveLength(5)
     const liste = tuiles[0]?.closest('ul')
     expect(liste).toHaveClass('grid-cols-2')
     expect(tuiles[0]).toHaveAccessibleName(/Décompter 301, 501 ou 701 jusqu’à zéro pile\./)
     expect(tuiles[1]).toHaveAccessibleName(/Fermer du 20 au 15 et la bulle avant les autres\./)
     expect(tuiles[2]).toHaveAccessibleName(/Du 20 au 1, puis la bulle\./)
-    expect(tuiles[3]).toHaveAccessibleName(/Seul : faire le checkout d’un reste tiré au sort\./)
+    expect(tuiles[3]).toHaveAccessibleName(/Un numéro, des vies : le dernier en vie gagne\./)
+    expect(tuiles[4]).toHaveAccessibleName(/Seul : faire le checkout d’un reste tiré au sort\./)
+    expect(tuiles[4]?.closest('li')).toHaveClass('col-span-2')
     expect(screen.queryByRole('textbox')).toBeNull()
   })
 
@@ -943,7 +949,8 @@ describe('Nouvelle partie — retour', () => {
 describe('Nouvelle partie — gardes et mémoire', () => {
   it('renvoie un jeu inconnu à l’étape 1', async () => {
     const { services } = await base([])
-    ouvrir(services, '/nouvelle-partie/killer')
+    // `killer` est devenu un jeu (lot `killer`) : un slug toujours inconnu.
+    ouvrir(services, '/nouvelle-partie/shanghai')
 
     expect(await screen.findByRole('link', { name: /^X01/ })).toBeInTheDocument()
     expect(titre()).toHaveTextContent('Nouvelle partie')

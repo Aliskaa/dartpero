@@ -15,6 +15,7 @@ export const SLUG_MODE: Record<GameModeId, string> = {
   X01: 'x01',
   CRICKET: 'cricket',
   TOUR_DU_MONDE: 'tour-du-monde',
+  KILLER: 'killer',
   CHECKOUT_PRACTICE: 'entrainement',
 }
 

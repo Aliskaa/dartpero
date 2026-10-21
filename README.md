@@ -3,7 +3,7 @@
 # 🎯 Dartpéro
 
 **Le compteur de fléchettes entre potes.**
-X01, Tour du monde, Cricket et entraînement au checkout —
+X01, Tour du monde, Cricket, Killer et entraînement au checkout —
 saisie fléchette par fléchette, suggestions de checkout, stats et historique.
 
 **100 % local · hors ligne · sans compte · sans pub**
@@ -31,13 +31,14 @@ activé.
 
 ## Ce que ça fait
 
-### Quatre modes de jeu
+### Cinq modes de jeu
 
 | | Mode | Ce que c'est |
 | --- | ---- | ------------ |
 | 🎯 | **X01** | 301 / 501 / 701, double in et double out, premier à N manches, sets en option. Le mode principal. |
 | 🌍 | **Tour du monde** | Du 20 à la bulle, 21 cibles. On finit le tour de table, et le moins de fléchettes gagne. |
 | ✖️ | **Cricket** | Sept cibles à fermer, variantes **standard** et **cut-throat** (où le plus petit score gagne). |
+| 🎯 | **Killer** | 2 à 6 joueurs, un numéro et des vies chacun : on devient killer sur le double de son numéro, puis on retire les vies des autres. Le dernier en vie gagne. |
 | 🎓 | **Entraînement** | Un reste tiré au sort entre 41 et 170, trois fléchettes pour faire le checkout. En solo. |
 
 ### Pendant la partie

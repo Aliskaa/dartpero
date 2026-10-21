@@ -32,6 +32,8 @@ export class ManageBackupUseCase implements ManageBackup {
         name: profil.name,
         color: profil.color,
         createdAt: profil.createdAt,
+        // Le genre ne part que s'il a été choisi : sinon, clé absente.
+        ...(profil.gender !== undefined ? { gender: profil.gender } : {}),
       })),
       matches: records.map((record) => ({
         id: record.id,

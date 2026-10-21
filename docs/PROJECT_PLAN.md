@@ -37,6 +37,10 @@ Chrome** (port 5202 : portrait et paysage, sombre et clair, quatre modes, boîte
 angles morts de `03-plan-de-test.md` (noms longs, parties à 3-4 joueurs, cut-throat et bust
 d'entraînement, appui fantôme en paysage, focus sous **Safari**, **VoiceOver**) ont été **vérifiés sur
 vrai téléphone** (19 octobre 2026).
+Lot `killer` (cinquième mode et genre du profil, voir § 4 et § 6) : **implémenté, 1929 tests verts, relecture
+à l'écran sur téléphone à faire** (lisibilité du numéro à 38 / 32 px à 2-3 m, 6 lignes en paysage, rangée
+compacte à 5 colonnes à 360 px, « Non précisé » sur deux lignes, contraste de `rouge-touche` sur le repère,
+comportement ouvert de la ligne « Genre »).
 Dettes du lot `reglages-par-usage` (`03-plan-de-test.md`) : **D1** — `useDernierExport` sans test du hook isolé
 (`renderHook` si un second lecteur apparaît) ; **N1** — garde de l'aperçu en liste noire (une
 couleur Tailwind par défaut passerait ; durcir en « toute couleur d'`Apercu` est `apercu-*` »).
@@ -148,7 +152,7 @@ Ce qu'il reste, par ordre de ce qui coûterait le plus cher à découvrir tard :
    décrivent les deux sorties. Reste, sans règle à écrire : « % doubles » s'affiche « — » pour
    toute partie en sortie libre (aucune tentative de double comptée), ce qui est exact.
 5. **Les décisions ouvertes** listées dans `CLAUDE.md` : les jeux fun restants (Killer,
-   Shanghai, Around the Clock), sync cloud (lot 6), i18n. Aucune n'est bloquante — le mode
+   livré depuis par le lot `killer` ; Shanghai, Around the Clock), sync cloud (lot 6), i18n. Aucune n'est bloquante — le mode
    paysage, le Cricket et le thème clair sont tranchés et livrés.
 
 ⚠️ **Ce que les sept lots de finition ont appris**, et qui vaut pour la suite : la moitié des
@@ -832,6 +836,19 @@ au « seulement dans un clic »). Reprise silencieuse. Politique `/confidentiali
 Acceptés par l'utilisateur : R1 (ABA de `visitCount`), R3 (deux onglets), C1, mutations de T1-T6 non faites
 d'abord. Reste, sur téléphone : R2 (Chrome peut sauter l'entrée empilée), `history.state` d'iOS, bref spinner.
 Effet visible : la volée survit aussi à un aller-retour par l'Accueil.
+
+### Lot « killer » (cinquième mode, genre du profil)
+
+🟡 **Implémenté, relecture sur téléphone à faire — 1929 tests verts** (1691 au début du lot ; lint, typecheck,
+build verts ; `npm audit --omit=dev` : 0). Niveau `high`. Détail : `docs/lots/killer/`. Le Killer entre par la
+couture `GameMode` (`games/killer/`, `KillerStarted`, volées en `VisitRecorded`), 2 à 6 joueurs, numéros tirés
+à l'étape 2 et **écrits dans l'ouverture** (hors config, retirés par « Rejouer » et « On remet ça »), 3 ou 5 vies,
+variante « Son propre numéro coûte des vies », classement par ordre d'élimination, « Éliminé(e) par X » déduit
+du journal, voix muette jusqu'à « Valider la sortie ». **Un genre facultatif est ajouté au profil** (`MASCULINE` /
+`FEMININE`, clé absente = non précisé, politique mise à jour le 21 octobre 2026), pour accorder « éliminé /
+éliminée ». Livré en deux passes `dev`, un seul commit. Acquis annexes : garde `hexagonalBoundary` qui lit les
+vrais dossiers (et résout les imports relatifs), garde `genreBoundary`, garde exhaustive de « Rejouer »,
+projection du journal de **tous** les modes à l'import. Voir § 6 pour les décisions.
 
 ### Lot « nouveaux-modes » — *à cadrer* (proposé le 19 octobre 2026)
 
@@ -2365,3 +2382,36 @@ Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `hig
   `review` (40), rapports obtenus par relance. 1602 → **1691 tests verts**.
 - **Reste, vrai téléphone** : R2 (Chrome peut sauter l'entrée d'historique empilée sans geste), `history.state`
   d'iOS au rechargement, bref spinner en revenant sur une partie en cache, latence réelle d'IndexedDB.
+
+### Décisions du lot « killer » (cinquième mode, genre du profil)
+
+`high` (domaine, couture, deux formats persistés, décisions gravées). Détail : `docs/lots/killer/`.
+
+- **Numéros dans l'ouverture, pas dans la config** : `KillerStarted.numbers` indexé comme `playerIds` ; la
+  configuration rejouable (mode + vies + variante + joueurs) ne les porte donc pas, « Rejouer » et « On remet
+  ça » tirent de nouveaux numéros. Tirage à l'arrivée de l'étape 2 (`DrawKillerNumbers`, synchrone), en mémoire (`useState`), repli
+  au lancement ; aucune donnée stockée de plus.
+- **Un seul calcul pour l'écran et le rejeu** : l'aperçu de la volée en cours, l'enregistrement et le jugement
+  d'un brouillon relu appellent la **même** `applyVisit` ; l'effet de la fléchette k ne dépend que de la base et
+  des fléchettes 1 à k (propriété de préfixe testée exhaustivement, 9³ × 2 départs). Le « qui a éliminé qui »
+  est **déduit** du rejeu (`KillerState.eliminations { playerId, by }`), jamais stocké.
+- **Genre** : `PlayerGender` `MASCULINE` / `FEMININE`, clé absente = non précisé ; **pas de `db.version`** (champ
+  non indexé, preuve par `color` / `createdAt` et la v2) ; `BACKUP_VERSION` 1 ; valeur invalide = profil ignoré
+  et compté ; lu **uniquement** pour accorder « éliminé / éliminée » (garde `genreBoundary`, liste fermée de
+  fichiers, plancher 18) ; politique `/confidentialite` mise à jour (lignes 438, 448, 457 et la date du
+  21 octobre 2026), la décision « inchangée » prise avant la Révision 1 est **renversée**.
+- **Piège trouvé** : `PartieEcran` finissait par `default: return x01` (un journal d'un mode non câblé ouvrait
+  l'écran X01) ; `GameModes.project`, `isFinished` et `currentPlayerId` aussi : `default` typé `never` partout.
+  La garde `hexagonalBoundary` avait une liste de modes en dur **et** comparait des chaînes (un import relatif
+  `../x01/…` passait) : elle lit maintenant les vrais dossiers et résout le chemin.
+- **Sélection de joueurs coupée et écrite** à la limite du jeu au changement de jeu (réponse de l'utilisateur,
+  contre la recommandation de l'architecte) : les 5e et 6e joueurs d'un Killer à 6 sont perdus en passant au X01.
+- **Import** : la projection du journal de **tous** les modes avant écriture (option recommandée par
+  l'architecte) touche le constat #11 ; risque d'un journal très long (coût quadratique, local) noté par `sec`.
+- **Acceptés par l'utilisateur** : voir `docs/lots/killer/00-orchestration.md` (à jour à la fin du lot).
+- **Chaîne** : `archi-authority` (2 lancements : PASS, puis Révision 1 PASS), `dev` (6 lancements dont passes
+  1, 2a, 2b), `test`, `sec`, `review`, tous en `opus` ; plafond de 100 tours atteint sans rapport par la passe 1
+  (rapport obtenu par relance). 1691 → **1929 tests verts**, 18 mutations sur 19 rouges (1 mutant équivalent).
+- **Reste, vrai téléphone** : lisibilité du numéro à 38 / 32 px à 2-3 m, 6 lignes en paysage, rangée compacte à
+  5 colonnes à 360 px, « Non précisé » sur deux lignes, classes Tailwind fractionnaires, contraste de
+  `rouge-touche` sur le repère, comportement ouvert de la ligne « Genre ».

@@ -1,14 +1,23 @@
 import { DomainError } from '../../domain/DomainError'
 import { Player } from '../../domain/entities/Player'
-import type { MatchEvent } from '../../domain/events/MatchEvent'
+import type { KillerStarted, MatchEvent } from '../../domain/events/MatchEvent'
+import { GameModes } from '../../domain/games'
 import { CheckoutPracticeConfig } from '../../domain/games/checkout-practice/config'
 import { CricketConfig, type CricketVariant } from '../../domain/games/cricket/config'
+import { KillerConfig } from '../../domain/games/killer/config'
+import { KillerRules } from '../../domain/games/killer/rules'
 import { TourDuMondeConfig } from '../../domain/games/tour-du-monde/config'
 import { X01Config } from '../../domain/games/x01/config'
-import { Dart, type Multiplier, type Segment } from '../../domain/value-objects/Dart'
+import {
+  Dart,
+  type Multiplier,
+  type Segment,
+  type SegmentNumber,
+} from '../../domain/value-objects/Dart'
 import { MatchId, PlayerId } from '../../domain/value-objects/ids'
 import { MatchName } from '../../domain/value-objects/MatchName'
 import { PlayerColor } from '../../domain/value-objects/PlayerColor'
+import { PlayerGender } from '../../domain/value-objects/PlayerGender'
 import type { MatchRecord } from '../ports/driven/MatchRepository'
 import { BACKUP_FORMAT, BACKUP_VERSION } from '../ports/driving/ManageBackup'
 
@@ -74,6 +83,14 @@ const versSegment = (valeur: unknown): Segment => {
   throw new DomainError(`invalid segment: ${String(valeur)}`)
 }
 
+/** Un numéro de Killer : un entier de 1 à 20, jamais la bulle ni `MISS`. */
+const versNumeroKiller = (valeur: unknown): SegmentNumber => {
+  if (typeof valeur === 'number' && Number.isInteger(valeur) && valeur >= 1 && valeur <= 20) {
+    return valeur as SegmentNumber
+  }
+  throw new DomainError(`invalid Killer number: ${String(valeur)}`)
+}
+
 /**
  * La partie commune à toutes les ouvertures : qui joue, qui commence, et le
  * nom tapé s'il y en a un.
@@ -119,6 +136,7 @@ const OUVERTURES = [
   'TourDuMondeStarted',
   'CricketStarted',
   'CheckoutPracticeStarted',
+  'KillerStarted',
 ]
 
 const versEvenement = (valeur: unknown): MatchEvent => {
@@ -175,6 +193,23 @@ const versEvenement = (valeur: unknown): MatchEvent => {
     }
   }
 
+  if (valeur.type === 'KillerStarted') {
+    const event: KillerStarted = {
+      type: 'KillerStarted',
+      // `KillerConfig.create` refuse des vies hors liste (3 ou 5) et un booléen mal typé.
+      config: KillerConfig.create({
+        startingLives: config.startingLives as number | undefined,
+        selfHitCostsLives: config.selfHitCostsLives as boolean | undefined,
+      }),
+      numbers: liste(valeur.numbers, 'numbers').map(versNumeroKiller),
+      ...versOuverture(valeur, 'KillerStarted'),
+    }
+    // Les règles de l'ouverture (2 à 6 joueurs, numéros uniques, longueurs
+    // égales…) vivent dans le domaine : on les appelle, on ne les recopie pas.
+    KillerRules.start(event)
+    return event
+  }
+
   if (valeur.type === 'RoundStarted') {
     const target = valeur.target
     if (!Number.isInteger(target) || (target as number) < 2) {
@@ -194,14 +229,24 @@ const versEvenement = (valeur: unknown): MatchEvent => {
   throw new DomainError(`unknown event type: ${String(valeur.type)}`)
 }
 
+/**
+ * Un profil venu du fichier. Le genre (lot `killer`) est facultatif : clé
+ * absente = « non précisé », comme toute sauvegarde d'avant le lot. Présent,
+ * il doit appartenir à la liste fermée (`PlayerGender.of`) : sinon le profil
+ * est refusé, comme pour une couleur inconnue — compté, sans planter.
+ */
 export const versPlayer = (valeur: unknown): Player => {
   if (!estObjet(valeur)) throw new DomainError('player must be an object')
+
+  const gender =
+    valeur.gender === undefined ? undefined : PlayerGender.of(texte(valeur.gender, 'player.gender'))
 
   return Player.create(
     PlayerId.of(texte(valeur.id, 'player.id')),
     texte(valeur.name, 'player.name'),
     PlayerColor.of(texte(valeur.color, 'player.color')),
     horodatage(valeur.createdAt, 'player.createdAt'),
+    gender,
   )
 }
 
@@ -213,6 +258,10 @@ export const versMatchRecord = (valeur: unknown): MatchRecord => {
   if (ouverture === undefined || !OUVERTURES.includes(ouverture)) {
     throw new DomainError(`a match journal must open with one of: ${OUVERTURES.join(', ')}`)
   }
+  // Le journal entier doit se rejouer (lot `killer`) : une volée après la fin
+  // de la partie, ou un événement d'un autre mode, refuse la partie — comptée
+  // dans `matchesSkipped`, sans planter.
+  GameModes.project(events)
 
   return {
     id: MatchId.of(texte(valeur.id, 'match.id')),

@@ -4,6 +4,7 @@ import { DomainError } from '@/core/domain/DomainError'
 import { GAME_MODE_IDS, type GameModeId } from '@/core/domain/games'
 import { CheckoutPracticeConfig } from '@/core/domain/games/checkout-practice/config'
 import { CricketConfig } from '@/core/domain/games/cricket/config'
+import { KillerConfig } from '@/core/domain/games/killer/config'
 import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import { resolveVisit } from '@/core/domain/services/visitOutcome'
@@ -387,6 +388,28 @@ describe.each(GAME_MODE_IDS)('Invariant : la volée rouverte n’est jamais comp
             const { state, darts } = await services.playTourDuMonde.undoLastVisit(id)
             const apercu = services.previewTourDuMondeVisit.execute({ state, darts })
             return { darts, complete: apercu.complete || apercu.completesTour }
+          },
+        }
+      }
+      case 'KILLER': {
+        // Kevin a le 8, Julien le 14 : killer, une vie, puis l'élimination qui gagne.
+        const id = await services.playKiller.start({
+          playerIds: joueurs,
+          config: KillerConfig.create({ selfHitCostsLives: true }),
+          numbers: [8, 14],
+        })
+        const volees = [[Dart.double(8), Dart.single(14), Dart.miss()], RATE, [Dart.double(14)]]
+        for (const darts of volees) await services.playKiller.recordVisit(id, darts)
+        expect((await services.playKiller.getState(id)).finished).toBe(true)
+        return {
+          id,
+          rouvrir: async () => {
+            if ((await services.playKiller.getState(id)).history.length === 0) return null
+            const { state, darts } = await services.playKiller.undoLastVisit(id)
+            return {
+              darts,
+              complete: services.previewKillerVisit.execute({ state, darts }).complete,
+            }
           },
         }
       }

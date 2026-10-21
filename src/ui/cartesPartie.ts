@@ -14,10 +14,12 @@ import {
   LIBELLE_EN_COURS,
   LIBELLE_ETAT_DERNIER_TOUR,
   libelleDateDeCarte,
+  libelleEnVie,
   libelleEtatEntrainement,
   libelleEtatX01,
   libelleFraction,
   libelleJourEtHeure,
+  libelleVies,
   nomJoueur,
   parleAucuneSortie,
   parleCibles,
@@ -30,6 +32,7 @@ import {
   parleReste,
   parleSansVainqueur,
   parleSorties,
+  parleVies,
   reglesCarteEntrainement,
   reglesCarteTourDuMonde,
   reglesCarteX01,
@@ -51,6 +54,7 @@ export const PICTOGRAMME_DU_MODE: Record<GameModeId, NomPictogramme> = {
   X01: 'x01',
   CRICKET: 'cricket',
   TOUR_DU_MONDE: 'tour-du-monde',
+  KILLER: 'killer',
   CHECKOUT_PRACTICE: 'entrainement',
 }
 
@@ -70,8 +74,12 @@ export type JaugeCarte =
       readonly total: number
       readonly bouclee: boolean
     }
+  /** Killer : les vies en carrés, pleins (restantes) puis en tirets (perdues). */
+  | { readonly type: 'vies'; readonly restantes: number; readonly total: number }
 
 export type JoueurCarte = {
+  /** Killer : éliminé, barré en bas du mini tableau. Absent ailleurs. */
+  readonly elimine?: boolean
   readonly playerId: PlayerId
   readonly nom: string
   /** Partie finie et en tête (tous les ex æquo) : laiton et « ✓ ». Jamais à l'entraînement. */
@@ -266,6 +274,47 @@ export const vueCarte = (partie: MatchSummary): VueCarte => {
               joueur.finishedInDarts !== null
                 ? parleFlechettes(joueur.finishedInDarts, avecUnite)
                 : parleCibles(joueur.targetIndex, partie.targetsTotal, avecUnite),
+          })),
+        ),
+      }
+    }
+
+    // Le mini tableau de la planche : classé par `rank` (vies décroissantes, ex
+    // æquo dans l'ordre de jeu, éliminés en bas), vies en carrés, « N en vie ».
+    case 'KILLER': {
+      const { startingLives } = partie.config
+      const classement = rankPlayers(partie)
+      const vivants = partie.players.filter((joueur) => !joueur.eliminated).length
+      return {
+        mode: 'KILLER',
+        pictogramme: PICTOGRAMME_DU_MODE.KILLER,
+        detail: libelleVies(startingLives),
+        unite: UNITE_CARTE.KILLER,
+        // « 3 vies » seulement : ni le tirage, ni la variante (réponse 8).
+        regles: libelleVies(startingLives),
+        joueurs: classement.map((joueur) => ({
+          playerId: joueur.playerId,
+          nom: nomJoueur(joueur.name),
+          premier: enTete(joueur.playerId),
+          // Pas de teinte de la ligne de tête en cours de partie (réponse 9).
+          enTeteDuClassement: false,
+          // Le rang une fois la partie finie, les vies en cours (réponse 8).
+          valeur: partie.finished ? String(joueur.rank) : String(joueur.lives),
+          chiffre: {
+            valeur: partie.finished ? String(joueur.rank) : String(joueur.lives),
+            petit: null,
+          },
+          jauge: { type: 'vies', restantes: joueur.lives, total: startingLives },
+          elimine: joueur.eliminated,
+        })),
+        etat: libelleEnVie(vivants),
+        phrase: construirePhrase(
+          phraseTete,
+          classement.map((joueur) => ({
+            nom: nomJoueur(joueur.name),
+            gagne: gagne(joueur.playerId),
+            unite: 'lives',
+            parle: (avecUnite) => parleVies(joueur.lives, avecUnite),
           })),
         ),
       }

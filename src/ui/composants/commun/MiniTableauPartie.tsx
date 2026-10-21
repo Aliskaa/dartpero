@@ -83,6 +83,24 @@ const Jauge = ({ jauge }: { readonly jauge: JaugeCarte }) => {
           />
         </span>
       )
+    case 'vies':
+      // Killer (planche) : carrés de 12 px, pleins pour les vies restantes, en tirets pour les perdues.
+      return (
+        <span className="flex gap-[3px]">
+          {Array.from({ length: jauge.total }, (_, rang) => (
+            <i
+              // biome-ignore lint/suspicious/noArrayIndexKey: une rangée de cases identiques, sans identité
+              key={rang}
+              className={[
+                'block size-3 border-2',
+                rang < jauge.restantes
+                  ? 'border-craie-vive bg-craie-vive'
+                  : 'border-dashed border-craie-3',
+              ].join(' ')}
+            />
+          ))}
+        </span>
+      )
     default: {
       const jamais: never = jauge
       return jamais
@@ -143,14 +161,23 @@ export const MiniTableauPartie = ({ partie, profils, quand, niveauTitre = 3 }: P
                 couleur={profils.get(joueur.playerId)?.color ?? null}
                 taille="sm"
               />
-              <span className="truncate font-score text-sm font-medium uppercase tracking-[0.06em] text-craie-vive">
+              <span
+                className={[
+                  'truncate font-score text-sm font-medium uppercase tracking-[0.06em]',
+                  joueur.elimine ? 'text-craie-3 line-through' : 'text-craie-vive',
+                ].join(' ')}
+              >
                 {joueur.nom}
               </span>
               <Jauge jauge={joueur.jauge} />
               <span
                 className={[
                   'chiffres text-right text-xl font-bold',
-                  joueur.enTeteDuClassement ? 'text-laiton-clair' : 'text-craie-vive',
+                  joueur.elimine
+                    ? 'text-craie-3'
+                    : joueur.enTeteDuClassement
+                      ? 'text-laiton-clair'
+                      : 'text-craie-vive',
                 ].join(' ')}
               >
                 {joueur.chiffre.valeur}

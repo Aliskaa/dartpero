@@ -19,6 +19,12 @@ export type BackupPlayer = {
   readonly name: string
   readonly color: string
   readonly createdAt: number
+  /**
+   * Facultatif (lot `killer`) : `MASCULINE` ou `FEMININE`, clé absente pour
+   * « non précisé ». Ajout facultatif : `BACKUP_VERSION` ne bouge pas, une
+   * sauvegarde sans la clé reste valide.
+   */
+  readonly gender?: string
 }
 
 export type BackupMatch = {

@@ -11,6 +11,7 @@ import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import type { VisitDraftRepository } from '@/core/application/ports/driven/VisitDraftRepository'
 import type { DeleteMatch } from '@/core/application/ports/driving/DeleteMatch'
+import type { DrawKillerNumbers } from '@/core/application/ports/driving/DrawKillerNumbers'
 import type { GetCheckoutRange } from '@/core/application/ports/driving/GetCheckoutRange'
 import type { GetCheckoutSuggestion } from '@/core/application/ports/driving/GetCheckoutSuggestion'
 import type { GetDeviceContents } from '@/core/application/ports/driving/GetDeviceContents'
@@ -27,8 +28,10 @@ import type { ManagePlayers } from '@/core/application/ports/driving/ManagePlaye
 import type { ManageVisitDraft } from '@/core/application/ports/driving/ManageVisitDraft'
 import type { PlayCheckoutPractice } from '@/core/application/ports/driving/PlayCheckoutPractice'
 import type { PlayCricket } from '@/core/application/ports/driving/PlayCricket'
+import type { PlayKiller } from '@/core/application/ports/driving/PlayKiller'
 import type { PlayTourDuMonde } from '@/core/application/ports/driving/PlayTourDuMonde'
 import type { PreviewCricketVisit } from '@/core/application/ports/driving/PreviewCricketVisit'
+import type { PreviewKillerVisit } from '@/core/application/ports/driving/PreviewKillerVisit'
 import type { PreviewTourDuMondeVisit } from '@/core/application/ports/driving/PreviewTourDuMondeVisit'
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
@@ -37,6 +40,7 @@ import type { ShuffleOrder } from '@/core/application/ports/driving/ShuffleOrder
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
 import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVisit'
 import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseCase'
+import { DrawKillerNumbersUseCase } from '@/core/application/use-cases/DrawKillerNumbersUseCase'
 import { GetCheckoutRangeUseCase } from '@/core/application/use-cases/GetCheckoutRangeUseCase'
 import { GetCheckoutSuggestionUseCase } from '@/core/application/use-cases/GetCheckoutSuggestionUseCase'
 import { GetDeviceContentsUseCase } from '@/core/application/use-cases/GetDeviceContentsUseCase'
@@ -53,8 +57,10 @@ import { ManagePlayersUseCase } from '@/core/application/use-cases/ManagePlayers
 import { ManageVisitDraftUseCase } from '@/core/application/use-cases/ManageVisitDraftUseCase'
 import { PlayCheckoutPracticeUseCase } from '@/core/application/use-cases/PlayCheckoutPracticeUseCase'
 import { PlayCricketUseCase } from '@/core/application/use-cases/PlayCricketUseCase'
+import { PlayKillerUseCase } from '@/core/application/use-cases/PlayKillerUseCase'
 import { PlayTourDuMondeUseCase } from '@/core/application/use-cases/PlayTourDuMondeUseCase'
 import { PreviewCricketVisitUseCase } from '@/core/application/use-cases/PreviewCricketVisitUseCase'
+import { PreviewKillerVisitUseCase } from '@/core/application/use-cases/PreviewKillerVisitUseCase'
 import { PreviewTourDuMondeVisitUseCase } from '@/core/application/use-cases/PreviewTourDuMondeVisitUseCase'
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
@@ -154,11 +160,16 @@ export type Services = {
   readonly playCricket: PlayCricket
   /** L'entraînement solo au checkout (lot 5b). */
   readonly playCheckoutPractice: PlayCheckoutPractice
+  /** Le Killer (lot `killer`) : numéros, vies, killers et éliminés. */
+  readonly playKiller: PlayKiller
   /** « Tirer au sort » (étape Ordre) : mélange visible, avant le lancement. */
   readonly shuffleOrder: ShuffleOrder
+  /** Les numéros du Killer, tirés à l'arrivée de l'étape 2 et par « Tirer au sort ». */
+  readonly drawKillerNumbers: DrawKillerNumbers
   readonly previewVisit: PreviewVisit
   readonly previewTourDuMondeVisit: PreviewTourDuMondeVisit
   readonly previewCricketVisit: PreviewCricketVisit
+  readonly previewKillerVisit: PreviewKillerVisit
   readonly devices: Devices
   /**
    * L'horloge des use cases, la **même instance**. Seconde exception de même
@@ -189,6 +200,7 @@ export const createServices = ({
   const playTourDuMonde = new PlayTourDuMondeUseCase(matches, players, clock, ids, random)
   const playCricket = new PlayCricketUseCase(matches, players, clock, ids, random)
   const playCheckoutPractice = new PlayCheckoutPracticeUseCase(matches, players, clock, ids, random)
+  const playKiller = new PlayKillerUseCase(matches, players, clock, ids, random)
 
   return {
     startMatch,
@@ -198,6 +210,7 @@ export const createServices = ({
       playTourDuMonde,
       playCricket,
       playCheckoutPractice,
+      playKiller,
     ),
     recordVisit: new RecordVisitUseCase(matches, clock),
     undoLastVisit: new UndoLastVisitUseCase(matches, clock),
@@ -219,10 +232,13 @@ export const createServices = ({
     playTourDuMonde,
     playCricket,
     playCheckoutPractice,
+    playKiller,
     shuffleOrder: new ShuffleOrderUseCase(random),
+    drawKillerNumbers: new DrawKillerNumbersUseCase(random),
     previewVisit: new PreviewVisitUseCase(),
     previewTourDuMondeVisit: new PreviewTourDuMondeVisitUseCase(),
     previewCricketVisit: new PreviewCricketVisitUseCase(),
+    previewKillerVisit: new PreviewKillerVisitUseCase(),
     devices,
     clock,
   }
