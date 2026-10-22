@@ -70,41 +70,69 @@ export const CartePodium = ({ titre, nom, pictogramme, action, children }: Props
  * 48 px** : un pseudo-élément déborde de 14 px au-dessus et au-dessous. En
  * largeur, la puce garde la sienne (« F9 » ≈ 29 px) : écart connu, accepté
  * (charte, Q3).
+ *
+ * Deux dessins (`disposition`) : `espacees`, les puces du podium ; `jointives`,
+ * celles de la carte Évolution (lot `courbe`, planche) — collées, bordures
+ * confondues (`-ml-px`), 32 px visibles et toujours 48 px d'appui (8 px de
+ * débord dessus et dessous). L'active passe au-dessus de ses voisines pour
+ * que sa bordure laiton se voie en entier.
  */
+const DISPOSITIONS_BASCULES = {
+  espacees: {
+    groupe: 'flex shrink-0 gap-1',
+    puce: 'px-1.75 py-1 tracking-[0.08em] after:-inset-y-3.5',
+    active: '',
+  },
+  jointives: {
+    groupe: 'flex shrink-0',
+    puce: 'min-h-8 px-2 tracking-[0.06em] [&:not(:first-child)]:-ml-px after:-inset-y-2',
+    active: 'z-10',
+  },
+} as const
+
+export type DispositionBascules = keyof typeof DISPOSITIONS_BASCULES
+
 export const BasculesPodium = <T extends string>({
   legende,
   valeurs,
   valeur,
   onChange,
   libelle,
+  disposition = 'espacees',
 }: {
   readonly legende: string
   readonly valeurs: readonly T[]
   readonly valeur: T
   readonly onChange: (valeur: T) => void
   readonly libelle: (valeur: T) => { readonly court: string; readonly complet: string }
-}) => (
-  <fieldset aria-label={legende} className="flex shrink-0 gap-1">
-    {valeurs.map((option) => {
-      const libelles = libelle(option)
-      const active = option === valeur
-      return (
-        <button
-          key={option}
-          type="button"
-          aria-pressed={active}
-          aria-label={nomBascule(libelles)}
-          onClick={() => onChange(option)}
-          className={`relative border px-1.75 py-1 font-score text-etiquette uppercase leading-none tracking-[0.08em] whitespace-nowrap after:absolute after:inset-x-0 after:-inset-y-3.5 ${
-            active ? 'border-laiton text-laiton-clair' : 'border-craie/25 text-craie-2'
-          }`}
-        >
-          {libelles.court}
-        </button>
-      )
-    })}
-  </fieldset>
-)
+  readonly disposition?: DispositionBascules
+}) => {
+  const dessin = DISPOSITIONS_BASCULES[disposition]
+  return (
+    <fieldset aria-label={legende} className={dessin.groupe}>
+      {valeurs.map((option) => {
+        const libelles = libelle(option)
+        const active = option === valeur
+        return (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={active}
+            aria-label={nomBascule(libelles)}
+            onClick={() => onChange(option)}
+            className={`relative border font-score text-etiquette uppercase leading-none whitespace-nowrap after:absolute after:inset-x-0 ${dessin.puce} ${
+              active
+                ? `border-laiton text-laiton-clair ${dessin.active}`
+                : 'border-craie/25 text-craie-2'
+            }`}
+          >
+            {libelles.court}
+          </button>
+        )
+      })}
+    </fieldset>
+  )
+}
 
 /** Une ligne prête à dessiner : le classement est déjà fait (`podium.ts`). */
 export type LigneClassement = {

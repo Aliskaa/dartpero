@@ -8,6 +8,7 @@ import {
 import { DartboardHits } from '@/core/domain/services/dartboardHits'
 import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { Avatar } from '@/ui/composants/commun/Avatar'
+import { CarteEvolution } from '@/ui/composants/commun/CarteEvolution'
 import { PlateauImpacts } from '@/ui/composants/commun/CarteImpacts'
 import {
   BarresPodium,
@@ -41,7 +42,7 @@ import {
   LEGENDE_BASCULE_FINITIONS,
   LEGENDE_BASCULE_GROSSES_VOLEES,
   LEGENDE_BASCULE_MOYENNE,
-  LEGENDE_JOUEUR_CIBLE,
+  LEGENDE_CHOIX_JOUEUR,
   LEGENDE_PERIODE,
   LIBELLE_HORS_CIBLE,
   LIBELLE_PERIODE,
@@ -217,7 +218,8 @@ const teteDe = (
 
 /**
  * Le sélecteur de joueurs : des onglets avatar + nom, l'actif souligné de
- * laiton. Il ne pilote **que la cible** — les cartes restent identiques.
+ * laiton. Il pilote la cible **et** la carte Évolution (lot `courbe`) — les
+ * cartes du podium restent identiques, elles comparent tous les joueurs.
  *
  * Largeurs égales quand ça tient (`flex-1`), défilement horizontal du seul
  * ruban au-delà (`min-w-max`). ⚠️ Le filet du bas est un élément à part, sous
@@ -259,7 +261,7 @@ const OngletsJoueurs = ({
   return (
     // `min-w-0` : un `fieldset` vaut `min-width: min-content` par défaut, et
     // pousserait la page au lieu de laisser défiler le seul ruban.
-    <fieldset aria-label={LEGENDE_JOUEUR_CIBLE} className="relative min-w-0">
+    <fieldset aria-label={LEGENDE_CHOIX_JOUEUR} className="relative min-w-0">
       <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-craie/25" />
       {/* `relative` : l'`offsetLeft` des onglets se mesure depuis le ruban. */}
       <div ref={ruban} className="relative flex overflow-x-auto">
@@ -476,6 +478,9 @@ export const StatistiquesEcran = () => {
   const [mesureMoyenne, setMesureMoyenne] = useState<MesureMoyenne>('MOYENNE')
   const [mesureGrossesVolees, setMesureGrossesVolees] = useState<SeuilGrossesVolees>('180')
   const [mesureFinitions, setMesureFinitions] = useState<MesureFinitions>('DOUBLES')
+  // La mesure de la carte Évolution : Moyenne à chaque ouverture, jamais mémorisée
+  // (aucune clé de plus, politique de confidentialité inchangée).
+  const [mesureEvolution, setMesureEvolution] = useState<MesureMoyenne>('MOYENNE')
 
   // ⚠️ Au-dessus du chargement, et la modale hors des branches : démontée
   // pendant un chargement, elle laisserait son entrée d'historique orpheline.
@@ -488,9 +493,19 @@ export const StatistiquesEcran = () => {
     queryFn: () => services.getPlayerStats.execute(periode),
   })
 
+  // La courbe de tous les joueurs de la période, d'un coup : changer d'onglet ne relit rien.
+  const evolution = useQuery({
+    queryKey: ['evolutionJoueurs', periode],
+    queryFn: () => services.getPlayerProgress.execute(periode),
+  })
+
   const joueurs = stats.data ?? []
   const flechettes = joueurs.reduce((total, joueur) => total + joueur.dartsThrown, 0)
   const cible = joueurDeLaCible(joueurs, periode, memorise, choix)
+  // ⚠️ Par identifiant : la liste ne compte que les joueurs avec au moins un point.
+  const progression = cible
+    ? evolution.data?.find((courbe) => courbe.playerId === cible.playerId)
+    : undefined
 
   const reglages: Reglages = {
     moyenne: mesureMoyenne,
@@ -528,7 +543,7 @@ export const StatistiquesEcran = () => {
           libelle={(option) => LIBELLE_PERIODE[option]}
         />
 
-        {stats.isPending ? (
+        {stats.isPending || evolution.isPending ? (
           <SpinnerLigne label={CHARGEMENT_STATISTIQUES} />
         ) : joueurs.length === 0 || !cible ? (
           // ⚠️ Deux vides très différents : « je n'ai jamais joué » appelle une
@@ -549,6 +564,21 @@ export const StatistiquesEcran = () => {
               <OngletsJoueurs joueurs={joueurs} actif={cible.playerId} onChoisir={choisir} />
             )}
             <BlocCible joueur={cible} />
+            {progression && progression.points.length > 0 && (
+              <CarteEvolution
+                // Remontée à chaque joueur et période, et quand la série gagne une
+                // partie (relecture en fond d'un cache périmé, constat B1) : sélection
+                // et vue repartent de la fin. Une bascule ne change pas la clé, son
+                // bouton garde le focus.
+                key={`${cible.playerId}|${periode}|${progression.points.length}|${
+                  progression.points.at(-1)?.matchId ?? ''
+                }`}
+                nom={nomJoueur(cible.name)}
+                progression={progression}
+                mesure={mesureEvolution}
+                onMesure={setMesureEvolution}
+              />
+            )}
             {/* Les cartes ne dépendent que des joueurs et des bascules, jamais de la cible. */}
             {CARTES_PODIUM.map((carte) => (
               <CarteDuPodium

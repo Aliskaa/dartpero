@@ -246,6 +246,11 @@ Fermer sans choisir (retour, Échap, voile) vaut *Corriger*. Même mécanisme qu
   par `PreviewKillerVisit` avec **la même** `applyVisit` que le rejeu). L'import projette le journal de **tous**
   les modes avant d'écrire : un journal qui ne se rejoue pas est refusé et compté. La tuile du Killer est la
   seule à porter « 2 à 6 joueurs » ; l'entraînement passe en pleine largeur (option B).
+- **Carte Évolution** (lot `courbe`) : sous la cible, elle suit le joueur du sélecteur et la
+  période ; aucun plafond (au-delà de 14 parties la courbe défile, axe fixe) ; **appui seul**
+  (un glissé ne sélectionne jamais) ; mesure **jamais mémorisée** (aucune clé, politique
+  inchangée). ⚠️ Texte d'axe ≈ 10 px : écart connu de la charte, réservé à cet écran de
+  consultation. Détail : CHARTE § Composants.
 
 ---
 
@@ -439,6 +444,15 @@ une volée s'arrête avant, `x01/stats.ts`).
 - **Meilleur leg** (« meilleure manche » à l'écran) = plus petit nombre de fléchettes pour
 finir un leg.
 - **Plus haut checkout** du match / du joueur.
+- **Évolution** (carte de Statistiques, lot `courbe`) : un point par partie X01 où le joueur a
+  lancé **au moins une fléchette**, rangé par `createdAt` (puis identifiant), parties en cours
+  et abandonnées comprises — les mêmes parties que le cumul, par le même filtre de période
+  (`x01StatsInPeriod`). **Tendance** au rang N ≥ 3, sur les parties N-2..N : Moyenne et First 9
+  **recalculées depuis les totaux** (`computeCareerStats`), jamais une moyenne de moyennes.
+  ⚠️ **Meilleure volée : moyenne arithmétique des 3 meilleures volées** (décision de
+  l'utilisateur), seule moyenne arithmétique de la série. Écart = tendance(N) − tendance(3) ;
+  ligne pointillée = la moyenne de la période, celle du podium. **Rien n'est stocké**
+  (`computeProgress`, `x01/progress.ts`).
 
 ---
 

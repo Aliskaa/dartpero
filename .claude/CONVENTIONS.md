@@ -494,7 +494,8 @@ invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchang�
 `useConfirmationSortie` au lot « annulation-volee ») ; lot « volee-partielle » : 26 ports driving
 (`ManageVisitDraft`), 12 driven (`VisitDraftRepository`), 15 hooks (`useVoleeEnCours`) ; lot « killer » :
 29 ports driving (`PlayKiller`, `PreviewKillerVisit`, `DrawKillerNumbers`), 12 driven, 16 hooks (`useKiller`),
-`PlayerGender` (value object), 5 modes, 4 services transverses.
+`PlayerGender` (value object), 5 modes, 4 services transverses ; lot « courbe » : 30 ports driving
+(`GetPlayerProgress`).
 
 ```
 src/
@@ -502,7 +503,7 @@ src/
 │  ├─ domain/
 │  │  ├─ games/           ← UN DOSSIER PAR MODE DE JEU
 │  │  │  ├─ index.ts      la couture : GameModeId, AnyMatchState, GameModes
-│  │  │  ├─ x01/          config · rules · stats · career
+│  │  │  ├─ x01/          config · rules · stats · career · progress (courbe Évolution)
 │  │  │  ├─ tour-du-monde/     config · rules
 │  │  │  ├─ cricket/           config · rules
 │  │  │  └─ checkout-practice/ config · rules      (solo)
@@ -525,11 +526,14 @@ src/
 │     │                   PlayCricket, PreviewCricketVisit, PreviewTourDuMondeVisit,
 │     │                   PlayCheckoutPractice, ShuffleOrder,
 │     │                   GetReplayableConfigurations,
-│     │                   GetDeviceContents (compte des parties et profils)
+│     │                   GetDeviceContents (compte des parties et profils),
+│     │                   GetPlayerProgress (la courbe X01 de chaque joueur, par période)
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
 │     │                   PersistentStorage, AppInstallation
-│     └─ use-cases/       + backupSchema.ts (validation d'un JSON importé)
+│     └─ use-cases/       + x01StatsInPeriod.ts (les parties X01 d'une période : le même
+│                           filtre pour GetPlayerStats et GetPlayerProgress)
+│                         + backupSchema.ts (validation d'un JSON importé)
 │                         + summarize.ts (summarize, nameIndex, matchStatus — fonction
 │                           pure de use-cases/ importée par l'UI)
 │                         + rankPlayers.ts (rankPlayers, leadingPlayers — idem : le
@@ -541,6 +545,7 @@ src/
 │  ├─ composants/         commun/ (dont CartePartie, la ligne de feuille, MiniTableauPartie, FeuillePartie ; `ui/cartesPartie.ts` ouvre l'union ; et DispositionPartie,
 │  │                      l'ossature portrait/paysage ; CartePodium, CompteBatons et
 │  │                      Modale, la boîte refermée par le retour du téléphone ;
+│  │                      CarteEvolution, la courbe du joueur du sélecteur ;
 │  │                      LivreRegles et FeuilleRegles, la feuille de règles ;
 │  │                      BoiteConfirmation, la confirmation de la sortie ;
 │  │                      Phrase, une phrase de labels.ts en segments typés ;
@@ -588,6 +593,8 @@ src/
 │     podium.ts (Statistiques : classement d'une carte, largeurs, ex æquo sur le
 │       chiffre affiché, coupure « N premiers » (apercuPodium), joueur de la cible,
 │       recadrage du ruban d'onglets (defilementPourMontrer) — pur, sans React) ·
+│     evolution.ts (Statistiques, carte Évolution : géométrie de la planche, pas et seuil
+│       de 14 parties, axe vertical, dates de la portion visible, défilement minimal — pur) ·
 │     reglagesPossibles.ts (SCORES, LEGS, SETS, SORTIES, MAX_JOUEURS,
        JOUEURS_ENTRAINEMENT) · rejouer.ts (« Rejouer » : filtre « reproductible », les trois
        lignes — pur, sans React) · reglesDuJeu.ts

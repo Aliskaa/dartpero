@@ -52,4 +52,7 @@ export const TRACES_ATTENDUS: Record<(typeof PICTOGRAMMES)[number], string> = {
     '<circle cx="12" cy="13.5" r="8"></circle>' +
     '<path d="M12 2.5 V4.5 M9.5 2.5 H14.5 M12 13.5 V9"></path>',
   nul: '<path d="M4 9 H20 M4 15 H20"></path>',
+  // Lot `courbe` (U9 a) : trait de 3, bouts plats — l'exception documentée de la charte.
+  evolution:
+    '<path d="M2.4 19.2 L8.4 12 L13.2 15.6 L21.6 4.8" stroke-width="3" stroke-linecap="butt"></path>',
 }

@@ -50,7 +50,7 @@ const troisJoueurs = async () => {
 }
 
 const cible = () => screen.findByRole('img', { name: /fléchettes$/ })
-const ruban = () => screen.getByRole('group', { name: 'Joueur de la cible' })
+const ruban = () => screen.getByRole('group', { name: 'Joueur' })
 const ordre = (region: HTMLElement) =>
   within(region)
     .getAllByRole('listitem')
@@ -243,7 +243,7 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     await cible()
-    expect(screen.queryByRole('group', { name: 'Joueur de la cible' })).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Joueur' })).toBeNull()
   })
 
   it('les cases de la bulle se disent en toutes lettres, et moins de trois zones donnent moins de cases', async () => {

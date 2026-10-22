@@ -2,9 +2,9 @@ import type { ReactNode } from 'react'
 import type { GameModeId } from '@/core/domain/games'
 
 /**
- * Les treize pictogrammes maison : cinq modes, huit moments. Le mode se
+ * Les quatorze pictogrammes maison : cinq modes, neuf moments. Le mode se
  * reconnaît à sa forme, plus seulement à sa couleur (charte § Identité).
- * Les huit moments n'ont pas encore tous un emploi : leurs lots les attendent.
+ * Les moments n'ont pas encore tous un emploi : leurs lots les attendent.
  */
 export const PICTOGRAMMES = [
   'x01',
@@ -20,6 +20,7 @@ export const PICTOGRAMMES = [
   'grosses-volees',
   'meilleure-manche',
   'nul',
+  'evolution',
 ] as const
 
 export type NomPictogramme = (typeof PICTOGRAMMES)[number]
@@ -126,6 +127,11 @@ const TRACES: Record<NomPictogramme, ReactNode> = {
   ),
   'grosses-volees': <path d="M5 4 V20 M9 4 V20 M13 4 V20 M17 4 V20 M2.5 17 L20.5 7" />,
   nul: <path d="M4 9 H20 M4 15 H20" />,
+  // ⚠️ Exception à la famille (lot `courbe`, U9 a, planche) : trait de 3 et bouts
+  // plats, la ligne brisée de la tendance en laiton de la carte Évolution.
+  evolution: (
+    <path d="M2.4 19.2 L8.4 12 L13.2 15.6 L21.6 4.8" strokeWidth={3} strokeLinecap="butt" />
+  ),
 }
 
 type Props = {

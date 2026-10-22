@@ -945,8 +945,11 @@ export const nombre = (valeur: number): string => valeur.toLocaleString('fr-FR')
 export const flechettesLancees = (total: number): string =>
   `${nombre(total)} ${total > 1 ? 'fléchettes lancées' : 'fléchette lancée'}`
 
-/** Le nom accessible du sélecteur de joueurs : il ne pilote que la cible. */
-export const LEGENDE_JOUEUR_CIBLE = 'Joueur de la cible'
+/**
+ * Le nom accessible du sélecteur de joueurs. Il pilote la cible **et** la
+ * carte Évolution (lot `courbe`, U11) : plus « Joueur de la cible ».
+ */
+export const LEGENDE_CHOIX_JOUEUR = 'Joueur'
 
 /**
  * Une case du plateau, dans la rangée sous la cible : « S20 », « T19 », et la
@@ -1034,6 +1037,113 @@ export const nomBascule = (libelle: {
   libelle.court === libelle.complet ? libelle.court : `${libelle.court}, ${libelle.complet}`
 
 export const LEGENDE_BASCULE_MOYENNE = 'Classer la moyenne par'
+
+/* ------------------------------------------------------------------------
+ * La carte Évolution (lot `courbe`) : la courbe du joueur du sélecteur,
+ * partie par partie. Mêmes mesures et mêmes formateurs que la carte Moyenne.
+ * ---------------------------------------------------------------------- */
+
+export const TITRE_CARTE_EVOLUTION = 'Évolution'
+/** Le nom accessible des bascules de la carte (planche, mot pour mot). */
+export const LEGENDE_BASCULE_EVOLUTION = 'Mesure tracée'
+
+/**
+ * Les mois en abrégé, **sans point** (décision de l'utilisateur, U5 a, C2) :
+ * « 21 oct », pas « 21 oct. ». Indexés par `Date.prototype.getMonth()`.
+ */
+const MOIS_COURTS = [
+  'janv',
+  'févr',
+  'mars',
+  'avr',
+  'mai',
+  'juin',
+  'juil',
+  'août',
+  'sept',
+  'oct',
+  'nov',
+  'déc',
+] as const
+
+/**
+ * La date d'une partie sous la courbe et dans la lecture : « 21 oct », et
+ * « 21 oct 2025 » seulement quand la courbe entière franchit un changement
+ * d'année (U5 b-i). Lue sur `createdAt` comme un calendrier, jamais l'heure courante.
+ */
+export const dateEvolution = (horodatage: number, avecAnnee: boolean): string => {
+  const date = new Date(horodatage)
+  const jour = `${date.getDate()} ${MOIS_COURTS[date.getMonth()]}`
+  return avecAnnee ? `${jour} ${date.getFullYear()}` : jour
+}
+
+/** « Partie 14 sur 14 · 21 oct » : le rang vrai dans la période, sur le nombre de points. */
+export const partieSurTotal = (numero: number, total: number, date: string): string =>
+  `Partie ${nombre(numero)} sur ${nombre(total)} · ${date}`
+
+/** La valeur d'une partie : une décimale pour Moyenne et First 9, entière pour Meilleure volée. */
+export const valeurEvolution = (valeur: number, decimales: 0 | 1): string =>
+  decimales === 1 ? moyenne(valeur) : nombre(Math.round(valeur))
+
+/**
+ * L'écart de tendance, signé à la main : « +12,4 », « −3,0 » (U+2212, le vrai
+ * signe moins), et « 0 » sans signe quand il s'arrondit à zéro (U12). Arrondi
+ * **avant** de choisir le signe : « −0,0 » n'existe pas. Meilleure volée : à
+ * l'entier (sa tendance est une moyenne de trois volées, rarement entière).
+ */
+export const ecartEvolution = (ecart: number, decimales: 0 | 1): string => {
+  const facteur = decimales === 1 ? 10 : 1
+  const arrondi = (Math.sign(ecart) * Math.round(Math.abs(ecart) * facteur)) / facteur
+  if (arrondi === 0) return '0'
+  return `${arrondi > 0 ? '+' : '−'}${valeurEvolution(Math.abs(arrondi), decimales)}`
+}
+
+/** Sous l'écart, sur deux lignes (planche). */
+export const LIGNES_ECART_EVOLUTION = ['tendance depuis', 'les 3 premières parties'] as const
+
+/**
+ * « La tendance apparaît à la 3ᵉ partie » : l'ordinal en segments, pour un
+ * `<sup>` (le caractère U+1D49 manque probablement au sous-ensemble `latin`
+ * des polices). Jamais de HTML brut.
+ */
+export const TENDANCE_A_VENIR = {
+  debut: 'La tendance',
+  suite: 'apparaît à la ',
+  rang: '3',
+  exposant: 'e',
+  fin: ' partie',
+} as const
+
+/** Seconde phrase de l'état « peu de parties », à deux parties seulement (U6). */
+export const ENCORE_UNE_PARTIE = 'Encore une partie pour la tracer.'
+
+export const LEGENDE_UNE_PARTIE = 'Une partie'
+export const LEGENDE_TENDANCE = 'Tendance, 3 parties'
+
+/** La ligne pointillée, dans la légende : « Sa moyenne 44,3 ». Pas de ligne pour Meilleure volée. */
+export const REFERENCE_EVOLUTION: Record<'MOYENNE' | 'FIRST_9', string> = {
+  MOYENNE: 'Sa moyenne',
+  FIRST_9: 'Son First 9 moyen',
+}
+
+/** « de Léo », « d’Inès » : l'élision devant une voyelle, comme la planche. */
+const deNom = (nom: string): string =>
+  /^[aeiouàâäéèêëîïôöùûü]/i.test(nom) ? `d’${nom}` : `de ${nom}`
+
+/** Le nom accessible du tracé (`role="img"`). */
+export const nomCourbe = (nom: string, parties: number): string =>
+  `Courbe ${deNom(nom)}, ${
+    parties === 1 ? 'une partie' : parties === 2 ? 'deux parties' : 'partie par partie'
+  }`
+
+/** Le curseur clavier (masqué) qui déplace la sélection : son nom, et sa valeur lue. */
+export const LIBELLE_CURSEUR_EVOLUTION = 'Partie lue sur la courbe'
+export const valeurCurseurEvolution = (
+  numero: number,
+  total: number,
+  date: string,
+  valeur: string,
+): string => `Partie ${nombre(numero)} sur ${nombre(total)}, ${date} : ${valeur}`
 
 export const TITRE_CARTE_VICTOIRES = 'Victoires'
 export const TITRE_CARTE_GROSSES_VOLEES = 'Grosses volées'

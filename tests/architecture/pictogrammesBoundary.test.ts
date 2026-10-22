@@ -30,6 +30,9 @@ const REMPLACEES = [
   'Globe2',
   // Le viseur du Killer (lot `killer`).
   'Crosshair',
+  // Lot `courbe` : la ligne brisée de la carte Évolution a son pictogramme `evolution`.
+  'TrendingUp',
+  'ChartLine',
 ]
 
 const IMPORT_LUCIDE = /import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*['"]lucide-react['"]/g

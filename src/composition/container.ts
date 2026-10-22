@@ -21,6 +21,7 @@ import type { GetMatchName } from '@/core/application/ports/driving/GetMatchName
 import type { GetMatchState } from '@/core/application/ports/driving/GetMatchState'
 import type { GetMatchStats } from '@/core/application/ports/driving/GetMatchStats'
 import type { GetOngoingMatch } from '@/core/application/ports/driving/GetOngoingMatch'
+import type { GetPlayerProgress } from '@/core/application/ports/driving/GetPlayerProgress'
 import type { GetPlayerStats } from '@/core/application/ports/driving/GetPlayerStats'
 import type { GetReplayableConfigurations } from '@/core/application/ports/driving/GetReplayableConfigurations'
 import type { ManageBackup } from '@/core/application/ports/driving/ManageBackup'
@@ -50,6 +51,7 @@ import { GetMatchNameUseCase } from '@/core/application/use-cases/GetMatchNameUs
 import { GetMatchStateUseCase } from '@/core/application/use-cases/GetMatchStateUseCase'
 import { GetMatchStatsUseCase } from '@/core/application/use-cases/GetMatchStatsUseCase'
 import { GetOngoingMatchUseCase } from '@/core/application/use-cases/GetOngoingMatchUseCase'
+import { GetPlayerProgressUseCase } from '@/core/application/use-cases/GetPlayerProgressUseCase'
 import { GetPlayerStatsUseCase } from '@/core/application/use-cases/GetPlayerStatsUseCase'
 import { GetReplayableConfigurationsUseCase } from '@/core/application/use-cases/GetReplayableConfigurationsUseCase'
 import { ManageBackupUseCase } from '@/core/application/use-cases/ManageBackupUseCase'
@@ -144,6 +146,8 @@ export type Services = {
   readonly getMatchName: GetMatchName
   readonly getOngoingMatch: GetOngoingMatch
   readonly getPlayerStats: GetPlayerStats
+  /** La courbe X01 de chaque joueur sur la période, pour la carte Évolution (lot `courbe`). */
+  readonly getPlayerProgress: GetPlayerProgress
   /** Le compte des parties et des profils de ce téléphone, pour les Réglages. */
   readonly getDeviceContents: GetDeviceContents
   readonly deleteMatch: DeleteMatch
@@ -224,6 +228,7 @@ export const createServices = ({
     getMatchName: new GetMatchNameUseCase(matches),
     getOngoingMatch: new GetOngoingMatchUseCase(matches, players),
     getPlayerStats: new GetPlayerStatsUseCase(matches, players, clock),
+    getPlayerProgress: new GetPlayerProgressUseCase(matches, clock),
     getDeviceContents: new GetDeviceContentsUseCase(matches, players),
     deleteMatch: new DeleteMatchUseCase(matches, visitDrafts),
     managePlayers: new ManagePlayersUseCase(players, ids, clock),

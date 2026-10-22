@@ -77,7 +77,7 @@ describe('Pictogrammes — leurs emplacements', () => {
     expect(new Set(noms).size).toBe(GAME_MODE_IDS.length)
   })
 
-  it('statistiques : un pictogramme de 20 px, décoratif, en tête de chacune des quatre cartes', async () => {
+  it('statistiques : un pictogramme de 20 px, décoratif, en tête de chacune des cinq cartes', async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
     const matchId = await services.startMatch.execute({
@@ -89,18 +89,21 @@ describe('Pictogrammes — leurs emplacements', () => {
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     const cartes = [
+      // Lot `courbe` : la carte Évolution, entre la cible et le podium.
+      await screen.findByRole('region', { name: 'Évolution' }),
       await screen.findByRole('region', { name: 'Moyenne 3 fl., Moyenne 3 fléchettes' }),
       screen.getByRole('region', { name: 'Victoires' }),
       screen.getByRole('region', { name: 'Grosses volées' }),
       screen.getByRole('region', { name: 'Finitions' }),
     ]
     const attendus = [
+      TRACES_ATTENDUS.evolution,
       TRACES_ATTENDUS.moyenne,
       TRACES_ATTENDUS.victoire,
       TRACES_ATTENDUS['grosses-volees'],
       TRACES_ATTENDUS.sortie,
     ]
-    expect(svgsDe(20)).toHaveLength(4)
+    expect(svgsDe(20)).toHaveLength(5)
     cartes.forEach((carte, rang) => {
       const svgs = svgsDe(20, carte)
       expect(svgs).toHaveLength(1)
