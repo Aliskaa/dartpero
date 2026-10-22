@@ -5,9 +5,7 @@ import { BrowserRouter } from 'react-router'
 import { createBrowserServices } from '@/composition/container'
 import { ServicesProvider } from '@/ui/providers/ServicesProvider'
 
-// Polices embarquées (offline-first) — voir la charte dans CLAUDE.md.
-// Sous-ensemble `latin` uniquement : l'app est en français, inutile de précacher
-// le cyrillique et le vietnamien (÷ 3 sur le poids des polices).
+// Polices embarquées (hors ligne), sous-ensemble `latin` seulement.
 import '@fontsource/alfa-slab-one/latin-400.css'
 import '@fontsource/oswald/latin-500.css'
 import '@fontsource/oswald/latin-700.css'
@@ -20,36 +18,27 @@ import './index.css'
 const racine = document.getElementById('root')
 if (!racine) throw new Error('Élément #root introuvable dans index.html')
 
-// Filet pour le découpage par route : un déploiement pendant qu'un onglet
-// reste ouvert purge l'ancien précache workbox (SW `autoUpdate`), et le
-// prochain `import()` vers un chunk lazy qui n'existe plus échoue. On
-// recharge une seule fois — le garde-fou en `sessionStorage` évite de
-// boucler si le rechargement retombe sur la même erreur.
+// Un déploiement purge le précache : un `import()` lazy peut échouer. On recharge une seule fois
+// (garde-fou `sessionStorage` contre la boucle).
 window.addEventListener('vite:preloadError', () => {
   const cle = 'dartpero:preload-error-reload'
   try {
     if (sessionStorage.getItem(cle)) return
     sessionStorage.setItem(cle, '1')
   } catch {
-    // Navigation privée sur certains navigateurs : sessionStorage peut lever
-    // à la simple lecture. Le pire cas acceptable est une boucle de
-    // rechargement, jamais l'absence totale de filet.
+    // Navigation privée : sessionStorage peut lever à la lecture.
   }
   window.location.reload()
 })
 
-// Tout est local : rien à revalider au retour de l'onglet, aucune requête réseau.
+// Tout est local : rien à revalider au retour de l'onglet.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { refetchOnWindowFocus: false, retry: false },
   },
 })
 
-// Les services naissent ICI, une seule fois, avant `createRoot` : le module
-// d'entrée s'exécute avant tout rendu, et l'adapter d'installation pose ses
-// écouteurs dans son constructeur — l'invite de Chromium peut partir avant le
-// montage de React. Créés dans le provider, ils arriveraient trop tard (et en
-// double sous `StrictMode`).
+// ⚠️ Les services naissent ici, avant `createRoot` : dans le provider ils seraient trop tard (et doublés sous StrictMode).
 const services = createBrowserServices()
 
 createRoot(racine).render(

@@ -23,28 +23,14 @@ import { type EtatVolee, useVoleeEnCours } from './useVoleeEnCours'
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
 
-/**
- * L'état d'un match en cours, côté écran.
- *
- * ⚠️ TanStack Query sert ici de **cache**, pas d'orchestrateur : chaque volée
- * enregistrée renvoie déjà le nouvel état, qu'on injecte directement dans le
- * cache. Aucun aller-retour de rechargement entre le tap et le score affiché.
- *
- * La volée **en cours de saisie** n'entre pas au journal : elle vit en état
- * local, doublée du brouillon de volée (`useVoleeEnCours`, lot
- * `volee-partielle`) qui la fait survivre à un rechargement, et n'est envoyée
- * au use case qu'une fois complète (3 fléchettes, bust ou sortie) — c'est le
- * port `PreviewVisit` qui le détermine.
- */
+/** ⚠️ TanStack Query n'est ici qu'un cache ; la volée en cours vit hors journal (`useVoleeEnCours`) jusqu'à sa complétion. */
 export const useX01 = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
   const dire = useVoix()
   const { enPause, armer, ecoulee } = usePauseAnnulation()
 
-  // Les pseudos, pour appeler le joueur suivant par son nom. Gardés dans une
-  // ref : la Map est reconstruite à chaque rendu, la mettre en dépendance
-  // recréerait tous les callbacks du hook pour rien.
+  // Pseudos en ref : la Map est reconstruite à chaque rendu, en dépendance elle recréerait les callbacks.
   const profils = useProfils()
   const profilsRef = useRef(profils)
   profilsRef.current = profils
@@ -57,10 +43,7 @@ export const useX01 = (matchId: MatchId) => {
 
   const state = requete.data ?? null
 
-  /**
-   * Où en est une volée, d'après `PreviewVisit` (aucune règle recopiée) : la
-   * sortie attend *Valider* quand sa fléchette est la dernière de la volée.
-   */
+  /** Où en est une volée, d'après `PreviewVisit` (aucune règle recopiée). */
   const evaluer = useCallback(
     (base: X01State, darts: readonly Dart[]): EtatVolee => {
       const joueur = base.players[base.currentPlayerIndex]
@@ -116,11 +99,7 @@ export const useX01 = (matchId: MatchId) => {
     })
   }, [services, state, termine, apercu, dartsEnCours.length, resteAffiche])
 
-  /**
-   * Jusqu'où une sortie existe ce soir : 170 sur un double, 180 en sortie libre.
-   * Au-delà, le tableau n'affiche ni route ni « Pas de finish ». Lue par le port,
-   * jamais en dur dans l'écran.
-   */
+  /** Borne du checkout (170 ou 180), lue par le port, jamais en dur. */
   const doubleOut = state?.config.doubleOut ?? null
   const sortieMax = useMemo(
     () => (doubleOut === null ? 0 : services.getCheckoutRange.execute({ doubleOut }).max),
@@ -141,10 +120,7 @@ export const useX01 = (matchId: MatchId) => {
         if (resultat.visit.outcome === 'BUSTED') services.devices.haptics.error()
         else if (resultat.visit.outcome === 'CHECKOUT') services.devices.haptics.success()
 
-        // Le score, puis à qui c'est le tour : le téléphone est posé à deux
-        // mètres du lanceur, la voix est le seul canal qui porte jusque-là.
-        // À la victoire du match seulement (`MatchFinished`, jamais `LegWon` ni
-        // `SetWon`) : la phrase du résumé, dans le même énoncé.
+        // Phrase de victoire à la victoire du match seulement (`MatchFinished`), dans le même énoncé.
         const matchGagne = resultat.milestones.some((jalon) => jalon.type === 'MatchFinished')
         dire(
           annonceFinDeVolee(
@@ -162,12 +138,7 @@ export const useX01 = (matchId: MatchId) => {
     [services, matchId, queryClient, dire, poser],
   )
 
-  /**
-   * La fléchette qui sort attend sa confirmation (lot `annulation-volee`) :
-   * l'aperçu des fléchettes en cours est une sortie, et rien n'est encore écrit,
-   * dit ni célébré. Dérivé, jamais stocké : retirer la fléchette suffit à
-   * l'éteindre.
-   */
+  /** La fléchette qui sort attend sa confirmation : rien n'est écrit, dit ni célébré. Dérivé, jamais stocké. */
   const sortieEnAttente = !termine && dartsEnCours.length > 0 && apercu?.outcome === 'CHECKOUT'
 
   /** Ce que la boîte demande : « Kevin sort sur D10 ? », « 40 → 0. … ». */
@@ -183,11 +154,7 @@ export const useX01 = (matchId: MatchId) => {
     }
   }, [sortieEnAttente, joueurCourant, dartsEnCours, profils])
 
-  /**
-   * Retire la dernière fléchette en cours. La dernière partie, la pause s'arme :
-   * un second appui réflexe ne doit pas défaire la volée d'un autre joueur
-   * (voir `usePauseAnnulation`).
-   */
+  /** Retire la dernière fléchette en cours ; la pause s'arme à la dernière (`usePauseAnnulation`). */
   const retirerFlechette = useCallback(() => {
     if (dartsEnCours.length === 0 || !state) return
     services.devices.haptics.tap()
@@ -195,11 +162,7 @@ export const useX01 = (matchId: MatchId) => {
     if (dartsEnCours.length === 1) armer()
   }, [services, dartsEnCours, state, poser, armer])
 
-  /**
-   * Ajoute une fléchette ; rend `true` quand elle **met une sortie en attente** :
-   * la volée n'est pas envoyée, l'écran ouvre la boîte de confirmation. Toute
-   * nouvelle fléchette est refusée tant que la sortie attend.
-   */
+  /** Ajoute une fléchette ; rend `true` si elle met une sortie en attente (la boîte s'ouvre). */
   const ajouterFlechette = useCallback(
     (dart: Dart): boolean => {
       if (!state || !joueurCourant || occupe || termine || sortieEnAttente) return false
@@ -207,21 +170,16 @@ export const useX01 = (matchId: MatchId) => {
       const suite = [...dartsEnCours, dart]
       services.devices.haptics.tap()
       poser(suite, state)
-      // La célébration du leg précédent ne doit pas survivre à la reprise du jeu.
       setDerniereVolee(null)
 
-      // Le multiplicateur retombe sur SIMPLE après chaque fléchette : il ne
-      // reste jamais armé à l'insu du joueur. C'est ici et pas dans le pavé,
-      // pour que la règle tienne quelle que soit la façon de saisir.
+      // Le multiplicateur retombe sur SIMPLE après chaque fléchette (ici, pas dans le pavé).
       setMultiplicateur('SIMPLE')
 
       switch (evaluer(state, suite)) {
         case 'ouverte':
           return false
-        // La sortie attend *Valider* : ni journal, ni voix, ni célébration avant.
         case 'en-attente':
           return true
-        // Le bust, lui, n'est jamais confirmé.
         case 'close':
           void enregistrer(suite)
           return false
@@ -253,13 +211,7 @@ export const useX01 = (matchId: MatchId) => {
     void enregistrer(dartsEnCours)
   }, [sortieEnAttente, occupe, enregistrer, dartsEnCours])
 
-  /**
-   * Un seul bouton d'annulation, une fléchette par appui (lot
-   * `annulation-volee`) : la dernière en cours, sinon la dernière de la volée
-   * enregistrée juste avant — même si elle avait gagné une manche. Cette volée
-   * quitte le journal et se rouvre : ses fléchettes restantes reviennent en
-   * saisie, le reste les suit.
-   */
+  /** Annule une fléchette par appui : la dernière en cours, sinon celle de la volée enregistrée, qui se rouvre. */
   const annuler = useCallback(async () => {
     if (occupe) return
     setErreur(null)
@@ -275,7 +227,7 @@ export const useX01 = (matchId: MatchId) => {
     try {
       const { state: revenu, darts } = await services.undoLastVisit.execute(matchId)
       queryClient.setQueryData(['match', matchId], revenu)
-      // Estampillée avec l'état **rouvert** : la volée rouverte survit à un rechargement.
+      // Estampillée avec l'état rouvert : elle survit à un rechargement.
       poser(darts, revenu)
       setDerniereVolee(null)
       services.devices.haptics.tap()
@@ -299,11 +251,7 @@ export const useX01 = (matchId: MatchId) => {
     poser,
   ])
 
-  /**
-   * Ce que le bouton va retirer, écrit dessus : la fléchette, et son joueur
-   * dans le nom accessible. L'auteur de la dernière volée se lit sur la
-   * **projection** (`Visit.playerId`), jamais recalculé ici.
-   */
+  /** Ce que le bouton va retirer (fléchette et joueur) ; l'auteur se lit sur la projection (`Visit.playerId`). */
   const annulation = useMemo(() => {
     const derniereFlechette = dartsEnCours.at(-1)
     if (derniereFlechette && joueurCourant) {

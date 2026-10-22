@@ -38,9 +38,7 @@ describe('Pictogrammes — leurs emplacements', () => {
     const svgs = svgsDe(40)
     expect(svgs).toHaveLength(5)
     for (const svg of svgs) expect(svg.getAttribute('aria-hidden')).toBe('true')
-    // Un par carte : le mode se reconnaît à sa forme.
     for (const carte of cartes) expect(svgsDe(40, carte)).toHaveLength(1)
-    // Et c'est bien la forme du mode : pas une icône de même taille.
     expect(svgs.map((svg) => svg.innerHTML).sort()).toEqual(
       [
         TRACES_ATTENDUS.x01,
@@ -52,11 +50,6 @@ describe('Pictogrammes — leurs emplacements', () => {
     )
   })
 
-  /**
-   * Dette P3-1 du lot `pictogrammes` : la liste triée ci-dessus ne dit pas QUELLE
-   * tuile porte QUEL tracé. L'association est écrite en dur, d'après la planche,
-   * jamais dérivée de la table du code (ce serait un test qui se répond à lui-même).
-   */
   it.each([
     ['X01', /^X01/, 'x01'],
     ['CRICKET', /^Cricket/, 'cricket'],
@@ -89,7 +82,6 @@ describe('Pictogrammes — leurs emplacements', () => {
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     const cartes = [
-      // Lot `courbe` : la carte Évolution, entre la cible et le podium.
       await screen.findByRole('region', { name: 'Évolution' }),
       await screen.findByRole('region', { name: 'Moyenne 3 fl., Moyenne 3 fléchettes' }),
       screen.getByRole('region', { name: 'Victoires' }),

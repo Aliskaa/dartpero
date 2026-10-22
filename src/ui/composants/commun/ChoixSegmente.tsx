@@ -1,19 +1,6 @@
-/**
- * Sélecteur segmenté : un rail d'ardoise, un curseur de laiton **plat** qui
- * glisse. Le relief poli est réservé au CTA — ici il saturait l'écran.
- *
- * Vivait dans `NouvellePartieEcran` tant qu'un seul écran s'en servait ; remonté
- * dans `commun/` quand le filtre de période des statistiques en a eu besoin.
- * La règle du projet est de réutiliser, jamais de recopier une variante ad hoc.
- */
+/** Sélecteur segmenté : un rail d'ardoise, un curseur de laiton plat qui glisse. */
 
-/**
- * `md` — le rail de configuration de partie : des chiffres qu'on lit de loin.
- * `sm` — un filtre au-dessus d'un tableau : il annonce, il ne domine pas.
- *
- * ⚠️ La hauteur ne descend pas sous `min-h-12` (48 px) dans les deux cas : le
- * plancher tactile n'est pas une variable d'ajustement.
- */
+/** `md` : rail de configuration ; `sm` : filtre au-dessus d'un tableau. ⚠️ Jamais sous `min-h-12`. */
 export type TailleChoix = 'md' | 'sm'
 
 const TEXTE: Record<TailleChoix, string> = {

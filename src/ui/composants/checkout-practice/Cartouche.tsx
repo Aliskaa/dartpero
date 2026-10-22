@@ -12,14 +12,7 @@ type Props = {
   readonly reussies: number
 }
 
-/**
- * ZONE LECTURE de l'entraînement.
- *
- * Le chiffre géant est le **reste à sortir** : c'est le seul nombre qui compte,
- * et il descend à chaque fléchette. La cible tirée reste affichée à côté pour
- * qu'on sache d'où l'on partait — sans quoi, après deux fléchettes, on ne sait
- * plus si on a bien joué.
- */
+/** Zone lecture de l'entraînement : le reste à sortir en chiffre géant, la cible tirée à côté. */
 export const Cartouche = ({
   cible,
   resteAffiche,
@@ -78,7 +71,6 @@ export const Cartouche = ({
         </output>
       </div>
 
-      {/* La route conseillée : on s'entraîne à sortir, autant apprendre le chemin. */}
       <div className="min-h-11">
         {cibles && (
           <div

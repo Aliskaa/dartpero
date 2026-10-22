@@ -72,7 +72,6 @@ describe('Lire le nom d’une partie', () => {
 })
 
 describe('Le nom survit à la vie de la partie', () => {
-  /** Critère 7 : un journal d'avant le lot, sans la clé, reste valide. */
   it('une partie d’avant le lot se lit sans nom, se projette et se relance', async () => {
     const { services, dependencies, joueurs } = await base()
     const [kevin, julien] = joueurs('X01')

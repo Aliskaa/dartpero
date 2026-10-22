@@ -24,16 +24,7 @@ type Props = {
   readonly actions?: ReactNode
 }
 
-/**
- * Une ligne de feuille : le mode à gauche (pictogramme, détail, unité), le nom
- * tapé ou les règles en haut, les joueurs classés dessous. **Toute la ligne est
- * une seule cible** (un lien, ≥ 64 px) : le résumé d'une partie terminée, la
- * reprise sinon ; les actions (corbeille) sont ses sœurs, pas ses enfants.
- *
- * Le visuel est `aria-hidden` : une phrase `sr-only` dit la même chose aux
- * lecteurs d'écran (« Sarah gagne, 86 points ; Kevin 61 ; Julien 22 »).
- * Le classement vient de `rankPlayers` via `vueCarte`, jamais recalculé ici.
- */
+/** Une ligne de feuille, toute entière une seule cible (≥ 64 px) ; visuel `aria-hidden`, doublé par une phrase `sr-only`. */
 export const CartePartie = ({
   partie,
   statut,
@@ -62,7 +53,6 @@ export const CartePartie = ({
           <span className="whitespace-nowrap font-score text-etiquette font-bold tracking-[0.04em] text-craie-2">
             {vue.detail}
           </span>
-          {/* « checkouts » est la seule unité qui dépasse la colonne de 56 px : on la resserre. */}
           <span
             className={`font-score text-etiquette font-medium uppercase text-craie-3 ${
               vue.unite.length > 8 ? 'tracking-tighter' : 'tracking-[0.06em]'

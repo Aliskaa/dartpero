@@ -13,7 +13,6 @@ import { CLE_DERNIER_EXPORT, CLE_VOIX } from '@/ui/hooks/useAppareil'
 import { FakeAppInstallation, FakePersistentStorage, fakeServices, SettableClock } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 
-/** Midi, le 17 octobre 2026, en heure locale du test. */
 const MAINTENANT = new Date(2026, 9, 17, 12).getTime()
 const ilYA = (jours: number) => new Date(2026, 9, 17 - jours, 12).getTime()
 
@@ -36,7 +35,6 @@ const ouvrir = (surcharges: Partial<Dependencies> = {}, queryClient?: QueryClien
   return { services, dependencies }
 }
 
-/** Un téléchargement qui aboutit, sans dépendre de l'`URL` de l'environnement. */
 const telechargementPossible = () => {
   vi.stubGlobal(
     'URL',
@@ -47,7 +45,6 @@ const telechargementPossible = () => {
   )
 }
 
-/** Un téléchargement que le navigateur refuse : la remise du fichier jette. */
 const telechargementImpossible = () => {
   vi.stubGlobal(
     'URL',
@@ -77,7 +74,6 @@ describe('Réglages — une page rangée par usage', () => {
     const sauvegardes = screen.getByRole('region', { name: 'Sauvegarde' })
     const joueurs = screen.getByRole('region', { name: 'Joueurs et appli' })
     const pied = screen.getByText('100 % local, hors ligne, sans compte.')
-    // U8f : la présentation sous « 100 % local… ».
     const presentation = screen.getByText(/compteur de fléchettes/)
 
     const ordre = [
@@ -214,7 +210,6 @@ describe('Réglages — voyant « Dernier export »', () => {
     ouvrir({ matches: new DepotLent() })
     const utilisateur = userEvent.setup()
     await voyantSauvegarde()
-    // Le compte de la page lit aussi le dépôt : on le libère d'abord.
     await act(async () => liberer())
 
     await utilisateur.click(screen.getByRole('button', { name: 'Exporter' }))
@@ -398,7 +393,6 @@ describe('Réglages — ligne de contenu et « Gérer les joueurs »', () => {
     ouvrir({ players: new DepotJoueursEnPanne() }, client)
     await voyantSauvegarde()
 
-    // L'échec est constaté côté cache, puis on laisse React peindre.
     await waitFor(() => expect(client.getQueryState(CLE_CONTENU_APPAREIL)?.status).toBe('error'))
     await act(async () => {
       await new Promise((resoudre) => setTimeout(resoudre, 0))
@@ -446,7 +440,6 @@ describe('Réglages — ligne de contenu et « Gérer les joueurs »', () => {
       expect(await contenu()).toHaveTextContent('0 partie · 1 joueur sur ce téléphone.'),
     )
     expect(gerer()).toHaveTextContent('1')
-    // U8f : le résumé vient après l'explication de la restauration.
     const explication = screen.getByText(/la base : les profils et parties du fichier/)
     expect(
       explication.compareDocumentPosition(resume) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -491,7 +484,6 @@ describe('Réglages — Affichage', () => {
     ouvrir()
     await voyantSauvegarde()
 
-    // Une vignette tient au moins la hauteur de son aperçu : 54 px (`h-13.5`).
     const vignettes = within(screen.getByRole('group', { name: 'Thème' })).getAllByRole('button')
     expect(vignettes).toHaveLength(3)
     for (const vignette of vignettes) {
@@ -510,7 +502,6 @@ describe('Réglages — Affichage', () => {
       screen.getByRole('button', { name: 'Exporter' }),
       screen.getByRole('button', { name: 'Restaurer' }),
     ]) {
-      // Le duo de la planche : 56 px, Restaurer à la même hauteur qu'Exporter.
       expect(bouton).toHaveClass('min-h-14')
     }
   })

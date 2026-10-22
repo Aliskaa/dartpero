@@ -7,23 +7,8 @@ import { KillerRules, type KillerState } from './killer/rules'
 import { TourDuMondeRules, type TourDuMondeState } from './tour-du-monde/rules'
 import { X01Rules, type X01State } from './x01/rules'
 
-/**
- * LA COUTURE `GameMode` — annoncée dès le lot 1, écrite au lot 5a seulement,
- * quand un deuxième mode réel est arrivé. Généraliser plus tôt aurait été
- * inventer une abstraction sans savoir ce qu'elle devait abstraire.
- *
- * Le principe : chaque mode garde **ses propres règles et son propre état**,
- * complets et lisibles, sans dénominateur commun artificiel. Ce fichier ne fait
- * qu'aiguiller, sur le discriminant `mode` que porte chaque état. TypeScript
- * garantit alors qu'aucun cas n'est oublié.
- *
- * Le troisième mode (l'entraînement au checkout, lot 5b) a coûté exactement ce
- * qui était annoncé : un dossier, un événement d'ouverture, trois lignes ici.
- *
- * ⚠️ Lot `killer` : chaque aiguillage se termine par un `default` typé `never`.
- * Avant lui, un mode oublié tombait en silence dans la branche X01 (un journal
- * Killer aurait été rejoué par `X01Rules`) : TypeScript ne le voyait pas.
- */
+// Couture `GameMode` : chaque mode garde ses règles et son état, ce fichier aiguille sur `mode`.
+// ⚠️ Chaque aiguillage finit par un `default` typé `never` : un mode oublié ne compile pas.
 export const GAME_MODE_IDS = [
   'X01',
   'TOUR_DU_MONDE',
@@ -34,7 +19,6 @@ export const GAME_MODE_IDS = [
 
 export type GameModeId = (typeof GAME_MODE_IDS)[number]
 
-/** L'état d'une partie, quel que soit son mode. */
 export type AnyMatchState =
   | X01State
   | TourDuMondeState
@@ -46,11 +30,7 @@ const impossible = (valeur: never): never => {
   throw new DomainError(`Unknown game mode: ${String(valeur)}`)
 }
 
-/**
- * Le mode se lit sur le **premier événement du journal**, jamais sur un champ
- * ajouté après coup : les parties d'avant le lot 5a portent `'MatchStarted'` et
- * se rejouent en X01 pour toujours, sans migration.
- */
+/** ⚠️ Le mode se lit sur le premier événement : `'MatchStarted'` reste du X01. */
 export const modeOf = (events: readonly MatchEvent[]): GameModeId => {
   switch (events[0]?.type) {
     case 'TourDuMondeStarted':
@@ -117,17 +97,14 @@ export const GameModes = {
       case 'KILLER':
         return KillerRules.currentPlayer(state).playerId
       case 'CHECKOUT_PRACTICE':
-        // Exercice solo : il n'y a jamais qu'un joueur.
         return state.playerId
       default:
         return impossible(state)
     }
   },
 
-  /** Le nombre de volées enregistrées, commun à tous les modes. */
   visitCount: (state: AnyMatchState): number =>
     state.mode === 'CHECKOUT_PRACTICE' ? state.roundsPlayed : state.history.length,
 
-  /** Un exercice solo n'a pas d'adversaire : il ne se « gagne » pas. */
   isSolo: (mode: GameModeId): boolean => mode === 'CHECKOUT_PRACTICE',
 }

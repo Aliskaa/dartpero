@@ -15,7 +15,6 @@ const avecStockage = (stockage: FakePersistentStorage) => {
   return fakeServices({ devices: { ...base.devices, persistentStorage: stockage } }).services
 }
 
-/** Laisse les promesses déjà résolues se dérouler. */
 const vider = () => act(async () => {})
 
 describe('Stockage persistant — demande au démarrage', () => {
@@ -40,9 +39,6 @@ describe('Stockage persistant — demande au démarrage', () => {
 
   it('demande une seule fois même sous StrictMode, qui rejoue les effets', async () => {
     const stockage = new FakePersistentStorage('not-persisted')
-    // StrictMode tout en haut : posé sous les providers de `renderWithServices`,
-    // il ne rejoue pas les effets (vérifié : le garde `useRef` n'était alors
-    // pas exercé, le test passait même sans lui).
     render(
       <StrictMode>
         <QueryClientProvider client={new QueryClient()}>
@@ -218,7 +214,6 @@ describe('Stockage persistant — Réglages, groupe Sauvegarde', () => {
         refus,
       )
 
-      // Le navigateur finit par accorder (ex. après installation sur l'écran d'accueil).
       stockage.request = async () => {
         stockage.etat = 'persisted'
         return 'persisted'

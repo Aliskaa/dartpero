@@ -12,21 +12,11 @@ type Props = {
   readonly alerte?: boolean
   /** Dès trois joueurs : 15 px et interlettrage resserré, pour tenir dans la colonne. */
   readonly serre?: boolean
-  /**
-   * Éliminé (Killer) : nom en `craie-3` barré, carré de profil en niveaux de
-   * gris — un effet, pas une couleur (planche `killer`).
-   */
+  /** Éliminé (Killer) : nom barré en `craie-3`, carré de profil en niveaux de gris. */
   readonly elimine?: boolean
 }
 
-/**
- * Le nom d'un joueur sur la feuille, devant son carré de couleur de 12 px — le
- * même dans les trois jeux. Un carré de repère, pas une pastille, pas un liseré.
- * Le nom est tronqué en dernier recours (« … »), et la couronne du vainqueur a
- * son texte pour les lecteurs d'écran.
- *
- * Craie atténuée au repos, craie vive pour celui qui lance.
- */
+/** Nom d'un joueur sur la feuille devant son carré de couleur ; tronqué en dernier recours. */
 export const NomJoueurFeuille = ({
   nom,
   couleur,

@@ -95,15 +95,7 @@ const GrilleNumeros = ({
   )
 }
 
-/**
- * Le bloc « Numéros » de l'étape 2 du Killer (planche `killer`, recommandation) :
- * le tirage est **déjà fait** à l'arrivée, « Tirer au sort » le refait, toucher
- * une tuile ouvre la grille sous la rangée.
- *
- * ⚠️ La grille ouverte est un état local, **jamais une entrée d'historique** :
- * elle se referme après un choix, le retour du téléphone ne la referme pas
- * (réponse 13), comme les dépliants de la fiche.
- */
+/** Le bloc « Numéros » de l'étape 2 du Killer. ⚠️ La grille ouverte est un état local, jamais une entrée d'historique. */
 export const NumerosKiller = ({
   partie,
   retenus,
@@ -113,8 +105,7 @@ export const NumerosKiller = ({
 }) => {
   const [ouvert, setOuvert] = useState<PlayerId | null>(null)
 
-  // La complétion : chaque joueur retenu reçoit un numéro libre. Idempotente
-  // (rien n'est écrit quand rien ne manque), donc sûre sous `StrictMode`.
+  // Complétion idempotente : chaque joueur retenu reçoit un numéro libre.
   const cle = retenus
     .map((joueur) => `${joueur.id}:${partie.numeros.numeroDe(joueur.id) ?? ''}`)
     .join('|')

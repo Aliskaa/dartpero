@@ -50,7 +50,6 @@ describe('Entraînement au checkout (use case)', () => {
     const id = await demarrer()
     const cible = (await services.playCheckoutPractice.getState(id)).current?.target ?? 0
 
-    // On sort pile la cible : le domaine sait que c'est réussi.
     const sortie = await services.playCheckoutPractice.recordVisit(
       id,
       Dart.points(Dart.double(20)) === cible ? [Dart.double(20)] : RATE,
@@ -75,10 +74,6 @@ describe('Entraînement au checkout (use case)', () => {
     for (const bogey of BOGEY_NUMBERS) expect(cibles).not.toContain(bogey)
   })
 
-  /**
-   * Le piège qu'on veut éviter : annuler pour retomber sur une cible plus
-   * facile. Les tirages étant dans le journal, l'annulation les rend tels quels.
-   */
   it('redonne exactement la même cible après une annulation', async () => {
     const id = await demarrer()
     const avant = (await services.playCheckoutPractice.getState(id)).current?.target
@@ -112,10 +107,8 @@ describe('Entraînement au checkout (use case)', () => {
     const historique = await services.getMatchHistory.execute()
     expect(historique).toHaveLength(1)
     expect(historique[0]?.mode).toBe('CHECKOUT_PRACTICE')
-    // Pas d'adversaire, donc pas de vainqueur.
     expect(historique[0]?.winnerId).toBeNull()
 
-    // Moyennes et 180 n'ont pas de sens ici : la carrière X01 reste vide.
     expect(await services.getPlayerStats.execute()).toEqual([])
   })
 })

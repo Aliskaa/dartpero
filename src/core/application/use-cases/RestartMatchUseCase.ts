@@ -9,28 +9,8 @@ import type { RestartMatch } from '../ports/driving/RestartMatch'
 import type { StartMatch } from '../ports/driving/StartMatch'
 import { loadMatch } from './loadMatch'
 
-/**
- * Relance une partie à l'identique.
- *
- * ⚠️ Ce use case **ne recopie pas** l'événement d'ouverture dans un nouveau
- * journal : il rappelle le lancement du mode concerné. C'est la seule façon de
- * garantir qu'une relance passe exactement par les mêmes contrôles qu'un
- * premier départ — profil supprimé entre-temps, validation des règles, et,
- * pour l'entraînement, le tirage d'une nouvelle cible. Recopier l'ouverture
- * aurait dupliqué ces trois décisions, donc créé trois occasions de diverger.
- *
- * Corollaire assumé : une session d'entraînement relancée tire de **nouvelles**
- * cibles. On refait le même exercice, pas la même série — refaire la série à
- * l'identique n'aurait aucun intérêt, on connaîtrait déjà les restes.
- *
- * Le nom **tapé** voyage avec la relance et repasse par `MatchName.of`, comme
- * un premier départ. Sans nom tapé, rien n'est écrit : la nouvelle partie
- * prend le nom par défaut de **sa** date de création, pas celui de l'ancienne.
- *
- * L'aiguillage porte sur le type de l'événement d'ouverture, exactement comme
- * `modeOf` côté domaine : le mode se lit sur le premier événement du journal,
- * jamais sur un champ ajouté après coup.
- */
+// ⚠️ Rappelle le lancement du mode (mêmes contrôles qu'un premier départ), ne recopie pas l'ouverture ;
+// l'entraînement tire donc de nouvelles cibles.
 export class RestartMatchUseCase implements RestartMatch {
   constructor(
     private readonly matches: MatchRepository,
@@ -70,8 +50,7 @@ export class RestartMatchUseCase implements RestartMatch {
         })
 
       case 'KillerStarted':
-        // ⚠️ Sans `numbers` : « On remet ça » tire de **nouveaux** numéros
-        // (décision de l'utilisateur, lot `killer`).
+        // ⚠️ Sans `numbers` : « On remet ça » tire de nouveaux numéros.
         return this.killer.start({
           playerIds: ouverture.playerIds,
           config: ouverture.config,

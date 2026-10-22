@@ -29,16 +29,7 @@ const MENTIONS = [
   },
 ] as const
 
-/**
- * Politique de confidentialité et mentions légales — l'URL publique donnée à
- * la Play Console. Une page de lecture à 30 cm, pas un écran de partie : elle
- * vit sous `LayoutPrincipal`, barre de navigation comprise (un visiteur venu
- * du store peut entrer dans l'app de là).
- *
- * Aucun service, aucun hook : du texte, tiré de `labels.ts`. Ce texte est un
- * engagement public — voir l'avertissement en tête de sa section dans
- * `labels.ts`.
- */
+/** Politique de confidentialité (URL publique de la Play Console) : du texte de `labels.ts`, un engagement public. */
 export const ConfidentialiteEcran = () => (
   <main className="flex flex-1 flex-col gap-4 pb-4">
     <EnTeteEcran titre={TITRE_CONFIDENTIALITE} sousTitre={SOUS_TITRE_CONFIDENTIALITE} />

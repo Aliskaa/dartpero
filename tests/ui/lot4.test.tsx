@@ -11,7 +11,6 @@ import { renderWithServices } from './renderWithServices'
 
 const T20 = [Dart.triple(20), Dart.triple(20), Dart.triple(20)]
 
-/** Une base déjà vécue : deux joueurs et une partie entamée. */
 const basePeuplee = async (services: Services) => {
   const kevin = await services.managePlayers.create('Kevin')
   const julien = await services.managePlayers.create('Julien')
@@ -24,10 +23,6 @@ const basePeuplee = async (services: Services) => {
 }
 
 describe('Navigation principale', () => {
-  /**
-   * Critère 12 : quatre onglets, plus de « Joueurs ». On ajoute ses potes en
-   * créant une partie ; la gestion des profils vit dans les Réglages.
-   */
   it('n’a que quatre onglets, sans « Joueurs »', async () => {
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/' })
@@ -115,7 +110,6 @@ describe('Écran Joueurs', () => {
     await utilisateur.click(await screen.findByRole('button', { name: 'Modifier Kevin' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Supprimer' }))
 
-    // Premier clic : rien n'est perdu, on demande seulement confirmation.
     expect(await services.managePlayers.listAll()).toHaveLength(1)
 
     await utilisateur.click(
@@ -133,8 +127,6 @@ describe('Écran Parties', () => {
 
     renderWithServices(<App />, { services, route: '/historique' })
 
-    // Un X01 non terminé, seul : c'est la partie en cours, marquée « En cours »
-    // (sans « Reprendre » : toute la ligne y mène déjà).
     expect(await screen.findByText('En cours')).toBeInTheDocument()
     expect(screen.queryByText('Reprendre')).not.toBeInTheDocument()
     expect(screen.queryByText(/abandonnée/i)).not.toBeInTheDocument()
@@ -169,7 +161,6 @@ describe('Historique — filtre de mode', () => {
     const services = await deuxModes()
     renderWithServices(<App />, { services, route: '/historique' })
 
-    // Sans filtre, les deux parties sont là.
     expect(await screen.findByText(/2 parties enregistrées/i)).toBeInTheDocument()
 
     await utilisateur.click(screen.getByRole('button', { name: 'Cricket' }))
@@ -201,7 +192,6 @@ describe('Écran Statistiques', () => {
       playerIds: [julien.id, kevin.id],
       config: X01Config.create({ legsToWin: 1 }),
     })
-    // Julien commence et marque 60, Kevin enchaîne un 180.
     await services.recordVisit.execute({
       matchId,
       darts: [Dart.single(20), Dart.single(20), Dart.single(20)],
@@ -219,16 +209,11 @@ describe('Écran Statistiques', () => {
     expect(within(lignes[1] as HTMLElement).getByText('Julien')).toBeInTheDocument()
   })
 
-  /**
-   * Révision 1 : les manches ont quitté Statistiques. Victoires dit « v / j »
-   * sur chaque ligne, les parties gagnées sur les parties jouées par ce joueur.
-   */
   it('Victoires donne à chaque joueur son dénominateur, sans manches ni %', async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
     const julien = await services.managePlayers.create('Julien')
 
-    // Une manche gagnée par Kevin en 9 fléchettes ; Julien n'a rien pris.
     const matchId = await services.startMatch.execute({
       playerIds: [kevin.id, julien.id],
       config: X01Config.create({ startingScore: 501, legsToWin: 2 }),
@@ -246,7 +231,6 @@ describe('Écran Statistiques', () => {
 
     const victoires = await screen.findByRole('region', { name: 'Victoires' })
 
-    // La partie n'est pas finie : 0 victoire sur 1 partie, pour chacun.
     for (const nom of ['Kevin', 'Julien']) {
       const ligne = within(victoires)
         .getAllByRole('listitem')
@@ -254,7 +238,6 @@ describe('Écran Statistiques', () => {
       expect(within(ligne).getByText('0')).toBeInTheDocument()
       expect(within(ligne).getByText('/ 1')).toBeInTheDocument()
     }
-    // Témoin d'abord, absences ensuite : plus de manches, plus de pourcentage.
     expect(victoires).toHaveTextContent('/ 1')
     expect(victoires).not.toHaveTextContent(/manche/i)
     expect(victoires).not.toHaveTextContent('%')
@@ -288,7 +271,6 @@ describe('Écran Statistiques', () => {
 
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    // « Tout » par défaut : les deux parties sont au compteur.
     const victoires = await screen.findByRole('region', { name: 'Victoires' })
     expect(within(victoires).getAllByText('/ 2').length).toBeGreaterThan(0)
 
@@ -320,8 +302,7 @@ describe('Écran Statistiques', () => {
 
     await utilisateur.click(screen.getByRole('button', { name: "Aujourd'hui" }))
 
-    // ⚠️ Surtout pas « Aucune partie au compteur » : la base est intacte, et le
-    // faire croire serait la pire chose que cet écran puisse dire.
+    // ⚠️ Surtout pas « Aucune partie au compteur » : la base est intacte.
     expect(await screen.findByText(/rien sur cette période/i)).toBeInTheDocument()
     expect(screen.queryByText(/aucune partie au compteur/i)).not.toBeInTheDocument()
   })
@@ -342,12 +323,9 @@ describe('Écran Statistiques', () => {
 
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    // La couleur ne se teste pas ; le nom accessible, lui, porte la donnée —
-    // et c'est aussi ce qu'un lecteur d'écran restitue.
     const plateau = await screen.findByRole('img', {
       name: /Kevin : T20 3 fois, S5 2 fois, sur 6 fléchettes/,
     })
-    // Sous la cible, la rangée de cases : les zones favorites, puis le hors cible.
     const cases = within(plateau.closest('figure') as HTMLElement).getAllByRole('listitem')
     expect(cases.map((c) => c.textContent)).toEqual(['T203 fois', 'S52 fois', '1hors cible'])
   })
@@ -358,8 +336,6 @@ describe('Écran Statistiques', () => {
     const julien = await services.managePlayers.create('Julien')
     const david = await services.managePlayers.create('David')
 
-    // Kevin : déjà « sur un double » (40, double out par défaut), deux
-    // ratés puis la sortie — 1 réussite sur 3 tentatives, donc 33 %.
     const matchKevin = await services.startMatch.execute({
       playerIds: [kevin.id],
       config: X01Config.create({ startingScore: 40, legsToWin: 1 }),
@@ -369,8 +345,6 @@ describe('Écran Statistiques', () => {
       darts: [Dart.miss(), Dart.miss(), Dart.double(20)],
     })
 
-    // Julien : même point de départ, mais rate ses trois tentatives —
-    // 0 réussite sur 3, donc « 0 % », pas un tiret.
     const matchJulien = await services.startMatch.execute({
       playerIds: [julien.id],
       config: X01Config.create({ startingScore: 40, legsToWin: 1 }),
@@ -380,8 +354,6 @@ describe('Écran Statistiques', () => {
       darts: [Dart.miss(), Dart.miss(), Dart.miss()],
     })
 
-    // David : ne s'approche jamais d'un reste de double — aucune tentative,
-    // donc un tiret.
     const matchDavid = await services.startMatch.execute({
       playerIds: [david.id],
       config: X01Config.create({ legsToWin: 1 }),
@@ -393,8 +365,6 @@ describe('Écran Statistiques', () => {
 
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    // « % doubles » est la bascule par défaut de Finitions ; David, sans
-    // occasion, passe en dernier.
     const finitions = await screen.findByRole('region', { name: 'Finitions' })
     const lignes = within(finitions).getAllByRole('listitem')
     const attendues = [
@@ -415,8 +385,6 @@ describe('Écran Réglages', () => {
   it('restaure une sauvegarde déposée par l’utilisateur', async () => {
     const utilisateur = userEvent.setup()
 
-    // La sauvegarde vient d'un autre téléphone : on l'exporte depuis une base
-    // à part, exactement comme dans la vraie vie.
     const ailleurs = fakeServices().services
     await basePeuplee(ailleurs)
     const sauvegarde = await ailleurs.manageBackup.exportAll()

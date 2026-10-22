@@ -32,11 +32,7 @@ import { configurationsAffichees } from '@/ui/rejouer'
 import { BarreEtapes } from './BarreEtapes'
 import { EnTeteEtape } from './EnTeteEtape'
 
-/**
- * L'ordre est fixe, X01 en tête : aucune tuile n'est mise en avant. Une tuile
- * présélectionnée se lirait comme un choix en attente, alors qu'ici toucher
- * une tuile, c'est avancer.
- */
+// Ordre fixe, aucune tuile mise en avant : une tuile présélectionnée se lirait comme un choix en attente.
 const JEUX: readonly GameModeId[] = [
   'X01',
   'CRICKET',
@@ -45,11 +41,7 @@ const JEUX: readonly GameModeId[] = [
   'CHECKOUT_PRACTICE',
 ]
 
-/**
- * Une tuile. L'entraînement, seul jeu solo, prend **toute la largeur** sous la
- * grille 2 × 2 des jeux à plusieurs (planche `killer`, option B). La plage de
- * joueurs n'est écrite que sur la tuile Killer (réponse 5).
- */
+/** Une tuile ; l'entraînement (solo) prend toute la largeur, la plage de joueurs n'est écrite que sur le Killer. */
 const TuileJeu = ({ mode }: { readonly mode: GameModeId }) => {
   const large = mode === 'CHECKOUT_PRACTICE'
   return (
@@ -104,11 +96,7 @@ const JeuCompact = ({ mode }: { readonly mode: GameModeId }) => (
   </li>
 )
 
-/**
- * Une ligne de « Rejouer » : le mode, ses réglages, les joueurs, et **une seule
- * cible** — ▶ (48 px). Les pastilles n'ont que des initiales : les pseudos
- * entiers vivent dans le nom accessible de ▶.
- */
+/** Une ligne de « Rejouer » : une seule cible, ▶ ; les pseudos entiers vivent dans son nom accessible. */
 const LigneRejouer = ({
   configuration,
   partie,
@@ -155,19 +143,10 @@ const LigneRejouer = ({
   )
 }
 
-/**
- * Étape 1 — le jeu. Avec un historique : « Rejouer » (les trois configurations
- * récentes) puis « Ou un autre jeu » en rangée compacte. Sans aucune
- * configuration à rejouer : les tuiles 2 × 2, l'entraînement en pleine largeur
- * dessous. Tant que l'historique ou
- * les profils chargent : **rien** sous la barre d'étapes — ni rangée ni tuiles,
- * sans quoi la mise en page basculerait sous le doigt et un appui serait perdu.
- *
- * Le nom de la partie n'est plus ici (il descend à l'étape 2, facultatif).
- */
+/** Étape 1 — le jeu. ⚠️ Rien sous la barre d'étapes tant que l'historique ou les profils chargent : la mise en page basculerait sous le doigt. */
 export const EtapeJeu = ({ partie }: { readonly partie: NouvellePartie }) => {
   const services = useServices()
-  // Lue **une fois** par passage : le libellé de date ne bouge pas sous les doigts.
+  // Lue une fois par passage : le libellé de date ne bouge pas.
   const [maintenant] = useState(() => services.clock.now())
   const historique = useQuery({
     queryKey: CLE_REJOUER,

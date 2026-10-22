@@ -48,7 +48,6 @@ describe('Dart', () => {
   })
 
   it('énumère les 62 fléchettes marquantes, sans le manqué', () => {
-    // 20 secteurs × 3 multiplicateurs + bull + bullseye
     expect(ALL_SCORING_DARTS).toHaveLength(62)
     expect(ALL_SCORING_DARTS.some((d) => d.segment === 'MISS')).toBe(false)
     expect(Math.max(...ALL_SCORING_DARTS.map(Dart.points))).toBe(60)

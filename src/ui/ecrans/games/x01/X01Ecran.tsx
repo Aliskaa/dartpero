@@ -27,10 +27,7 @@ import {
 import { useServices } from '@/ui/providers/ServicesProvider'
 import { reglesDeLaConfigX01 } from '@/ui/reglesDuJeu'
 
-/**
- * Le bandeau du X01 : DI / DO en complément du sous-titre, « Manche N » et
- * « Set M » à droite (le set seulement quand la partie en compte).
- */
+/** Le bandeau du X01 : DI / DO, « Manche N » et « Set M » (seulement si la partie en compte). */
 const EnTeteManche = ({
   config,
   legNumber,
@@ -84,8 +81,7 @@ export const X01Ecran = () => {
     enabled: state !== null,
   })
 
-  // La boîte « Kevin sort sur D10 ? » (lot `annulation-volee`) : au-dessus du
-  // chargement, comme toute boîte au retour (CONVENTIONS § 9).
+  // La boîte « Kevin sort sur D10 ? » : au-dessus du chargement, comme toute boîte au retour.
   const confirmation = useConfirmationSortie({
     pret: match.pret,
     enAttente: match.sortieEnAttente,
@@ -99,8 +95,7 @@ export const X01Ecran = () => {
     if (match.ajouterFlechette(dart)) confirmation.demander()
   }
 
-  // Le résumé attend que l'entrée de la boîte soit dépilée : la remplacer
-  // laisserait la partie derrière elle dans l'historique.
+  // Le résumé attend que l'entrée de la boîte soit dépilée, sinon la partie resterait dans l'historique.
   const auRepos = confirmation.auRepos
   useEffect(() => {
     if (termine && auRepos) navigate(`/partie/${identifiant}/resume`, { replace: true })
@@ -140,8 +135,7 @@ export const X01Ecran = () => {
   const heroNom = heroId ? nomJoueur(profils.get(heroId)?.name ?? null) : undefined
   const moment = momentDepuisVoleeX01(match.derniereVolee, heroNom)
 
-  // « Annuler » vit DANS le pavé, sur sa dernière rangée : le bas de l'écran
-  // est la seule zone qu'on atteint sans changer la prise du téléphone.
+  // « Annuler » vit dans le pavé, dernière rangée : le bas est la seule zone atteignable sans changer de prise.
   const actions = {
     onAnnuler: () => void match.annuler(),
     peutAnnuler: match.peutAnnuler,

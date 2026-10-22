@@ -10,7 +10,7 @@ import { fakeServices, SettableClock } from '../fakes'
 import { retourTelephone } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/** ⚠️ En dur, à dessein : la clé est citée par la politique de confidentialité. */
+// ⚠️ En dur, à dessein : la clé est citée par la politique de confidentialité.
 const CLE = 'statistiques:joueur'
 
 const S20 = [Dart.single(20), Dart.single(20), Dart.single(20)]
@@ -27,13 +27,6 @@ const partie = async (
   return matchId
 }
 
-/**
- * Trois joueurs, chacun sa partie :
- * - Kevin : trois volées de 60 → moyenne 60, meilleure volée 60 ;
- * - Julien : 100 puis trois volées blanches → moyenne 25, First 9 33,3, meilleure volée 100 ;
- * - Sarah : une volée de 15.
- * Ordre de `GetPlayerStats` (moyenne) : Kevin, Julien, Sarah.
- */
 const troisJoueurs = async () => {
   const { services, dependencies } = fakeServices()
   const kevin = await services.managePlayers.create('Kevin')
@@ -59,7 +52,6 @@ const ordre = (region: HTMLElement) =>
         within(ligne).getAllByText(/^(Kevin|Julien|Sarah|Joueur supprimé)$/)[0]?.textContent,
     )
 
-/** Chaque barre d'une carte : [nom, valeur, complément] — la colonne de valeur est la 4e. */
 const valeursDe = (region: HTMLElement) =>
   within(region)
     .getAllByRole('listitem')
@@ -92,12 +84,10 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
         return cases[cases.length - 1]?.textContent
       })
 
-    // Kevin n'a rien manqué : la colonne écrit « 0 » (jamais un mot à la place).
     const { unmount } = renderWithServices(<App />, { services, route: '/statistiques' })
     expect(await derniereCase()).toBe('0hors cible')
     unmount()
 
-    // Julien a manqué 9 fléchettes : le nombre.
     dependencies.devices.preferences.write(CLE, julien.id)
     renderWithServices(<App />, { services, route: '/statistiques' })
     expect(await derniereCase()).toBe('9hors cible')
@@ -122,7 +112,6 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     const { services } = fakeServices({ clock: horloge })
     const kevin = await services.managePlayers.create('Kevin')
 
-    // Une vieille partie : 3 hors cible. Une partie de ce soir : 0, puis une autre : 1.
     horloge.regler(new Date(2026, 6, 3, 20).getTime())
     await partie(services, [kevin.id], [RIEN])
     horloge.regler(new Date(2026, 9, 15, 20).getTime())
@@ -132,12 +121,10 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     const ligne = () => screen.findByText('Hors cible par partie').then((l) => l.closest('p'))
-    // Tout : 4 hors cible sur 3 parties.
     await utilisateur.click(screen.getByRole('button', { name: 'Tout' }))
     await waitFor(async () =>
       expect((await ligne())?.textContent).toBe('Hors cible par partie1,3sur 3 parties'),
     )
-    // Aujourd'hui : 1 hors cible sur 2 parties.
     await utilisateur.click(screen.getByRole('button', { name: "Aujourd'hui" }))
     await waitFor(async () =>
       expect((await ligne())?.textContent).toBe('Hors cible par partie0,5sur 2 parties'),
@@ -163,7 +150,6 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     expect((await cible()).getAttribute('aria-label')).toMatch(/^Kevin :/)
-    // Ses parties restent : il figure toujours au podium, sous « Joueur supprimé ».
     expect(within(ruban()).getByRole('button', { name: 'Joueur supprimé' })).toBeInTheDocument()
   })
 
@@ -174,7 +160,6 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
     const kevin = await services.managePlayers.create('Kevin')
     const sarah = await services.managePlayers.create('Sarah')
 
-    // Sarah a lancé il y a longtemps ; ce soir, elle est à la partie mais n'a rien lancé.
     horloge.regler(new Date(2026, 6, 3, 20).getTime())
     await partie(services, [sarah.id], [S20])
     horloge.regler(new Date(2026, 9, 15, 20).getTime())
@@ -191,7 +176,6 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
       expect((await cible()).getAttribute('aria-label')).toMatch(/^Kevin :/),
     )
 
-    // La préférence n'est pas effacée : Sarah revient dès que la période la contient.
     await utilisateur.click(screen.getByRole('button', { name: 'Tout' }))
     await waitFor(async () =>
       expect((await cible()).getAttribute('aria-label')).toMatch(/^Sarah :/),
@@ -216,7 +200,6 @@ describe('Statistiques — la cible et le joueur mémorisé', () => {
       )
     const avant = cartes()
 
-    // Rien n'est écrit tant qu'on n'a pas touché un onglet (U7).
     expect(dependencies.devices.preferences.read(CLE, null)).toBeNull()
 
     await utilisateur.click(within(ruban()).getByRole('button', { name: 'Sarah' }))
@@ -273,7 +256,6 @@ describe('Statistiques — les cartes du podium', () => {
     ]) {
       const region = await screen.findByRole('region', { name: nom })
       expect(within(region).getByRole('heading', { level: 2, name: nom })).toBeInTheDocument()
-      // Dessins muets : pictogramme, bâtons. Le témoin d'abord, l'absence ensuite.
       const dessins = [...region.querySelectorAll('svg')]
       expect(dessins.length).toBeGreaterThan(0)
       for (const svg of dessins) expect(svg.getAttribute('aria-hidden')).toBe('true')
@@ -339,7 +321,6 @@ describe('Statistiques — les cartes du podium', () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
     const sarah = await services.managePlayers.create('Sarah')
-    // Kevin sort 60 en deux fléchettes ; Sarah sort 40 en une.
     await partie(
       services,
       [kevin.id],
@@ -360,7 +341,6 @@ describe('Statistiques — les cartes du podium', () => {
       within(finitions).getByRole('button', { name: 'Haut, Plus haut finish' }),
     )
     expect(ordre(finitions)).toEqual(['Kevin', 'Sarah'])
-    // Témoin : le checkout de 60 existe bien… mais la ligne de bas est retirée (Révision 1).
     expect(within(finitions).getAllByText('60').length).toBeGreaterThan(0)
     expect(finitions).not.toHaveTextContent('Plus haut finish :')
     expect(finitions).not.toHaveTextContent('Manche la plus courte :')
@@ -369,7 +349,6 @@ describe('Statistiques — les cartes du podium', () => {
       within(finitions).getByRole('button', { name: 'Manche, Manche la plus courte' }),
     )
     expect(ordre(finitions)).toEqual(['Sarah', 'Kevin'])
-    // Le grand chiffre porte l'unité ; les barres écrivent le nombre seul.
     expect(within(finitions).getByText('fl.')).toBeInTheDocument()
   })
 
@@ -409,7 +388,6 @@ describe('Statistiques — les cartes du podium', () => {
       ['Kevin', '2', '/ 2'],
       ['Julien', '0', '/ 2'],
     ])
-    // Témoin d'abord (« / 2 » est là), absences ensuite.
     expect(victoires).not.toHaveTextContent(/manche/i)
     expect(victoires).not.toHaveTextContent('%')
   })
@@ -432,10 +410,8 @@ describe('Statistiques — les cartes du podium', () => {
     const rangees = within(grosses)
       .getAllByRole('term')
       .map((dt) => `${dt.textContent} ${dt.nextElementSibling?.textContent}`)
-    // 140+ et 100+ sont cumulatifs (CLAUDE.md § Statistiques) : le 180 compte aussi.
     expect(rangees).toEqual(['180 1', '140+ 2', '100+ 2'])
 
-    // T-M5 : la teinte des bâtons par seuil, en tokens pleins.
     const teintes = within(grosses)
       .getAllByRole('term')
       .map((dt) => dt.nextElementSibling?.querySelector('svg')?.parentElement?.className)
@@ -449,25 +425,21 @@ describe('Statistiques — les cartes du podium', () => {
     const sarah = await services.managePlayers.create('Sarah')
     const T20 = [Dart.triple(20), Dart.triple(20), Dart.triple(20)]
     const CENT = [Dart.triple(20), Dart.single(20), Dart.single(20)]
-    // Kevin : un 180, la meilleure moyenne. Sarah : trois volées de 100, aucun 180.
     await partie(services, [kevin.id], [T20])
     await partie(services, [sarah.id], [CENT, CENT, CENT])
     renderWithServices(<App />, { services, route: '/statistiques' })
 
     const grosses = await screen.findByRole('region', { name: 'Grosses volées' })
     const noms = () => [...grosses.querySelectorAll('.sr-only')].map((n) => n.textContent)
-    // L'ordre de la moyenne (Kevin d'abord) coïncide avec celui des 180…
     expect(within(grosses).getByRole('button', { name: '180' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
     expect(noms()).toEqual(['Kevin', 'Sarah'])
 
-    // … mais sur 100+, Sarah (3) passe devant Kevin (1).
     await utilisateur.click(within(grosses).getByRole('button', { name: '100+' }))
     expect(noms()).toEqual(['Sarah', 'Kevin'])
 
-    // La bascule survit au changement de période.
     await utilisateur.click(screen.getByRole('button', { name: '7 jours' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Tout' }))
     const apres = await screen.findByRole('region', { name: 'Grosses volées' })
@@ -484,9 +456,7 @@ describe('Statistiques — les cartes du podium', () => {
     for (const nom of ['Moyenne 3 fl., Moyenne 3 fléchettes', 'Victoires', 'Finitions']) {
       const region = await screen.findByRole('region', { name: nom })
       const lignes = within(region).getAllByRole('listitem')
-      // Témoin : trois lignes, donc trois pistes à trouver.
       expect(lignes).toHaveLength(3)
-      // La piste est la 3e colonne (avatar, nom, piste, valeur).
       const pistes = [...region.querySelectorAll('ol li > span:nth-child(3)')]
       expect(pistes).toHaveLength(3)
       for (const piste of pistes) expect(piste).toHaveAttribute('aria-hidden', 'true')
@@ -498,7 +468,6 @@ describe('Statistiques — les cartes du podium', () => {
     const kevin = await services.managePlayers.create('Kevin')
     const julien = await services.managePlayers.create('Julien')
     const config = X01Config.create({ startingScore: 40, legsToWin: 1 })
-    // Julien gagne deux fois sans briller ; Kevin perd, mais marque gros en solo.
     await partie(services, [kevin.id, julien.id], [RIEN, RIEN, RIEN, [Dart.double(20)]], config)
     await partie(services, [kevin.id, julien.id], [RIEN, RIEN, RIEN, [Dart.double(20)]], config)
     await partie(
@@ -518,12 +487,10 @@ describe('Statistiques — les cartes du podium', () => {
 
     const victoires = screen.getByRole('region', { name: 'Victoires' })
     expect(ordre(victoires)).toEqual(['Julien', 'Kevin'])
-    // Chaque ligne porte les parties de **son** joueur : 2 pour Julien, 3 pour Kevin.
     expect(valeursDe(victoires)).toEqual([
       ['Julien', '2', '/ 2'],
       ['Kevin', '0', '/ 3'],
     ])
-    // La grande ligne aussi : « 2 / 2 », Julien.
     const grande = within(victoires).getAllByText('/ 2')[0]
     expect(grande?.closest('p')).toHaveTextContent('Julien')
   })
@@ -549,7 +516,6 @@ describe('Statistiques — les cartes du podium', () => {
     const { services } = fakeServices()
     const julien = await services.managePlayers.create('Julien')
     const david = await services.managePlayers.create('David')
-    // Julien rate trois doubles (0 %) ; David n'en a jamais eu à jouer (—).
     await partie(
       services,
       [julien.id],
@@ -561,11 +527,9 @@ describe('Statistiques — les cartes du podium', () => {
 
     const finitions = await screen.findByRole('region', { name: 'Finitions' })
     expect(within(finitions).getAllByText('0 %')).toHaveLength(2)
-    // Témoin : les remplissages existent, aucun n'est en laiton.
     expect(finitions.querySelectorAll('ol li > span[aria-hidden] > span')).toHaveLength(2)
     expect(finitions.querySelectorAll('.bg-laiton')).toHaveLength(0)
     expect(within(finitions).getAllByText('0 %')[0]).toHaveClass('text-craie-vive')
-    // TM-d : le « — » de David est une information, en craie-3 (jamais du décor).
     const ligneDavid = within(finitions)
       .getAllByRole('listitem')
       .find((li) => within(li).queryByText('David')) as HTMLElement
@@ -578,7 +542,6 @@ describe('Statistiques — cas de bord à l’écran (T-M6)', () => {
     const { services } = await troisJoueurs()
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    // Kevin 9, Julien 12, Sarah 3.
     expect(
       await screen.findByText('24 fléchettes lancées · toutes parties confondues'),
     ).toBeInTheDocument()
@@ -611,7 +574,6 @@ describe('Statistiques — cas de bord à l’écran (T-M6)', () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
     const sarah = await services.managePlayers.create('Sarah')
-    // Sarah est à la partie, mais n'a encore rien lancé.
     await partie(services, [kevin.id, sarah.id], [S20])
     renderWithServices(<App />, { services, route: '/statistiques' })
 
@@ -627,12 +589,6 @@ describe('Statistiques — cas de bord à l’écran (T-M6)', () => {
   })
 })
 
-/**
- * Une bande de joueurs, chacun sa partie d'une volée de trois simples `k` :
- * moyenne 3k. Deux `k` égaux font deux ex aequo ; l'ordre reçu est celui de
- * la liste. Noms « J1 », « J2 »… dans l'ordre de la moyenne quand les `k`
- * décroissent.
- */
 const bande = async (ks: readonly number[]) => {
   const { services, dependencies } = fakeServices()
   for (const [rang, k] of ks.entries()) {
@@ -696,7 +652,6 @@ describe('Statistiques — N premiers, puis « Tout voir » (Révision 1)', () =
     const moyenne = await screen.findByRole('region', {
       name: 'Moyenne 3 fl., Moyenne 3 fléchettes',
     })
-    // Témoin : les quatre sont là.
     expect(within(moyenne).getAllByRole('listitem')).toHaveLength(4)
     expect(
       screen.getByRole('region', { name: 'Grosses volées' }).querySelectorAll('.sr-only'),
@@ -728,7 +683,6 @@ describe('Statistiques — N premiers, puis « Tout voir » (Révision 1)', () =
     const { services } = await bande(SEPT)
     renderWithServices(<App />, { services, route: '/statistiques' })
 
-    // Fermé : le dialogue n'est pas exposé.
     expect(
       await screen.findByRole('region', { name: 'Moyenne 3 fl., Moyenne 3 fléchettes' }),
     ).toBeInTheDocument()
@@ -792,19 +746,16 @@ describe('Statistiques — N premiers, puis « Tout voir » (Révision 1)', () =
     const dialogue = screen.getByRole('dialog', { name: 'Victoires' })
     dialogue.getBoundingClientRect = () => new DOMRect(16, 100, 358, 400)
 
-    // Un appui dans la liste d'abord : la boîte reste ouverte.
     const liste = within(dialogue).getAllByRole('listitem')[0] as HTMLElement
     fireEvent.pointerDown(liste, { clientX: 100, clientY: 200 })
     fireEvent.click(liste, { clientX: 100, clientY: 200 })
     expect(screen.getByRole('dialog', { name: 'Victoires' })).toBeInTheDocument()
 
-    // Puis sur le voile, au-dessus de la boîte.
     fireEvent.pointerDown(dialogue, { clientX: 100, clientY: 40 })
     fireEvent.click(dialogue, { clientX: 100, clientY: 40 })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(screen.getByRole('heading', { level: 1, name: 'Statistiques' })).toBeInTheDocument()
 
-    // Un seul recul : le retour suivant quitte Statistiques.
     await retourTelephone()
     await waitFor(() =>
       expect(screen.queryByRole('heading', { level: 1, name: 'Statistiques' })).toBeNull(),
@@ -832,7 +783,6 @@ describe('Statistiques — N premiers, puis « Tout voir » (Révision 1)', () =
 
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
       expect(screen.getByRole('heading', { level: 1, name: 'Statistiques' })).toBeInTheDocument()
-      // Le focus revient au bouton qui a ouvert.
       expect(screen.getByRole('button', { name: 'Tout voir, Victoires' })).toHaveFocus()
 
       await retourTelephone()
@@ -852,7 +802,6 @@ describe('Statistiques — Révision 1, rejeu Test (QO-1, TM-5, TM-6)', () => {
     const nom = 'Moyenne 3 fl., Moyenne 3 fléchettes'
     const region = await screen.findByRole('region', { name: nom })
     const titre = within(region).getByRole('heading', { level: 2, name: nom })
-    // Le titre visible reste abrégé, et il est contenu dans le nom (WCAG 2.5.3).
     expect(titre).toHaveTextContent(/^Moyenne 3 fl\.$/)
 
     const bouton = within(region).getByRole('button', { name: `Tout voir, ${nom}` })
@@ -862,7 +811,6 @@ describe('Statistiques — Révision 1, rejeu Test (QO-1, TM-5, TM-6)', () => {
       /^Moyenne 3 fl\.$/,
     )
 
-    // Les autres titres ne sont pas abrégés : nom = titre visible.
     await utilisateur.click(within(dialogue).getByRole('button', { name: 'F9, First 9' }))
     expect(screen.getByRole('dialog', { name: 'First 9' })).toBeInTheDocument()
   })
@@ -876,18 +824,12 @@ describe('Statistiques — Révision 1, rejeu Test (QO-1, TM-5, TM-6)', () => {
     const dialogue = screen.getByRole('dialog', { name: 'Victoires' })
     const lignes = valeursDe(dialogue)
     expect(lignes).toHaveLength(7)
-    // Chacun a joué une partie : « 0 / 1 » partout.
     for (const [, valeur, complement] of lignes) {
       expect(valeur).toBe('0')
       expect(complement).toBe('/ 1')
     }
   })
 
-  /**
-   * Cinq joueurs dont l'ordre des 100+ est l'inverse de celui de la moyenne :
-   * P1 une volée de 60 ; P2 à P5 de 1 à 4 volées de 100, noyées dans des
-   * volées blanches (moyennes 50, 40, 30, 20).
-   */
   const inverses = async () => {
     const { services } = fakeServices()
     const CENT = [Dart.triple(20), Dart.single(20), Dart.single(20)]
@@ -917,12 +859,10 @@ describe('Statistiques — Révision 1, rejeu Test (QO-1, TM-5, TM-6)', () => {
     const moyenne = await screen.findByRole('region', {
       name: 'Moyenne 3 fl., Moyenne 3 fléchettes',
     })
-    // Témoin : le podium de la moyenne commence par P1, P2, P3.
     expect(nomsDe(moyenne).slice(0, 3)).toEqual(['P1', 'P2', 'P3'])
 
     const grosses = screen.getByRole('region', { name: 'Grosses volées' })
     await utilisateur.click(within(grosses).getByRole('button', { name: '100+' }))
-    // La carte : les trois premiers sur 100+, pas ceux de la moyenne.
     expect(nomsGrosses(grosses)).toEqual(['P5', 'P4', 'P3'])
 
     await utilisateur.click(
@@ -934,11 +874,6 @@ describe('Statistiques — Révision 1, rejeu Test (QO-1, TM-5, TM-6)', () => {
 })
 
 describe('Statistiques — l’onglet actif ramené dans le ruban (constat 3)', () => {
-  /**
-   * jsdom ne fait pas de mise en page : on simule des onglets de 100 px côte à
-   * côte dans un ruban de 300 px, et l'on espionne `scrollLeft` (lecture 0,
-   * écritures retenues). Rien d'autre que le ruban ne doit défiler.
-   */
   const simulerMiseEnPage = () => {
     const proto = HTMLElement.prototype
     const origines = ['offsetLeft', 'offsetWidth', 'clientWidth', 'scrollLeft'].map(
@@ -959,8 +894,6 @@ describe('Statistiques — l’onglet actif ramené dans le ruban (constat 3)', 
     })
     Object.defineProperty(proto, 'offsetWidth', { configurable: true, get: () => 100 })
     Object.defineProperty(proto, 'clientWidth', { configurable: true, get: () => 300 })
-    // Le ruban retient sa dernière position, comme un vrai : un recadrage vers
-    // la gauche se voit alors aussi.
     const positions = new WeakMap<HTMLElement, number>()
     Object.defineProperty(proto, 'scrollLeft', {
       configurable: true,
@@ -992,9 +925,7 @@ describe('Statistiques — l’onglet actif ramené dans le ruban (constat 3)', 
       renderWithServices(<App />, { services, route: '/statistiques' })
       await waitFor(() => expect(ecritures.length).toBeGreaterThan(0))
       const derniere = ecritures.at(-1)
-      // Septième onglet : de 600 à 700, dans un ruban de 300 → 400.
       expect(derniere?.valeur).toBe(400)
-      // C'est bien le ruban qui défile, celui qui contient l'onglet actif.
       expect(derniere?.element.querySelector('button[aria-pressed="true"]')).toHaveTextContent('J7')
       expect(ecritures.every((e) => e.element.closest('fieldset'))).toBe(true)
     } finally {
@@ -1009,10 +940,8 @@ describe('Statistiques — l’onglet actif ramené dans le ruban (constat 3)', 
     try {
       renderWithServices(<App />, { services, route: '/statistiques' })
       await cible()
-      // J1, actif à l'ouverture, est déjà visible : rien n'a défilé.
       expect(ecritures).toHaveLength(0)
       await utilisateur.click(within(ruban()).getByRole('button', { name: 'J5' }))
-      // Cinquième onglet : de 400 à 500 → 200.
       expect(ecritures.at(-1)?.valeur).toBe(200)
     } finally {
       restaurer()
@@ -1023,8 +952,6 @@ describe('Statistiques — l’onglet actif ramené dans le ruban (constat 3)', 
     const horloge = new SettableClock(new Date(2026, 9, 16, 21).getTime())
     const { services, dependencies } = fakeServices({ clock: horloge })
 
-    // J7 a brillé il y a longtemps (premier sur « Tout ») ; ce soir, il est
-    // dernier. J1 à J6 n'ont joué que ce soir.
     const j7 = await services.managePlayers.create('J7')
     horloge.regler(new Date(2026, 6, 3, 20).getTime())
     const T20 = [Dart.triple(20), Dart.triple(20), Dart.triple(20)]
@@ -1044,21 +971,16 @@ describe('Statistiques — l’onglet actif ramené dans le ruban (constat 3)', 
     try {
       renderWithServices(<App />, { services, route: '/statistiques' })
       expect((await cible()).getAttribute('aria-label')).toMatch(/^J7 :/)
-      // « Tout » : J7 en tête du ruban, déjà visible.
       expect(ecritures).toHaveLength(0)
 
-      // « 7 jours » : J7 passe en septième position → 400.
       await utilisateur.click(screen.getByRole('button', { name: '7 jours' }))
       await waitFor(() => expect(ecritures.at(-1)?.valeur).toBe(400))
       const rubanSeptJours = ecritures.at(-1)?.element
       const avant = ecritures.length
 
-      // Retour à « Tout », déjà en cache : le ruban reste monté, J7 reste
-      // actif, mais il repasse en tête → le ruban recadre à 0.
       await utilisateur.click(screen.getByRole('button', { name: 'Tout' }))
       await waitFor(() => expect(ecritures.length).toBeGreaterThan(avant))
       expect(ecritures.at(-1)?.valeur).toBe(0)
-      // Le même ruban, jamais démonté entre les deux périodes.
       expect(ecritures.at(-1)?.element).toBe(rubanSeptJours)
       expect(within(ruban()).getByRole('button', { name: 'J7' })).toHaveAttribute(
         'aria-pressed',

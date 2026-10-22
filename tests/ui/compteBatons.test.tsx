@@ -8,7 +8,6 @@ const dessiner = (nombre: number) => {
   return {
     container,
     groupes,
-    /** Le nombre de traits verticaux de chaque groupe, et s'il est barré. */
     forme: groupes.map((svg) => {
       const lignes = [...svg.querySelectorAll('line')]
       const barre = lignes.some((ligne) => ligne.getAttribute('y1') !== '1')

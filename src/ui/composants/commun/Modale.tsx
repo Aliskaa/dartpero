@@ -6,12 +6,7 @@ import { LIBELLE_FERMER } from '@/ui/labels'
 
 type Props = {
   readonly ouvert: boolean
-  /**
-   * Toutes les fermetures passent par lui : ✕, Échap, retour du téléphone
-   * relayé par le navigateur. Avec `useModaleAuRetour`, il recule d'une entrée
-   * d'historique — **jamais** un état local remis à faux, sinon l'entrée
-   * empilée à l'ouverture resterait orpheline.
-   */
+  /** Toutes les fermetures reculent d'une entrée d'historique, jamais un état local remis à faux. */
   readonly onFermer: () => void
   readonly titre: string
   /** Le nom accessible du dialogue quand le titre visible est abrégé (il le contient). */
@@ -22,21 +17,7 @@ type Props = {
   readonly children: ReactNode
 }
 
-/**
- * Une boîte modale : un `<dialog>` natif ouvert par `showModal()` — couche
- * supérieure, fond inerte, `::backdrop` et Échap viennent du navigateur.
- *
- * Les pièges du `<dialog>` (un seul effet sans nettoyage qui ferme, `cancel`
- * et `close` relayés, focus, appui à côté) sont tenus par `useDialogueNatif`,
- * partagé avec la feuille de règles. Tenu ici :
- * - le `<dialog>` est **monté en permanence**, son contenu seulement quand il
- *   est ouvert (pas de doublon des cartes dans le DOM) ;
- * - **jamais `flex` ni `grid` sur le `<dialog>`** : `display: flex` l'afficherait
- *   même fermé ; la mise en page vit dans un conteneur intérieur.
- *
- * Fermée par ✕, Échap, le retour — **et un appui à côté**, sur le voile
- * (décision de l'utilisateur, renverse R1-Q5 sur ce point).
- */
+/** Boîte modale : `<dialog>` natif (`showModal()`), pièges tenus par `useDialogueNatif`. ⚠️ Jamais `flex`/`grid` sur le `<dialog>` ; un appui sur le voile ferme. */
 export const Modale = ({ ouvert, onFermer, titre, nom, pictogramme, action, children }: Props) => {
   const { boite, croix, surAnnulation, surFermeture, surAppui, surClic } = useDialogueNatif(
     ouvert,
@@ -54,10 +35,7 @@ export const Modale = ({ ouvert, onFermer, titre, nom, pictogramme, action, chil
       onPointerDown={surAppui}
       onClick={surClic}
       className={[
-        // Plus large et plus haute que « Nouveau joueur » (R1-Q5 précisé) : la
-        // largeur de l'écran moins la gouttière de 16 px de chaque côté, bornée
-        // à `max-w-lg` ; au plus 90 % de la hauteur visible (`dvh` : la barre
-        // d'adresse mobile compte).
+        // Largeur de l'écran moins 16 px de gouttière, bornée à `max-w-lg` ; au plus 90 % de la hauteur visible (`dvh`).
         'm-auto w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] overflow-hidden border-2 border-craie/35 bg-ardoise p-0 text-craie',
         'backdrop:bg-feutre-nuit/80',
       ].join(' ')}

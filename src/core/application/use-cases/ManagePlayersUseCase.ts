@@ -15,14 +15,7 @@ export class ManagePlayersUseCase implements ManagePlayers {
     private readonly clock: Clock,
   ) {}
 
-  /**
-   * Sans couleur choisie, on prend la première encore libre : créer quatre
-   * joueurs d'affilée donne quatre couleurs distinctes sans rien demander à
-   * personne — « zéro friction au démarrage » est la règle du projet.
-   *
-   * Le pseudo est unique (sans tenir compte de la casse) : deux « Diego » à
-   * l'oche, c'est deux profils qu'on ne distingue plus à 3 mètres.
-   */
+  // Sans couleur choisie, la première libre ; pseudo unique, casse ignorée (illisibles à 3 mètres sinon).
   async create(name: string, color?: PlayerColor, gender?: PlayerGender): Promise<Player> {
     const existants = await this.players.listAll()
     const propre = Player.cleanName(name)
@@ -49,9 +42,7 @@ export class ManagePlayersUseCase implements ManagePlayers {
       assurerPseudoLibre(nom, await this.players.listAll(), id)
     }
 
-    // `createdAt` ne bouge jamais : c'est l'ancienneté du profil, pas sa
-    // dernière modification.
-    // Genre : absent = inchangé, `null` = « non précisé » (la clé disparaît).
+    // `createdAt` ne bouge jamais. Genre : absent = inchangé, `null` = « non précisé » (clé retirée).
     const genre = changes.gender === undefined ? existant.gender : (changes.gender ?? undefined)
     const modifie = Player.create(
       existant.id,
@@ -73,7 +64,6 @@ export class ManagePlayersUseCase implements ManagePlayers {
   }
 }
 
-/** Compare les pseudos comme on les lit à distance : la casse ne compte pas. */
 const clePseudo = (nom: string): string => nom.toLocaleLowerCase('fr')
 
 const assurerPseudoLibre = (nom: string, existants: readonly Player[], sauf?: PlayerId): void => {

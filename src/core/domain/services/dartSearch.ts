@@ -9,10 +9,3 @@ export const SETUP_DARTS: readonly Dart[] = [...ALL_SCORING_DARTS].sort((a, b) =
   if (ecart !== 0) return ecart
   return COUT_MULTIPLICATEUR[a.multiplier] - COUT_MULTIPLICATEUR[b.multiplier]
 })
-
-/*
- * ⚠️ `findExactScore` vivait ici — la recherche d'une combinaison faisant
- * exactement un total, sans contrainte de double. Elle ne servait qu'à la
- * saisie rapide, retirée du projet : sa seule cliente partie, elle aussi.
- * `SETUP_DARTS` reste, c'est l'espace de recherche des sorties.
- */

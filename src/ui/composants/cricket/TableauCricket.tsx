@@ -22,18 +22,7 @@ const etatLisible = (marques: number, morte: boolean): string => {
   return `${marques} marque${marques > 1 ? 's' : ''}`
 }
 
-/**
- * Les marques d'une cible, dessinées comme sur une ardoise : une barre, une
- * croix, puis la croix cerclée qui dit « fermé ». C'est la notation que tout
- * le monde reconnaît, et elle se lit de loin bien mieux qu'un « 2/3 ».
- *
- * En SVG plutôt qu'en caractères : net à toutes les tailles, et rien à
- * précharger. Traits épais : lisibles à 3 mètres. 28 px (`size-7`), comme la
- * planche : au-delà, sept colonnes ne tiennent plus à quatre joueurs.
- *
- * Couleurs : fermée en laiton, en cours en craie vive, morte (fermée
- * par tout le monde) en `craie-decor` — la colonne entière est déjà à 30 %.
- */
+/** Marques d'une cible à l'ardoise : barre, croix, croix cerclée (fermé) ; fermée en laiton, morte en `craie-decor`. */
 const Marques = ({
   marques,
   morte,
@@ -87,21 +76,11 @@ type Props = {
   readonly volee: VoleeCricket
 }
 
-/**
- * Les colonnes : JOUEUR, une par cible (le nombre vient de la config, donc de
- * `--nb-cibles`), PTS. La planche donne 5,75 rem / 4 rem en portrait ; JOUEUR est
- * 6,25 rem pour le carré de 12 px et « MAXENCE » en entier (nom serré, 15 px), ce
- * que les marques de 26-28 px permettent encore à quatre joueurs.
- * ⚠️ Littéral complet : Tailwind ne scanne que le texte écrit.
- */
+/** Colonnes JOUEUR, une par cible (`--nb-cibles`), PTS. ⚠️ Littéral complet : Tailwind ne scanne que le texte écrit. */
 const GRILLE_CRICKET =
   'grid grid-cols-[6.25rem_repeat(var(--nb-cibles),minmax(0,1fr))_4rem] paysage:grid-cols-[7.5rem_repeat(var(--nb-cibles),minmax(0,1fr))_4.5rem]'
 
-/**
- * Hauteur minimale de CHAQUE ligne (la même pour toutes : le repère glisse par
- * `translateY(index * 100%)`) — planche : 88 px à 2 joueurs, 62 à 3, 54 à 4, 50
- * en paysage.
- */
+/** Hauteur minimale de CHAQUE ligne, la même pour toutes (le repère glisse par `translateY(index * 100%)`). */
 const HAUTEUR = [
   'min-h-22 paysage:min-h-12.5',
   'min-h-22 paysage:min-h-12.5',
@@ -109,20 +88,7 @@ const HAUTEUR = [
   'min-h-13.5 paysage:min-h-12.5',
 ] as const
 
-/**
- * ZONE LECTURE du Cricket — le tableau du pub, sur la feuille commune aux trois
- * jeux : les cibles en colonnes, un joueur par ligne, et la volée en cours écrite
- * sur une dernière ligne.
- *
- * C'est le seul mode où la disposition en tableau s'impose : ce qu'on compare
- * du regard, ce n'est pas un score entre voisins mais **une colonne** — qui a
- * fermé le 20, qui reste à découvert. Aligner les marques verticalement est
- * donc la lecture utile. Un filet de colonne seulement avant la première cible
- * et avant PTS : entre les cibles, il ferait un quadrillage.
- *
- * Échelle « tableau de pub » : marques et points lisibles à 3 m ; une colonne
- * morte s'éteint entièrement, pas seulement son en-tête (barré).
- */
+/** Zone lecture du Cricket : cibles en colonnes, un joueur par ligne, volée en cours sur la dernière ligne. */
 export const TableauCricket = ({ cibles, joueurs, mortes, cutThroat, volee }: Props) => {
   // PTS : 36 px, 30 px à quatre joueurs (et en paysage) comme la marque (26 px).
   const quatre = joueurs.length > 3

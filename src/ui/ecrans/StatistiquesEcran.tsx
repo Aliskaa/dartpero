@@ -82,18 +82,10 @@ import {
 } from '@/ui/podium'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-/**
- * ⚠️ Le dernier joueur consulté, mémorisé sur l'appareil (stocké
- * `dartpero:statistiques:joueur`). **Citée par la politique de
- * confidentialité** (`SECTIONS_CONFIDENTIALITE`) : elle ne se renomme pas, et
- * toute nouvelle clé se livre avec le texte de la politique et sa date.
- */
+/** ⚠️ Dernier joueur consulté (`dartpero:statistiques:joueur`) : citée par la politique de confidentialité, ne se renomme pas. */
 const CLE_JOUEUR_CONSULTE = 'statistiques:joueur'
 
-/**
- * La marque de la modale « Tout voir » dans `location.state` : une entrée
- * d'historique sur la même URL, que le retour du téléphone dépile.
- */
+/** La marque de la modale « Tout voir » dans `location.state`. */
 const CLE_LISTE = 'liste'
 
 /** Une ligne de podium, prête pour les barres (qui ne connaissent pas `PlayerCareer`). */
@@ -217,21 +209,8 @@ const teteDe = (
 }
 
 /**
- * Le sélecteur de joueurs : des onglets avatar + nom, l'actif souligné de
- * laiton. Il pilote la cible **et** la carte Évolution (lot `courbe`) — les
- * cartes du podium restent identiques, elles comparent tous les joueurs.
- *
- * Largeurs égales quand ça tient (`flex-1`), défilement horizontal du seul
- * ruban au-delà (`min-w-max`). ⚠️ Le filet du bas est un élément à part, sous
- * le ruban : un `-mb-px` serait rogné par `overflow-x-auto`.
- *
- * L'onglet actif est **ramené dans la vue** du ruban (constats 3 et 11 de la
- * revue), à trois moments : à l'ouverture (joueur mémorisé en fin de ruban) ;
- * à l'appui sur un onglet ; au changement de période — que le joueur affiché
- * change, ou qu'il reste le même dans une liste réordonnée (d'où `joueurs`
- * dans les dépendances). On règle le seul `scrollLeft` du ruban —
- * jamais `scrollIntoView`, qui pourrait faire défiler la page — et sans
- * animation, donc rien à faire pour `prefers-reduced-motion`.
+ * Le sélecteur de joueurs (cible et carte Évolution). ⚠️ Le filet du bas est à part : un `-mb-px` serait rogné ;
+ * l'actif est ramené dans la vue par `scrollLeft`, jamais `scrollIntoView`.
  */
 const OngletsJoueurs = ({
   joueurs,
@@ -259,8 +238,7 @@ const OngletsJoueurs = ({
   }, [actif, joueurs])
 
   return (
-    // `min-w-0` : un `fieldset` vaut `min-width: min-content` par défaut, et
-    // pousserait la page au lieu de laisser défiler le seul ruban.
+    // `min-w-0` : un `fieldset` poussait la page au lieu de laisser défiler le ruban.
     <fieldset aria-label={LEGENDE_CHOIX_JOUEUR} className="relative min-w-0">
       <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-craie/25" />
       {/* `relative` : l'`offsetLeft` des onglets se mesure depuis le ruban. */}
@@ -345,10 +323,7 @@ const TEINTES_SEUILS: Record<SeuilGrossesVolees, TeinteBatons> = {
 const compteDuSeuil = (joueur: PlayerCareer, seuil: SeuilGrossesVolees): number =>
   seuil === '180' ? joueur.count180 : seuil === '140+' ? joueur.count140plus : joueur.count100plus
 
-/**
- * Grosses volées : une rangée de bâtons par seuil et par joueur, les joueurs
- * dans l'ordre reçu — classés sur le seuil de la bascule (Révision 1).
- */
+/** Grosses volées : une rangée de bâtons par seuil et par joueur. */
 const GrossesVolees = ({
   joueurs,
   espacement = 'carte',
@@ -388,10 +363,7 @@ const GrossesVolees = ({
   </ul>
 )
 
-/**
- * Une carte du podium : sa tête, puis l'aperçu de son classement (N premiers,
- * `apercuPodium`) et « Tout voir » s'il en reste.
- */
+/** Une carte du podium : sa tête, l'aperçu du classement et « Tout voir » s'il en reste. */
 const CarteDuPodium = ({
   carte,
   joueurs,
@@ -460,35 +432,25 @@ const ListeComplete = ({
 export const StatistiquesEcran = () => {
   const services = useServices()
 
-  /**
-   * ⚠️ « Tout » par défaut, jamais « Aujourd'hui » : un jour sans partie
-   * ouvrirait l'écran sur du vide, et l'app aurait l'air d'avoir tout perdu.
-   * Le filtre est là, à portée de pouce, pour celui qui veut la soirée.
-   */
+  // ⚠️ « Tout » par défaut, jamais « Aujourd'hui » : un jour sans partie ouvrirait l'écran sur du vide.
   const [periode, setPeriode] = useState<StatsPeriod>('ALL_TIME')
 
-  // Appelé **une** fois : deux `usePreference` sur la même clé divergeraient.
-  // Écrit à l'appui sur un onglet seulement, jamais sur un repli (U7).
+  // Appelé une fois (deux `usePreference` sur la même clé divergeraient) ; écrit à l'appui seulement.
   const [memorise, setMemorise] = usePreference<PlayerId | null>(CLE_JOUEUR_CONSULTE, null)
   const [choix, setChoix] = useState<ChoixCible | null>(null)
 
-  // Les bascules vivent ici, au-dessus du chargement : `SpinnerLigne` démonte
-  // les cartes à chaque changement de période. Pas mémorisées : retour au
-  // premier choix à chaque ouverture. Partagées par la carte et son modal.
+  // Bascules au-dessus du chargement (`SpinnerLigne` démonte les cartes), non mémorisées.
   const [mesureMoyenne, setMesureMoyenne] = useState<MesureMoyenne>('MOYENNE')
   const [mesureGrossesVolees, setMesureGrossesVolees] = useState<SeuilGrossesVolees>('180')
   const [mesureFinitions, setMesureFinitions] = useState<MesureFinitions>('DOUBLES')
-  // La mesure de la carte Évolution : Moyenne à chaque ouverture, jamais mémorisée
-  // (aucune clé de plus, politique de confidentialité inchangée).
+  // Mesure de la carte Évolution : jamais mémorisée (politique de confidentialité).
   const [mesureEvolution, setMesureEvolution] = useState<MesureMoyenne>('MOYENNE')
 
-  // ⚠️ Au-dessus du chargement, et la modale hors des branches : démontée
-  // pendant un chargement, elle laisserait son entrée d'historique orpheline.
+  // ⚠️ Modale hors des branches : démontée pendant un chargement, elle orphelinerait son entrée d'historique.
   const liste = useModaleAuRetour(CLE_LISTE, CARTES_PODIUM)
 
   const stats = useQuery({
-    // La période fait partie de la clé : chaque fenêtre garde son cache, donc
-    // revenir sur « Tout » est instantané.
+    // La période fait partie de la clé : chaque fenêtre garde son cache.
     queryKey: ['statistiquesJoueurs', periode],
     queryFn: () => services.getPlayerStats.execute(periode),
   })
@@ -546,9 +508,7 @@ export const StatistiquesEcran = () => {
         {stats.isPending || evolution.isPending ? (
           <SpinnerLigne label={CHARGEMENT_STATISTIQUES} />
         ) : joueurs.length === 0 || !cible ? (
-          // ⚠️ Deux vides très différents : « je n'ai jamais joué » appelle une
-          // invitation, « rien ce soir » appelle un élargissement de la fenêtre.
-          // Les confondre ferait croire à une base effacée.
+          // ⚠️ Deux vides distincts : jamais joué (invitation) et rien sur la période (élargir).
           periode === 'ALL_TIME' ? (
             <EmptyState titre={TITRE_STATS_VIDES} description={DESCRIPTION_STATS_VIDES} />
           ) : (
@@ -566,10 +526,7 @@ export const StatistiquesEcran = () => {
             <BlocCible joueur={cible} />
             {progression && progression.points.length > 0 && (
               <CarteEvolution
-                // Remontée à chaque joueur et période, et quand la série gagne une
-                // partie (relecture en fond d'un cache périmé, constat B1) : sélection
-                // et vue repartent de la fin. Une bascule ne change pas la clé, son
-                // bouton garde le focus.
+                // Remontée à chaque joueur, période ou partie gagnée par la série ; une bascule ne change pas la clé.
                 key={`${cible.playerId}|${periode}|${progression.points.length}|${
                   progression.points.at(-1)?.matchId ?? ''
                 }`}

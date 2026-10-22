@@ -2,21 +2,8 @@ import { DartboardHits, type DartboardZone } from '@/core/domain/services/dartbo
 import { Dart } from '@/core/domain/value-objects/Dart'
 import { angles, ORDRE, point, R, rangDuSecteur, trace } from './geometrieCible'
 
-/**
- * LA CARTE DES IMPACTS — où les fléchettes d'un joueur se sont plantées.
- *
- * ⚠️ Ce n'est **pas** la `Cible` décorative avec un calque par-dessus, et c'est
- * délibéré : sur un plateau déjà rouge, vert, crème et noir, une couche de
- * chaleur ne se lit pas — on ne sait plus si le rouge est la cible ou la
- * donnée. Ici le plateau est réduit à sa **structure** (des cases, des fils,
- * vingt numéros) et la seule couleur de l'image est la donnée. Exactement le
- * principe de la feuille de match, appliqué à un graphique.
- *
- * L'échelle est relative au joueur : la case la plus touchée est toujours à
- * fond. On compare des formes, pas des volumes — « je dérive vers le 5 » se lit
- * du premier coup d'œil, « j'ai lancé plus que Julien » se lit dans la carte
- * Moyenne des statistiques, à sa place.
- */
+/** Carte des impacts : plateau réduit à sa structure, la seule couleur est la donnée. */
+// ⚠️ Pas la `Cible` décorative avec un calque : sur un plateau coloré, la chaleur ne se lit pas.
 
 /** Les 20 quartiers, en très faible contraste : ils situent, ils ne parlent pas. */
 const QUARTIERS = ORDRE.map((numero, rang) => {
@@ -25,11 +12,7 @@ const QUARTIERS = ORDRE.map((numero, rang) => {
   return { numero, debut, fin, x, y, sombre: rang % 2 === 0 }
 })
 
-/**
- * Une case froide reste visible : une seule fléchette dans le 5, c'est
- * précisément l'information qu'on cherche, et à 12 % d'opacité elle
- * disparaîtrait. D'où le plancher.
- */
+/** Plancher d'opacité : une case froide (une seule fléchette) doit rester visible. */
 const opacite = (hits: number, busiest: number): number =>
   busiest === 0 ? 0 : 0.22 + 0.78 * (hits / busiest)
 
@@ -70,20 +53,12 @@ type PropsPlateau = {
   readonly className?: string
 }
 
-/**
- * Le plateau seul, sans légende : une image nommée (`role="img"`), dont le nom
- * accessible dit les trois cases les plus touchées. `CarteImpacts` l'enrobe
- * d'une légende pour le résumé de partie ; l'écran Statistiques le pose en
- * grand, avec sa propre rangée de cases dessous.
- */
+/** Le plateau seul, en `role="img"` dont le nom dit les trois cases les plus touchées. */
 export const PlateauImpacts = ({ nom, hits, className = 'w-full' }: PropsPlateau) => {
   const chaudes = hits.zones.filter((zone) => zone.hits > 0)
 
   return (
-    // ⚠️ La `viewBox` déborde du plateau de 4 unités : les numéros vivent à
-    // 48,6 du centre, donc le haut du « 20 » sort d'un cadre calé à 100 et se
-    // fait rogner. Vu à l'écran, invisible en test — aucune requête par rôle ne
-    // dit qu'un glyphe est coupé.
+    // ⚠️ La `viewBox` déborde de 4 unités : le haut du « 20 » (à 48,6 du centre) serait rogné.
     <svg
       viewBox="-4 -4 108 108"
       role="img"
@@ -91,7 +66,6 @@ export const PlateauImpacts = ({ nom, hits, className = 'w-full' }: PropsPlateau
       focusable="false"
       className={className}
     >
-      {/* Le plateau réduit à sa structure. */}
       <circle cx="50" cy="50" r={R.bordExterieur} fill="var(--color-feutre-nuit)" />
       {QUARTIERS.map((quartier) => (
         <path
@@ -102,12 +76,6 @@ export const PlateauImpacts = ({ nom, hits, className = 'w-full' }: PropsPlateau
         />
       ))}
 
-      {/* La donnée, et elle seule, porte de la couleur.
-            ⚠️ Chaque case allumée est **cernée du fond**, et pas seulement
-            remplie : chez un joueur qui arrose, quinze secteurs voisins à la
-            même intensité fusionnaient en un disque doré où l'on ne
-            distinguait plus ni les secteurs ni les anneaux. Les fils de craie
-            ne suffisent pas — ils s'effacent sous le laiton. */}
       {chaudes.map((zone) =>
         anneaux(zone).map((d) => (
           <path
@@ -122,8 +90,6 @@ export const PlateauImpacts = ({ nom, hits, className = 'w-full' }: PropsPlateau
         )),
       )}
 
-      {/* Le centre a son propre fond : les quartiers s'arrêtent à l'anneau
-            à 25, sinon vingt bandes traverseraient la bulle. */}
       <circle cx="50" cy="50" r={R.anneau25} fill="var(--color-craie)" fillOpacity="0.07" />
       <circle
         cx="50"
@@ -153,7 +119,6 @@ export const PlateauImpacts = ({ nom, hits, className = 'w-full' }: PropsPlateau
         )}
       />
 
-      {/* Les fils : ce sont eux qui font lire un plateau plutôt qu'un camembert. */}
       <g stroke="var(--color-craie)" strokeOpacity="0.22" strokeWidth="0.3" fill="none">
         {QUARTIERS.map((quartier) => {
           const [x1, y1] = point(R.anneau25, quartier.debut)
@@ -167,7 +132,6 @@ export const PlateauImpacts = ({ nom, hits, className = 'w-full' }: PropsPlateau
         <circle cx="50" cy="50" r={R.anneau25} />
       </g>
 
-      {/* Sans les numéros, une carte de chaleur ne dit pas OÙ. */}
       <g
         fill="var(--color-craie)"
         fillOpacity="0.55"

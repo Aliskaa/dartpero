@@ -16,14 +16,11 @@ export class UndoLastVisitUseCase implements UndoLastVisit {
   async execute(matchId: MatchId): Promise<ReopenedVisit<X01State>> {
     const record = await loadMatch(this.matches, matchId)
 
-    // La dernière volée **projetée** : ses fléchettes sont déjà coupées à celle
-    // qui a conclu (bust ou sortie).
     const derniere = X01Rules.project(record.events).history.at(-1)
-    // Le premier événement est toujours X01Started : on n'y touche pas.
     if (!derniere || record.events.length <= 1) throw new DomainError('No visit to undo')
 
     const events = record.events.slice(0, -1)
-    // Projeter AVANT d'écrire : un journal qui ne se rejoue pas n'est pas sauvé.
+    // Projeter avant d'écrire : un journal qui ne se rejoue pas n'est pas sauvé.
     const state = X01Rules.project(events)
     await this.matches.save({ ...record, events, updatedAt: this.clock.now() })
 

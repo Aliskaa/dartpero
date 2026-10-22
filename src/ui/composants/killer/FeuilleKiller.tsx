@@ -52,11 +52,7 @@ export type VoleeKiller = {
 
 type Effectif = 2 | 3 | 4 | 5 | 6
 
-/**
- * Les colonnes JOUEUR · N° · VIES · STATUT de la planche : 104 / 84 / 1fr / 80 px
- * en portrait, 128 / 84 / 1fr / 92 px en paysage.
- * ⚠️ Littéral complet : Tailwind ne scanne que le texte écrit.
- */
+/** Colonnes JOUEUR · N° · VIES · STATUT. ⚠️ Littéral complet : Tailwind ne scanne que le texte écrit. */
 const GRILLE_KILLER =
   'grid grid-cols-[6.5rem_5.25rem_minmax(0,1fr)_5rem] paysage:grid-cols-[8rem_5.25rem_minmax(0,1fr)_5.75rem]'
 
@@ -69,12 +65,7 @@ const HAUTEUR: Record<Effectif, string> = {
   6: 'min-h-12.5 paysage:min-h-10.75',
 }
 
-/**
- * Le numéro, ce qu'on lit de loin pour savoir qui viser (planche) : portrait
- * 72/65/50/42/38 px, paysage 68/52/42/36/32 px. 38 et 32 px sont sous l'échelle
- * X01 : le prix de six lignes sans défilement (écart accepté, à confirmer sur
- * téléphone).
- */
+/** Le numéro, ce qu'on lit de loin pour savoir qui viser. */
 const TAILLE_NUMERO: Record<Effectif, string> = {
   2: 'text-score-solo paysage:text-score-xl',
   3: 'text-score-l-portrait paysage:text-score-l',
@@ -139,16 +130,7 @@ type Props = {
   readonly volee: VoleeKiller
 }
 
-/**
- * ZONE LECTURE du Killer — une ligne par joueur sur la feuille commune :
- * JOUEUR · N° · VIES · STATUT, puis la volée en cours sur la dernière ligne,
- * chaque fléchette avec son effet écrit dessous (« Killer ! », « Julien −1 »,
- * « Sarah éliminée », « sans effet »).
- *
- * L'état des lignes inclut déjà la volée en cours (aperçu du port) ; le repère
- * suit le joueur qui lance, lu sur l'état réel. Un éliminé reste visible,
- * enfoncé (fond `feutre`), nom et numéro barrés en `craie-3`.
- */
+/** Zone lecture du Killer : une ligne par joueur, volée en cours sur la dernière ligne avec l'effet de chaque fléchette. */
 export const FeuilleKiller = ({ joueurs, viesDeDepart, volee }: Props) => {
   const n = effectif(joueurs.length)
   const indexActif = joueurs.findIndex((joueur) => joueur.actif)

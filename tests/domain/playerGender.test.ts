@@ -4,7 +4,6 @@ import { Player } from '@/core/domain/entities/Player'
 import { PlayerId } from '@/core/domain/value-objects/ids'
 import { PLAYER_GENDERS, PlayerGender } from '@/core/domain/value-objects/PlayerGender'
 
-/** Lot `killer` : le genre d'un profil, liste fermée, « non précisé » = clé absente. */
 describe('PlayerGender', () => {
   it('la liste fermée tient en deux valeurs persistées', () => {
     expect(PLAYER_GENDERS).toEqual(['MASCULINE', 'FEMININE'])

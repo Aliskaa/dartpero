@@ -16,17 +16,7 @@ export type KillerPlayerState = {
   readonly dartsThrown: number
 }
 
-/**
- * Ce qu'a fait **une** fléchette.
- *
- * - `NONE` : rien (hors 1-20, numéro non attribué ou d'un éliminé, non-killer
- *   sur un adversaire, simple / triple de son numéro avant d'être killer,
- *   son numéro une fois killer sans la variante).
- * - `BECAME_KILLER` : le double de son propre numéro.
- * - `HIT` : des vies retirées à `targetId` — `livesLost` est ce qui a été
- *   **réellement** perdu, plancher à 0 compris (un triple sur 1 vie : 1).
- *   Variante : un tir sur son propre numéro est un `HIT` sur le lanceur.
- */
+/** Effet d'une fléchette ; `livesLost` = vies réellement perdues (plancher 0). */
 export type KillerDartEffect =
   | { readonly type: 'NONE' }
   | { readonly type: 'BECAME_KILLER'; readonly playerId: PlayerId }
@@ -45,11 +35,7 @@ export type KillerVisit = {
   readonly effects: readonly KillerDartEffect[]
 }
 
-/**
- * Une élimination, dans l'ordre où elle est arrivée. `by` est le lanceur de la
- * fléchette éliminante — le joueur lui-même pour une auto-élimination
- * (variante). Déduite au rejeu : rien n'est stocké.
- */
+/** `by` = lanceur de la fléchette éliminante (le joueur lui-même en auto-élimination). */
 export type KillerElimination = {
   readonly playerId: PlayerId
   readonly by: PlayerId
@@ -84,7 +70,7 @@ const at = <T>(items: readonly T[], index: number, label: string): T => {
   return item
 }
 
-/** Simple 1, double 2, triple 3 : le barème validé, pour un adversaire comme pour soi. */
+/** Simple 1, double 2, triple 3. */
 const livesOf = (dart: Dart): number =>
   dart.multiplier === 'TRIPLE' ? 3 : dart.multiplier === 'DOUBLE' ? 2 : 1
 
@@ -150,13 +136,7 @@ type Brouillon = {
   dartsThrown: number
 }
 
-/**
- * Applique une volée, **fléchette par fléchette**.
- *
- * ⚠️ L'effet de la fléchette k ne dépend que de l'état de départ et des
- * fléchettes 1 à k : l'aperçu pendant la volée, l'enregistrement et le rejeu
- * appellent cette même fonction, et ne peuvent donc pas diverger.
- */
+/** ⚠️ Aperçu, enregistrement et rejeu passent par cette seule fonction : ils ne peuvent pas diverger. */
 const applyVisit = (state: KillerState, darts: readonly Dart[]): KillerState => {
   if (state.finished) throw new DomainError('Match is already finished')
   if (darts.length < 1 || darts.length > 3) {
@@ -276,11 +256,7 @@ const nextAlive = (players: readonly KillerPlayerState[], index: number): number
   throw new DomainError('No player left alive')
 }
 
-/**
- * Rejoue le journal et renvoie l'état courant.
- *
- * C'est aussi l'implémentation de l'annulation : `project(events.slice(0, -1))`.
- */
+/** Rejoue le journal ; l'annulation est `project(events.slice(0, -1))`. */
 const project = (events: readonly MatchEvent[]): KillerState => {
   const [first, ...rest] = events
   if (first === undefined || first.type !== 'KillerStarted') {
@@ -297,10 +273,7 @@ const project = (events: readonly MatchEvent[]): KillerState => {
   return state
 }
 
-/**
- * La volée est-elle close ? Partie finie, trois fléchettes, ou lanceur
- * éliminé par sa propre fléchette. Seule source du « complet » de l'aperçu.
- */
+/** Close si partie finie, trois fléchettes, ou lanceur éliminé par sa propre fléchette. */
 const visitIsOver = (state: KillerState, darts: readonly Dart[]): boolean => {
   if (darts.length === 0) return false
   const apres = applyVisit(state, darts)
@@ -316,15 +289,8 @@ const livesLostIn = (visit: KillerVisit, playerId: PlayerId): number =>
     0,
   )
 
-/**
- * Le classement (règle 9) : le gagnant, puis les vivants par vies
- * décroissantes — l'ordre de jeu départage l'affichage, mais deux vivants à
- * vies égales partagent leur rang tant que la partie dure —, puis les éliminés
- * dans l'ordre **inverse** d'élimination (le dernier éliminé juste derrière).
- * Partie finie : rangs 1 à n, tous distincts.
- */
+/** Gagnant, puis vivants par vies décroissantes (égalité = rang partagé), puis éliminés en ordre inverse d'élimination. */
 const ranking = (state: KillerState): readonly KillerRank[] => {
-  // L'ordre de jeu = l'ordre de `playerIds`, fixé à l'étape Ordre.
   const ordreDeJeu = (playerId: PlayerId): number =>
     state.players.findIndex((joueur) => joueur.playerId === playerId)
 
@@ -359,7 +325,6 @@ export const KillerRules = {
   visitIsOver,
   livesLostIn,
   ranking,
-  /** Le nombre de joueurs encore en vie (« N en vie »). */
   aliveCount: (state: KillerState): number =>
     state.players.filter((joueur) => !joueur.eliminated).length,
 }

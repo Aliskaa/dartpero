@@ -12,15 +12,7 @@ type Props = {
   readonly annulation?: Annulation
 }
 
-/**
- * ZONE SAISIE du X01 et de l'entraînement : le pavé commun (`PaveSaisie`) sur
- * 5 colonnes, les vingt secteurs, avec son rail.
- *
- * Il n'y a **plus** de touche « 25 » ni « 0 » : « Bulle » (25 en Simple, 50 en
- * Double, grisée en Triple) et « Hors » (`MISS`) les remplacent, dans la rangée
- * Bulle · Hors · Annuler commune aux quatre jeux. Les fléchettes enregistrées
- * sont les mêmes qu'avant.
- */
+/** Zone saisie du X01 et de l'entraînement : `PaveSaisie` sur 5 colonnes, les vingt secteurs, avec son rail. */
 export const PaveFlechettes = ({
   multiplicateur,
   onMultiplicateur,

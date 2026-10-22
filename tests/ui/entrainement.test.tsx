@@ -9,11 +9,6 @@ import { FakeAnnouncer, fakeDependencies, fakeServices } from '../fakes'
 import { flechette } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Des services dont le porte-voix note ce qu'on lui demande de dire — c'est
- * tout l'intérêt d'avoir mis l'annonce derrière un port : on la teste sans
- * navigateur ni synthèse vocale.
- */
 const avecVoix = () => {
   const announcer = new FakeAnnouncer()
 
@@ -45,7 +40,6 @@ describe('Entraînement au checkout — écran', () => {
     const cible = Number(reste.textContent)
     expect(cible).toBeGreaterThanOrEqual(41)
 
-    // Un simple 1 : assez petit pour ne jamais buster, quel que soit le tirage.
     await flechette(utilisateur, '1')
     await waitFor(() => expect(Number(reste.textContent)).toBe(cible - 1))
   })
@@ -67,7 +61,6 @@ describe('Entraînement au checkout — écran', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await screen.findByLabelText('Reste pour le checkout')
 
-    // Deux manches ratées : trois fléchettes chacune, aucune sortie.
     for (const _ of [0, 1]) {
       for (const __ of [0, 1, 2]) await flechette(utilisateur, '1')
     }
@@ -84,7 +77,6 @@ describe('Entraînement au checkout — écran', () => {
     await screen.findByLabelText('Reste pour le checkout')
 
     expect(screen.queryByRole('button', { name: /rapide/i })).toBeNull()
-    // Mais bien le pavé fléchette par fléchette, avec ses multiplicateurs.
     expect(screen.getByRole('button', { name: 'Triple' })).toBeInTheDocument()
   })
 
@@ -121,7 +113,6 @@ describe('Annonce vocale', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await screen.findByLabelText('Score restant de Kevin')
 
-    // 20 · 20 · 20 = 60, mais sans double : bust.
     for (const _ of [0, 1, 2]) await flechette(utilisateur, '20')
 
     await waitFor(() =>
@@ -129,7 +120,6 @@ describe('Annonce vocale', () => {
     )
   })
 
-  /** Les nombres partent en chiffres : la voix française les lit très bien. */
   it('annonce le total en chiffres, pas en lettres', async () => {
     const utilisateur = userEvent.setup()
     const { announcer, services } = avecVoix()
@@ -160,12 +150,10 @@ describe('Annonce vocale', () => {
       config: X01Config.create(),
     })
 
-    // On coupe la voix depuis l'écran de réglages…
     const reglages = renderWithServices(<App />, { services, route: '/reglages' })
     await utilisateur.click(await screen.findByRole('button', { name: /annoncer les volées/i }))
     reglages.unmount()
 
-    // … et plus rien n'est annoncé en partie.
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await screen.findByLabelText('Score restant de Kevin')
     await flechette(utilisateur, '20', 'Triple')

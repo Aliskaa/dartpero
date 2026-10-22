@@ -37,10 +37,6 @@ const jouer = (
 ): CheckoutPracticeState => CheckoutPracticeRules.project(journal(volees, config))
 
 describe('Checkout Practice — les cibles tirables', () => {
-  /**
-   * Le point qui rend l'exercice juste : on ne propose jamais un reste
-   * impossible à finir en trois fléchettes.
-   */
   it('exclut les bogey numbers, sans jamais consulter la liste', () => {
     const cibles = playableTargets(CheckoutPracticeConfig.create())
 
@@ -155,10 +151,6 @@ describe('Checkout Practice — la session', () => {
     ).toThrow(DomainError)
   })
 
-  /**
-   * Les cibles vivent dans le journal : annuler redonne exactement la même
-   * manche. Sans ça, on pourrait annuler jusqu'à tomber sur un reste facile.
-   */
   it('rend la même cible après annulation', () => {
     const complet = journal([
       [121, [Dart.miss(), Dart.miss(), Dart.miss()]],
@@ -168,7 +160,6 @@ describe('Checkout Practice — la session', () => {
     const avant = CheckoutPracticeRules.project(complet.slice(0, -1))
     expect(avant.current?.target).toBe(40)
 
-    // On rejoue exactement le même journal : la cible ne bouge pas.
     expect(CheckoutPracticeRules.project(complet.slice(0, -1)).current?.target).toBe(40)
   })
 })

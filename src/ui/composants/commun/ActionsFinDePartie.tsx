@@ -10,28 +10,12 @@ import { MessageErreur } from './Etats'
 
 type Props = {
   readonly matchId: MatchId
-  /**
-   * Où mène le second bouton : l'étape 2 de « Nouvelle partie » **du mode qu'on
-   * vient de jouer** (`cheminNouvellePartie(mode)`). Obligatoire : un défaut
-   * commun ramènerait au choix du jeu, une étape trop tôt.
-   */
+  /** Étape 2 de « Nouvelle partie » du mode qu'on vient de jouer. Obligatoire : un défaut ramènerait au choix du jeu. */
   readonly versReglages: string
   readonly libelleReglages?: string
 }
 
-/**
- * Les trois sorties d'un écran de résumé, dans l'ordre où on les veut.
- *
- * « On remet ça » est en tête parce que c'est le geste réel d'une soirée : on
- * enchaîne quatre ou cinq parties avec les mêmes potes et les mêmes réglages.
- * Avant, la seule action offerte renvoyait sur un formulaire de configuration
- * **remis à zéro** — il fallait re-cocher chaque joueur et re-choisir chaque
- * règle entre deux parties.
- *
- * Le use case `RestartMatch` relit la composition dans le journal de la partie
- * qu'on vient de finir : l'écran n'a donc aucune règle à connaître, et le même
- * composant sert les quatre modes.
- */
+/** Les trois sorties d'un résumé ; « On remet ça » en tête, c'est le geste réel d'une soirée. */
 export const ActionsFinDePartie = ({
   matchId,
   versReglages,

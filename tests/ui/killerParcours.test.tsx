@@ -10,13 +10,6 @@ import { ouverture } from '../use-cases/lancerPartie'
 import { locationCourante, retourTelephone } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Lot `killer`, passe 2b : le parcours Nouvelle partie du Killer — tuile,
- * fiche, numéros, moins de deux joueurs, coupe de la sélection, lancement et
- * « Rejouer ». Les tirages passent par le vrai `DrawKillerNumbers` (aléa
- * factice) : on vérifie des **invariants**, jamais des valeurs exactes.
- */
-
 const NOMS = ['Kevin', 'Julien', 'Sarah', 'Marie', 'Paul', 'Lea'] as const
 
 const base = async (retenus: readonly string[] = []) => {
@@ -44,7 +37,6 @@ const blocNumeros = () => screen.getByRole('region', { name: 'Numéros' })
 const tuile = (nom: string) =>
   within(blocNumeros()).getByRole('button', { name: new RegExp(`^Numéro de ${nom}`) })
 
-/** Le numéro d'un joueur, lu dans le nom accessible de sa tuile. */
 const numeroDe = (nom: string): number => {
   const trouve = /: (\d+),/.exec(tuile(nom).getAttribute('aria-label') ?? '')
   if (!trouve?.[1]) throw new Error(`pas de numéro pour ${nom}`)
@@ -128,10 +120,8 @@ describe('Killer — étape 2, les numéros', () => {
     await utilisateur.click(tuile('Kevin'))
     expect(tuile('Kevin')).toHaveAttribute('aria-expanded', 'true')
     const grille = within(screen.getByRole('list', { name: 'Numéro de Kevin' }))
-    // Le numéro de Julien : grisé, sa pastille, pas un bouton.
     expect(grille.getByRole('img', { name: `${julien}, pris par Julien` })).toBeInTheDocument()
     expect(grille.queryByRole('button', { name: new RegExp(`^${julien}$`) })).toBeNull()
-    // La bulle n'en est pas un : 19 boutons (18 libres + l'actuel) et un pris.
     expect(grille.getAllByRole('button')).toHaveLength(19)
     expect(grille.getByRole('button', { pressed: true })).toHaveTextContent(String(avant))
 
@@ -145,7 +135,6 @@ describe('Killer — étape 2, les numéros', () => {
     expect(numeroDe('Kevin')).toBe(libre)
     expect(numeroDe('Julien')).toBe(julien)
 
-    // Aucune entrée d'historique : le retour quitte l'étape.
     await retourTelephone()
     await waitFor(() => expect(locationCourante().pathname).toBe('/nouvelle-partie'))
   })
@@ -194,7 +183,6 @@ describe('Killer — étape 2, les numéros', () => {
 
     await screen.findByRole('region', { name: 'Numéros' })
     await attendreNumeros(['Kevin', 'Julien', 'Sarah'])
-    // Les numéros déjà attribués ne bougent pas.
     expect(numerosDe(['Kevin', 'Julien'])).toEqual(avant)
 
     await utilisateur.click(screen.getByRole('button', { name: 'Retirer Julien de la partie' }))
@@ -216,7 +204,6 @@ describe('Killer — étape 2, les numéros', () => {
     await waitFor(() =>
       expect(within(blocNumeros()).queryByRole('button', { name: /^Numéro de Julien/ })).toBeNull(),
     )
-    // Kevin prend le numéro libéré.
     await utilisateur.click(tuile('Kevin'))
     const grille = within(screen.getByRole('list', { name: 'Numéro de Kevin' }))
     await utilisateur.click(grille.getByRole('button', { name: String(ancienDeJulien) }))
@@ -229,7 +216,6 @@ describe('Killer — étape 2, les numéros', () => {
 
     await screen.findByRole('region', { name: 'Numéros' })
     await attendreNumeros(['Kevin', 'Sarah', 'Julien'])
-    // Kevin, placé avant, garde le numéro ; Julien en reçoit un autre.
     expect(numeroDe('Kevin')).toBe(ancienDeJulien)
     expect(numeroDe('Julien')).not.toBe(ancienDeJulien)
     expect(blocNumeros()).toHaveTextContent('3 sur 3 attribués · tous différents')
@@ -247,7 +233,6 @@ describe('Killer — étape 2, les numéros', () => {
 
     await utilisateur.click(screen.getByRole('button', { name: 'Continuer' }))
     await screen.findByRole('heading', { level: 1, name: 'Ordre de jeu' })
-    // L'ordre mélangé à l'écran, puis le lancement.
     await utilisateur.click(screen.getByRole('button', { name: /^Tirer au sort/ }))
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
     await waitFor(() => expect(locationCourante().pathname).toMatch(/^\/partie\//))
@@ -397,7 +382,6 @@ describe('Killer — Rejouer', () => {
     expect(debut.config).toEqual({ startingLives: 5, selfHitCostsLives: true })
     expect(tousDifferents(debut.numbers)).toBe(true)
     expect(debut.numbers).toHaveLength(5)
-    // Un nouveau tirage, pas les numéros de la partie rejouée.
     expect(debut.numbers).not.toEqual([1, 2, 3, 4, 5])
     expect('name' in debut).toBe(false)
   })

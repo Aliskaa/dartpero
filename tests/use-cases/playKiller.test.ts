@@ -140,7 +140,6 @@ describe('PlayKiller', () => {
       Dart.double(8),
       Dart.triple(8),
     ])
-    // Précondition : Kevin s'est bien éliminé, la partie continue à deux.
     expect(apres.eliminations).toEqual([{ playerId: kevin, by: kevin }])
     expect(apres.finished).toBe(false)
 
@@ -157,7 +156,6 @@ describe('PlayKiller', () => {
     const id = await partie([kevin, julien])
     await services.playKiller.recordVisit(id, [Dart.double(8), Dart.triple(14)])
 
-    // Seul le X01 est cumulé : aucun joueur n'a de partie comptée.
     expect(await services.getPlayerStats.execute()).toEqual([])
   })
 })
@@ -184,7 +182,6 @@ describe('Killer — résumé, classement, relance', () => {
       ['Julien', 14, 2, false, 3],
       ['Sarah', 3, 3, false, 1],
     ])
-    // En cours : ex æquo de tête, dans l'ordre de jeu.
     expect(rankPlayers(resume).map((p) => p.name)).toEqual(['Kevin', 'Sarah', 'Julien'])
     expect(leadingPlayers(resume).map((p) => p.name)).toEqual(['Kevin', 'Sarah'])
 
@@ -221,8 +218,6 @@ describe('Killer — résumé, classement, relance', () => {
     expect(nouvelle.config).toEqual({ startingLives: 5, selfHitCostsLives: true })
     expect(nouvelle.playerIds).toEqual([kevin, julien])
     expect(nouvelle.name).toBe('Revanche')
-    // Un vrai tirage peut retomber sur les mêmes numéros : on prouve seulement qu'on
-    // RE-TIRE (ce que redonne `CyclingRandomSource`, 1 puis 3), pas qu'on évite [8, 14].
     expect(nouvelle.numbers).toEqual([1, 3])
   })
 })

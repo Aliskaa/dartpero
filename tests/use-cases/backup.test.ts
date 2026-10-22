@@ -50,11 +50,9 @@ describe('Sauvegarde JSON', () => {
       createdAt: kevin.createdAt,
     })
     expect(sauvegarde.matches[0]?.id).toBe(matchId)
-    // Le journal part en entier : c'est lui qui porte toute la partie.
     expect(sauvegarde.matches[0]?.events).toHaveLength(2)
   })
 
-  /** Le vrai scénario du lot 4 : changer de téléphone sans rien perdre. */
   it('se restaure à l’identique sur un appareil vierge', async () => {
     await baseGarnie(services)
     const sauvegarde = await services.manageBackup.exportAll()
@@ -69,7 +67,6 @@ describe('Sauvegarde JSON', () => {
       matchesSkipped: 0,
     })
 
-    // Les scores se rejouent depuis le journal restauré, pas depuis un cache.
     const historique = await neuf.getMatchHistory.execute()
     expect(historique).toHaveLength(1)
 
@@ -80,12 +77,6 @@ describe('Sauvegarde JSON', () => {
     expect(x01.players[0]?.remaining).toBe(321)
   })
 
-  /**
-   * ⚠️ Le piège : la sauvegarde emporte **toutes** les parties, mais seul le
-   * X01 savait revenir. Une partie d'un autre mode repartait bien du téléphone
-   * et était refusée au retour — on ne s'en apercevait qu'en changeant
-   * d'appareil, c'est-à-dire au pire moment.
-   */
   it('restaure aussi les parties qui ne sont pas du X01', async () => {
     const kevin = await services.managePlayers.create('Kevin')
     const julien = await services.managePlayers.create('Julien')
@@ -119,7 +110,6 @@ describe('Sauvegarde JSON', () => {
     const modes = (await neuf.getMatchHistory.execute()).map((partie) => partie.mode).sort()
     expect(modes).toEqual(['CHECKOUT_PRACTICE', 'CRICKET', 'TOUR_DU_MONDE'])
 
-    // La variante, elle aussi, doit survivre au voyage : elle décide du vainqueur.
     const restaure = await neuf.playCricket.getState(cricket)
     expect(restaure.config.variant).toBe('CUT_THROAT')
     expect(restaure.players[1]?.score).toBe(60)
@@ -128,8 +118,6 @@ describe('Sauvegarde JSON', () => {
   it('fusionne sans jamais effacer ce qui était déjà là', async () => {
     await services.managePlayers.create('Paul')
 
-    // Une sauvegarde venue d'un autre téléphone : ses identifiants n'ont rien
-    // à voir avec ceux d'ici.
     await services.manageBackup.importFrom({
       format: 'dartpero-backup',
       version: 1,
@@ -142,11 +130,6 @@ describe('Sauvegarde JSON', () => {
     expect(noms).toEqual(['Kevin', 'Paul'])
   })
 
-  /**
-   * Le pendant de la fusion : un identifiant déjà connu est bien écrasé. C'est
-   * ce qui permet de restaurer par-dessus une base à jour sans se retrouver
-   * avec deux fois le même joueur.
-   */
   it('écrase un profil dont l’identifiant est déjà connu', async () => {
     const paul = await services.managePlayers.create('Paul')
 
@@ -191,10 +174,6 @@ describe('Sauvegarde JSON', () => {
     )
   })
 
-  /**
-   * Le point qui fait la différence entre « j'ai tout perdu » et « il manque
-   * une partie » : une entrée abîmée n'emporte pas le fichier avec elle.
-   */
   it('importe ce qui est lisible et compte ce qui ne l’est pas', async () => {
     await baseGarnie(services)
     const sauvegarde = await services.manageBackup.exportAll()
@@ -236,8 +215,6 @@ describe('Sauvegarde JSON', () => {
               playerIds: ['kevin'],
               startingPlayerIndex: 0,
             },
-            // Le triple bull n'existe pas sur une cible : `Dart.of` le refuse,
-            // et c'est la même règle qui protège l'import.
             { type: 'VisitRecorded', darts: [{ segment: 'BULL', multiplier: 'TRIPLE' }] },
           ],
         },
@@ -249,7 +226,6 @@ describe('Sauvegarde JSON', () => {
   })
 })
 
-/** Lot `killer` : une partie de Killer part et revient ; un journal incohérent est refusé. */
 describe('Sauvegarde JSON — le Killer', () => {
   const killer = (surcharge: Record<string, unknown> = {}, volees: unknown[] = []) => ({
     format: 'dartpero-backup',
@@ -343,7 +319,6 @@ describe('Sauvegarde JSON — le Killer', () => {
   })
 })
 
-/** Lot `killer` : le genre du profil, facultatif, `BACKUP_VERSION` inchangé. */
 describe('Sauvegarde JSON — le genre du profil', () => {
   const fichier = (players: readonly Record<string, unknown>[]) => ({
     format: 'dartpero-backup',
@@ -450,7 +425,6 @@ describe('Sauvegarde JSON — le nom de partie', () => {
     })),
   })
 
-  /** Critère 8 : une sauvegarde d'avant le lot, écrite à la main, sans aucune clé `name`. */
   it('importe une sauvegarde d’avant le lot, sans nom', async () => {
     const neuf = fakeServices()
     const rapport = await neuf.services.manageBackup.importFrom(fichier([{}]))
@@ -507,11 +481,6 @@ describe('Sauvegarde JSON — le nom de partie', () => {
     expect('name' in (await ouverture(neuf.dependencies, MatchId.of('partie-1')))).toBe(false)
   })
 
-  /**
-   * Le refus d'un nom invalide vaut pour **chaque** ouverture, pas seulement
-   * `MatchStarted` : le fichier part d'un vrai export, dont on abîme le nom
-   * d'une des deux parties.
-   */
   it.each(
     GAME_MODE_IDS.filter((mode) => mode !== 'X01').flatMap((mode) =>
       (
@@ -572,14 +541,6 @@ describe('Sauvegarde JSON — le nom de partie', () => {
     expect(resume?.name).toBeNull()
   })
 
-  /**
-   * Un fichier hostile qui glisse un `name` par la chaîne de prototypes. Le
-   * texte passe par un vrai `JSON.parse` : c'est lui qui fait de `"__proto__"`
-   * une clé **propre** (un littéral JS, lui, changerait le prototype). Si
-   * l'import recopiait un jour l'objet lu par affectation (`Object.assign`,
-   * `obj[clé] = …`), le setter `__proto__` ferait hériter `name: 'Pirate'` et
-   * la partie s'importerait nommée — ce test le verrait.
-   */
   it('ne lit pas un nom glissé par `__proto__` dans le fichier', async () => {
     const texte = `{
       "format": "dartpero-backup",
@@ -601,7 +562,6 @@ describe('Sauvegarde JSON — le nom de partie', () => {
       }]
     }`
     const fichierHostile = JSON.parse(texte)
-    // Garde-fou du test lui-même : la clé est bien propre, le prototype intact.
     expect(Object.hasOwn(fichierHostile.matches[0].events[0], '__proto__')).toBe(true)
     expect(fichierHostile.matches[0].events[0].name).toBeUndefined()
 
@@ -626,11 +586,6 @@ describe('Sauvegarde JSON — le nom de partie', () => {
   })
 })
 
-/**
- * Lot `volee-partielle` : le brouillon de volée ne part jamais dans le fichier,
- * et la restauration (une fusion) n'efface que celui d'une partie qu'elle
- * remplace (option A de Q1).
- */
 describe('Sauvegarde JSON — le brouillon de volée', () => {
   const S1 = Dart.single(1)
 
@@ -666,7 +621,6 @@ describe('Sauvegarde JSON — le brouillon de volée', () => {
   it('un import qui remplace la partie efface son brouillon ; une partie absente du fichier garde le sien', async () => {
     const { services, dependencies, matchId } = await avecBrouillon()
     const sauvegarde = JSON.parse(JSON.stringify(await services.manageBackup.exportAll()))
-    // Une seconde partie, absente du fichier, avec sa volée en cours.
     const kevin = (await services.managePlayers.create('Marie')).id
     const autre = await lancer(services, 'X01', [kevin])
     const baseAutre = await services.getMatchState.execute(autre)
@@ -697,19 +651,12 @@ describe('Sauvegarde JSON — le brouillon de volée', () => {
     expect((await dependencies.visitDrafts.findById(matchId))?.darts).toEqual([S1, S1])
   })
 
-  /**
-   * Q-T2, tranchée par l'utilisateur : l'effacement du brouillon passe avant
-   * l'écriture du journal. S'il échoue, la partie est écartée et celle de
-   * l'appareil reste intacte — refuser plutôt qu'un brouillon sur un journal remplacé.
-   */
   it('un brouillon impossible à effacer : la partie est écartée, son journal n’est pas écrit', async () => {
     const { services, dependencies } = fakeServices({ visitDrafts: new BrouillonsIndelebiles() })
     const { matchId } = await baseGarnie(services)
     const sauvegarde = JSON.parse(JSON.stringify(await services.manageBackup.exportAll()))
-    // La partie avance sur l'appareil après l'export : le fichier la remplacerait.
     await services.recordVisit.execute({ matchId, darts: [S1, S1, S1] })
     const avant = await dependencies.matches.findById(matchId)
-    // Précondition : le journal du fichier diffère de celui de l'appareil.
     expect(avant?.events).toHaveLength(sauvegarde.matches[0].events.length + 1)
 
     const rapport = await services.manageBackup.importFrom(sauvegarde)
@@ -720,8 +667,6 @@ describe('Sauvegarde JSON — le brouillon de volée', () => {
 
   it('une sauvegarde v1 écrite à la main s’importe avec les mêmes compteurs', async () => {
     const neuf = fakeServices()
-    // Un brouillon laissé sur l'appareil sous l'identifiant de la partie du fichier :
-    // l'import l'efface (sans lui, l'assertion finale serait vraie d'avance).
     const remplacee = MatchId.of('partie-0')
     await neuf.dependencies.visitDrafts.save({ matchId: remplacee, visitCount: 0, darts: [S1] })
     expect(await neuf.dependencies.visitDrafts.findById(remplacee)).not.toBeNull()

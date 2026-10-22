@@ -5,16 +5,7 @@ type Props = {
   readonly suffixe?: string
 }
 
-/**
- * Une statistique, lisible d'un coup d'œil : le libellé s'efface, le chiffre
- * reste. `accent` met la tuile en laiton pour les deux ou trois chiffres qui
- * font la fierté du joueur (moyenne, plus haut checkout).
- *
- * ⚠️ Le libellé occupe **deux lignes réservées**, qu'il en remplisse une ou
- * deux : sans cette hauteur fixe, « Plus haut checkout » repoussait son
- * chiffre bien plus bas que celui de « 180 », et la rangée cessait d'être
- * comparable — or c'est précisément pour comparer qu'on la lit.
- */
+/** Une statistique ; `accent` la met en laiton. ⚠️ Libellé sur deux lignes réservées : les chiffres d'une rangée restent alignés. */
 export const StatTile = ({ libelle, valeur, accent = false, suffixe }: Props) => (
   <div
     className={[

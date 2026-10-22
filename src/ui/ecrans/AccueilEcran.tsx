@@ -40,19 +40,10 @@ import {
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-/**
- * Le plafond de cartes de l'Accueil : au-delà, c'est l'onglet Parties.
- * `GetMatchHistory` rend les N plus récentes sans désérialiser toute la base.
- */
+/** Le plafond de cartes de l'Accueil : au-delà, c'est l'onglet Parties. */
 const PLAFOND_CARTES = 30
 
-/**
- * L'invitation à installer : une ligne discrète, jamais au-dessus de
- * « Nouvelle partie » en poids visuel. Un bouton qui ouvre l'invite native là
- * où le navigateur la fournit, un lien vers le guide des Réglages sur iOS.
- * « Plus tard » la masque pour de bon sur cet appareil — ici seulement : les
- * Réglages gardent toujours leur entrée.
- */
+/** L'invitation à installer : une ligne discrète ; « Plus tard » la masque ici seulement, les Réglages gardent leur entrée. */
 const InvitationInstallation = () => {
   const { etat, installer } = useInstallation()
   const [ecartee, setEcartee] = usePreference(CLE_INSTALLATION_ECARTEE, false)
@@ -106,15 +97,12 @@ export const AccueilEcran = () => {
     queryFn: () => services.getOngoingMatch.execute(),
   })
   const historique = useQuery({
-    // Sous le préfixe `['historique']` : tout ce qui l'invalide (fin de partie,
-    // suppression, lancement) rafraîchit aussi l'Accueil.
+    // Sous le préfixe `['historique']` : tout ce qui l'invalide rafraîchit l'Accueil.
     queryKey: [...CLE_HISTORIQUE, 'accueil'],
     queryFn: () => services.getMatchHistory.execute(PLAFOND_CARTES),
   })
 
-  // L'heure par l'horloge injectée, jamais `Date.now()`. Lue à chaque rendu :
-  // pas de minuteur à minuit, le groupement se recalcule à la navigation
-  // suivante (décision de l'utilisateur).
+  // Heure par l'horloge injectée, lue à chaque rendu : pas de minuteur à minuit.
   const maintenant = services.clock.now()
 
   const enCours = encours.data ?? null
@@ -175,8 +163,7 @@ export const AccueilEcran = () => {
   )
 
   return (
-    // Le tapis et la barre du bas viennent du layout : l'écran ne pose que son
-    // propre rythme vertical. Pas de padding bas : le bouton fixé clôt l'écran.
+    // Tapis et barre du bas viennent du layout ; pas de padding bas : le bouton fixé clôt l'écran.
     <main className="flex flex-1 flex-col gap-6 px-5 pt-[max(2rem,env(safe-area-inset-top))]">
       <LogoHero />
 
@@ -240,18 +227,7 @@ export const AccueilEcran = () => {
 
       <InvitationInstallation />
 
-      {/*
-        Le bouton fixé : `sticky` plutôt qu'une hauteur bornée du `main`. Il est
-        dans le flux, juste après la dernière carte (rien à masquer, pas de
-        padding à deviner), et ne se « colle » qu'une fois la liste plus haute
-        que l'écran — calé au-dessus de la barre du bas, dont la hauteur est la
-        variable partagée `--hauteur-nav-basse` (la zone de sécurité est portée
-        par la barre elle-même, on l'ajoute ici sans la redoubler). Une hauteur
-        bornée aurait dû contraindre `LayoutPrincipal` (`min-h-dvh`, qui grandit
-        avec le contenu) et dépendre de `dvh`, instable sous la barre d'adresse.
-        L'entraînement est une carte de l'étape 1 : un seul point d'entrée.
-        L'état de parcours laisse le retour de l'étape 1 revenir ici.
-      */}
+      {/* `sticky` plutôt qu'une hauteur bornée (`dvh` instable), calé au-dessus de la barre du bas (`--hauteur-nav-basse`). */}
       <div className="sticky bottom-[calc(var(--hauteur-nav-basse)+env(safe-area-inset-bottom))] z-10 -mx-5 mt-auto border-t border-chene/40 bg-feutre px-5 py-3">
         <Link
           to={cheminNouvellePartie()}

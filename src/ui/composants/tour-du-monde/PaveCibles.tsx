@@ -10,18 +10,7 @@ type Props = {
   readonly annulation?: Annulation
 }
 
-/**
- * ZONE SAISIE du Tour du monde — le pavé commun (`PaveSaisie`), **sans bascule
- * S/D/T** : pas de rail, pas de touche armée.
- *
- * Au Tour du monde, seul le secteur compte : un triple 20 vaut exactement ce
- * que vaut un simple 20, c'est-à-dire « touché ». Afficher un sélecteur de
- * multiplicateur qui ne changerait rien induirait en erreur. Les fléchettes
- * enregistrées sont donc des simples (la Bulle : `Dart.bull()`).
- *
- * La rangée Bulle · Hors · Annuler est la dernière : Annuler y est un rail
- * (64 px) plus bas qu'aux autres jeux, ce qui est accepté.
- */
+/** Zone saisie du Tour du monde : `PaveSaisie` sans bascule S/D/T, seul le secteur compte (fléchettes enregistrées en simples). */
 export const PaveCibles = ({
   onFlechette,
   onAnnuler,

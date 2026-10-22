@@ -32,7 +32,6 @@ describe('Cycle de vie d’un match', () => {
       const { state: apresAnnulation } = await services.undoLastVisit.execute(matchId)
       expect(apresAnnulation.players[0]?.remaining).toBe(321)
 
-      // Relu depuis le dépôt : l'annulation a bien été écrite.
       const relu = await services.getMatchState.execute(matchId)
       expect(relu.players[0]?.remaining).toBe(321)
       expect(relu.history).toHaveLength(1)
@@ -63,7 +62,6 @@ describe('Cycle de vie d’un match', () => {
         }),
       ).rejects.toThrow(DomainError)
 
-      // Rien n'a été persisté au passage.
       expect(await dependencies.matches.listRecent()).toHaveLength(1)
     })
 
@@ -91,7 +89,6 @@ describe('Cycle de vie d’un match', () => {
       })
       await services.recordVisit.execute({ matchId: court, darts: [D20] })
 
-      // Le premier match est toujours en cours : c'est lui qu'on doit retrouver.
       expect((await services.getOngoingMatch.execute())?.id).toBe(matchId)
 
       await services.recordVisit.execute({ matchId, darts: [T20] })

@@ -3,18 +3,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-/**
- * Garde du lot `bundle-par-route` (voir docs/lots/bundle-par-route/01-architecture.md,
- * Q7) : les 16 écrans passés en `lazy()` (8 dans `App.tsx`, 8 dans
- * `PartieEcran.tsx`) ne doivent jamais redevenir des imports statiques dans
- * les deux fichiers qui les aiguillent, sous peine de revenir discrètement
- * dans le chunk commun.
- *
- * Même réflexe que `hexagonalBoundary.test.ts` : les imports sont lus par regex
- * sur le contenu réel des fichiers, avec un plancher pour qu'une regex cassée ne
- * rende pas ce test vert à vide.
- */
-
+// ⚠️ Les écrans passés en `lazy()` ne doivent jamais redevenir des imports statiques, sous peine de regrossir le chunk commun.
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const APP = resolve(RACINE, 'src/App.tsx')
 const PARTIE_ECRAN = resolve(RACINE, 'src/ui/ecrans/games/PartieEcran.tsx')
@@ -40,8 +29,6 @@ const nomsImportesStatiquement = (source: string): string[] =>
 
 const nombreDeLazy = (source: string): number => [...source.matchAll(LAZY_IMPORT)].length
 
-// Les 8 routes de src/App.tsx passées en lazy() — AccueilEcran reste statique
-// volontairement (start_url, route par défaut, fourre-tout `*`), il n'y figure pas.
 const ECRANS_ROUTES = [
   'JoueursEcran',
   'StatistiquesEcran',
@@ -53,7 +40,6 @@ const ECRANS_ROUTES = [
   'ResumePartieEcran',
 ]
 
-// Les 10 écrans de mode de PartieEcran.tsx — un par mode, jeu + résumé (Killer : lot `killer`).
 const ECRANS_MODE = [
   'X01Ecran',
   'ResumeX01Ecran',
@@ -69,8 +55,6 @@ const ECRANS_MODE = [
 
 describe('Découpage par route (bundle-par-route)', () => {
   it('analyse réellement les fichiers vérifiés', () => {
-    // Garde-fou : sans ça, une regex cassée rendrait les tests suivants verts
-    // pour de mauvaises raisons (cf. CONVENTIONS.md § 11).
     const appSource = readFileSync(APP, 'utf8')
     const partieSource = readFileSync(PARTIE_ECRAN, 'utf8')
 
@@ -78,11 +62,6 @@ describe('Découpage par route (bundle-par-route)', () => {
     expect(partieSource.length).toBeGreaterThan(500)
     expect(nombreDeLazy(appSource)).toBeGreaterThan(0)
     expect(nombreDeLazy(partieSource)).toBeGreaterThan(0)
-    // Plancher pour IMPORT_STATIQUE (symétrique à celui sur nombreDeLazy
-    // ci-dessus) : sans lui, une regex cassée renverrait toujours [] et les
-    // tests « n'importe jamais statiquement » passeraient au vert à vide.
-    // AccueilEcran est le seul écran resté statique dans App.tsx, il sert
-    // de témoin garanti présent.
     expect(nomsImportesStatiquement(appSource)).toContain('AccueilEcran')
   })
 

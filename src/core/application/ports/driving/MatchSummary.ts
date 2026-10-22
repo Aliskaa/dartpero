@@ -26,31 +26,23 @@ export type TourDuMondeSummaryPlayer = SummaryPlayer & {
 }
 
 export type CricketSummaryPlayer = SummaryPlayer & {
-  /** Cibles fermées, sur `targetsTotal`. Le détail marque par marque n'a pas sa
-   * place dans un aperçu : ce qu'on veut savoir, c'est qui est près de finir. */
+  /** Cibles fermées, sur `targetsTotal`. */
   readonly closedTargets: number
   readonly score: number
 }
 
 export type KillerSummaryPlayer = SummaryPlayer & {
-  /** Son numéro, de 1 à 20. */
   readonly number: SegmentNumber
   readonly lives: number
   readonly killer: boolean
   readonly eliminated: boolean
-  /**
-   * Le rang lu sur `KillerRules.ranking` (règle 9) : partagé entre vivants à
-   * vies égales en cours de partie, distinct une fois la partie finie.
-   */
+  /** Rang de `KillerRules.ranking` : partagé entre vivants à vies égales en cours de partie. */
   readonly rank: number
 }
 
 type BaseSummary = {
   readonly id: MatchId
-  /**
-   * Le nom **tapé** à la création, `null` s'il n'y en a pas — l'UI affiche
-   * alors le nom par défaut, calculé depuis `createdAt`.
-   */
+  /** Le nom tapé à la création ; `null` : l'UI affiche le nom par défaut. */
   readonly name: MatchName | null
   readonly createdAt: number
   readonly updatedAt: number
@@ -64,10 +56,7 @@ export type X01Summary = BaseSummary & {
   readonly mode: 'X01'
   readonly config: X01Config
   readonly players: readonly X01SummaryPlayer[]
-  /**
-   * Manches jouées, **tous sets confondus** : le nombre de `LegWon` du journal.
-   * Dérivé, jamais stocké ; juste en cours comme une fois la partie terminée.
-   */
+  /** Manches jouées, tous sets confondus (nombre de `LegWon`). */
   readonly legsPlayed: number
 }
 
@@ -85,17 +74,13 @@ export type CricketSummary = BaseSummary & {
   readonly players: readonly CricketSummaryPlayer[]
 }
 
-/** Une partie de Killer (lot `killer`). Les joueurs restent dans l'ordre de jeu. */
 export type KillerSummary = BaseSummary & {
   readonly mode: 'KILLER'
   readonly config: KillerConfig
   readonly players: readonly KillerSummaryPlayer[]
 }
 
-/**
- * Un exercice solo : pas d'adversaire, donc pas de vainqueur — `winnerId` y
- * vaut toujours `null`. Ce qui compte, c'est le taux de réussite.
- */
+/** Exercice solo : `winnerId` y vaut toujours `null`. */
 export type CheckoutPracticeSummary = BaseSummary & {
   readonly mode: 'CHECKOUT_PRACTICE'
   readonly config: CheckoutPracticeConfig
@@ -105,23 +90,7 @@ export type CheckoutPracticeSummary = BaseSummary & {
   readonly successPercent: number
 }
 
-/**
- * Vue condensée d'un match. Entièrement dérivée du journal : rien de tout ceci
- * n'est stocké.
- *
- * L'Accueil et l'Historique (`CartePartie`) n'en lisent que `id`, `createdAt`,
- * le mode, le nom, les joueurs, `finished`, `winnerId`, `legsPlayed`,
- * `targetsTotal`, `roundsWon` / `roundsPlayed` et la config (aucun fichier de
- * `src/ui` ne lit `updatedAt`). Les autres champs (`remaining`, `legsWonInSet`,
- * `setsWon`, `targetIndex`, `finishedInDarts`, `closedTargets`, `score`, `successPercent`,
- * `totalVisits`) ne sont plus lus par aucun écran : ils sont gardés pour les use
- * cases, les tests et un éventuel écran de détail.
- *
- * ⚠️ Union discriminée par `mode` : un Tour du monde n'a pas de score restant,
- * un X01 n'a pas de cible courante. Plutôt qu'un type mou dont la moitié des
- * champs seraient vides selon le mode, chacun porte exactement ce qu'il a — et
- * TypeScript force l'UI à traiter les deux cas.
- */
+/** Vue condensée d'un match, dérivée du journal (rien n'est stocké), discriminée par `mode`. */
 export type MatchSummary =
   | X01Summary
   | TourDuMondeSummary

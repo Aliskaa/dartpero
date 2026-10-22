@@ -5,19 +5,8 @@ import { useServices } from '../providers/ServicesProvider'
 export const PAUSE_ANNULATION_MS = 1000
 
 /**
- * La pause qui suit le retrait de la **dernière** fléchette d'un joueur — en
- * cours de saisie, ou d'une volée rouverte qui n'en comptait plus qu'une (lot
- * `annulation-volee`).
- *
- * Un double appui réflexe sur « Annuler T20 » retirait la fléchette, puis
- * rouvrait la volée d'un autre joueur (ou défaisait une manche gagnée). Pendant
- * `PAUSE_ANNULATION_MS`, le bouton refuse donc de toucher à une volée enregistrée.
- *
- * - `ecoulee()` fait **autorité** : elle compare `services.clock` à l'instant
- *   du retrait, et ne dépend pas du minuteur (onglet en arrière-plan : c'est
- *   l'horloge qui tranche).
- * - Le minuteur ne sert qu'à l'affichage : il repasse `enPause` à `false` pour
- *   que le bouton se réactive à l'écran.
+ * La pause qui suit le retrait de la dernière fléchette d'un joueur : un double appui réflexe rouvrirait la volée d'un autre.
+ * ⚠️ `ecoulee()` fait autorité (horloge), le minuteur ne sert qu'à réactiver le bouton à l'écran.
  */
 export const usePauseAnnulation = () => {
   const { clock } = useServices()

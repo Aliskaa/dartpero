@@ -11,14 +11,6 @@ import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 import { fakeServices, SettableClock } from '../fakes'
 import { lancer, ouverture } from './lancerPartie'
 
-/**
- * « On remet ça » — la relance à l'identique.
- *
- * Le test qui porte tout le lot : la relance doit passer par **les mêmes
- * contrôles** qu'un premier départ. C'est ce qui justifie que le use case
- * rappelle les lancements existants au lieu de recopier l'événement
- * d'ouverture dans un journal neuf.
- */
 describe('Relancer une partie à l’identique', () => {
   let services: Services
   let kevin: PlayerId
@@ -45,9 +37,7 @@ describe('Relancer une partie à l’identique', () => {
     expect(nouvelle).not.toBe(ancienne)
     expect(state.config).toEqual(config)
     expect(state.players.map((joueur) => joueur.playerId)).toEqual([julien, kevin])
-    // L'ordre de passage aussi : qui commence n'est jamais neutre.
     expect(state.startingPlayerIndex).toBe(1)
-    // Journal vierge : on rejoue la même partie, on ne reprend pas la précédente.
     expect(state.history).toHaveLength(0)
     expect(state.players[0]?.remaining).toBe(301)
   })
@@ -91,12 +81,6 @@ describe('Relancer une partie à l’identique', () => {
     expect(state.players).toHaveLength(2)
   })
 
-  /**
-   * ⚠️ Un entraînement relancé **retire ses cibles**. On refait le même
-   * exercice, pas la même série : rejouer des restes qu'on connaît déjà
-   * n'entraînerait plus personne. C'est la conséquence assumée de passer par
-   * `PlayCheckoutPractice.start`, qui consulte `RandomSource`.
-   */
   it('rejoue un entraînement avec une manche déjà ouverte', async () => {
     const ancienne = await services.playCheckoutPractice.start({
       playerId: kevin,
@@ -110,16 +94,10 @@ describe('Relancer une partie à l’identique', () => {
 
     expect(state.config.rounds).toBe(3)
     expect(state.roundsPlayed).toBe(0)
-    // Une cible est bien tirée : une session s'ouvre toujours sur un reste à viser.
     expect(state.current).not.toBeNull()
     expect(state.current?.target).not.toBe(cibleAncienne)
   })
 
-  /**
-   * La raison d'être du choix d'implémentation : recopier l'ouverture aurait
-   * relancé une partie avec un joueur qui n'existe plus, et l'écran de match
-   * aurait affiché « Joueur supprimé » face à lui-même.
-   */
   it('refuse de relancer si un joueur a été supprimé depuis', async () => {
     const ancienne = await services.startMatch.execute({
       playerIds: [kevin, julien],
@@ -135,10 +113,6 @@ describe('Relancer une partie à l’identique', () => {
   })
 })
 
-/**
- * Critère 9 : « On remet ça » garde un nom tapé, et sinon la nouvelle partie
- * prend le nom de **sa** date — jamais celui de l'ancienne, jamais écrit.
- */
 describe('Relancer une partie — son nom', () => {
   const base = async () => {
     const clock = new SettableClock(new Date(2026, 9, 10, 21, 0).getTime())

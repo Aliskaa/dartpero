@@ -50,11 +50,9 @@ describe('Adapters Dexie (IndexedDB)', () => {
       await repository.save(original)
       const relu = await repository.findById(original.id)
 
-      // Le journal est ce qui fait foi : il doit survivre au stockage à l'octet près.
       expect(relu).toEqual(original)
     })
 
-    /** Lot `nom-de-partie` : le nom tapé vit dans l'ouverture, sans migration. */
     it('fait traverser la base au nom tapé de l’ouverture', async () => {
       const repository = new DexieMatchRepository(db)
       const sansNom = record('anonyme', 2000)
@@ -70,11 +68,6 @@ describe('Adapters Dexie (IndexedDB)', () => {
       expect(await repository.findById(nomme.id)).toEqual(nomme)
     })
 
-    /**
-     * Les **vrais** lancements, sur la vraie base : IndexedDB garde une clé
-     * `name: undefined` (clonage structuré). Un lancement sans nom qui la
-     * poserait se verrait donc ici, une fois relu depuis la base.
-     */
     it.each(GAME_MODE_IDS)(
       '%s : un lancement sans nom n’écrit aucune clé `name` en base',
       async (mode) => {
@@ -125,8 +118,6 @@ describe('Adapters Dexie (IndexedDB)', () => {
       await repository.save(kevin)
       await repository.save(julien)
 
-      // La couleur et l'ancienneté font le tour complet, sinon changer de
-      // téléphone repeindrait tous les profils.
       expect(await repository.findById(KEVIN)).toEqual(kevin)
       expect((await repository.listAll()).map((p) => p.name)).toEqual(['Julien', 'Kevin'])
 
@@ -135,7 +126,6 @@ describe('Adapters Dexie (IndexedDB)', () => {
       expect(await repository.listAll()).toHaveLength(1)
     })
 
-    /** Lot `killer` : le genre, champ non indexé, sans `db.version`. */
     it('relit une ligne brute sans genre comme « non précisé », sans clé', async () => {
       await db.players.put({ id: KEVIN, name: 'Kevin', color: 'brique', createdAt: 1000 })
 
@@ -173,7 +163,6 @@ describe('Adapters Dexie (IndexedDB)', () => {
     })
   })
 
-  /** Lot `volee-partielle` : la volée en cours, une ligne par partie, hors du journal. */
   describe('DexieVisitDraftRepository', () => {
     const PARTIE = MatchId.of('partie-1')
     const AUTRE = MatchId.of('partie-2')
@@ -187,7 +176,6 @@ describe('Adapters Dexie (IndexedDB)', () => {
 
       expect(await repository.findById(PARTIE)).toEqual(brouillon)
       expect(await db.visitDrafts.count()).toBe(2)
-      // Ce que le disque garde vraiment : trois clés, aucune `undefined`, aucun horodatage.
       const brut = await db.visitDrafts.get(PARTIE)
       expect(Object.keys(brut ?? {}).sort()).toEqual(['darts', 'matchId', 'visitCount'])
       for (const flechette of brut?.darts ?? []) {
@@ -205,23 +193,15 @@ describe('Adapters Dexie (IndexedDB)', () => {
 
       await repository.delete(PARTIE)
       expect(await repository.findById(PARTIE)).toBeNull()
-      // Effacer un absent est sans effet.
       await repository.delete(AUTRE)
       expect(await repository.findById(AUTRE)).toBeNull()
     })
   })
 
-  /**
-   * Le moment où l'on casse tout sans s'en rendre compte : la mise à jour de
-   * l'application sur un téléphone qui a déjà des profils. Sans migration, ces
-   * profils n'ont ni couleur ni date, `Player.create` les refuse à la lecture,
-   * et l'utilisateur ouvre l'app pour découvrir qu'il n'a plus personne.
-   */
   describe('Migration v1 → v2', () => {
     it('donne une couleur et une date aux profils déjà en base', async () => {
       const nom = `dartpero-migration-${compteurBase}`
 
-      // Une base telle que la laissait le lot 2 : ni couleur, ni createdAt.
       const ancienne = new Dexie(nom)
       ancienne.version(1).stores({ matches: 'id, updatedAt', players: 'id, name' })
       await ancienne.open()
@@ -239,19 +219,12 @@ describe('Adapters Dexie (IndexedDB)', () => {
         expect(PLAYER_COLORS).toContain(profil.color)
         expect(profil.createdAt).toBeGreaterThan(0)
       }
-      // Deux joueurs, deux couleurs : personne ne se retrouve en double.
       expect(new Set(profils.map((profil) => profil.color)).size).toBe(2)
 
       migree.close()
     })
   })
 
-  /**
-   * Lot `volee-partielle` : `db.version(3)` n'ajoute que la table `visitDrafts`,
-   * sans `upgrade` et sans redéclarer `matches` ni `players`. Ce test prouve que
-   * Dexie 4 garde les tables non redéclarées : rien de ce que la v2 avait écrit
-   * ne doit bouger.
-   */
   describe('Migration v2 → v3', () => {
     it('garde profils et parties à l’identique, et ouvre une table de brouillons vide', async () => {
       const nom = `dartpero-migration-v3-${compteurBase}`
@@ -263,7 +236,6 @@ describe('Adapters Dexie (IndexedDB)', () => {
         events: record('partie-1', 2000).events,
       }
 
-      // Une base telle que la laissait le lot 4 : version 2, deux tables.
       const ancienne = new Dexie(nom)
       ancienne.version(1).stores({ matches: 'id, updatedAt', players: 'id, name' })
       ancienne.version(2).stores({})
@@ -284,7 +256,6 @@ describe('Adapters Dexie (IndexedDB)', () => {
       ])
       expect(await migree.players.toArray()).toEqual([joueur])
       expect(await migree.matches.toArray()).toEqual([partie])
-      // Les index des parties ont survécu : le tri par date marche toujours.
       expect((await new DexieMatchRepository(migree).listRecent()).map((m) => m.id)).toEqual([
         'partie-1',
       ])

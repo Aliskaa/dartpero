@@ -26,7 +26,6 @@ describe('Historique filtré par mode', () => {
       config: TourDuMondeConfig.create(),
     })
     await services.playCricket.start({ playerIds: [kevin], config: CricketConfig.create() })
-    // Solo : ce mode prend un joueur, pas une liste.
     await services.playCheckoutPractice.start({
       playerId: kevin,
       config: CheckoutPracticeConfig.create(),
@@ -53,12 +52,6 @@ describe('Historique filtré par mode', () => {
     }
   })
 
-  /**
-   * ⚠️ LE piège du filtre : couper à `limit` PUIS filtrer ne rendrait rien le
-   * soir où l'on vient d'enchaîner vingt X01 après un Cricket. Un filtre qui
-   * dépend de ce qu'on a joué depuis n'est pas un filtre, c'est une
-   * coïncidence.
-   */
   it('filtre avant de couper, pas après', async () => {
     await services.playCricket.start({ playerIds: [kevin], config: CricketConfig.create() })
     for (let partie = 0; partie < 25; partie += 1) {
@@ -68,7 +61,6 @@ describe('Historique filtré par mode', () => {
       })
     }
 
-    // Le Cricket est la plus ancienne des 26 : hors des 20 plus récentes.
     expect(await services.getMatchHistory.execute(20)).toHaveLength(20)
     expect(await services.getMatchHistory.execute(20, 'CRICKET')).toHaveLength(1)
   })

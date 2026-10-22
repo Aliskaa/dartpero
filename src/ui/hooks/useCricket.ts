@@ -23,29 +23,14 @@ import { type EtatVolee, useVoleeEnCours } from './useVoleeEnCours'
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
 
-/**
- * L'état d'une partie de Cricket, côté écran.
- *
- * Même principe qu'ailleurs : TanStack Query sert de **cache**, la volée
- * enregistrée renvoie déjà le nouvel état, qu'on injecte directement.
- *
- * Comme au X01 et au Tour du monde, la volée en cours est « prévue » par un
- * port : au Cricket il n'y a ni bust ni sortie, mais une volée s'arrête sur la
- * fléchette qui gagne la partie, et l'écran ne peut pas le deviner seul.
- * En revanche le multiplicateur compte ici (il vaut une, deux ou trois
- * marques), donc la bascule S/D/T du X01 revient — **momentanée**, elle aussi.
- *
- * La volée en cours reste hors du journal, doublée du brouillon de volée
- * (`useVoleeEnCours`, lot `volee-partielle`) qui la fait survivre à un rechargement.
- */
+/** L'état d'une partie de Cricket : la volée en cours est prévue par `PreviewCricketVisit`, hors journal. */
 export const useCricket = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
   const dire = useVoix()
   const { enPause, armer, ecoulee } = usePauseAnnulation()
 
-  // Les pseudos, pour appeler le joueur suivant par son nom. Gardés dans une
-  // ref : la Map est reconstruite à chaque rendu.
+  // Pseudos en ref : la Map est reconstruite à chaque rendu.
   const profils = useProfils()
   const profilsRef = useRef(profils)
   profilsRef.current = profils
@@ -58,10 +43,7 @@ export const useCricket = (matchId: MatchId) => {
 
   const state = requete.data ?? null
 
-  /**
-   * La volée est close à trois fléchettes — ou dès celle qui gagne la partie,
-   * qui attend *Valider*. Lu sur `PreviewCricketVisit`, jamais recopié.
-   */
+  /** Close à trois fléchettes ou à celle qui gagne (elle attend *Valider*), lu sur `PreviewCricketVisit`. */
   const evaluer = useCallback(
     (base: CricketState, darts: readonly Dart[]): EtatVolee => {
       const evaluation = services.previewCricketVisit.execute({ state: base, darts })
@@ -83,12 +65,7 @@ export const useCricket = (matchId: MatchId) => {
   const joueurCourant = state?.players[state.currentPlayerIndex] ?? null
   const termine = state?.finished ?? false
 
-  /**
-   * Le tableau **tel qu'il doit s'afficher** : marques et points suivent chaque
-   * fléchette, avant même que la volée ne soit enregistrée. Le calcul vient du
-   * port, jamais d'un comptage recopié ici — une divergence sur la valeur d'une
-   * marque serait invisible jusqu'à ce qu'elle fausse une partie.
-   */
+  /** Le tableau tel qu'il s'affiche : marques et points suivent chaque fléchette, calculés par le port. */
   const apercu = useMemo(() => {
     if (!state || termine) return null
     return services.previewCricketVisit.execute({ state, darts: dartsEnCours })
@@ -115,9 +92,7 @@ export const useCricket = (matchId: MatchId) => {
           gagnee,
           cutThroat: resultat.state.config.variant === 'CUT_THROAT',
         })
-        // Une volée blanche ne se commente pas, mais elle passe quand même la
-        // main : sans l'appel, personne ne saurait que c'est à lui.
-        // La victoire (cut-throat compris) ajoute la phrase du résumé, même énoncé.
+        // Une volée blanche passe quand même la main ; la victoire ajoute la phrase du résumé, même énoncé.
         dire(
           annonceFinDeVolee(
             annonce,
@@ -134,16 +109,10 @@ export const useCricket = (matchId: MatchId) => {
     [services, matchId, queryClient, dire, poser],
   )
 
-  /**
-   * La fléchette qui gagne la partie attend sa confirmation (lot
-   * `annulation-volee`) : lue sur l'aperçu, jamais sur une règle recopiée.
-   */
+  /** La fléchette qui gagne attend sa confirmation : lue sur l'aperçu. */
   const sortieEnAttente = dartsEnCours.length > 0 && (apercu?.state.finished ?? false)
 
-  /**
-   * « Kevin gagne sur T20 ? ». En cut-throat, une fléchette de Julien peut faire
-   * gagner Kevin : le nom est celui du **gagnant** de l'aperçu.
-   */
+  /** « Kevin gagne sur T20 ? » : le nom est celui du gagnant (en cut-throat, Julien peut faire gagner Kevin). */
   const confirmation = useMemo(() => {
     const flechette = dartsEnCours.at(-1)
     const gagnant = apercu?.state.winnerId ?? null
@@ -175,14 +144,10 @@ export const useCricket = (matchId: MatchId) => {
       poser(suite, state)
       setDerniereVolee(null)
 
-      // Le multiplicateur retombe sur SIMPLE après chaque fléchette : il ne
-      // reste jamais armé à l'insu du joueur. La règle vit dans le hook, pas
-      // dans le pavé, pour tenir quelle que soit la façon de saisir.
+      // Le multiplicateur retombe sur SIMPLE après chaque fléchette.
       setMultiplicateur('SIMPLE')
 
-      // La volée est close à trois fléchettes — ou dès celle qui gagne la
-      // partie : réclamer les deux suivantes n'aurait aucun sens. Celle-là
-      // attend *Valider* avant d'être écrite.
+      // Close à trois fléchettes ou à celle qui gagne, qui attend *Valider*.
       switch (evaluer(state, suite)) {
         case 'ouverte':
           return false
@@ -208,10 +173,7 @@ export const useCricket = (matchId: MatchId) => {
     void enregistrer(dartsEnCours)
   }, [sortieEnAttente, occupe, enregistrer, dartsEnCours])
 
-  /**
-   * Une fléchette par appui : la dernière en cours, sinon la dernière de la
-   * volée enregistrée juste avant, qui se rouvre (voir `useX01`).
-   */
+  /** Une fléchette par appui, comme `useX01`. */
   const annuler = useCallback(async () => {
     if (occupe) return
     setErreur(null)

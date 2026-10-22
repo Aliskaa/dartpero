@@ -35,8 +35,7 @@ export const CricketEcran = () => {
 
   useWakeLock(state !== null && !termine)
 
-  // La boîte « Kevin gagne sur T20 ? » (lot `annulation-volee`) : au-dessus du
-  // chargement, comme toute boîte au retour (CONVENTIONS § 9).
+  // La boîte « Kevin gagne sur T20 ? » : au-dessus du chargement, comme toute boîte au retour.
   const confirmation = useConfirmationSortie({
     pret: partie.pret,
     enAttente: partie.sortieEnAttente,
@@ -50,8 +49,7 @@ export const CricketEcran = () => {
     if (partie.ajouterFlechette(dart)) confirmation.demander()
   }
 
-  // Le résumé attend que l'entrée de la boîte soit dépilée : la remplacer
-  // laisserait la partie derrière elle dans l'historique.
+  // Le résumé attend que l'entrée de la boîte soit dépilée, sinon la partie resterait dans l'historique.
   const auRepos = confirmation.auRepos
   useEffect(() => {
     if (termine && auRepos) navigate(`/partie/${identifiant}/resume`, { replace: true })
@@ -76,8 +74,7 @@ export const CricketEcran = () => {
   }
 
   const cutThroat = state.config.variant === 'CUT_THROAT'
-  // Le tableau affiché intègre la volée en cours ; la main, elle, se lit sur
-  // l'état réel — c'est encore au même joueur de jouer tant qu'il n'a pas fini.
+  // Le tableau intègre la volée en cours ; la main se lit sur l'état réel.
   const affiche = partie.affiche ?? state
   const mortes = state.config.targets.map((_, index) =>
     affiche.players.every((joueur) => (joueur.marks[index] ?? 0) >= MARKS_TO_CLOSE),
@@ -99,10 +96,7 @@ export const CricketEcran = () => {
         }
       : null
 
-  // La volée écrite sur la dernière ligne : celle en cours si une fléchette est
-  // déjà plantée, sinon celle du joueur précédent (avec son nom), sinon — au
-  // tout début — les cases vides du joueur qui va lancer. Aucune règle ici : on
-  // lit la liste des fléchettes et l'historique, rien d'autre.
+  // Dernière ligne : la volée en cours, sinon celle du joueur précédent, sinon les cases vides du lanceur.
   const derniere = state.history.at(-1)
   const proprietaire =
     partie.dartsEnCours.length === 0 && derniere ? derniere.playerId : partie.joueurCourant.playerId

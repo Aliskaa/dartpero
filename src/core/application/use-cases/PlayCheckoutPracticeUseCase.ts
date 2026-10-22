@@ -33,13 +33,7 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
     private readonly random: RandomSource,
   ) {}
 
-  /**
-   * Tire une cible parmi celles réellement finissables.
-   *
-   * Le résultat part dans le journal : l'aléa n'est consulté **qu'une fois**,
-   * au moment où la manche s'ouvre. Annuler une volée ne redistribue donc pas
-   * les cartes — sinon l'annulation deviendrait un moyen de changer de cible.
-   */
+  // L'aléa n'est consulté qu'à l'ouverture de la manche (le résultat part au journal) : annuler ne change pas de cible.
   private tirer(config: CheckoutPracticeConfig): number {
     const cibles = playableTargets(config)
     if (cibles.length === 0) throw new DomainError('No playable checkout in the configured range')
@@ -50,7 +44,6 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
   }
 
   async start({ playerId, config, name: nomTape }: StartCheckoutPracticeCommand): Promise<MatchId> {
-    // Le nom d'abord : trop long, rien n'est tiré ni écrit.
     const name = nameField(nomTape)
     if (!(await this.players.findById(playerId))) {
       throw new DomainError(`Unknown player: ${playerId}`)
@@ -63,8 +56,7 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
       startingPlayerIndex: 0,
       ...name,
     }
-    // Valide avant de persister, puis ouvre déjà la première manche : une
-    // session commence toujours avec une cible à viser.
+    // Valide avant de persister ; la première manche s'ouvre tout de suite.
     CheckoutPracticeRules.start(started)
 
     const events: readonly MatchEvent[] = [
@@ -87,18 +79,15 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
     const record = await loadMatch(this.matches, matchId)
 
     const avant = CheckoutPracticeRules.project(record.events)
-    // Les règles d'abord : une volée illégale ne laisse aucune trace.
     const apres = CheckoutPracticeRules.applyVisit(avant, darts)
 
     const events: MatchEvent[] = [...record.events, { type: 'VisitRecorded', darts }]
-    // La manche est close : on tire la suivante tant qu'il en reste.
     if (CheckoutPracticeRules.needsRound(apres)) {
       events.push({ type: 'RoundStarted', target: this.tirer(apres.config) })
     }
 
     await this.matches.save({ ...record, events, updatedAt: this.clock.now() })
 
-    // L'issue de la manche qu'on vient de jouer : la dernière close.
     const outcome = apres.rounds.filter((round) => round.outcome !== null).at(-1)?.outcome
     if (!outcome) throw new DomainError('The round was not resolved')
 
@@ -108,15 +97,11 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
   async undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<CheckoutPracticeState>> {
     const record = await loadMatch(this.matches, matchId)
 
-    // La dernière manche close **projetée** : ses fléchettes sont déjà coupées
-    // à celle qui a conclu (sortie ou bust).
     const derniere = CheckoutPracticeRules.project(record.events)
       .rounds.filter((round) => round.outcome !== null)
       .at(-1)
 
-    // On retire la volée ET la manche qu'elle a ouverte : sans ça, annuler
-    // laisserait une cible orpheline et la session avancerait toute seule. Le
-    // `RoundStarted` de la manche rouverte, lui, reste : même reste à viser.
+    // On retire la volée ET la manche qu'elle a ouverte ; le `RoundStarted` de la manche rouverte reste.
     const events = [...record.events]
     if (events.at(-1)?.type === 'RoundStarted') events.pop()
     if (!derniere || events.at(-1)?.type !== 'VisitRecorded') {
@@ -124,7 +109,7 @@ export class PlayCheckoutPracticeUseCase implements PlayCheckoutPractice {
     }
     events.pop()
 
-    // Projeter AVANT d'écrire : un journal qui ne se rejoue pas n'est pas sauvé.
+    // Projeter avant d'écrire : un journal qui ne se rejoue pas n'est pas sauvé.
     const state = CheckoutPracticeRules.project(events)
     await this.matches.save({ ...record, events, updatedAt: this.clock.now() })
 

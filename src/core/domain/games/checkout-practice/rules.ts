@@ -6,12 +6,12 @@ import type { Dart } from '../../value-objects/Dart'
 import type { PlayerId } from '../../value-objects/ids'
 import type { CheckoutPracticeConfig } from './config'
 
-/** L'entraînement se joue en `double out` : c'est tout son objet. */
+// Toujours en `double out`.
 const SORTIE = { doubleOut: true, doubleIn: false } as const
 
 export type CheckoutRound = {
   readonly target: number
-  /** Ce qui a été lancé sur la manche, tronqué à la fléchette qui sort. */
+  /** Tronqué à la fléchette qui sort. */
   readonly darts: readonly Dart[]
   /** `null` tant que la manche est en cours. */
   readonly outcome: VisitOutcome | null
@@ -23,13 +23,13 @@ export type CheckoutPracticeState = {
   readonly config: CheckoutPracticeConfig
   readonly playerId: PlayerId
   readonly rounds: readonly CheckoutRound[]
-  /** La manche en cours, ou `null` entre deux manches et à la fin. */
+  /** `null` entre deux manches et à la fin. */
   readonly current: CheckoutRound | null
   readonly roundsWon: number
   readonly roundsPlayed: number
   readonly dartsThrown: number
   readonly finished: boolean
-  /** Réussite en pourcentage (0-100). Brute, l'UI arrondit. */
+  /** 0-100, brute. */
   readonly successPercent: number
 }
 
@@ -38,8 +38,6 @@ const cloturee = (round: CheckoutRound): boolean => round.outcome !== null
 const start = (event: CheckoutPracticeStarted): CheckoutPracticeState => {
   const { config, playerIds } = event
 
-  // Un exercice solo : un seul joueur, mais on garde la forme d'une partie pour
-  // que l'historique, la suppression et la sauvegarde marchent sans exception.
   if (playerIds.length !== 1) {
     throw new DomainError('Checkout practice is a solo exercise: exactly one player')
   }
@@ -89,13 +87,7 @@ const openRound = (state: CheckoutPracticeState, target: number): CheckoutPracti
   return recalculer(state, [...state.rounds, round], round)
 }
 
-/**
- * Une volée sur la manche en cours.
- *
- * La résolution vient de `services/visitOutcome` — **la même fonction que le
- * X01**. Une manche ratée est donc ratée pour exactement les mêmes raisons
- * qu'en partie : bust, reste à 1, ou zéro sans double.
- */
+// Même `resolveVisit` que le X01 : une manche est ratée pour les mêmes raisons qu'en partie.
 const applyVisit = (
   state: CheckoutPracticeState,
   darts: readonly Dart[],
@@ -111,8 +103,7 @@ const applyVisit = (
   const resolution = resolveVisit(SORTIE, encours.remaining, true, darts)
   const lancees = [...encours.darts, ...darts.slice(0, resolution.dartsUsed)]
 
-  // Une manche dure une seule volée : sortie, bust, ou trois fléchettes sans
-  // finir — dans tous les cas, on passe à la suivante.
+  // Une manche = une seule volée, quelle qu'en soit l'issue.
   const termine: CheckoutRound = {
     ...encours,
     darts: lancees,
@@ -124,13 +115,7 @@ const applyVisit = (
   return recalculer(state, rounds, null)
 }
 
-/**
- * Rejoue le journal et renvoie l'état courant.
- *
- * C'est aussi l'implémentation de l'annulation : `project(events.slice(0, -1))`.
- * Comme les cibles tirées sont dans le journal, annuler une volée redonne bien
- * la même manche, avec le même reste.
- */
+/** Rejoue le journal ; l'annulation est `project(events.slice(0, -1))` (le reste tiré est au journal). */
 const project = (events: readonly MatchEvent[]): CheckoutPracticeState => {
   const [first, ...rest] = events
   if (first === undefined || first.type !== 'CheckoutPracticeStarted') {
@@ -152,6 +137,5 @@ export const CheckoutPracticeRules = {
   applyVisit,
   project,
   isFinished: (state: CheckoutPracticeState): boolean => state.finished,
-  /** Une manche doit-elle être ouverte ? Vrai entre deux manches. */
   needsRound: (state: CheckoutPracticeState): boolean => !state.finished && state.current === null,
 }

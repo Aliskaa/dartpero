@@ -5,7 +5,6 @@ import type { GetOngoingMatch } from '../ports/driving/GetOngoingMatch'
 import type { MatchSummary } from '../ports/driving/MatchSummary'
 import { nameIndex, summarize } from './summarize'
 
-/** Au-delà, un match non terminé est considéré comme abandonné. */
 const PROFONDEUR = 20
 
 export class GetOngoingMatchUseCase implements GetOngoingMatch {
@@ -16,8 +15,7 @@ export class GetOngoingMatchUseCase implements GetOngoingMatch {
 
   async execute(): Promise<MatchSummary | null> {
     const records = await this.matches.listRecent(PROFONDEUR)
-    // ⚠️ Via la couture, jamais via `X01Rules` : une partie d'un autre mode
-    // n'est pas projetable en X01, et l'accueil planterait à la reprise.
+    // ⚠️ Via la couture `GameModes`, jamais `X01Rules` : un autre mode n'est pas projetable en X01.
     const encours = records.find(
       (record) => !GameModes.isFinished(GameModes.project(record.events)),
     )

@@ -2,11 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, type To } from 'react-router'
 
-/**
- * Une liste de réglages (planche `#rg4`) : une fiche d'ardoise sous un filet de
- * craie de 3 px, des lignes séparées d'un filet fin. Chaque ligne est entière
- * une cible de 56 px.
- */
+/** Liste de réglages : fiche d'ardoise, lignes de 56 px séparées d'un filet. */
 export const ListeReglages = ({ children }: { readonly children: ReactNode }) => (
   <ul className="border-t-3 border-craie bg-ardoise">{children}</ul>
 )
@@ -30,10 +26,7 @@ const CLASSES_LIGNE = [
   'active:bg-craie/10 disabled:opacity-40',
 ].join(' ')
 
-/**
- * L'interrupteur : 46 × 26 px, curseur de 18 px. Purement visuel — l'état
- * est porté par `aria-pressed` sur la ligne.
- */
+/** Interrupteur purement visuel : l'état est porté par `aria-pressed` sur la ligne. */
 const Bascule = ({ active }: { readonly active: boolean }) => (
   <span
     aria-hidden="true"

@@ -7,30 +7,20 @@ import type { ReopenedVisit } from './ReopenedVisit'
 export type StartCheckoutPracticeCommand = {
   readonly playerId: PlayerId
   readonly config: CheckoutPracticeConfig
-  /** Le nom tapé, brut : absent si rien n'a été tapé (voir `StartMatchCommand.name`). */
+  /** Le nom tapé, brut (voir `StartMatchCommand.name`). */
   readonly name?: string
 }
 
 export type CheckoutPracticeResult = {
   readonly state: CheckoutPracticeState
-  /** La manche qui vient d'être jouée : réussie, bustée, ou simplement ratée. */
+  /** La manche qui vient d'être jouée. */
   readonly outcome: 'CHECKOUT' | 'BUSTED' | 'SCORED'
 }
 
-/**
- * L'entraînement au checkout : un reste tiré au sort, trois fléchettes pour le
- * sortir, et on recommence.
- *
- * Port regroupé, comme `PlayTourDuMonde` : les opérations partagent le même
- * journal et la même mécanique de persistance.
- */
 export interface PlayCheckoutPractice {
   start(command: StartCheckoutPracticeCommand): Promise<MatchId>
   getState(matchId: MatchId): Promise<CheckoutPracticeState>
   recordVisit(matchId: MatchId, darts: readonly Dart[]): Promise<CheckoutPracticeResult>
-  /**
-   * Retire la dernière fléchette jouée : la dernière volée quitte le journal et
-   * ses fléchettes restantes reviennent à la saisie (voir `ReopenedVisit`).
-   */
+  /** Retire la dernière fléchette jouée (voir `ReopenedVisit`). */
   undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<CheckoutPracticeState>>
 }

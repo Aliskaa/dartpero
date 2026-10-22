@@ -1,15 +1,7 @@
 import { DomainError } from '../../DomainError'
 import { suggestCheckout } from '../../services/checkout'
 
-/**
- * **Checkout Practice** — l'exercice solo du lot 5b.
- *
- * On tire un reste au sort, on a trois fléchettes pour le sortir, et on
- * recommence. C'est l'entraînement qui rapporte le plus : savoir finir est ce
- * qui gagne les parties, et c'est précisément ce qu'on rate le plus.
- */
 export type CheckoutPracticeConfig = {
-  /** Nombre de manches dans une session. */
   readonly rounds: number
   /** Bornes du tirage, incluses. */
   readonly minTarget: number
@@ -22,10 +14,7 @@ export type CheckoutPracticeConfigInput = {
   readonly maxTarget?: number
 }
 
-/**
- * 41, parce qu'en dessous une seule fléchette suffit (40 = D20) : ce ne serait
- * plus un exercice de sortie mais de visée. 170, c'est le maximum théorique.
- */
+// 41 : en dessous une seule fléchette suffit (40 = D20). 170 : le maximum théorique.
 export const DEFAUT: CheckoutPracticeConfig = {
   rounds: 10,
   minTarget: 41,
@@ -48,14 +37,7 @@ export const CheckoutPracticeConfig = {
   },
 }
 
-/**
- * Les restes réellement jouables, **calculés et non tabulés**.
- *
- * On garde ceux qu'une route de trois fléchettes peut clore : les bogey numbers
- * (169, 168, 166, 165, 163, 162, 159) s'excluent donc tout seuls. Proposer un
- * reste impossible à finir serait un exercice injuste, et coder la liste en dur
- * la ferait diverger le jour où l'on change les options de sortie.
- */
+/** Restes jouables, calculés et non tabulés : les bogey numbers s'excluent d'eux-mêmes. */
 export const playableTargets = (config: CheckoutPracticeConfig): readonly number[] => {
   const cibles: number[] = []
   for (let reste = config.minTarget; reste <= config.maxTarget; reste += 1) {

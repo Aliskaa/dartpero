@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
+// ⚠️ L'heure passe par `Clock` / `services.clock` : `Date.now()` rendrait l'UI intestable et pourrait diverger de `createdAt`.
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 
 const estSource = (nom: string): boolean => /\.tsx?$/.test(nom) && !nom.endsWith('.d.ts')
@@ -15,17 +16,6 @@ const fichiers = (dossier: string, recursif = true): string[] =>
     return estSource(entree.name) ? [chemin] : []
   })
 
-/**
- * Lire l'heure courante sans passer par le port `Clock` :
- *
- * - `Date.now`, appelé **ou passé en référence** (`useState(Date.now)`) ;
- * - `new Date` sans argument, avec ou sans parenthèses (`new Date()`, `new Date`) ;
- * - `Date(…)` appelé comme une fonction — il rend l'heure courante, quel que
- *   soit l'argument.
- *
- * `new Date(horodatage)` reste permis : c'est le **calendrier** d'un instant
- * donné (`getDay()`, `getHours()`), pas une horloge. `Date.UTC(…)` aussi.
- */
 const HORLOGE =
   /\bDate\s*\.\s*now\b|\bnew\s+Date\b(?!\s*\((?!\s*\)))|(?<![.\w$]|\bnew\s+)Date\s*\(/g
 
@@ -54,22 +44,6 @@ const AVANT_REGEX = new Set([
   '^',
 ])
 
-/**
- * Le source sans ses commentaires — ils citent volontiers `Date.now()` pour
- * dire de ne pas l'employer.
- *
- * Un petit lecteur plutôt qu'une regex : une chaîne qui contient `/*` ou `//`
- * (`'/nouvelle-partie/*'`, `'https://…'`) ne doit pas faire avaler le code qui
- * la suit. Les chaînes, les gabarits et les expressions régulières sont
- * recopiés tels quels — donc encore inspectés : une chaîne qui contiendrait
- * `Date.now()` serait signalée, faux positif assumé, jamais l'inverse.
- *
- * ⚠️ Limites connues, documentées par les échantillons ci-dessous : un
- * gabarit qui imbrique un autre gabarit dans `${…}` ; un `/` d'expression
- * régulière après un mot-clé (`return /…/`), lu comme une division. Les deux
- * ne peuvent que faire **garder** du texte, jamais en retirer — sauf un `/*`
- * ou un `//` dans une telle regex, qu'aucun source n'a aujourd'hui.
- */
 const sansCommentaires = (source: string): string => {
   let sortie = ''
   let precedent = '' // dernier caractère significatif hors espaces
@@ -128,20 +102,12 @@ const fautesDans = (fichiersLus: readonly string[]): string[] =>
   })
 
 describe('Frontière de l’horloge', () => {
-  /**
-   * Lot `nom-de-partie` : l'UI a besoin de l'heure pour proposer « Dimanche
-   * soir ». Elle la lit par `services.clock`, la même horloge que les use
-   * cases — jamais par `Date.now()`, qui rendrait la proposition intestable et
-   * pourrait la faire diverger du `createdAt` de la partie. Le cœur, lui, n'a
-   * jamais eu le droit de lire l'heure (`CLAUDE.md` § Règle d'architecture).
-   */
   it.each([
     ['src/ui', 40],
     ['src/core', 40],
   ])('aucune lecture directe de l’heure dans %s', (dossier, plancher) => {
     const tous = fichiers(resolve(RACINE, dossier))
 
-    // Garde-fou : un test vert à vide ne vérifie rien.
     expect(tous.length).toBeGreaterThan(plancher)
     expect(fautesDans(tous)).toEqual([])
   })

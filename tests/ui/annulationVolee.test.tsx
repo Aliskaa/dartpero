@@ -17,14 +17,6 @@ import { fakeDependencies, SettableClock } from '../fakes'
 import { flechette, locationCourante, retourTelephone, validerSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Lot `annulation-volee`, à l'écran : la touche « Annuler » retire une
- * fléchette par appui (planche `annulation`, § 1 et 2), et la fléchette qui
- * sort, gagne ou boucle ouvre une boîte *Corriger* / *Valider la sortie*
- * (forme B, § 3) avant toute écriture.
- */
-
-/** Des services à voix écoutée et à horloge réglable. */
 const banc = () => {
   const dites: string[] = []
   const announcer: Announcer = {
@@ -66,7 +58,6 @@ describe('La touche Annuler, une fléchette par appui (X01)', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('379'))
     expect(actif('Julien')).toBe(true)
-    // La touche nomme la fléchette ; le joueur n'est que dans le nom accessible.
     const touche = screen.getByRole('button', { name: 'Annuler S5 de Kevin' })
     expect(touche).toHaveTextContent('Annuler S5')
     expect(touche).not.toHaveTextContent('Kevin')
@@ -84,7 +75,6 @@ describe('La touche Annuler, une fléchette par appui (X01)', () => {
     await utilisateur.click(annuler())
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
     expect(actif('Kevin')).toBe(true)
-    // Plus rien à retirer : libellé neutre, touche grisée.
     expect(screen.getByRole('button', { name: 'Annuler' })).toBeDisabled()
     expect(await historique(services, matchId)).toBe(0)
   })
@@ -106,7 +96,6 @@ describe('La touche Annuler, une fléchette par appui (X01)', () => {
 
     await utilisateur.click(annuler())
     await utilisateur.click(annuler())
-    // Julien n'a plus de fléchette : un appui réflexe ne défait rien chez Kevin.
     await utilisateur.click(annuler())
     expect(await historique(services, matchId)).toBe(1)
     expect(scoreDe('Kevin')).toHaveTextContent('379')
@@ -152,7 +141,6 @@ describe('La touche Annuler, une fléchette par appui (X01)', () => {
     await waitFor(() => expect(screen.getByText('Manche 1')).toBeInTheDocument())
     expect(scoreDe('Kevin')).toHaveTextContent('20')
     expect(actif('Kevin')).toBe(true)
-    // Rouvrir la volée n'ouvre pas la boîte : sans D10, la volée n'est plus une sortie.
     expect(boite()).toBeNull()
   })
 })
@@ -178,11 +166,9 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
 
     const dialogue = await screen.findByRole('dialog', { name: 'Kevin sort sur D10 ?' })
     expect(dialogue).toHaveTextContent('40 → 0. La manche est gagnée dès que vous validez.')
-    // Le focus d'ouverture va sur le choix sans conséquence.
     expect(screen.getByRole('button', { name: 'Corriger' })).toHaveFocus()
     expect(await historique(services, matchId)).toBe(0)
     expect(dites).toEqual([])
-    // Derrière la boîte, le reste suit déjà la fléchette de sortie.
     expect(scoreDe('Kevin')).toHaveTextContent('0')
 
     await validerSortie(utilisateur)
@@ -217,7 +203,6 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
     await flechette(utilisateur, '20', 'Double')
     await validerSortie(utilisateur)
     await waitFor(() => expect(actif('Julien')).toBe(true))
-    // Julien lance après la garde qui suit toute fermeture de la boîte.
     clock.regler(clock.now() + GARDE_APRES_FERMETURE_MS)
     await flechette(utilisateur, '20', 'Double')
 
@@ -259,7 +244,6 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
     await flechette(utilisateur, '10', 'Double')
     const dialogue = await screen.findByRole('dialog')
 
-    // jsdom ne relaie pas Échap en `cancel` : on envoie l'événement du navigateur.
     act(() => {
       dialogue.dispatchEvent(new Event('cancel', { cancelable: true }))
     })
@@ -277,7 +261,6 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
     await flechette(utilisateur, '10', 'Double')
     const dialogue = await screen.findByRole('dialog')
 
-    // Hors de la boîte (jsdom la mesure à 0 × 0) : l'appui commence et finit sur le voile.
     fireEvent.pointerDown(dialogue, { clientX: 300, clientY: 600 })
     fireEvent.click(dialogue, { clientX: 300, clientY: 600 })
 
@@ -302,7 +285,6 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
     expect(await screen.findByText('Vainqueur')).toBeInTheDocument()
     expect(locationCourante().pathname).toBe(`/partie/${matchId}/resume`)
     expect(locationCourante().state).toBeNull()
-    // Le résumé a remplacé l'écran de partie : un retour ramène à l'accueil.
     await retourTelephone()
     expect(locationCourante().pathname).toBe('/')
   })
@@ -356,8 +338,6 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
     const T20 = Dart.triple(20)
     const T19 = Dart.triple(19)
     const M = Dart.miss()
-    // Kevin ferme le 20 ; Marie ferme le 19 et charge Kevin et Julien (57 chacun) ;
-    // Kevin ferme le 19 : tout fermé, mais 57 > 0 chez Marie, il ne gagne pas.
     for (const darts of [
       [T20, M, M],
       [M, M, M],
@@ -372,7 +352,6 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Points de Julien').closest('[aria-current]')).not.toBeNull(),
     )
-    // Julien ferme le 20, puis charge Marie de 60 : Kevin devient le plus bas.
     await flechette(utilisateur, '20', 'Triple')
     await flechette(utilisateur, '20', 'Triple')
 
@@ -400,9 +379,7 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
 
     await validerSortie(utilisateur)
     expect(await screen.findByText('Dernier tour')).toBeInTheDocument()
-    // Julien lance après la garde qui suit toute fermeture de la boîte.
     clock.regler(clock.now() + GARDE_APRES_FERMETURE_MS)
-    // La fin du tour de table, elle, ne se confirme pas.
     for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: '1' }))
     expect(await screen.findByText('Vainqueur')).toBeInTheDocument()
   })
@@ -437,7 +414,6 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
     await waitFor(async () =>
       expect((await services.playCheckoutPractice.getState(matchId)).roundsPlayed).toBe(0),
     )
-    // La sortie rejouée part directement : aucune confirmation à l'entraînement.
     await flechette(
       utilisateur,
       derniere.segment === 'BULL' ? 'Bulle' : String(derniere.segment),
@@ -451,14 +427,6 @@ describe('La boîte de confirmation de la sortie (forme B)', () => {
 })
 
 describe('La boîte de confirmation — tour de correction (Test → Dev)', () => {
-  /**
-   * I-1 : sous `StrictMode`, les effets sont rejoués au montage ; une entrée
-   * héritée dépilée deux fois ferait quitter l'écran de partie. Depuis le lot
-   * `volee-partielle`, ce qui protège ici est que `pret` est faux au montage :
-   * la réconciliation n'a lieu qu'au rendu où la volée en cours est relue, que
-   * `StrictMode` ne rejoue pas. La ref `reconciliee` n'est pas ce que ce test
-   * observe (Q-T3).
-   */
   it('StrictMode : une entrée héritée n’est dépilée qu’une fois, l’écran reste', async () => {
     const { services } = banc()
     const matchId = await x01(services)
@@ -479,12 +447,10 @@ describe('La boîte de confirmation — tour de correction (Test → Dev)', () =
     await waitFor(() => expect(locationCourante().state).toBeNull())
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
     expect(locationCourante().pathname).toBe(`/partie/${matchId}`)
-    // Un seul recul a eu lieu : le retour suivant ramène à l'accueil.
     await retourTelephone()
     expect(locationCourante().pathname).toBe('/')
   })
 
-  /** C-3 : la sortie en attente bloque le pavé, même si un appui le traverse. */
   it('X01 : aucune fléchette n’est prise tant qu’une sortie attend', async () => {
     const utilisateur = userEvent.setup()
     const { services } = banc()
@@ -495,12 +461,10 @@ describe('La boîte de confirmation — tour de correction (Test → Dev)', () =
     await flechette(utilisateur, '20')
     await flechette(utilisateur, '10', 'Double')
     await screen.findByRole('dialog')
-    // Le pavé est derrière la boîte : on force l'appui pour prouver la garde du hook.
     fireEvent.click(screen.getByRole('button', { name: '1', hidden: true }))
 
     await utilisateur.click(screen.getByRole('button', { name: 'Corriger' }))
     await waitFor(() => expect(boite()).toBeNull())
-    // Seule S20 reste : le 1 n'a jamais été pris.
     expect(scoreDe('Kevin')).toHaveTextContent('20')
     expect(await historique(services, matchId)).toBe(0)
   })
@@ -527,10 +491,6 @@ describe('La boîte de confirmation — tour de correction (Test → Dev)', () =
     expect(etat.history[0]?.darts).toHaveLength(2)
   })
 
-  /**
-   * C-6 : tant que la boîte est ouverte, le journal est identique en profondeur
-   * (événements ET `updatedAt`) ; un double appui sur Valider n'écrit qu'une volée.
-   */
   it('journal intact pendant la boîte ; double appui sur Valider : une seule volée', async () => {
     const utilisateur = userEvent.setup()
     const { services, dependencies } = banc()
@@ -554,7 +514,6 @@ describe('La boîte de confirmation — tour de correction (Test → Dev)', () =
   })
 })
 
-/** C-4 : Corriger et le retour du téléphone, au Cricket et au Tour du monde. */
 describe.each([
   {
     nom: 'Cricket',
@@ -645,10 +604,6 @@ describe.each([
   })
 })
 
-/**
- * Relecture à l'écran, boucle 3 (R3) : un double appui sur *Corriger* posait une
- * fléchette sur le pavé que la boîte venait de découvrir.
- */
 describe('Appui fantôme après Corriger (X01)', () => {
   const sortie = async () => {
     const outils = banc()
@@ -668,7 +623,6 @@ describe('Appui fantôme après Corriger (X01)', () => {
     await flechette(utilisateur, '20')
     await flechette(utilisateur, '10', 'Double')
     await utilisateur.click(await screen.findByRole('button', { name: 'Corriger' }))
-    // Le second appui du double tap : la boîte n'est plus là, c'est le 2 du pavé.
     await utilisateur.click(screen.getByRole('button', { name: '2' }))
 
     await waitFor(() => expect(boite()).toBeNull())
@@ -676,12 +630,10 @@ describe('Appui fantôme après Corriger (X01)', () => {
     expect(screen.getByRole('button', { name: 'Annuler S20 de Kevin' })).toBeEnabled()
     expect(await historique(services, matchId)).toBe(0)
 
-    // Juste avant la fin du délai : toujours ignoré.
     clock.regler(clock.now() + GARDE_APRES_FERMETURE_MS - 1)
     await utilisateur.click(screen.getByRole('button', { name: '2' }))
     expect(scoreDe('Kevin')).toHaveTextContent('20')
 
-    // Le délai passé (horloge des services), la fléchette est prise.
     clock.regler(clock.now() + 1)
     await utilisateur.click(screen.getByRole('button', { name: '2' }))
     expect(scoreDe('Kevin')).toHaveTextContent('18')
@@ -705,10 +657,6 @@ describe('Appui fantôme après Corriger (X01)', () => {
     expect(scoreDe('Kevin')).toHaveTextContent('18')
   })
 
-  /**
-   * Revue, 2e passe (boucle 4) : un double appui sur *Valider* posait une
-   * fléchette fantôme au joueur suivant. La garde vaut aussi après *Valider*.
-   */
   it('Valider arme la garde : le double appui ne pose rien au joueur suivant', async () => {
     const utilisateur = userEvent.setup()
     const { services, matchId, clock } = await sortie()
@@ -719,7 +667,6 @@ describe('Appui fantôme après Corriger (X01)', () => {
     await waitFor(() => expect(actif('Julien')).toBe(true))
     expect(await screen.findByText('Manche !')).toBeInTheDocument()
 
-    // Même instant de l'horloge : le second appui (et un troisième) tombe sur le pavé.
     await utilisateur.click(screen.getByRole('button', { name: '1' }))
     await utilisateur.click(screen.getByRole('button', { name: '1' }))
     expect(scoreDe('Julien')).toHaveTextContent('40')
@@ -735,11 +682,6 @@ describe('Appui fantôme après Corriger (X01)', () => {
     expect(await historique(services, matchId)).toBe(1)
   })
 
-  /**
-   * Au Tour du monde, la partie continue après le bouclage : même garde pour le
-   * joueur suivant. (Au Cricket, la fléchette confirmée gagne la partie : l'écran
-   * est terminé, `termine` refuse déjà tout appui — pas de scénario.)
-   */
   it('Tour du monde : après Valider le bouclage, l’appui immédiat de Julien est ignoré', async () => {
     const utilisateur = userEvent.setup()
     const { services, clock } = banc()

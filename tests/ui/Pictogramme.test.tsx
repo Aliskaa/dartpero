@@ -60,7 +60,6 @@ describe('Pictogramme', () => {
   })
 
   it('refuse à la compilation un nom inconnu et une taille sous 20 px', () => {
-    // Jamais exécuté : seul le typage est vérifié (`npm run typecheck`).
     const _refuses = () => (
       <>
         {/* @ts-expect-error nom inconnu */}

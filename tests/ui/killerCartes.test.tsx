@@ -10,13 +10,6 @@ import { vueCarte } from '@/ui/cartesPartie'
 import { MiniTableauPartie } from '@/ui/composants/commun/MiniTableauPartie'
 import { fakeServices } from '../fakes'
 
-/**
- * Lot `killer`, les cartes (réponses 8 et 9) : « 3 vies » seulement, ni tirage
- * ni variante ; en cours, les vies de chacun, classées par `rank` (vies
- * décroissantes, ex æquo dans l'ordre de jeu, éliminés en bas), sans teinte de
- * la ligne de tête ; finie, le rang. Les résumés viennent du vrai journal.
- */
-
 const partie = async (config = KillerConfig.create()) => {
   const { services } = fakeServices()
   const ids = []
@@ -24,7 +17,6 @@ const partie = async (config = KillerConfig.create()) => {
     ids.push((await services.managePlayers.create(nom)).id)
   }
   const id = await services.playKiller.start({ playerIds: ids, config, numbers: [17, 8, 12] })
-  // Kevin devient killer et élimine Julien (3 vies, un triple) ; Sarah ne fait rien.
   await services.playKiller.recordVisit(id, [Dart.double(17), Dart.triple(8), Dart.single(1)])
   await services.playKiller.recordVisit(id, [Dart.single(1), Dart.single(1), Dart.single(1)])
   return { services, id }

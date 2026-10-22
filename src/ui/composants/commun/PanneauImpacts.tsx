@@ -2,20 +2,7 @@ import type { DartboardHits } from '@/core/domain/services/dartboardHits'
 import { CarteImpacts } from '@/ui/composants/commun/CarteImpacts'
 import { Panneau } from '@/ui/composants/commun/Panneau'
 
-/**
- * Les cartes d'impacts, côte à côte — la seule chose de l'app qui parle du bras
- * plutôt que du score.
- *
- * Posée par le résumé de partie (une soirée).
- *
- * ⚠️ Au résumé de partie, toujours **plusieurs cartes côte à côte** quand il y
- * a plusieurs joueurs : une carte isolée derrière un sélecteur de joueur
- * détruirait ce que la juxtaposition donne gratuitement — « lui il vise, moi
- * j'arrose » se voit en une seconde, se démontre difficilement. L'écran
- * Statistiques, lui, a fait l'autre choix (lot `statistiques-podium`) : une
- * seule cible en grand, derrière un sélecteur, parce que la comparaison y est
- * déjà portée par les cartes du podium (`PlateauImpacts`).
- */
+/** Cartes d'impacts côte à côte au résumé de partie. ⚠️ Toujours juxtaposées : un sélecteur détruirait la comparaison. */
 
 export type Impacts = {
   readonly id: string

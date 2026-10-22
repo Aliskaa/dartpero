@@ -78,7 +78,6 @@ describe('X01Rules — bust', () => {
     expect(volee.scored).toBe(0)
     expect(volee.remainingBefore).toBe(100)
     expect(volee.remainingAfter).toBe(100)
-    // La 3e fléchette n'a pas été lancée : la volée s'arrête au bust.
     expect(volee.darts).toHaveLength(2)
   })
 
@@ -220,7 +219,6 @@ describe('X01Rules — annulation', () => {
       [T20, T20, T20],
     ])
 
-    // L'état observé AVANT d'enregistrer la 2e volée, construit indépendamment.
     const avant = X01Rules.project(journal(config, DEUX_JOUEURS, [[T20, T20, T20]]))
     const annule = X01Rules.project(complet.slice(0, -1))
 

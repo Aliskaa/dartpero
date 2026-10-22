@@ -21,13 +21,7 @@ import {
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-/**
- * Les chiffres qui se commentent au comptoir, dans cet ordre.
- *
- * ⚠️ « Fléchettes » ferme la liste plutôt que d'être relégué en coin de
- * panneau : c'est le **dénominateur de la moyenne**, et une moyenne de 60 sur
- * 12 fléchettes ne vaut pas la même chose que sur 90.
- */
+/** Les chiffres qui se commentent au comptoir. ⚠️ « Fléchettes » ferme la liste : c'est le dénominateur de la moyenne. */
 const LIGNES: readonly LigneStat<X01PlayerStats>[] = [
   {
     libelle: 'Moyenne',
@@ -66,9 +60,7 @@ const LIGNES: readonly LigneStat<X01PlayerStats>[] = [
     meilleur: (j) => j.highestCheckout,
   },
   {
-    // ⚠️ Aucun meneur : lancer plus de fléchettes n'est pas un exploit,
-    // c'est souvent le contraire. Un score constant les met tous à égalité,
-    // donc la ligne ne dore personne.
+    // ⚠️ Aucun meneur : lancer plus de fléchettes n'est pas un exploit.
     libelle: 'Fléchettes',
     valeur: (j) => j.dartsThrown,
     meilleur: () => 0,

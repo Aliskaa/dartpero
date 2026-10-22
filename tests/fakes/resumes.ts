@@ -12,17 +12,11 @@ import type { Segment } from '@/core/domain/value-objects/Dart'
 import { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 import { MatchName } from '@/core/domain/value-objects/MatchName'
 
-/**
- * Des `MatchSummary` écrits à la main, pour tester le classement et l'affichage
- * sans rejouer de journal : la fonction testée ne lit que ce résumé.
- */
-
 export const joueurId = (nom: string): PlayerId => PlayerId.of(nom.toLowerCase())
 
 const commun = (id: string, nom: string | null, finished: boolean, winner: string | null) => ({
   id: MatchId.of(id),
   name: nom === null ? null : MatchName.of(nom),
-  // `MatchName.of` rend `null` pour un nom vide : sans nom tapé.
   createdAt: new Date(2026, 9, 13, 20, 0).getTime(),
   updatedAt: new Date(2026, 9, 13, 20, 0).getTime(),
   finished,

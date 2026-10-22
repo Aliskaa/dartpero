@@ -29,9 +29,7 @@ export class PlayTourDuMondeUseCase implements PlayTourDuMonde {
 
   async start(command: StartTourDuMondeCommand): Promise<MatchId> {
     const { config, startingPlayerIndex = 0, shuffle = false } = command
-    // Le nom d'abord : trop long, rien n'est tiré ni écrit.
     const name = nameField(command.name)
-    // Le tirage a lieu ici, une fois, et son résultat part dans le journal.
     const playerIds = shuffle ? shufflePlayers(command.playerIds, this.random) : command.playerIds
 
     const profils = await Promise.all(playerIds.map((id) => this.players.findById(id)))
@@ -45,7 +43,6 @@ export class PlayTourDuMondeUseCase implements PlayTourDuMonde {
       startingPlayerIndex,
       ...name,
     }
-    // Valide la composition AVANT de persister quoi que ce soit.
     TourDuMondeRules.start(started)
 
     const id = MatchId.of(this.ids.newId())
@@ -63,7 +60,6 @@ export class PlayTourDuMondeUseCase implements PlayTourDuMonde {
     const record = await loadMatch(this.matches, matchId)
 
     const avant = TourDuMondeRules.project(record.events)
-    // Applique les règles d'abord : si la volée est illégale, rien n'est écrit.
     const apres = TourDuMondeRules.applyVisit(avant, darts)
 
     await this.matches.save({
@@ -81,17 +77,14 @@ export class PlayTourDuMondeUseCase implements PlayTourDuMonde {
   async undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<TourDuMondeState>> {
     const record = await loadMatch(this.matches, matchId)
 
-    // La dernière volée **projetée**, déjà coupée à la fléchette qui a bouclé.
     const derniere = TourDuMondeRules.project(record.events).history.at(-1)
-    // Le premier événement ouvre la partie : on n'y touche pas.
     if (!derniere || record.events.length <= 1) throw new DomainError('No visit to undo')
 
     const events = record.events.slice(0, -1)
-    // Projeter AVANT d'écrire : un journal qui ne se rejoue pas n'est pas sauvé.
+    // Projeter avant d'écrire : un journal qui ne se rejoue pas n'est pas sauvé.
     const state = TourDuMondeRules.project(events)
     await this.matches.save({ ...record, events, updatedAt: this.clock.now() })
 
-    // La volée se rouvre : ses fléchettes restantes reviennent à la saisie.
     return { state, darts: derniere.darts.slice(0, -1) }
   }
 }

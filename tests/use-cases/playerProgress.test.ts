@@ -11,10 +11,6 @@ import { lancer } from './lancerPartie'
 const T20 = [Dart.triple(20), Dart.triple(20), Dart.triple(20)]
 const RIEN = [Dart.miss(), Dart.miss(), Dart.miss()]
 
-/**
- * Un instant en heure **locale**, construit comme le use case le lira
- * (`test.env.TZ = 'Europe/Paris'`).
- */
 const local = (annee: number, mois: number, jour: number, heure: number): number =>
   new Date(annee, mois, jour, heure).getTime()
 
@@ -72,13 +68,11 @@ describe('Carte Évolution (use case GetPlayerProgress)', () => {
     const hier = await ouvrir([kevin], local(2026, 7, 25, 23))
     const ceSoir = await ouvrir([kevin], CE_SOIR)
     await volee(ceSoir, T20, CE_SOIR)
-    // La partie d'hier est touchée en dernier : le dépôt la rend en tête.
     await volee(hier, RIEN, local(2026, 7, 26, 22))
 
     const tout = await courbe('ALL_TIME')
     expect(tout?.points.map((point) => point.matchId)).toEqual([hier, ceSoir])
 
-    // Touchée aujourd'hui, mais ouverte hier : elle reste sur hier.
     const aujourdhui = await courbe('TODAY')
     expect(aujourdhui?.points.map((point) => point.matchId)).toEqual([ceSoir])
   })
@@ -127,7 +121,6 @@ describe('Carte Évolution (use case GetPlayerProgress)', () => {
 
     expect((await courbe(undefined, kevin))?.points).toHaveLength(1)
     expect(await courbe(undefined, julien)).toBeUndefined()
-    // Le podium, lui, compte la partie pour Julien (R2 de l'architecture).
     const podium = await services.getPlayerStats.execute()
     expect(podium.find((joueur) => joueur.playerId === julien)?.matchesPlayed).toBe(1)
   })

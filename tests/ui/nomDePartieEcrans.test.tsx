@@ -16,10 +16,8 @@ import { lancer, ouverture } from '../use-cases/lancerPartie'
 import { retourTelephone } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/** Dimanche 11 octobre 2026, 21 h, heure locale : « Dimanche soir ». */
 const DIMANCHE_SOIR = new Date(2026, 9, 11, 21, 0).getTime()
 
-/** Des préférences qui gardent la trace de tout ce qu'on y écrit. */
 const preferencesEspionnes = () => {
   const memoire = createMemoryPreferences()
   const ecrites: unknown[] = []
@@ -43,21 +41,14 @@ const base = async () => {
   })
   const kevin = (await services.managePlayers.create('Kevin')).id
   const julien = (await services.managePlayers.create('Julien')).id
-  // Kevin seul retenu : chaque jeu se lance dès l'étape 2, sans étape d'ordre.
   preferences.write('partie:joueurs', [kevin])
   ecrites.length = 0
   const joueurs = (mode: GameModeId): readonly PlayerId[] =>
     mode === 'CHECKOUT_PRACTICE' ? [kevin] : [kevin, julien]
-  /** Kevin et Julien retenus : « Continuer » mène alors à l'étape Ordre. */
   const deuxJoueurs = () => preferences.write('partie:joueurs', [kevin, julien])
   return { services, dependencies, ecrites, joueurs, clock, deuxJoueurs }
 }
 
-/**
- * Mardi 13 octobre 2026, 9 h : un **autre jour** que la création. Les cas « nom
- * par défaut » y avancent l'horloge avant d'ouvrir l'écran, pour prouver que
- * le nom vient de la date de création et non de l'heure courante.
- */
 const MARDI_MATIN = new Date(2026, 9, 13, 9, 0).getTime()
 
 const ouvrir = (services: Services, route = '/nouvelle-partie') =>
@@ -73,10 +64,6 @@ const CARTE: Record<GameModeId, RegExp> = {
   CHECKOUT_PRACTICE: /^Entraînement/,
 }
 
-/**
- * Lance depuis l'étape 2. Le Killer ne se joue pas seul : il passe par
- * l'étape Ordre (deux joueurs retenus avant l'ouverture, `deuxJoueurs`).
- */
 const commencer = async (utilisateur: ReturnType<typeof userEvent.setup>, mode: GameModeId) => {
   if (mode === 'KILLER') {
     await utilisateur.click(await screen.findByRole('button', { name: 'Continuer' }))
@@ -93,7 +80,6 @@ const derniere = async (services: Services) => {
 }
 
 describe('Nom de la partie — étape 1', () => {
-  /** Critère 4 : le champ a quitté l'étape 1. */
   it('n’a plus de champ nom à l’étape 1', async () => {
     const { services } = await base()
     ouvrir(services)
@@ -104,7 +90,6 @@ describe('Nom de la partie — étape 1', () => {
 })
 
 describe('Nom de la partie — étape 2', () => {
-  /** Critère 1 : à l'étape 2, marqué facultatif. */
   it('propose « Dimanche soir » un dimanche à 21 h, facultatif, sans prendre le focus', async () => {
     const { services } = await base()
     ouvrir(services, '/nouvelle-partie/x01')
@@ -115,7 +100,6 @@ describe('Nom de la partie — étape 2', () => {
     expect(champ).not.toBeRequired()
   })
 
-  /** Critère 6, côté écran : 31 caractères ne peuvent pas être saisis. */
   it('limite la saisie à 30 caractères', async () => {
     const { services } = await base()
     ouvrir(services, '/nouvelle-partie/x01')
@@ -133,7 +117,6 @@ describe('Nom de la partie — étape 2', () => {
     expect(champNom()).toHaveAttribute('placeholder', 'Dimanche soir')
   })
 
-  /** Critère 10. */
   it('garde le nom tapé au retour du téléphone depuis l’étape 3', async () => {
     const utilisateur = userEvent.setup()
     const { services, deuxJoueurs } = await base()
@@ -184,7 +167,6 @@ describe('Nom de la partie — étape 2', () => {
 })
 
 describe('Nom de la partie — lancement, les quatre jeux', () => {
-  /** Critères 4 et 5. */
   it.each(GAME_MODE_IDS)('%s : enregistre le nom tapé, sans les espaces autour', async (mode) => {
     const utilisateur = userEvent.setup()
     const { services, dependencies, deuxJoueurs } = await base()
@@ -202,7 +184,6 @@ describe('Nom de la partie — lancement, les quatre jeux', () => {
     expect(await ouverture(dependencies, partie.id)).toMatchObject({ name: 'Finale des potes' })
   })
 
-  /** Critères 3 et 5 : laissé sur la proposition, vidé, ou fait d'espaces. */
   it.each(
     GAME_MODE_IDS.flatMap((mode) =>
       (['intact', 'vide', 'espaces'] as const).map((saisie) => [mode, saisie] as const),
@@ -226,7 +207,6 @@ describe('Nom de la partie — lancement, les quatre jeux', () => {
 })
 
 describe('Nom de la partie — à l’écran', () => {
-  /** Critère 4 : pendant la partie, dans le bandeau. */
   it.each(GAME_MODE_IDS)('%s : le bandeau porte le nom tapé', async (mode) => {
     const { services, joueurs } = await base()
     const id = await lancer(services, mode, joueurs(mode), 'Finale des potes')
@@ -247,7 +227,6 @@ describe('Nom de la partie — à l’écran', () => {
     expect(within(bandeau).queryByText('Mardi matin')).not.toBeInTheDocument()
   })
 
-  /** Critère 4 : en tête du résumé, sans second titre de niveau 1. */
   it.each(GAME_MODE_IDS)('%s : le résumé porte le nom en tête', async (mode) => {
     const { services, joueurs } = await base()
     const id = await lancer(services, mode, joueurs(mode), 'Finale des potes')
@@ -255,11 +234,9 @@ describe('Nom de la partie — à l’écran', () => {
 
     const nom = await screen.findByText('Finale des potes')
     expect(nom.tagName).toBe('P')
-    // Un paragraphe, jamais un second titre : le seul `<h1>` reste le vainqueur.
     expect(screen.queryAllByRole('heading', { level: 1 }).length).toBeLessThanOrEqual(1)
   })
 
-  /** Critère 3 : sans nom tapé, le résumé porte le nom de la date de création. */
   it.each(GAME_MODE_IDS)('%s : le résumé porte le nom par défaut sans nom tapé', async (mode) => {
     const { services, joueurs, clock } = await base()
     const id = await lancer(services, mode, joueurs(mode))
@@ -271,12 +248,6 @@ describe('Nom de la partie — à l’écran', () => {
     expect(nom.tagName).toBe('P')
   })
 
-  /**
-   * Critère 11, la part que jsdom peut voir : la ligne du nom existe **avant**
-   * que le nom arrive (`nomPartie = null`), avec sa hauteur réservée — sinon la
-   * zone de lecture sauterait à l'arrivée du nom. Le rendu lui-même reste à
-   * relire à l'écran.
-   */
   it('le bandeau réserve la ligne du nom pendant le chargement', () => {
     render(
       <DispositionPartie enTete={<span>Manche 1</span>} nomPartie={null} saisie={null}>
@@ -290,17 +261,12 @@ describe('Nom de la partie — à l’écran', () => {
     expect(lignes[0]).toHaveClass('h-4')
   })
 
-  /**
-   * Critères 4 et 7, puis `cartes-partie` : seul un nom TAPÉ titre une ligne ; sans
-   * nom (défaut ou partie d'avant le lot), le titre est la règle du jeu, jamais « Dimanche soir ».
-   */
   it('l’historique titre les lignes du nom tapé seulement, jamais du nom par défaut', async () => {
     const { services, dependencies, joueurs } = await base()
     await lancer(services, 'CRICKET', joueurs('CRICKET'), 'Finale des potes')
     await lancer(services, 'X01', joueurs('X01'))
     const [kevin] = joueurs('X01')
     if (!kevin) throw new Error('joueur attendu')
-    // Un samedi après-midi, enregistré avant le lot : pas de clé `name`.
     const samedi = new Date(2026, 9, 10, 15, 0).getTime()
     await dependencies.matches.save({
       id: MatchId.of('ancienne'),
@@ -326,7 +292,6 @@ describe('Nom de la partie — à l’écran', () => {
     expect(titres.join(' ')).not.toMatch(/soir|après-midi|matin|nuit/i)
   })
 
-  /** Critère 9, de bout en bout : « On remet ça » garde le nom tapé. */
   it('« On remet ça » garde le nom tapé', async () => {
     const utilisateur = userEvent.setup()
     const { services, joueurs } = await base()

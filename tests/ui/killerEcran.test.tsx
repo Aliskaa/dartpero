@@ -14,14 +14,6 @@ import { DepotCompteur, fakeDependencies, SettableClock } from '../fakes'
 import { flechette, validerSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Lot `killer`, passe 2 : l'écran de partie. Effets écrits fléchette par
- * fléchette, état des lignes qui inclut la volée en cours, boîte « Valider la
- * sortie » au nom du gagnant (forme variante comprise), rien d'écrit ni de dit
- * avant de valider, un seul énoncé par volée, reprise après rechargement,
- * annulation à travers killer et élimination.
- */
-
 const banc = () => {
   const dites: string[] = []
   const announcer: Announcer = {
@@ -73,7 +65,6 @@ const actif = (nom: string) => ligne(nom).getAttribute('aria-current') === 'true
 const vies = (nom: string) => screen.getByLabelText(`Vies de ${nom}`)
 const volee = (nom: string) => screen.getByLabelText(`Volée de ${nom}`)
 const boite = () => screen.queryByRole('dialog')
-/** Le résumé est là (« Numéro » n'existe que sous ses numéros) : l'écran de partie est parti. */
 const resumeAffiche = () =>
   waitFor(() => expect(screen.getAllByText('Numéro').length).toBeGreaterThan(0), {
     timeout: 3000,
@@ -98,19 +89,16 @@ describe('Killer — l’écran pendant la volée', () => {
 
     await flechette(utilisateur, '17', 'Double')
     expect(volee('Kevin')).toHaveTextContent('D17 Killer !')
-    // Killer tout de suite : le badge remplace « Vise D17 » avant l'enregistrement.
     expect(within(ligne('Kevin')).getByText('Killer')).toBeInTheDocument()
     expect(within(ligne('Kevin')).queryByText('Vise')).toBeNull()
     expect(await evenements(matches, id)).toBe(journal)
     expect(dites).toEqual([])
 
-    // La troisième compte déjà : Kevin est killer depuis la deuxième.
     await flechette(utilisateur, '8')
     await waitFor(async () => expect(await evenements(matches, id)).toBe(journal + 1))
     expect(volee('Kevin')).toHaveTextContent('S8 Julien −1')
     expect(vies('Julien')).toHaveTextContent('2 vies, 1 perdue')
     expect(actif('Julien')).toBe(true)
-    // Un seul énoncé : le jalon, puis la main qui passe.
     expect(dites).toEqual(['Kevin devient killer. À toi, Julien'])
   })
 
@@ -130,7 +118,6 @@ describe('Killer — l’écran pendant la volée', () => {
 })
 
 describe('Killer — la boîte « Valider la sortie »', () => {
-  /** Kevin killer (D17), Julien sans effet : la prochaine fléchette de Kevin peut gagner. */
   const auBord = async (joueurs: readonly Joueur[] = [KEVIN, JULIEN]) => {
     const outils = banc()
     const id = await killer(outils.services, joueurs)
@@ -161,17 +148,14 @@ describe('Killer — la boîte « Valider la sortie »', () => {
     expect(dialogue).toHaveTextContent(
       'Julien est éliminé. Kevin est le dernier en vie : la partie est gagnée dès que vous validez.',
     )
-    // L'aperçu montre déjà l'élimination, mais rien n'est écrit ni dit.
     expect(volee('Kevin')).toHaveTextContent('T8 Julien éliminé')
     expect(await evenements(matches, id)).toBe(journal)
     expect(dites).toEqual([])
 
     await validerSortie(utilisateur)
     await waitFor(async () => expect(await evenements(matches, id)).toBe(journal + 1))
-    // Pas de « À toi », pas de « Partie gagnée ! » : l'élimination puis la phrase.
     await waitFor(() => expect(dites).toEqual([`Julien est éliminé. ${phraseVictoire(id)}`]))
 
-    // Le résumé : classement par ordre d'élimination, « Éliminé par … ».
     await resumeAffiche()
     expect(screen.getByText('Dernier en vie · 3 vies')).toBeInTheDocument()
     expect(screen.getByText('Éliminé par Kevin')).toBeInTheDocument()
@@ -190,16 +174,13 @@ describe('Killer — la boîte « Valider la sortie »', () => {
     await waitFor(() => expect(boite()).toBeNull())
     expect(vies('Julien')).toHaveTextContent('3 vies')
     expect(within(ligne('Julien')).queryByText('Éliminé')).toBeNull()
-    // La volée est vide ; la pause protège la volée précédente, celle de Julien.
     expect(screen.getByRole('button', { name: 'Annuler S1 de Julien' })).toBeDisabled()
     expect(await evenements(matches, id)).toBe(journal)
-    // Critère 14 : Corriger ne dit rien.
     expect(dites).toEqual([])
 
     clock.regler(clock.now() + GARDE_APRES_FERMETURE_MS)
     await flechette(utilisateur, '8')
     expect(vies('Julien')).toHaveTextContent('2 vies, 1 perdue')
-    // Témoin : la voix est bien branchée, la volée suivante, elle, se dit.
     await flechette(utilisateur, '1')
     await flechette(utilisateur, '1')
     await waitFor(() => expect(dites).toHaveLength(1))
@@ -259,7 +240,6 @@ describe('Killer — élimination en cours de partie', () => {
     expect(screen.getByLabelText('Joueurs en vie')).toHaveTextContent('3 en vie')
 
     await flechette(utilisateur, '12', 'Triple')
-    // Une élimination qui ne finit pas la partie : pas de boîte.
     expect(boite()).toBeNull()
     expect(within(ligne('Sarah')).getByText('Éliminée')).toBeInTheDocument()
     expect(screen.getByLabelText('Joueurs en vie')).toHaveTextContent('2 en vie')
@@ -267,7 +247,6 @@ describe('Killer — élimination en cours de partie', () => {
     await flechette(utilisateur, '1')
     await flechette(utilisateur, '1')
     await waitFor(async () => expect(await evenements(matches, id)).toBe(5))
-    // Sarah est sautée : c'est à Julien.
     await waitFor(() => expect(actif('Julien')).toBe(true))
     expect(dites).toEqual(['Sarah est éliminée. À toi, Julien'])
   })
@@ -286,7 +265,6 @@ describe('Killer — élimination en cours de partie', () => {
 
     await flechette(utilisateur, '8', 'Double')
     await flechette(utilisateur, '8', 'Triple')
-    // Volée arrêtée, aucune boîte : la partie continue à deux.
     await waitFor(async () => expect(await evenements(matches, id)).toBe(3))
     expect(boite()).toBeNull()
     expect(volee('Julien')).toHaveTextContent('T8 Julien éliminé')
@@ -307,7 +285,6 @@ describe('Killer — élimination en cours de partie', () => {
     await services.playKiller.recordVisit(id, [Dart.double(8), Dart.triple(8)])
     ouvrir(services, id)
     await waitFor(() => expect(actif('Sarah')).toBe(true))
-    // Précondition : l'auto-élimination est bien là.
     expect(within(ligne('Julien')).getByText('Éliminé')).toBeInTheDocument()
 
     await utilisateur.click(screen.getByRole('button', { name: 'Annuler T8 de Julien' }))
@@ -315,7 +292,6 @@ describe('Killer — élimination en cours de partie', () => {
     await waitFor(() => expect(actif('Julien')).toBe(true))
     expect(within(ligne('Julien')).queryByText('Éliminé')).toBeNull()
     expect(vies('Julien')).toHaveTextContent('3 vies')
-    // Le D8 reste dans la volée rouverte : Julien est toujours killer.
     expect(within(ligne('Julien')).getByText('Killer')).toBeInTheDocument()
     expect((await services.playKiller.getState(id)).eliminations).toEqual([])
     expect(dites).toEqual([])
@@ -350,7 +326,6 @@ describe('Killer — élimination en cours de partie', () => {
 })
 
 describe('Killer — profil supprimé, de bout en bout', () => {
-  /** Supprime le profil `nom` après avoir vérifié son genre (précondition de l'accord). */
   const supprimer = async (services: Services, nom: string, genre?: PlayerGender) => {
     const profil = (await services.managePlayers.listAll()).find((p) => p.name === nom)
     if (!profil) throw new Error(`profil ${nom} absent`)
@@ -383,7 +358,6 @@ describe('Killer — profil supprimé, de bout en bout', () => {
     ouvrir(services, id)
 
     await resumeAffiche()
-    // Sarah et Julien, tous deux éliminés par Kevin, supprimé ; Sarah perd son accord.
     expect(screen.getAllByText('Éliminé par Joueur supprimé')).toHaveLength(2)
     expect(screen.queryByText(/Éliminée/)).toBeNull()
   })
@@ -403,13 +377,11 @@ describe('Killer — rechargement et annulation', () => {
     await flechette(utilisateur, '8')
     await screen.findByRole('dialog', { name: 'Kevin gagne sur S8 ?' })
     dites.length = 0
-    // Le brouillon s'écrit en file : on laisse la dernière écriture aboutir.
     await waitFor(async () =>
       expect((await dependencies.visitDrafts.findById(id))?.darts ?? []).toHaveLength(2),
     )
     avant.unmount()
 
-    // Mêmes services (le même disque), nouveau `QueryClient` (renderWithServices).
     ouvrir(services, id)
     expect(await screen.findByRole('dialog', { name: 'Kevin gagne sur S8 ?' })).toBeInTheDocument()
     expect(volee('Kevin')).toHaveTextContent('D8 Julien −2')
@@ -439,10 +411,8 @@ describe('Killer — rechargement et annulation', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Annuler D17 de Kevin' }))
     expect(within(ligne('Kevin')).getByText('Vise')).toBeInTheDocument()
     expect((await services.playKiller.getState(id)).history).toHaveLength(0)
-    // Critère 14 : trois annulations, et pas un mot.
     expect(dites).toEqual([])
 
-    // Témoin : la voix est bien branchée, une volée jouée se dit.
     await flechette(utilisateur, '1')
     await flechette(utilisateur, '1')
     await flechette(utilisateur, '1')

@@ -13,10 +13,7 @@ export const useJoueurs = () => {
   })
 }
 
-/**
- * Profil complet par identifiant, pour habiller un état de match qui ne connaît
- * que des `PlayerId` — le pseudo pour l'écrire, la couleur pour la pastille.
- */
+/** Profil complet par identifiant, pour habiller un état de match qui ne connaît que des `PlayerId`. */
 export const useProfils = (): ReadonlyMap<PlayerId, Player> => {
   const { data } = useJoueurs()
   return new Map((data ?? []).map((joueur) => [joueur.id, joueur]))

@@ -44,10 +44,8 @@ import {
 } from '@/ui/labels'
 
 /**
- * Ce que les deux cartes de partie (ligne de feuille, mini tableau) affichent,
- * calculé hors des composants : un `switch` exhaustif sur `MatchSummary`, le
- * français dans `labels.ts`. Un cinquième mode fait échouer la compilation ici.
- * Le classement vient de `rankPlayers` (application), jamais recalculé.
+ * Ce que les deux cartes de partie (ligne de feuille, mini tableau) affichent, calculé hors des composants
+ * : un `switch` exhaustif sur `MatchSummary`, le français dans `labels.ts`.
  */
 
 export const PICTOGRAMME_DU_MODE: Record<GameModeId, NomPictogramme> = {
@@ -78,17 +76,12 @@ export type JaugeCarte =
   | { readonly type: 'vies'; readonly restantes: number; readonly total: number }
 
 export type JoueurCarte = {
-  /** Killer : éliminé, barré en bas du mini tableau. Absent ailleurs. */
   readonly elimine?: boolean
   readonly playerId: PlayerId
   readonly nom: string
-  /** Partie finie et en tête (tous les ex æquo) : laiton et « ✓ ». Jamais à l'entraînement. */
   readonly premier: boolean
-  /** À égalité avec le premier sur toutes les clés, partie finie ou non : le mini tableau le teinte. */
   readonly enTeteDuClassement: boolean
-  /** Le chiffre de la ligne de feuille : vide pour le vainqueur d'un X01 (le « ✓ » le remplace). */
   readonly valeur: string
-  /** Le chiffre du mini tableau : le nombre, et son petit suffixe. */
   readonly chiffre: { readonly valeur: string; readonly petit: string | null }
   readonly jauge: JaugeCarte
 }
@@ -98,13 +91,9 @@ export type VueCarte = {
   readonly pictogramme: NomPictogramme
   readonly detail: string
   readonly unite: string
-  /** Les règles, sans le nom du jeu. */
   readonly regles: string
-  /** Dans l'ordre du classement. */
   readonly joueurs: readonly JoueurCarte[]
-  /** L'état du mini tableau : « Manche 3 », « Dernier tour »… */
   readonly etat: string
-  /** La phrase complète des lecteurs d'écran. */
   readonly phrase: string
 }
 
@@ -124,7 +113,6 @@ type Parole = {
   readonly gagne: boolean
   readonly unite: string
   readonly parle: ((avecUnite: boolean) => string) | null
-  /** X01 fini : les manches jouées, dites avec le vainqueur. */
   readonly enManches?: number
 }
 
@@ -279,8 +267,8 @@ export const vueCarte = (partie: MatchSummary): VueCarte => {
       }
     }
 
-    // Le mini tableau de la planche : classé par `rank` (vies décroissantes, ex
-    // æquo dans l'ordre de jeu, éliminés en bas), vies en carrés, « N en vie ».
+    // Le mini tableau de la planche : classé par `rank` (vies décroissantes, ex æquo dans l'ordre de jeu,
+    // éliminés en bas), vies en carrés, « N en vie ».
     case 'KILLER': {
       const { startingLives } = partie.config
       const classement = rankPlayers(partie)
@@ -290,15 +278,15 @@ export const vueCarte = (partie: MatchSummary): VueCarte => {
         pictogramme: PICTOGRAMME_DU_MODE.KILLER,
         detail: libelleVies(startingLives),
         unite: UNITE_CARTE.KILLER,
-        // « 3 vies » seulement : ni le tirage, ni la variante (réponse 8).
+        // « 3 vies » seulement : ni le tirage, ni la variante.
         regles: libelleVies(startingLives),
         joueurs: classement.map((joueur) => ({
           playerId: joueur.playerId,
           nom: nomJoueur(joueur.name),
           premier: enTete(joueur.playerId),
-          // Pas de teinte de la ligne de tête en cours de partie (réponse 9).
+          // Pas de teinte de la ligne de tête en cours de partie.
           enTeteDuClassement: false,
-          // Le rang une fois la partie finie, les vies en cours (réponse 8).
+          // Le rang une fois la partie finie, les vies en cours.
           valeur: partie.finished ? String(joueur.rank) : String(joueur.lives),
           chiffre: {
             valeur: partie.finished ? String(joueur.rank) : String(joueur.lives),
@@ -324,7 +312,7 @@ export const vueCarte = (partie: MatchSummary): VueCarte => {
       const { rounds, minTarget, maxTarget } = partie.config
       const reussies = partie.roundsWon
       const jouees = partie.roundsPlayed
-      // Un seul joueur et rien à classer : ni laiton ni « ✓ » (réponse R6).
+      // Un seul joueur et rien à classer : ni laiton ni « ✓ ».
       const joueurs = partie.players.map((joueur) => ({
         playerId: joueur.playerId,
         nom: nomJoueur(joueur.name),
@@ -366,11 +354,8 @@ export const vueCarte = (partie: MatchSummary): VueCarte => {
 }
 
 /**
- * Le « quand » d'une carte : l'heure seule aujourd'hui à l'Accueil, « dim. 18 h 10 »
- * dans la semaine (et, à Parties, dès aujourd'hui), « 3 oct. 22 h 15 » au-delà,
- * « 3 oct. 2025 » d'une autre année.
- *
- * `maintenant` vient de `services.clock.now()` : jamais `Date.now()` ici.
+ * Le « quand » d'une carte : l'heure seule aujourd'hui à l'Accueil, « dim. 18 h 10 » dans la semaine (et, à
+ * Parties, dès aujourd'hui), « 3 oct. 22 h 15 » au-delà, « 3 oct. 2025 » d'une autre année.
  */
 export const quandCarte = (
   createdAt: number,

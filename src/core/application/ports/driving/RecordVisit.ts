@@ -6,17 +6,13 @@ import type { MatchId } from '../../../domain/value-objects/ids'
 
 export type RecordVisitCommand = {
   readonly matchId: MatchId
-  /** 1 à 3 fléchettes, dans l'ordre où elles ont été lancées. */
   readonly darts: readonly Dart[]
 }
 
 export type RecordVisitResult = {
   readonly state: X01State
   readonly visit: Visit
-  /**
-   * Uniquement les jalons déclenchés par CETTE volée (leg gagné, set, fin de
-   * match). C'est ce dont l'UI a besoin pour son moment de récompense.
-   */
+  /** Uniquement les jalons déclenchés par cette volée. */
   readonly milestones: readonly X01Milestone[]
 }
 

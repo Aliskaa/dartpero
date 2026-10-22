@@ -5,15 +5,7 @@ import App from '@/App'
 import { fakeServices } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * La politique de confidentialité et les mentions légales (`/confidentialite`),
- * l'URL publique donnée à la Play Console.
- *
- * ⚠️ Aucune assertion sur les valeurs des mentions légales : elles changent
- * avec l'éditeur ou l'hébergeur, pas avec le code. Un marqueur REMPLIR oublié
- * est bloqué par la garde de publication de `npm run smoke`, sur `dist/` —
- * pas par la suite de tests.
- */
+// ⚠️ Aucune assertion sur les valeurs des mentions légales : elles changent avec l'éditeur.
 
 const ouvrir = (route: string) =>
   renderWithServices(<App />, { services: fakeServices().services, route })

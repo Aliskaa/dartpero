@@ -28,16 +28,6 @@ import {
 import { flechette, locationCourante, retourTelephone, validerSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Lot `volee-partielle`, à l'écran : les fléchettes de la volée en cours
- * survivent à un rechargement, sans message ; la boîte « Valider la sortie »
- * revient si sa fléchette attendait ; rien n'est dit ni célébré à la reprise.
- *
- * « Rechargement » : l'application est démontée, puis rendue à neuf avec les
- * **mêmes services** (le même disque) et un **nouveau** `QueryClient` (la
- * mémoire de la page est perdue).
- */
-
 const banc = (surcharges: Partial<Dependencies> = {}) => {
   const dites: string[] = []
   const announcer: Announcer = {
@@ -60,11 +50,9 @@ const joueurs = async (services: Services, noms = ['Kevin', 'Julien']) => {
 const ouvrir = (services: Services, matchId: MatchId) =>
   renderWithServices(<App />, { services, route: `/partie/${matchId}` })
 
-/** Le brouillon de la partie, tel que le disque le garde. */
 const brouillon = (dependencies: Dependencies, matchId: MatchId) =>
   dependencies.visitDrafts.findById(matchId)
 
-/** Attend que les écritures du brouillon (asynchrones, en file) aient abouti. */
 const attendreBrouillon = async (dependencies: Dependencies, matchId: MatchId, n: number) =>
   waitFor(async () => expect((await brouillon(dependencies, matchId))?.darts ?? []).toHaveLength(n))
 
@@ -80,15 +68,9 @@ type Mode = {
   readonly poser: (utilisateur: Utilisateur) => Promise<void>
   readonly derniere: string
   readonly affiche: (services: Services, id: MatchId) => Promise<unknown>
-  /** Trois fléchettes qui closent la volée sans finir la partie (N-1). */
   readonly clore: readonly [string, string, string]
 }
 
-/**
- * Les modes : une partie neuve, deux fléchettes posées, ce qui doit revenir.
- * Indexés par `GameModeId` : un mode nouveau fait échouer la compilation tant
- * qu'il n'a pas son entrée (`rules/testing.md`).
- */
 const PAR_MODE = {
   X01: {
     nom: 'X01',
@@ -121,7 +103,6 @@ const PAR_MODE = {
     derniere: 'Annuler D19 de Kevin',
     affiche: async () =>
       expect(screen.getByLabelText('Volée de Kevin')).toHaveTextContent('S20D19—'),
-    // Le 20 fermé, six cibles encore ouvertes : la partie continue.
     clore: ['20', '20', '20'],
   },
   TOUR_DU_MONDE: {
@@ -138,7 +119,6 @@ const PAR_MODE = {
     },
     derniere: 'Annuler 19 de Kevin',
     affiche: async () => expect(screen.getByLabelText('Cible de Kevin')).toHaveTextContent('18'),
-    // 20, 19, 18 : trois cibles validées, dix-huit encore à faire.
     clore: ['20', '19', '18'],
   },
   CHECKOUT_PRACTICE: {
@@ -158,12 +138,10 @@ const PAR_MODE = {
     },
     derniere: 'Annuler S2 de Kevin',
     affiche: async (services: Services, id: MatchId) => {
-      // Un simple 1 puis un simple 2 : le reste tiré (au journal), moins 3.
       const cible = (await services.playCheckoutPractice.getState(id)).current?.target ?? 0
       expect(cible).toBeGreaterThanOrEqual(41)
       expect(screen.getByLabelText('Reste pour le checkout')).toHaveTextContent(String(cible - 3))
     },
-    // Le reste tiré vaut au moins 41 : trois simples 1 ne le finissent pas.
     clore: ['1', '1', '1'],
   },
   KILLER: {
@@ -180,10 +158,8 @@ const PAR_MODE = {
       await flechette(utilisateur, '8')
     },
     derniere: 'Annuler S8 de Kevin',
-    // Killer au D17, puis Julien touché tout de suite : l'effet revient avec la volée.
     affiche: async () =>
       expect(screen.getByLabelText('Volée de Kevin')).toHaveTextContent('D17 Killer !S8 Julien −1'),
-    // 1 n'est le numéro de personne : trois fléchettes sans effet.
     clore: ['1', '1', '1'],
   },
 } satisfies Record<GameModeId, Mode>
@@ -209,7 +185,6 @@ describe.each(MODES)('$nom : la volée en cours survit au rechargement', (mode) 
     expect(screen.getByRole('button', { name: mode.derniere })).toBeEnabled()
     await mode.affiche(services, id)
     expect(screen.getByRole('button', { name: '20' })).toBeEnabled()
-    // La reprise est silencieuse : rien n'est dit, rien n'est écrit au journal.
     expect(dites).toEqual([])
     expect((await brouillon(dependencies, id))?.darts).toHaveLength(2)
   })
@@ -228,7 +203,6 @@ describe('Volée en cours — X01 au détail', () => {
 
     ouvrir(services, id)
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('441'))
-    // La saisie reprend après la fléchette rendue (la bascule : test suivant).
     await flechette(utilisateur, '20')
     expect(scoreDe('Kevin')).toHaveTextContent('421')
     await attendreBrouillon(dependencies, id, 2)
@@ -243,7 +217,6 @@ describe('Volée en cours — X01 au détail', () => {
     await flechette(utilisateur, '20')
     await attendreBrouillon(dependencies, id, 1)
     await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
-    // Précondition : la bascule est bien enfoncée quand l'application est tuée.
     expect(screen.getByRole('button', { name: 'Triple' })).toHaveAttribute('aria-pressed', 'true')
     avant.unmount()
 
@@ -251,7 +224,6 @@ describe('Volée en cours — X01 au détail', () => {
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('481'))
     expect(screen.getByRole('button', { name: 'Triple' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: 'Simple' })).toHaveAttribute('aria-pressed', 'true')
-    // La fléchette suivante est donc un simple.
     await flechette(utilisateur, '20')
     expect(scoreDe('Kevin')).toHaveTextContent('461')
   })
@@ -259,13 +231,11 @@ describe('Volée en cours — X01 au détail', () => {
   it('le brouillon est effacé après trois fléchettes, après un bust, après une sortie validée', async () => {
     const utilisateur = userEvent.setup()
 
-    // Trois fléchettes.
     const trois = banc()
     const id = await PAR_MODE.X01.demarrer(trois.services)
     const vue = ouvrir(trois.services, id)
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
     for (const _ of [0, 1]) await flechette(utilisateur, '1')
-    // Précondition : la volée ouverte est bien au brouillon avant la troisième.
     await attendreBrouillon(trois.dependencies, id, 2)
     await flechette(utilisateur, '1')
     await waitFor(async () =>
@@ -274,7 +244,6 @@ describe('Volée en cours — X01 au détail', () => {
     await waitFor(async () => expect(await brouillon(trois.dependencies, id)).toBeNull())
     vue.unmount()
 
-    // Un bust : la volée part sans confirmation, son brouillon s'efface.
     const bust = banc()
     const idBust = await bust.services.startMatch.execute({
       playerIds: await joueurs(bust.services),
@@ -282,7 +251,6 @@ describe('Volée en cours — X01 au détail', () => {
     })
     const vueBust = ouvrir(bust.services, idBust)
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('50'))
-    // S20 laisse 30, la volée reste ouverte : précondition, elle est au brouillon.
     await flechette(utilisateur, '20')
     await attendreBrouillon(bust.dependencies, idBust, 1)
     await flechette(utilisateur, '20', 'Triple')
@@ -292,7 +260,6 @@ describe('Volée en cours — X01 au détail', () => {
     await waitFor(async () => expect(await brouillon(bust.dependencies, idBust)).toBeNull())
     vueBust.unmount()
 
-    // Une sortie validée.
     const sortie = banc()
     const idSortie = await sortie.services.startMatch.execute({
       playerIds: await joueurs(sortie.services),
@@ -351,7 +318,6 @@ describe('Volée en cours — entraînement', () => {
     const reste = await screen.findByLabelText('Reste pour le checkout')
     expect(Number(reste.textContent)).toBe(cible - 2)
     expect(screen.getByRole('button', { name: 'Annuler S1 de Kevin' })).toBeEnabled()
-    // La reprise ne consulte pas la source d'aléa : le reste est au journal.
     expect(random.tirages).toBe(tirages)
     expect(boite()).toBeNull()
   })
@@ -363,7 +329,6 @@ describe('Volée en cours — entraînement', () => {
     ouvrir(services, id)
     await PAR_MODE.CHECKOUT_PRACTICE.attendre()
 
-    // Le reste tiré vaut au moins 41 : trois simples 1 ne le finissent pas.
     for (const _ of [0, 1]) await flechette(utilisateur, '1')
     await attendreBrouillon(dependencies, id, 2)
     await flechette(utilisateur, '1')
@@ -399,7 +364,6 @@ describe('Volée en cours — Tour du monde au détail', () => {
   })
 })
 
-/** La boîte « Valider la sortie » revient si sa fléchette attendait. */
 const SORTIES = [
   {
     nom: 'X01',
@@ -457,7 +421,6 @@ const SORTIES = [
 ] as const
 
 describe.each(SORTIES)('$nom : la sortie en attente au rechargement', (mode) => {
-  /** Pose la fléchette de sortie, laisse la boîte ouverte, puis démonte (l'app est tuée). */
   const tuerAvecBoite = async () => {
     const utilisateur = userEvent.setup()
     const outils = banc()
@@ -487,7 +450,6 @@ describe.each(SORTIES)('$nom : la sortie en attente au rechargement', (mode) => 
     expect(locationCourante().pathname).toBe(`/partie/${id}`)
     expect(await mode.volees(services, id)).toBe(0)
     expect(dites).toEqual([])
-    // Corriger a retiré la fléchette de sortie, au brouillon aussi.
     await attendreBrouillon(dependencies, id, mode.nombre - 1)
   })
 
@@ -562,7 +524,6 @@ describe('Volée en cours — brouillon écarté', () => {
     expect(await services.getMatchState.execute(id)).toMatchObject({ history: [] })
   })
 
-  /** Une fléchette qui gagne ou boucle, suivie d'une autre : le préfixe n'est pas une volée ouverte. */
   const PREFIXES_ILLEGAUX = [
     {
       nom: 'Cricket : une fléchette après celle qui gagne',
@@ -626,7 +587,6 @@ describe('Volée en cours — les règles du mode lèvent en jugeant le brouillo
     const { services, dependencies } = banc()
     const id = await PAR_MODE.X01.demarrer(services)
     await dependencies.visitDrafts.save({ matchId: id, visitCount: 0, darts: [Dart.single(1)] })
-    // Précondition : le brouillon est lisible et cohérent, seul le jugement lève.
     expect(await brouillon(dependencies, id)).not.toBeNull()
     const base = await services.getMatchState.execute(id)
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -664,7 +624,6 @@ describe('Volée en cours — brouillon écrit, volée refusée par le journal (
     await flechette(utilisateur, '1')
 
     expect(await screen.findByRole('alert')).toHaveTextContent('disque plein')
-    // L'effacement ne suit que l'enregistrement réussi : les trois fléchettes restent.
     await attendreBrouillon(dependencies, id, 3)
     expect((await services.getMatchState.execute(id)).history).toHaveLength(0)
     avant.unmount()
@@ -672,7 +631,6 @@ describe('Volée en cours — brouillon écrit, volée refusée par le journal (
 
     ouvrir(services, id)
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('501'))
-    // Une volée close n'a rien à faire en saisie : écartée, sans message.
     expect(screen.getByRole('button', { name: 'Annuler' })).toBeDisabled()
     expect(screen.queryByRole('alert')).toBeNull()
     expect(boite()).toBeNull()
@@ -699,7 +657,6 @@ describe('Volée en cours — brouillon écrit, volée refusée par le journal (
       await flechette(utilisateur, troisieme)
 
       expect(await screen.findByRole('alert')).toHaveTextContent('disque plein')
-      // L'effacement ne suit que l'enregistrement réussi : les trois fléchettes restent.
       await attendreBrouillon(dependencies, id, 3)
       expect(await evenements()).toBe(journal)
       avant.unmount()
@@ -707,7 +664,6 @@ describe('Volée en cours — brouillon écrit, volée refusée par le journal (
 
       ouvrir(services, id)
       await mode.attendre()
-      // Une volée close n'a rien à faire en saisie : écartée, sans message.
       await waitFor(() => expect(screen.getByRole('button', { name: 'Annuler' })).toBeDisabled())
       expect(screen.queryByRole('alert')).toBeNull()
       expect(boite()).toBeNull()
@@ -785,11 +741,9 @@ describe('Volée en cours — l’écriture du brouillon ne bloque jamais la sai
     await waitFor(async () =>
       expect((await services.getMatchState.execute(id)).history).toHaveLength(1),
     )
-    // Une seule écriture a atteint le dépôt : les suivantes attendent leur tour.
     expect(visitDrafts.ecritures).toBe(1)
 
     visitDrafts.liberer()
-    // Trois écritures puis l'effacement, dans l'ordre : le dépôt finit vide.
     await waitFor(() => expect(visitDrafts.ecritures).toBe(4))
     expect(await visitDrafts.findById(id)).toBeNull()
   })
@@ -800,14 +754,11 @@ describe('Volée en cours — StrictMode', () => {
     const visitDrafts = new BrouillonsSuspendus()
     const { services } = banc({ visitDrafts })
     const id = await SORTIES[0].demarrer(services)
-    // Une sortie en attente, laissée par une page tuée : S20 puis D10, à 40.
     await visitDrafts.save({
       matchId: id,
       visitCount: 0,
       darts: [Dart.single(20), Dart.double(10)],
     })
-    // La partie déjà en cache (retour par « Reprendre ») : l'état est là dès le
-    // montage, c'est donc là que `StrictMode` rejoue l'effet de lecture.
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     queryClient.setQueryData(['match', id], await services.getMatchState.execute(id))
 
@@ -821,7 +772,6 @@ describe('Volée en cours — StrictMode', () => {
     expect(await screen.findByRole('dialog', { name: 'Kevin sort sur D10 ?' })).toBeInTheDocument()
     expect(visitDrafts.lectures).toBe(1)
 
-    // Un seul recul ferme la boîte (Corriger) ; le suivant quitte la partie.
     await retourTelephone()
     await waitFor(() => expect(boite()).toBeNull())
     expect(locationCourante().pathname).toBe(`/partie/${id}`)

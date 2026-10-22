@@ -51,8 +51,7 @@ export const KillerEcran = () => {
 
   useWakeLock(state !== null && !termine)
 
-  // La boîte « Kevin gagne sur D8 ? » : au-dessus du chargement, comme toute
-  // boîte au retour (CONVENTIONS § 9).
+  // La boîte « Kevin gagne sur D8 ? » : au-dessus du chargement, comme toute boîte au retour.
   const confirmation = useConfirmationSortie({
     pret: partie.pret,
     enAttente: partie.sortieEnAttente,
@@ -93,9 +92,7 @@ export const KillerEcran = () => {
   const affiche = partie.affiche ?? state
   const nomDe = (id: PlayerId) => nomJoueur(profils.get(id)?.name ?? null)
 
-  // La volée écrite sur la dernière ligne : celle en cours si une fléchette est
-  // posée, sinon la dernière enregistrée (avec son nom), sinon les cases vides
-  // de qui va lancer. Les effets viennent du domaine, jamais recalculés ici.
+  // Dernière ligne : la volée en cours, sinon la dernière enregistrée, sinon les cases vides du lanceur.
   const visite: KillerVisit | null = partie.voleeEnCours ?? state.history.at(-1) ?? null
   const proprietaire = visite?.playerId ?? partie.joueurCourant.playerId
 

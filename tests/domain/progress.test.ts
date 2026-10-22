@@ -125,7 +125,6 @@ describe('Carte Évolution — la série par partie (lot courbe)', () => {
     const kevin = courbeDe(progres)
 
     expect(kevin.points.map((point) => point.matchId)).toEqual(['a', 'c'])
-    // Le rang ne compte que les parties tracées : « Partie 2 sur 2 ».
     expect(kevin.points.map((point) => point.number)).toEqual([1, 2])
     expect(courbeDe(progres, JULIEN).points).toHaveLength(1)
   })
@@ -158,7 +157,6 @@ describe('Carte Évolution — la série par partie (lot courbe)', () => {
   })
 
   it('trace toutes les parties de la période : 80 parties, 80 points numérotés de 1 à 80', () => {
-    // Plus de plafond de 30 (Révision 1, U4) : la courbe défile à l'écran.
     const points = courbeDe(computeProgress(serie(80))).points
 
     expect(points).toHaveLength(80)
@@ -169,19 +167,12 @@ describe('Carte Évolution — la série par partie (lot courbe)', () => {
   })
 
   it('calcule la tendance sur les 3 dernières parties seulement (N-2..N)', () => {
-    // Parties à 3, 6, 9, 12… points en 3 fléchettes : moyennes 3, 6, 9, 12…
     const points = courbeDe(computeProgress(serie(5))).points
 
-    // Rang 5 : parties 3, 4, 5 → (9 + 12 + 15) ÷ 9 × 3 = 12.
     expect(points[4]?.trend?.average3).toBeCloseTo(12, 10)
-    // Rang 3 : parties 1, 2, 3 → (3 + 6 + 9) ÷ 9 × 3 = 6.
     expect(points[2]?.trend?.average3).toBeCloseTo(6, 10)
   })
 
-  /**
-   * Critère 3 : 180 points en 3 fléchettes, 0 en 3, 300 en 30. La pondérée vaut
-   * 480 ÷ 36 × 3 = 40 ; la moyenne des moyennes (180 + 0 + 30) ÷ 3 = 70.
-   */
   it('recalcule la tendance depuis les totaux, jamais en moyennant des moyennes', () => {
     const entree = [
       deKevin('a', 1, { points: 180, darts: 3 }),
@@ -205,7 +196,6 @@ describe('Carte Évolution — la série par partie (lot courbe)', () => {
 
     const tendance = courbeDe(computeProgress(entree)).points[2]?.trend
 
-    // (180 + 0 + 90) ÷ (3 + 3 + 9) × 3 = 54 ; la moyenne des First 9 donnerait 70.
     expect(tendance?.first9Average).toBeCloseTo(54, 10)
   })
 
@@ -218,12 +208,10 @@ describe('Carte Évolution — la série par partie (lot courbe)', () => {
 
     const tendance = courbeDe(computeProgress(entree)).points[2]?.trend
 
-    // Ni le maximum (140), ni rien de pondéré : la moyenne des trois.
     expect(tendance?.highestVisit).toBe(100)
   })
 
   it('⚠️ Meilleure volée, série non croissante : la tendance et l’écart sont des moyennes, jamais des maximums', () => {
-    // 60, 140, 100, 180, 60 : le maximum glissant vaudrait 140, 180, 180 (écart final +40).
     const entree = [60, 140, 100, 180, 60].map((volee, rang) =>
       deKevin(`v${rang}`, rang + 1, { points: volee, darts: 3, highestVisit: volee }),
     )
@@ -233,7 +221,6 @@ describe('Carte Évolution — la série par partie (lot courbe)', () => {
     expect(points[2]?.trend?.highestVisit).toBeCloseTo(100, 10)
     expect(points[3]?.trend?.highestVisit).toBeCloseTo(140, 10)
     expect(points[4]?.trend?.highestVisit).toBeCloseTo(340 / 3, 10)
-    // Écart final : (100 + 180 + 60) ÷ 3 − 100 = 13,3 ; le maximum aurait donné 180 − 140 = 40.
     expect(points[4]?.trendDelta?.highestVisit).toBeCloseTo(40 / 3, 10)
     expect(points[4]?.trendDelta?.highestVisit).not.toBeCloseTo(40, 1)
   })
@@ -241,12 +228,9 @@ describe('Carte Évolution — la série par partie (lot courbe)', () => {
   it('mesure l’écart depuis la tendance au rang 3, même à 80 parties', () => {
     const points = courbeDe(computeProgress(serie(80))).points
 
-    // Rang 3 : tendance 6, écart nul.
     expect(points[2]?.trendDelta?.average3).toBeCloseTo(0, 10)
-    // Rang 80 : parties 78-80 → (234 + 237 + 240) ÷ 9 × 3 = 237 ; écart 237 − 6.
     expect(points[79]?.trend?.average3).toBeCloseTo(237, 10)
     expect(points[79]?.trendDelta?.average3).toBeCloseTo(231, 10)
-    // Meilleure volée : (234 + 237 + 240) ÷ 3 − (3 + 6 + 9) ÷ 3.
     expect(points[79]?.trendDelta?.highestVisit).toBeCloseTo(237 - 6, 10)
   })
 

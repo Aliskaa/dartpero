@@ -194,12 +194,7 @@ const Bloc = ({ bloc }: { readonly bloc: BlocRegles }) => {
   }
 }
 
-/**
- * Une rubrique repliable : une ligne de 48 px sous un `h3`, numérotée, avec un
- * chevron qui tourne. Repliée au montage — le contenu de la feuille n'est monté
- * qu'ouvert, donc tout est replié à chaque ouverture ; plusieurs peuvent
- * l'être à la fois.
- */
+/** Rubrique repliable : repliée au montage, plusieurs peuvent être ouvertes. */
 const Rubrique = ({
   rubrique,
   numero,
@@ -266,9 +261,7 @@ const DISPOSITION: Record<Props['hauteur'], string> = {
     'top-0',
     'paysage:left-auto paysage:w-[52%] paysage:border-l-[3px] paysage:border-craie',
   ].join(' '),
-  // Match : décalée comme la planche (210 px), voile sur le haut du tableau.
-  // Paysage : la largeur de la colonne du pavé, sous le bandeau ; la lecture
-  // reste visible à gauche.
+  // Match : décalée de 210 px sous le bandeau ; paysage : largeur de la colonne du pavé.
   moitie: [
     'top-[210px] border-t-[3px] border-craie',
     'paysage:top-[var(--haut-feuille,0px)] paysage:left-auto paysage:border-t-0',
@@ -277,21 +270,7 @@ const DISPOSITION: Record<Props['hauteur'], string> = {
   ].join(' '),
 }
 
-/**
- * La feuille de règles : un `<dialog>` natif ouvert par `showModal()` (couche
- * supérieure, fond inerte, focus), avec la discipline de la `Modale` des
- * Statistiques — `useDialogueNatif`, partagé, en tient les pièges.
- *
- * - Le `<dialog>` est **monté en permanence** (par `LivreRegles`), son contenu
- *   seulement ouvert : le démontage replie les rubriques à chaque ouverture.
- * - **Aucune classe de `display` sur le `<dialog>`** : `flex` l'afficherait
- *   même fermé ; la colonne vit dans un conteneur intérieur.
- * - La tête est un `<div>` : un `<header>` dans le `<header>` du bandeau est
- *   interdit par le modèle de contenu HTML.
- * - Fermée par la croix, Échap, le retour ou un appui à côté (voile en
- *   portrait sur le match ; partie gauche, sous un voile transparent, en
- *   paysage) : tout passe par `onFermer`, qui recule d'une entrée.
- */
+/** Feuille de règles : `<dialog>` natif (`showModal()`), pièges tenus par `useDialogueNatif`. ⚠️ Jamais de classe `display` sur le `<dialog>`. */
 export const FeuilleRegles = ({
   id,
   mode,

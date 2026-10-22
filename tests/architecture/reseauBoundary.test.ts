@@ -3,22 +3,7 @@ import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-/**
- * Garde du lot `confidentialite-assetlinks` : la politique publiée à
- * `/confidentialite` affirme que l'application n'envoie rien. Ce test est un
- * fil-piège, pas une preuve : il fait échouer la suite au premier appel
- * réseau écrit dans `src/`, pour que ce texte public soit relu AVANT de
- * livrer (CLAUDE.md § Décisions structurantes, « pas de réseau »).
- *
- * Deux règles : les capacités réseau dans les scripts de `src/`, et toute
- * adresse `http(s)://` écrite en dur dans `src/` (scripts ET CSS) ou dans
- * `index.html`. Hors de portée : une URL sans schéma (`//cdn…`) ou assemblée
- * à l'exécution — le smoke et la relecture restent les filets.
- *
- * Recherche dans le texte brut, commentaires compris — même réflexe que
- * `installationBoundary.test.ts`.
- */
-
+// ⚠️ Fil-piège : la politique `/confidentialite` affirme « pas de réseau » ; tout appel réseau doit faire relire ce texte public avant livraison.
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const SRC = resolve(RACINE, 'src')
 
@@ -52,15 +37,6 @@ const DETECTEURS: readonly { readonly nom: string; readonly motif: RegExp }[] = 
 const detecter = (source: string): string[] =>
   DETECTEURS.filter(({ motif }) => motif.test(source)).map(({ nom }) => nom)
 
-/**
- * Une adresse absolue écrite en dur : `<img src>`, `new Image().src`,
- * `import('https://…')`, `url(https://…)` en CSS, un `<link>` vers une police
- * en ligne… Toutes chargent quelque chose depuis un tiers sans passer par
- * `fetch`. Seules exceptions : les URI d'espace de noms SVG et XLink, écrites
- * EXACTEMENT — des identifiants qui ne se téléchargent jamais. Le reste de
- * l'hôte w3.org reste interdit (une icône du W3C se télécharge, elle).
- * `src/index.css` emploie `http://www.w3.org/2000/svg` dans ses `data:` SVG.
- */
 const ESPACES_DE_NOMS: readonly string[] = [
   'http://www.w3.org/2000/svg',
   'http://www.w3.org/1999/xlink',

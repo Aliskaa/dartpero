@@ -9,7 +9,6 @@ import { retourTelephone, SondeHistorique } from './gestes'
 
 const LISTES = ['A', 'B'] as const
 
-/** Un écran minimal : il ouvre et ferme la modale par les gestes de l'utilisateur. */
 const Harnais = () => {
   const { ouverte, ouvrir, fermer } = useModaleAuRetour('liste', LISTES)
   const { pathname } = useLocation()
@@ -47,7 +46,6 @@ const Harnais = () => {
 
 type Entree = string | { readonly pathname: string; readonly state: unknown }
 
-/** `/avant` puis `/ici` : un recul de trop retomberait sur `/avant`. */
 const monter = (entrees: readonly Entree[] = ['/avant', '/ici'], strict = false) => {
   const arbre = (
     <MemoryRouter initialEntries={[...entrees]} initialIndex={entrees.length - 1}>
@@ -166,7 +164,6 @@ describe('useModaleAuRetour — les gardes, geste par geste', () => {
   })
 })
 
-/** Le hook **et** la `Modale`, comme l'écran : le piège 6 vit dans la modale. */
 const HarnaisAvecModale = () => {
   const { ouverte, fermer } = useModaleAuRetour('liste', LISTES)
   const { pathname } = useLocation()
@@ -195,8 +192,6 @@ describe('useModaleAuRetour + Modale — sous StrictMode, tout en haut (piège 6
       </StrictMode>,
     )
 
-    // Un nettoyage d'effet qui fermerait le `<dialog>` le refermerait ici, au
-    // second montage de StrictMode, et reculerait l'historique.
     expect(screen.getByRole('dialog', { name: 'Liste' })).toBeInTheDocument()
     expect(ouverte()).toBe('A')
     expect(chemin()).toBe('/ici')

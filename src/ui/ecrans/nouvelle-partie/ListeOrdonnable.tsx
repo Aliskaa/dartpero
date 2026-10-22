@@ -39,15 +39,7 @@ type Mesure = {
 
 type Geste = { readonly de: number; readonly dy: number; readonly vers: number }
 
-/**
- * L'ordre de passage, réglé par glisser-déposer **à la poignée**, ou au
- * clavier (↑ / ↓) sur cette même poignée.
- *
- * Pendant le geste, le DOM ne bouge pas : la ligne tenue suit le doigt en
- * `translateY`, les autres se décalent d'un pas pour lui faire place. Le vrai
- * réordonnancement n'a lieu qu'au relâcher, par le même `deplacer` que le
- * clavier. Un tap sans mouvement ne fait rien.
- */
+/** L'ordre de passage, par glisser-déposer à la poignée ou au clavier ; le DOM ne bouge qu'au relâcher. */
 export const ListeOrdonnable = ({ joueurs, tirages = 0, onDeplacer }: Props) => {
   const idAide = useId()
   const lignes = useRef<(HTMLLIElement | null)[]>([])
@@ -58,8 +50,7 @@ export const ListeOrdonnable = ({ joueurs, tirages = 0, onDeplacer }: Props) => 
   const [geste, setGeste] = useState<Geste | null>(null)
   const [annonce, setAnnonce] = useState('')
 
-  // Après un déplacement, le focus revient à la poignée déplacée : sa ligne a
-  // changé de place dans le DOM, et le navigateur l'a peut-être perdu en route.
+  // Après un déplacement, le focus revient à la poignée (sa ligne a changé de place dans le DOM).
   // biome-ignore lint/correctness/useExhaustiveDependencies: on refocalise à chaque nouvel ordre.
   useLayoutEffect(() => {
     const id = aFocaliser.current
@@ -104,8 +95,7 @@ export const ListeOrdonnable = ({ joueurs, tirages = 0, onDeplacer }: Props) => 
       milieux: boites.map((boite) => (boite ? boite.top + boite.height / 2 : 0)),
       // Le pas entre deux lignes, filet compris.
       hauteur: seconde ? seconde.top - premiere.top : tenue.height,
-      // La borne arrête le centre pile sur le milieu de la première / dernière
-      // ligne : `rangVise` place donc ses seuils à mi-chemin, jamais sur un milieu.
+      // La borne arrête le centre sur le milieu de la 1re / dernière ligne : voir `rangVise`.
       min: premiere.top - tenue.top,
       max: derniere.top - tenue.top,
     }
@@ -118,8 +108,7 @@ export const ListeOrdonnable = ({ joueurs, tirages = 0, onDeplacer }: Props) => 
     const dy = Math.min(Math.max(evenement.clientY - m.debutY, m.min), m.max)
     const centre = (m.milieux[m.de] ?? 0) + dy
     const vers = rangVise(m.milieux, m.de, centre)
-    // Gardé aussi hors de l'état : le relâcher peut arriver avant le rendu
-    // qui aurait rafraîchi la fermeture.
+    // Gardé aussi hors de l'état : le relâcher peut précéder le rendu.
     rangCourant.current = vers
     setGeste({ de: m.de, dy, vers })
   }
@@ -153,9 +142,7 @@ export const ListeOrdonnable = ({ joueurs, tirages = 0, onDeplacer }: Props) => 
 
   return (
     <>
-      {/* Chaque tirage remonte la feuille (`key`) : le bref mouvement dit que le
-          sort a joué, même s'il redonne le même ordre. Coupé sous
-          `prefers-reduced-motion` par la feuille de styles. */}
+      {/* Chaque tirage remonte la feuille (`key`) : le mouvement dit que le sort a joué, même sans changement. */}
       <ol
         key={tirages}
         aria-label={LEGENDE_ORDRE}
@@ -177,9 +164,7 @@ export const ListeOrdonnable = ({ joueurs, tirages = 0, onDeplacer }: Props) => 
                 tenue
                   ? 'z-10 bg-ardoise shadow-[0_8px_24px_-8px_var(--color-feutre-nuit)] outline outline-1 -outline-offset-1 outline-laiton/60'
                   : '',
-                // ⚠️ La transition seulement **pendant** le geste : au relâcher, les
-                // lignes enjambées changent de place dans le DOM et perdent leur
-                // décalage dans le même rendu — animé, ce retour les ferait sauter.
+                // ⚠️ Transition seulement pendant le geste : animé au relâcher, le retour ferait sauter les lignes.
                 geste !== null && !tenue
                   ? 'motion-safe:transition-transform motion-safe:duration-150'
                   : '',

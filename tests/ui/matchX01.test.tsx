@@ -14,13 +14,7 @@ import { DepotSuspendu, fakeServices } from '../fakes'
 import { flechette, flechetteDeSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Lot `match-x01` — l'écran de match X01 selon la maquette validée.
- *
- * ⚠️ Angle mort assumé : jsdom ne mesure aucune hauteur ni aucune largeur. Ces
- * tests vérifient les ÉTATS (attributs, classes, présence, ordre dans le DOM),
- * jamais une couleur, une taille rendue ou un rognage : cela se relit à l'écran.
- */
+// ⚠️ jsdom ne mesure rien : on vérifie les ÉTATS (attributs, classes, ordre du DOM), pas les dimensions.
 
 const partie = async (config: X01ConfigInput = {}, services?: Services) => {
   const svc = services ?? fakeServices().services
@@ -72,14 +66,12 @@ describe('Pavé X01 — le multiplicateur armé', () => {
       const touches = within(pave()).getAllByRole('button')
       const armees = touches.filter((touche) => touche.classList.contains('touche-armee'))
 
-      // 1 à 20 et la Bulle : vingt et une touches, quel que soit le multiplicateur.
       expect(armees).toHaveLength(21)
       for (const nom of [...Array.from({ length: 20 }, (_, rang) => String(rang + 1)), 'Bulle']) {
         expect(screen.getByRole('button', { name: nom })).toHaveClass('touche-armee')
       }
       expect(screen.getByRole('button', { name: 'Hors' })).not.toHaveClass('touche-armee')
       expect(screen.getByRole('button', { name: 'Annuler' })).not.toHaveClass('touche-armee')
-      // Ni le rail Simple / Double / Triple.
       expect(screen.getByRole('button', { name: bouton })).not.toHaveClass('touche-armee')
     },
   )
@@ -105,12 +97,10 @@ describe('Pavé X01 — le multiplicateur armé', () => {
   it('l’exposant annonce la valeur réelle : rien en Simple, 2× en Double, 3× en Triple, 25 puis 50 sur la Bulle', async () => {
     const utilisateur = userEvent.setup()
     await afficher()
-    // L'exposant est `aria-hidden` : on le lit dans la touche, pas par son nom accessible.
     const exposant = (nom: string) =>
       screen.getByRole('button', { name: nom }).querySelector('[aria-hidden="true"]')?.textContent
 
     expect(exposant('20')).toBeUndefined()
-    // En Simple, la Bulle dit sa valeur en neutre (« 25 », craie-3), pas en laiton.
     expect(exposant('Bulle')).toBe('25')
     expect(screen.getByRole('button', { name: 'Bulle' }).querySelector('span')).toHaveClass(
       'exposant-touche-neutre',
@@ -127,7 +117,6 @@ describe('Pavé X01 — le multiplicateur armé', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Triple' }))
     expect(exposant('20')).toBe('60')
     expect(exposant('1')).toBe('3')
-    // Pas de triple bull : la Bulle est éteinte et n'annonce rien.
     expect(exposant('Bulle')).toBeUndefined()
 
     await utilisateur.click(screen.getByRole('button', { name: 'Simple' }))
@@ -145,7 +134,6 @@ describe('Pavé X01 — fin du clignotement', () => {
     depot.suspendre()
     depot.ecritures = 0
 
-    // Trois fléchettes : la volée est complète, son écriture reste suspendue.
     await flechette(utilisateur, '20')
     await flechette(utilisateur, '20')
     await flechette(utilisateur, '20')
@@ -156,7 +144,6 @@ describe('Pavé X01 — fin du clignotement', () => {
       .filter((touche) => touche.hasAttribute('disabled'))
     expect(eteintes).toEqual([])
 
-    // Un appui pendant l'écriture : la garde `occupe` du hook le refuse.
     await utilisateur.click(screen.getByRole('button', { name: '1' }))
     expect(depot.ecritures).toBe(1)
 
@@ -164,7 +151,6 @@ describe('Pavé X01 — fin du clignotement', () => {
       depot.liberer()
     })
     await waitFor(() => expect(scoreDe('Kevin')).toHaveTextContent('441'))
-    // La fléchette tapée pendant l'écriture n'a été enregistrée nulle part.
     expect(scoreDe('Julien')).toHaveTextContent('501')
     expect(depot.ecritures).toBe(1)
   })
@@ -185,11 +171,9 @@ describe('Moment célébré — hors du flux', () => {
 
     const tableau = screen.getByRole('region', { name: 'Tableau des scores' })
     const enveloppe = moment.parentElement
-    // Même enveloppe `relative` que le tableau, le moment en dernier enfant.
     expect(enveloppe).toHaveClass('relative')
     expect(enveloppe?.contains(tableau)).toBe(true)
     expect(enveloppe?.lastElementChild).toBe(moment)
-    // Il n'est ni dans le tableau (sa hauteur ne bouge pas) ni autour du pavé.
     expect(tableau.contains(moment)).toBe(false)
     expect(enveloppe?.contains(pave())).toBe(false)
   })
@@ -197,7 +181,6 @@ describe('Moment célébré — hors du flux', () => {
 
 describe('Bâtons — les manches restantes en tirets', () => {
   it('trace en tirets ce qui reste à gagner, y compris le trait barré, et en plein ce qui est acquis', () => {
-    // Six traits : un acquis, puis quatre verticaux et le cinquième (barré) restants, puis un sixième.
     const { container } = render(<Batons gagnes={1} requis={6} libelle="Manches" />)
 
     const acquis = container.querySelectorAll('.bg-craie')
@@ -207,7 +190,6 @@ describe('Bâtons — les manches restantes en tirets', () => {
     expect(restants).toHaveLength(5)
     expect(container.querySelectorAll('.border-l-2')).toHaveLength(4)
     expect(container.querySelectorAll('.border-t-2')).toHaveLength(1)
-    // Un trait acquis n'est jamais en tirets, et l'ancien trait fantôme a disparu.
     for (const trait of acquis) expect(trait).not.toHaveClass('border-dashed')
     expect(container.querySelector('[class*="bg-craie/25"]')).toBeNull()
   })
@@ -225,7 +207,6 @@ describe('Bandeau X01', () => {
     await afficher({ startingScore: 501, legsToWin: 2 })
 
     const bandeau = screen.getByRole('banner')
-    // `:not(.lucide)` : la flèche de retour (lucide) porte aussi width=24 par défaut.
     const picto = bandeau.querySelector('svg:not(.lucide)[width="24"]')
     expect(picto).not.toBeNull()
     expect(picto).toHaveAttribute('aria-hidden', 'true')
@@ -233,7 +214,6 @@ describe('Bandeau X01', () => {
     expect(within(bandeau).getByText(TITRE_BANDEAU_X01)).toBeInTheDocument()
     expect(within(bandeau).getByText('501 · premier à 2 manches')).toBeInTheDocument()
     expect(within(bandeau).getByText('Manche 1')).toBeInTheDocument()
-    // Sans sets, rien ne parle de set.
     expect(within(bandeau).queryByText(/^Set /)).not.toBeInTheDocument()
   })
 
@@ -272,7 +252,6 @@ describe('Tableau X01 — le repère qui glisse', () => {
     expect(repere()).toHaveAttribute('aria-hidden', 'true')
     expect(repere()?.style.height).toBe('50%')
     expect(repere()?.style.transform).toBe('translateY(0%)')
-    // L'état accessible reste porté par la ligne.
     expect(scoreDe('Kevin').closest('[aria-current]')).not.toBeNull()
   })
 
@@ -286,7 +265,6 @@ describe('Tableau X01 — le repère qui glisse', () => {
 
     await waitFor(() => expect(repere()?.style.transform).toBe('translateY(100%)'))
     expect(scoreDe('Julien').closest('[aria-current]')).not.toBeNull()
-    // Le même élément a glissé : il n'y en a pas un second qui apparaît.
     expect(document.querySelectorAll('.repere-lancer')).toHaveLength(1)
   })
 })
@@ -342,11 +320,6 @@ describe('Disposition commune — lecture en haut, nom masqué en paysage', () =
   })
 })
 
-/**
- * Cricket et Tour du monde : mêmes promesses que le X01 (critères 3 et 4 du lot).
- * Deux joueurs ; les cibles sont réduites dans la config (elle vit dans le journal)
- * pour qu'une seule volée provoque le moment sans terminer la partie.
- */
 type ModeCible = {
   readonly nom: string
   readonly demarrer: (
@@ -354,14 +327,10 @@ type ModeCible = {
     joueurs: readonly [PlayerId, PlayerId],
   ) => Promise<MatchId>
   readonly enregistrees: (services: Services, matchId: MatchId) => Promise<number>
-  /** Les touches d'une volée complète, sans moment particulier. */
   readonly voleeComplete: readonly string[]
-  /** Ce qu'on tape pour provoquer le moment, et son titre. */
   readonly provoquer: (utilisateur: ReturnType<typeof userEvent.setup>) => Promise<void>
   readonly titreMoment: string
-  /** Une touche qui existe sur le pavé du mode. */
   readonly touche: string
-  /** Où la volée enregistrée s'écrit une fois la main passée, et ce qu'elle y montre. */
   readonly voleeEcrite: { readonly etiquette: string; readonly texte: string }
 }
 
@@ -377,14 +346,12 @@ const MODES_CIBLES: readonly ModeCible[] = [
       (await services.playCricket.getState(matchId)).history.length,
     voleeComplete: ['20', '20', '20'],
     provoquer: async (utilisateur) => {
-      // Un triple 20 ferme le 20 ; la volée se complète par deux fléchettes hors cible.
       await flechette(utilisateur, '20', 'Triple')
       await flechette(utilisateur, 'Hors')
       await flechette(utilisateur, 'Hors')
     },
     titreMoment: 'Fermée !',
     touche: '19',
-    // La ligne VOLÉE du Cricket montre la volée du joueur précédent.
     voleeEcrite: { etiquette: 'Volée de Kevin', texte: 'S20S20S20' },
   },
   {
@@ -398,14 +365,11 @@ const MODES_CIBLES: readonly ModeCible[] = [
       (await services.playTourDuMonde.getState(matchId)).history.length,
     voleeComplete: ['20', '20', '20'],
     provoquer: async (utilisateur) => {
-      // Un parcours de deux cibles : le 19 boucle le tour, la volée s'arrête là
-      // et attend *Valider la sortie* (lot `annulation-volee`).
       await flechette(utilisateur, '20')
       await flechetteDeSortie(utilisateur, '19')
     },
     titreMoment: 'Bouclé !',
     touche: '1',
-    // Trois 20 : le premier touche, les deux suivants manquent le 19 — pas de bouclage.
     voleeEcrite: { etiquette: 'Dernière volée de Kevin', texte: '202020' },
   },
 ]
@@ -437,7 +401,6 @@ describe.each(MODES_CIBLES)('$nom — le pavé ne se grise pas pendant l’écri
       .filter((touche) => touche.hasAttribute('disabled'))
     expect(eteintes).toEqual([])
 
-    // Un appui pendant l'écriture : la garde `occupe` du hook le refuse.
     await utilisateur.click(within(region).getByRole('button', { name: mode.touche }))
     expect(depot.ecritures).toBe(1)
 
@@ -446,8 +409,6 @@ describe.each(MODES_CIBLES)('$nom — le pavé ne se grise pas pendant l’écri
     })
     await waitFor(async () => expect(await mode.enregistrees(services, matchId)).toBe(1))
     expect(depot.ecritures).toBe(1)
-    // La fléchette tapée pendant l'écriture n'a été retenue nulle part : aucune volée
-    // n'est en cours, et celle qui s'écrit est exactement la volée enregistrée.
     await waitFor(() =>
       expect(screen.getByLabelText(mode.voleeEcrite.etiquette)).toHaveTextContent(
         mode.voleeEcrite.texte,

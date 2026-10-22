@@ -5,9 +5,7 @@ import type { MatchId } from '@/core/domain/value-objects/ids'
 import { EcranErreur, Spinner, SpinnerLigne } from '@/ui/composants/commun/Etats'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-// Un chunk par mode : ouvrir un 501 ne charge plus le Cricket, et inversement.
-// Un mode ajouté à la couture `GameMode` doit gagner sa paire de `lazy()` ici
-// — sinon il revient discrètement dans le chunk commun (voir CONVENTIONS.md § 13).
+// Un chunk par mode : un mode ajouté doit gagner sa paire de `lazy()` ici, sinon il retombe dans le chunk commun.
 const X01Ecran = lazy(() => import('./x01/X01Ecran').then((m) => ({ default: m.X01Ecran })))
 const ResumeX01Ecran = lazy(() =>
   import('./x01/ResumeX01Ecran').then((m) => ({ default: m.ResumeX01Ecran })),
@@ -43,17 +41,7 @@ const ResumeEntrainementEcran = lazy(() =>
   })),
 )
 
-/**
- * L'aiguillage de la couture `GameMode`, côté écran.
- *
- * Une même URL (`/partie/:id`) mène à des écrans différents selon le mode de la
- * partie — l'utilisateur n'a pas à savoir dans quel mode il reprend, et un lien
- * d'historique reste valable quel que soit le jeu.
- *
- * Chaque mode a son **propre** écran plutôt qu'un écran unique bourré de
- * conditions : on ne compte pas un 501 comme on remonte un plateau, et les
- * deux zones de saisie n'ont rien en commun.
- */
+/** L'aiguillage de la couture `GameMode` : une même URL `/partie/:id`, un écran propre à chaque mode. */
 const useMode = (matchId: MatchId) => {
   const services = useServices()
   return useQuery({
@@ -97,8 +85,7 @@ const Aiguillage = ({
     )
   }
 
-  // ⚠️ Un `case` par mode et un `default` typé `never` (lot `killer`) : avant,
-  // tout mode non listé ouvrait l'écran X01.
+  // ⚠️ Un `case` par mode et un `default` typé `never` : un mode non listé ne doit pas ouvrir l'écran X01.
   const ecran = (() => {
     const id = mode.data
     switch (id) {

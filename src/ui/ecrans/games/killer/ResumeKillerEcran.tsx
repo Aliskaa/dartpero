@@ -21,12 +21,7 @@ import {
 } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-/**
- * Le résumé d'un Killer : le tableau d'honneur, puis le classement **par ordre
- * d'élimination** (règle 9), lu sur `KillerRules.ranking` — jamais recalculé.
- * Chaque éliminé dit qui l'a éliminé (règle 14), déduit du journal : rien
- * n'est stocké. Une auto-élimination (variante) se lit « Éliminé » seul.
- */
+/** Le résumé d'un Killer : classement par ordre d'élimination (`KillerRules.ranking`), « Éliminé par X » déduit du journal. */
 export const ResumeKillerEcran = () => {
   const { matchId } = useParams()
   const identifiant = (matchId ?? '') as MatchId

@@ -23,7 +23,6 @@ describe('Ordre de jeu — deplacer', () => {
 })
 
 describe('Ordre de jeu — rangVise', () => {
-  // Trois lignes de 50 px : milieux à 25, 75, 125 ; seuils à 50 et 100.
   const milieux = [25, 75, 125]
 
   it('reste en place tant que le centre n’a pas fait une demi-ligne', () => {
@@ -41,14 +40,7 @@ describe('Ordre de jeu — rangVise', () => {
   })
 })
 
-/**
- * Constat n° 1 de la revue. La borne du geste arrête le centre de la ligne
- * tenue **exactement** sur le milieu de la première / dernière ligne (à
- * hauteurs égales) : ces valeurs-là sont les seules qui comptent, puisque ce
- * sont les seules que le doigt peut atteindre au bout de la liste.
- */
 describe('Ordre de jeu — rangVise à la borne du geste', () => {
-  // Lignes de 56 px, filet de 8 px : milieux à 28, 92, 156, 220.
   const quatre = [28, 92, 156, 220]
 
   it('à deux lignes, la borne basse donne la dernière place et la borne haute la première', () => {

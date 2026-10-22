@@ -1,36 +1,23 @@
 /**
- * Le thème d'affichage — purement UI, aucune règle de jeu, donc aucun port.
- *
- * Deux feuilles de match pour un seul jeu de tokens : `src/index.css` déclare
- * la palette sombre dans `@theme` et n'en redéfinit que les **valeurs** sous
- * `html[data-theme="clair"]`. Ce module ne fait que poser cet attribut.
- *
- * ⚠️ Le défaut reste **sombre**, pas « système ». Le cadrage du projet est un
- * garage mal éclairé, téléphone en luminosité basse : le sombre est l'app, le
- * clair est une option. Ouvrir la mise à jour sur un fond blanc parce que le
- * téléphone est en clair serait un changement qu'on n'a pas demandé.
+ * ⚠️ Le défaut reste **sombre**, pas « système ». Le cadrage du projet est un garage mal éclairé, téléphone
+ * en luminosité basse : le sombre est l'app, le clair est une option.
  */
 export type Theme = 'sombre' | 'clair' | 'systeme'
 
 /** Ce que le thème vaut une fois « système » résolu — ce qui part dans le DOM. */
 export type ThemeResolu = 'sombre' | 'clair'
 
-/** L'ordre du rail : le défaut d'abord, la délégation au système en dernier. */
 export const THEMES: readonly Theme[] = ['sombre', 'clair', 'systeme']
 
 export const THEME_DEFAUT: Theme = 'sombre'
 
-/** La clé de préférence, partagée avec le script d'amorçage de `index.html`. */
 export const CLE_THEME = 'theme'
 
 const REQUETE_SOMBRE = '(prefers-color-scheme: dark)'
 
 /**
- * La couleur de la barre système (encoche, barre d'onglets du navigateur).
- * Sans mise à jour, elle resterait vert-feutre au-dessus d'une page en papier.
- *
- * ⚠️ Le `theme_color` du **manifeste** PWA, lui, est figé : une app installée
- * garde sa barre sombre. C'est une limite du format, pas un oubli.
+ * ⚠️ Le `theme_color` du **manifeste** PWA, lui, est figé : une app installée garde sa barre sombre. C'est
+ * une limite du format, pas un oubli.
  */
 const TEINTE_BARRE: Record<ThemeResolu, string> = {
   sombre: '#0E1A13',
@@ -38,8 +25,8 @@ const TEINTE_BARRE: Record<ThemeResolu, string> = {
 }
 
 /**
- * `matchMedia` manque en jsdom et sur de très vieux navigateurs : on retombe
- * alors sur le sombre, qui est le défaut de l'app.
+ * `matchMedia` manque en jsdom et sur de très vieux navigateurs : on retombe alors sur le sombre, qui est
+ * le défaut de l'app.
  */
 const prefereSombre = (): boolean =>
   typeof window === 'undefined' || !window.matchMedia || window.matchMedia(REQUETE_SOMBRE).matches
@@ -48,8 +35,8 @@ export const resoudreTheme = (theme: Theme): ThemeResolu =>
   theme === 'systeme' ? (prefereSombre() ? 'sombre' : 'clair') : theme
 
 /**
- * Pose le thème sur `<html>`. **Le seul endroit** qui écrit `data-theme` :
- * deux écrivains finiraient par se contredire au retour d'un écran.
+ * Pose le thème sur `<html>`. **Le seul endroit** qui écrit `data-theme` : deux écrivains finiraient par se
+ * contredire au retour d'un écran.
  */
 export const appliquerTheme = (theme: Theme): ThemeResolu => {
   const resolu = resoudreTheme(theme)

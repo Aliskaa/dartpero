@@ -144,15 +144,12 @@ describe('Rejouer — les libellés', () => {
   ] as const)(
     'compte les jours sur le calendrier local, même le %s (changement d’heure)',
     (_, mois, jour, heures) => {
-      // Précondition : ce jour-là dure bien `heures` heures dans le fuseau des tests
-      // (sous UTC, ce test serait vert sans rien prouver).
       expect(local(2026, mois, jour + 1, 0) - local(2026, mois, jour, 0)).toBe(heures * 3_600_000)
 
       const soir = local(2026, mois, jour, 23)
       expect(libelleDateRelative(local(2026, mois, jour - 1, 12), soir)).toBe('hier')
       expect(libelleDateRelative(local(2026, mois, jour, 0), soir)).toBe('aujourd’hui')
       expect(libelleDateRelative(local(2026, mois, jour - 1, 0), soir)).toBe('hier')
-      // Le lendemain du jour de 23 h : minuit à minuit ne fait que 23 h, c'est pourtant « hier ».
       expect(
         libelleDateRelative(local(2026, mois, jour, 12), local(2026, mois, jour + 1, 12)),
       ).toBe('hier')

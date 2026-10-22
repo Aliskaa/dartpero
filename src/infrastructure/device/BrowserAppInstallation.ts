@@ -4,21 +4,17 @@ import type {
   InstallState,
 } from '@/core/application/ports/driven/AppInstallation'
 
-/**
- * La part de `window` que lit l'adapter. Se passe au constructeur pour tester
- * sans toucher le global — un vrai `EventTarget`, pas un mock.
- */
+/** La part de `window` que lit l'adapter, injectable pour les tests. */
 export type InstallWindow = EventTarget & {
   readonly matchMedia?: (query: string) => Pick<MediaQueryList, 'matches'> & EventTarget
   readonly navigator: {
     readonly userAgent: string
     readonly maxTouchPoints?: number
-    /** Safari iOS seulement : vrai quand l'app est ouverte depuis l'écran d'accueil. Absent de lib.dom. */
+    /** Safari iOS seulement, absent de lib.dom. */
     readonly standalone?: boolean
   }
 }
 
-/** L'événement `beforeinstallprompt` de Chromium, non standard, absent de lib.dom. */
 type InstallPromptEvent = Event & {
   prompt(): Promise<unknown>
   readonly userChoice: Promise<{ readonly outcome?: string } | undefined>
@@ -28,19 +24,7 @@ type InstallPromptEvent = Event & {
 const NAVIGATEURS_TIERS =
   /CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|GSA\/|DuckDuckGo|FBAN|FBAV|Instagram|Line\//
 
-/**
- * Le navigateur iOS, d'après l'user agent : `null` hors iOS.
- *
- * - iOS : `iPhone`, `iPad`, `iPod`, ou `Macintosh` **tactile** — un iPad en
- *   « site pour ordinateur » se présente comme un Mac, mais un Mac a 0 point
- *   de contact.
- * - Safari : `Version/` et `Safari/`, sans jeton d'un navigateur tiers. Les
- *   navigateurs intégrés aux apps n'ont pas `Version/` : « Ouvrez dans
- *   Safari » est alors le bon conseil.
- *
- * Limites assumées : Brave iOS se présente comme Safari ; un futur Mac
- * tactile passerait pour un iPad. Le repli reste lisible.
- */
+/** Navigateur iOS d'après l'user agent (`null` hors iOS) ; un iPad « site ordinateur » se présente comme un Mac tactile. */
 export const detectIosBrowser = (
   userAgent: string,
   maxTouchPoints = 0,
@@ -56,17 +40,7 @@ export const detectIosBrowser = (
 const estInvite = (evenement: Event): evenement is InstallPromptEvent =>
   typeof (evenement as Partial<InstallPromptEvent>).prompt === 'function'
 
-/**
- * `beforeinstallprompt`, `appinstalled`, `(display-mode: standalone)` et
- * `navigator.standalone` — le seul endroit de `src/` qui les lit.
- *
- * Les écouteurs sont posés **dans le constructeur** : l'invite de Chromium
- * peut partir avant le montage de React. D'où une instance unique par page,
- * créée dans `src/main.tsx` avant `createRoot`.
- *
- * Rien ne doit casser : `window` absent, API manquante ou qui lève →
- * `unavailable`, abonnement muet, `prompt()` → `'unavailable'`.
- */
+/** ⚠️ Écouteurs posés dans le constructeur : l'invite peut partir avant le montage de React. Jamais d'exception. */
 export class BrowserAppInstallation implements AppInstallation {
   private etat: InstallState = 'unavailable'
   private hs = false
@@ -99,8 +73,7 @@ export class BrowserAppInstallation implements AppInstallation {
 
       win.addEventListener('beforeinstallprompt', (evenement) => {
         if (this.hs || !estInvite(evenement)) return
-        // C'est l'app qui propose l'installation — ou qui se tait après
-        // « Plus tard ». Sans ça, Chrome afficherait sa propre bannière.
+        // Sans preventDefault, Chrome afficherait sa propre bannière.
         evenement.preventDefault()
         this.invite = evenement
         this.publier()
@@ -108,8 +81,7 @@ export class BrowserAppInstallation implements AppInstallation {
 
       win.addEventListener('appinstalled', () => {
         if (this.hs) return
-        // En mémoire seulement : persisté, une désinstallation le rendrait
-        // faux pour toujours.
+        // En mémoire seulement : persisté, une désinstallation le rendrait faux.
         this.installee = true
         this.invite = undefined
         this.publier()
@@ -139,15 +111,13 @@ export class BrowserAppInstallation implements AppInstallation {
     const invite = this.invite
     if (this.hs || !invite) return Promise.resolve('unavailable')
 
-    // Une invite ne sert qu'une fois : retirée et publiée AVANT toute attente,
-    // pour qu'un second appel concurrent n'y retouche pas.
+    // Une invite ne sert qu'une fois : retirée AVANT toute attente (appel concurrent).
     this.invite = undefined
     this.publier()
 
     let ouverture: Promise<unknown>
     try {
-      // Appelée sans `await` préalable : l'activation utilisateur du clic doit
-      // encore être là.
+      // Sans `await` préalable : l'activation utilisateur du clic doit rester valide.
       ouverture = invite.prompt()
     } catch {
       return Promise.resolve('unavailable')
@@ -175,15 +145,12 @@ export class BrowserAppInstallation implements AppInstallation {
     return 'unavailable'
   }
 
-  /** Recalcule l'état, PUIS prévient les abonnés. Un abonné qui lève ne prive pas les autres. */
   private publier(): void {
     this.etat = this.calculer()
     for (const abonne of [...this.abonnes]) {
       try {
         abonne()
-      } catch {
-        // Un abonné défaillant ne casse ni l'adapter ni les autres abonnés.
-      }
+      } catch {}
     }
   }
 }

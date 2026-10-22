@@ -84,33 +84,21 @@ import { CryptoIdGenerator } from '@/infrastructure/system/CryptoIdGenerator'
 import { CryptoRandomSource } from '@/infrastructure/system/CryptoRandomSource'
 import { SystemClock } from '@/infrastructure/system/SystemClock'
 
-/**
- * COMPOSITION ROOT — le seul endroit du projet où un port rencontre son adapter.
- *
- * Nulle part ailleurs on ne doit voir `new Dexie…` ni `Date.now()`. C'est ce qui
- * permet de rejouer toute l'application en mémoire dans les tests, et d'ajouter
- * un jour une synchro distante en changeant une seule ligne ici.
- */
+// Composition root : le seul endroit où un port rencontre son adapter.
 /** Les capacités de l'appareil, derrière des ports. Muettes si le matériel manque. */
 export type Devices = {
   readonly screenLock: ScreenLock
   readonly haptics: Haptics
   readonly preferences: Preferences
   readonly announcer: Announcer
-  /** Protection de la base contre l'effacement par le navigateur. */
   readonly persistentStorage: PersistentStorage
-  /**
-   * L'installation sur l'écran d'accueil : état synchrone, abonnement, invite.
-   * ⚠️ L'adapter navigateur écoute dès sa construction : les services naissent
-   * donc une seule fois, dans `src/main.tsx`, avant `createRoot`.
-   */
+  /** ⚠️ L'adapter écoute dès sa construction : services créés une fois, dans `main.tsx`, avant `createRoot`. */
   readonly appInstallation: AppInstallation
 }
 
 export type Dependencies = {
   readonly matches: MatchRepository
   readonly players: PlayerRepository
-  /** La volée en cours de chaque partie, hors du journal (lot `volee-partielle`). */
   readonly visitDrafts: VisitDraftRepository
   readonly clock: Clock
   readonly ids: IdGenerator
@@ -118,70 +106,40 @@ export type Dependencies = {
   readonly devices: Devices
 }
 
-/**
- * Tout ce que l'UI a le droit d'appeler. Rien d'autre ne lui est exposé.
- *
- * `devices` est une exception assumée à la règle « UI → use cases uniquement » :
- * ce sont des ports **driven** (écran, vibreur, préférences locales, protection du stockage,
- * installation) consommés directement par la coquille UI. Ils ne portent aucune règle métier, donc les
- * emballer dans des use cases serait de la cérémonie pure. Ils restent des
- * ports : injectables, remplaçables, muets quand le matériel ne suit pas.
- */
+/** Tout ce que l'UI peut appeler. `devices` (ports driven sans règle métier) est une exception assumée. */
 export type Services = {
   readonly startMatch: StartMatch
-  /** « On remet ça » : relance une partie terminée à l'identique. */
   readonly restartMatch: RestartMatch
   readonly recordVisit: RecordVisit
   readonly undoLastVisit: UndoLastVisit
   readonly getMatchState: GetMatchState
   readonly getCheckoutSuggestion: GetCheckoutSuggestion
-  /** 170 ou 180 selon la sortie, et les restes sans finish : « Pas de finish », feuille de règles. */
   readonly getCheckoutRange: GetCheckoutRange
   readonly getMatchStats: GetMatchStats
   readonly getMatchHistory: GetMatchHistory
-  /** Les configurations récentes distinctes, pour « Rejouer » (étape 1 de Nouvelle partie). */
   readonly getReplayableConfigurations: GetReplayableConfigurations
   readonly getMatchMode: GetMatchMode
-  /** Le nom tapé d'une partie et sa date de création, pour son bandeau et son résumé. */
   readonly getMatchName: GetMatchName
   readonly getOngoingMatch: GetOngoingMatch
   readonly getPlayerStats: GetPlayerStats
-  /** La courbe X01 de chaque joueur sur la période, pour la carte Évolution (lot `courbe`). */
   readonly getPlayerProgress: GetPlayerProgress
-  /** Le compte des parties et des profils de ce téléphone, pour les Réglages. */
   readonly getDeviceContents: GetDeviceContents
   readonly deleteMatch: DeleteMatch
   readonly managePlayers: ManagePlayers
   readonly manageBackup: ManageBackup
-  /**
-   * La volée en cours, écrite à chaque fléchette et relue à l'ouverture de la
-   * partie (lot `volee-partielle`) : elle survit à un rechargement.
-   */
   readonly manageVisitDraft: ManageVisitDraft
-  /** Le second mode de jeu. Voir la couture `GameModes` côté domaine. */
   readonly playTourDuMonde: PlayTourDuMonde
-  /** Le Cricket, standard ou cut-throat selon la configuration de la partie. */
   readonly playCricket: PlayCricket
-  /** L'entraînement solo au checkout (lot 5b). */
   readonly playCheckoutPractice: PlayCheckoutPractice
-  /** Le Killer (lot `killer`) : numéros, vies, killers et éliminés. */
   readonly playKiller: PlayKiller
-  /** « Tirer au sort » (étape Ordre) : mélange visible, avant le lancement. */
   readonly shuffleOrder: ShuffleOrder
-  /** Les numéros du Killer, tirés à l'arrivée de l'étape 2 et par « Tirer au sort ». */
   readonly drawKillerNumbers: DrawKillerNumbers
   readonly previewVisit: PreviewVisit
   readonly previewTourDuMondeVisit: PreviewTourDuMondeVisit
   readonly previewCricketVisit: PreviewCricketVisit
   readonly previewKillerVisit: PreviewKillerVisit
   readonly devices: Devices
-  /**
-   * L'horloge des use cases, la **même instance**. Seconde exception de même
-   * nature que `devices` : l'étape 1 de Nouvelle partie propose un nom d'après
-   * l'heure (« Dimanche soir ») avant que la partie n'existe. Lire `Date.now()`
-   * dans l'UI rendrait ce calcul intestable ; passer par ce port garde la
-   * proposition et le `createdAt` de la partie sur la même horloge.
-   */
+  /** Même instance que celle des use cases : l'UI propose un nom d'après l'heure sans `Date.now()`. */
   readonly clock: Clock
 }
 
@@ -194,12 +152,7 @@ export const createServices = ({
   random,
   devices,
 }: Dependencies): Services => {
-  // Les quatre lancements sont gardés sous la main : « on remet ça » les
-  // rappelle tels quels plutôt que de recopier un journal, pour qu'une relance
-  // passe par exactement les mêmes contrôles qu'un premier départ.
-  // ⚠️ Corollaire : une relance NE rebat PAS l'ordre de passage. Le journal ne
-  // dit pas s'il avait été tiré au sort ou choisi à la main — le redistribuer
-  // serait deviner, et l'ordre qui vient de jouer est un ordre accepté.
+  // « On remet ça » rappelle ces lancements tels quels. ⚠️ Une relance ne rebat pas l'ordre de passage.
   const startMatch = new StartMatchUseCase(matches, players, clock, ids, random)
   const playTourDuMonde = new PlayTourDuMondeUseCase(matches, players, clock, ids, random)
   const playCricket = new PlayCricketUseCase(matches, players, clock, ids, random)
@@ -270,8 +223,5 @@ export const createBrowserDependencies = (): Dependencies => {
   }
 }
 
-/**
- * Appelé **une seule fois**, par `src/main.tsx`, avant le premier rendu : un
- * jeu de services par page, et des écouteurs d'appareil posés au plus tôt.
- */
+/** Appelé une seule fois, par `src/main.tsx`, avant le premier rendu. */
 export const createBrowserServices = (): Services => createServices(createBrowserDependencies())

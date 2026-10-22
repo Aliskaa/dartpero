@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
+// ⚠️ Un mode ou un moment se dit par son pictogramme maison, pas par une icône `lucide-react` générique.
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const UI = resolve(RACINE, 'src/ui')
 
@@ -15,12 +16,6 @@ const fichiers = (dossier: string): string[] =>
 
 const enUi = (chemin: string) => relative(UI, chemin).replaceAll('\\', '/')
 
-/**
- * Les icônes `lucide-react` qui ont un équivalent maison (`Pictogramme`) : un
- * mode ou un moment se dit par sa forme, plus par une icône générique.
- * Le motif lit les imports `lucide-react` (une ou plusieurs lignes) et cherche
- * ces noms, entiers, dans la liste importée.
- */
 const REMPLACEES = [
   'Crown',
   'Handshake',
@@ -28,9 +23,7 @@ const REMPLACEES = [
   'ChevronsDown',
   'Grid3x3',
   'Globe2',
-  // Le viseur du Killer (lot `killer`).
   'Crosshair',
-  // Lot `courbe` : la ligne brisée de la carte Évolution a son pictogramme `evolution`.
   'TrendingUp',
   'ChartLine',
 ]
@@ -48,7 +41,6 @@ const importsRemplaces = (source: string): string[] =>
 describe('Pictogrammes maison', () => {
   it('aucune icône lucide-react remplacée par un pictogramme ne revient dans src/ui', () => {
     const tous = fichiers(UI)
-    // Garde-fou : un test vert à vide ne vérifie rien.
     expect(tous.length).toBeGreaterThan(40)
 
     const fautes = tous.flatMap((fichier) =>

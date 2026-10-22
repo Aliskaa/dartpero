@@ -2,12 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { StorageProtection } from '@/core/application/ports/driven/PersistentStorage'
 import { useServices } from '../providers/ServicesProvider'
 
-/**
- * Demande la protection du stockage au démarrage, une seule fois, sans rien
- * afficher ni bloquer le rendu : la promesse n'est pas attendue.
- *
- * Le `useRef` tient l'unicité sous `StrictMode`, qui rejoue les effets.
- */
+/** Demande la protection du stockage au démarrage, une fois (`useRef` sous `StrictMode`), sans attendre la promesse. */
 export const useDemandeStockageAuDemarrage = (): void => {
   const { devices } = useServices()
   const lance = useRef(false)
@@ -22,12 +17,7 @@ export const useDemandeStockageAuDemarrage = (): void => {
   }, [devices])
 }
 
-/**
- * L'état de la protection pour les Réglages. `etat` vaut `null` tant que
- * `status()` n'a pas répondu. `redemander` applique la valeur de retour de
- * `request()` : pas de rechargement, pas de TanStack Query — c'est une
- * capacité d'appareil, pas une lecture de données.
- */
+/** L'état de la protection pour les Réglages : `etat` vaut `null` tant que `status()` n'a pas répondu. */
 export const useProtectionStockage = (): {
   readonly etat: StorageProtection | null
   readonly redemander: () => Promise<void>

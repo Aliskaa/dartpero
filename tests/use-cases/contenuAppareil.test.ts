@@ -4,11 +4,6 @@ import { X01Config } from '@/core/domain/games/x01/config'
 import { fakeServices } from '../fakes'
 import { lancer } from './lancerPartie'
 
-/**
- * « N parties · M joueurs sur ce téléphone » (Réglages, lot `reglages-par-usage`) :
- * toutes les parties enregistrées, en cours, abandonnées et entraînements
- * compris, et tous les profils.
- */
 describe('GetDeviceContents — ce que contient ce téléphone', () => {
   it('base vide : 0 partie, 0 joueur', async () => {
     const { services } = fakeServices()
@@ -26,7 +21,6 @@ describe('GetDeviceContents — ce que contient ce téléphone', () => {
   it.each(GAME_MODE_IDS)('une partie de %s compte, entraînement compris', async (mode) => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
-    // Pas de solo au Killer : deux joueurs au moins.
     const joueurs =
       mode === 'KILLER'
         ? [kevin.id, (await services.managePlayers.create('Julien')).id]
@@ -45,7 +39,6 @@ describe('GetDeviceContents — ce que contient ce téléphone', () => {
     const kevin = await services.managePlayers.create('Kevin')
     const julien = await services.managePlayers.create('Julien')
 
-    // 25 parties jamais finies : une en cours, les autres abandonnées.
     for (let rang = 0; rang < 25; rang += 1) {
       await services.startMatch.execute({
         playerIds: [kevin.id, julien.id],

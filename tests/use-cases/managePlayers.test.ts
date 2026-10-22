@@ -37,7 +37,6 @@ describe('ManagePlayers', () => {
     await expect(services.managePlayers.update(diego.id, { name: 'lucky' })).rejects.toThrow(
       DomainError,
     )
-    // Garder son propre pseudo (ou seulement changer la casse affichée) reste OK.
     await expect(services.managePlayers.update(diego.id, { name: 'Diego' })).resolves.toMatchObject(
       {
         name: 'Diego',
@@ -86,7 +85,6 @@ describe('ManagePlayers', () => {
   })
 })
 
-/** Lot `killer` : le genre, facultatif, clé absente pour « non précisé ». */
 describe('ManagePlayers — le genre du profil', () => {
   let services: Services
 
@@ -115,7 +113,6 @@ describe('ManagePlayers — le genre du profil', () => {
     expect(feminin.gender).toBe('FEMININE')
     expect(feminin.createdAt).toBe(sarah.createdAt)
 
-    // Ne changer que le pseudo garde le genre.
     const renomme = await services.managePlayers.update(sarah.id, { name: 'Sarah B.' })
     expect(renomme.gender).toBe('FEMININE')
 

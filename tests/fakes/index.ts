@@ -42,13 +42,6 @@ export class TickingClock implements Clock {
   }
 }
 
-/**
- * Horloge que le test déplace à la main.
- *
- * Indispensable dès qu'une donnée est **datée** : `TickingClock` avance d'une
- * seconde, donc toutes les parties qu'elle crée tombent le même soir — ce qui
- * ne permet pas de vérifier un filtre de période.
- */
 export class SettableClock implements Clock {
   constructor(private courant = Date.UTC(2026, 7, 26, 12)) {}
 
@@ -72,11 +65,6 @@ export class SequentialIdGenerator implements IdGenerator {
   }
 }
 
-/**
- * Aléa déterministe : parcourt les valeurs en boucle plutôt que de renvoyer
- * toujours la même. Un tirage figé masquerait les bugs de tirage — comme une
- * cible qui ne changerait jamais d'une manche à l'autre.
- */
 export class CyclingRandomSource implements RandomSource {
   private appel = 0
 
@@ -93,11 +81,6 @@ export class CyclingRandomSource implements RandomSource {
   }
 }
 
-/**
- * Stockage persistant espion : état initial réglable, compteurs d'appels.
- * `accorde` dit ce que répondra `request()` ; `requestBloquee` ne la résout
- * jamais (prouve que le rendu n'attend pas la demande).
- */
 export class FakePersistentStorage implements PersistentStorage {
   statusCalls = 0
   requestCalls = 0
@@ -123,14 +106,6 @@ export class FakePersistentStorage implements PersistentStorage {
   }
 }
 
-/**
- * Installation réglable : `regler()` change l'état et prévient les abonnés,
- * comme l'adapter à l'arrivée d'une invite ou après `appinstalled`.
- * `promptCalls` compte **chaque** appel à `prompt()`, utile ou non : un double
- * appel se voit. `issue` dit ce qu'ouvrira l'invite. Comme l'adapter, hors
- * `installable` l'appel répond `unavailable`, et une invite consommée laisse
- * `unavailable`.
- */
 export class FakeAppInstallation implements AppInstallation {
   promptCalls = 0
   private readonly abonnes = new Set<() => void>()
@@ -169,11 +144,6 @@ export class FakeAppInstallation implements AppInstallation {
   }
 }
 
-/**
- * Un dépôt de parties dont l'écriture peut être suspendue : un fake, pas un mock.
- * `suspendre()` bloque les `save` suivants jusqu'à `liberer()` ; `ecritures`
- * compte les appels (suspendus compris).
- */
 export class DepotSuspendu extends InMemoryMatchRepository {
   ecritures = 0
   private porte: Promise<void> | null = null
@@ -209,10 +179,6 @@ export class DepotCompteur extends InMemoryMatchRepository {
   }
 }
 
-/**
- * Un dépôt de parties dont l'écriture tombe en panne à la demande : `panne`
- * vrai, chaque `save` rejette (une volée qui n'arrive pas au journal).
- */
 export class DepotEnPanne extends InMemoryMatchRepository {
   panne = false
 
@@ -247,11 +213,6 @@ export class BrouillonsEnPanne extends InMemoryVisitDraftRepository {
   }
 }
 
-/**
- * Un dépôt de brouillons dont les écritures (`save` et `delete`) peuvent être
- * suspendues, comme `DepotSuspendu`. `ecritures` compte les appels, suspendus
- * compris ; `lectures` compte les `findById`.
- */
 export class BrouillonsSuspendus extends InMemoryVisitDraftRepository {
   ecritures = 0
   lectures = 0

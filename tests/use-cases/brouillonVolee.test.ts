@@ -9,12 +9,6 @@ import { MatchId, type PlayerId } from '@/core/domain/value-objects/ids'
 import { BrouillonsIndelebiles, BrouillonsSuspendus, DepotCompteur, fakeServices } from '../fakes'
 import { lancer } from './lancerPartie'
 
-/**
- * Lot `volee-partielle` : la volée en cours vit dans un brouillon hors du
- * journal, estampillé avec le nombre de volées de l'état affiché. Il n'est
- * rendu que s'il est cohérent avec le journal ; sinon il est effacé.
- */
-
 const M = Dart.miss()
 const S1 = Dart.single(1)
 
@@ -106,7 +100,6 @@ describe('Brouillon de volée — aller-retour (les quatre modes)', () => {
 
       await services.manageVisitDraft.save({ matchId: id, base, darts: [S1, M] })
       expect(await services.manageVisitDraft.restore({ matchId: id, base })).toEqual([S1, M])
-      // Une ligne par partie, estampillée avec le nombre de volées de l'état affiché.
       expect(await dependencies.visitDrafts.findById(id)).toEqual({
         matchId: id,
         visitCount: 0,
@@ -144,7 +137,6 @@ describe('Brouillon de volée — aller-retour (les quatre modes)', () => {
       expect(darts).toEqual([S1, M])
       await services.manageVisitDraft.save({ matchId: id, base: revenu, darts })
 
-      // Rechargement : l'état est rejoué depuis le dépôt, pas repris de la mémoire.
       const recharge = await etat(dependencies, id)
       expect(await services.manageVisitDraft.restore({ matchId: id, base: recharge })).toEqual([
         S1,
@@ -235,7 +227,6 @@ describe('Brouillon de volée — écarté et effacé quand il ne colle pas au j
     await services.manageVisitDraft.save({ matchId: id, base: actuel, darts: [S1] })
     expect(await dependencies.visitDrafts.findById(id)).not.toBeNull()
 
-    // Brouillon et journal d'accord, mais l'écran affiche encore l'état d'avant.
     expect(await services.manageVisitDraft.restore({ matchId: id, base: ancien })).toEqual([])
     expect(await dependencies.visitDrafts.findById(id)).toBeNull()
   })
@@ -284,7 +275,6 @@ describe('Brouillon de volée — écarté et effacé quand il ne colle pas au j
     const base = await etat(dependencies, id)
     await services.manageVisitDraft.save({ matchId: id, base, darts: [S1] })
     expect(await dependencies.visitDrafts.findById(id)).not.toBeNull()
-    // Un journal sans événement d'ouverture : `GameModes.project` lève.
     const record = await dependencies.matches.findById(id)
     if (!record) throw new Error('partie introuvable')
     await dependencies.matches.save({ ...record, events: [] })
@@ -303,19 +293,12 @@ describe('Brouillon de volée — écarté et effacé quand il ne colle pas au j
     expect(await visitDrafts.findById(id)).not.toBeNull()
 
     expect(await services.manageVisitDraft.restore({ matchId: id, base })).toEqual([])
-    // Il reste sur le disque, toujours écarté : la prochaine fléchette l'écrasera.
     expect(await visitDrafts.findById(id)).toMatchObject({ visitCount: 5 })
     expect(await services.manageVisitDraft.restore({ matchId: id, base })).toEqual([])
   })
 })
 
 describe('Brouillon de volée — l’écriture ne relit pas le journal', () => {
-  /**
-   * La raison de la clé `visitCount` : l'estampille est l'état affiché au moment
-   * du geste. Une écriture qui relirait le journal pourrait, terminée après
-   * l'enregistrement de la volée, estampiller les anciennes fléchettes avec le
-   * nouveau nombre de volées — et les rendre au joueur suivant.
-   */
   it('save n’appelle le dépôt de parties à aucun moment', async () => {
     const matches = new DepotCompteur()
     const { services, dependencies } = banc({ matches })
@@ -337,7 +320,6 @@ describe('Brouillon de volée — l’écriture ne relit pas le journal', () => 
     visitDrafts.suspendre()
 
     const ecriture = services.manageVisitDraft.save({ matchId: id, base, darts: [S1] })
-    // Synchrone : l'appel au dépôt a déjà eu lieu avant le premier `await`.
     expect(visitDrafts.ecritures).toBe(1)
 
     visitDrafts.liberer()
@@ -350,7 +332,6 @@ describe('Brouillon de volée — l’écriture ne relit pas le journal', () => 
     const id = await partie(services, 'X01')
     const avant = await etat(dependencies, id)
     await jouer(services, 'X01', id, [M, M, M])
-    // Écrite après coup, mais avec l'état affiché au moment du geste.
     await services.manageVisitDraft.save({ matchId: id, base: avant, darts: [M, M] })
     expect(await dependencies.visitDrafts.findById(id)).toMatchObject({ visitCount: 0 })
 
@@ -373,21 +354,14 @@ describe('Brouillon de volée — suppression de la partie', () => {
 
     expect(await dependencies.visitDrafts.findById(id)).toBeNull()
     expect(await dependencies.matches.findById(id)).toBeNull()
-    // Seule la partie supprimée perd sa volée.
     expect(await dependencies.visitDrafts.findById(autre)).not.toBeNull()
   })
 
-  /**
-   * Q-T2, tranchée par l'utilisateur : l'effacement du brouillon passe avant la
-   * suppression. S'il échoue, la partie reste et l'erreur remonte (l'écran dit
-   * qu'elle n'a pas pu être supprimée) — jamais de brouillon orphelin.
-   */
   it('un brouillon impossible à effacer : la partie n’est pas supprimée, l’erreur remonte', async () => {
     const { services, dependencies } = banc({ visitDrafts: new BrouillonsIndelebiles() })
     const id = await partie(services, 'X01')
     const base = await etat(dependencies, id)
     await services.manageVisitDraft.save({ matchId: id, base, darts: [S1] })
-    // Précondition : la partie et son brouillon sont là avant la suppression.
     expect(await dependencies.matches.findById(id)).not.toBeNull()
     expect(await dependencies.visitDrafts.findById(id)).not.toBeNull()
 

@@ -5,7 +5,6 @@ import type {
   TourDuMondePreview,
 } from '../ports/driving/PreviewTourDuMondeVisit'
 
-/** Aucune dépendance : la projection est pure, elle ne lit ni n'écrit rien. */
 export class PreviewTourDuMondeVisitUseCase implements PreviewTourDuMondeVisit {
   execute({
     state,
@@ -14,18 +13,14 @@ export class PreviewTourDuMondeVisitUseCase implements PreviewTourDuMondeVisit {
     readonly state: TourDuMondeState
     readonly darts: readonly Dart[]
   }): TourDuMondePreview {
-    // `applyVisit` refuse une volée vide : rien à prévoir tant qu'aucune
-    // fléchette n'est plantée.
+    // `applyVisit` refuse une volée vide.
     if (darts.length === 0) return { state, complete: false, completesTour: false }
 
     const apres = TourDuMondeRules.applyVisit(state, darts)
     const volee = apres.history.at(-1)
     const boucle = volee !== undefined && volee.targetIndexAfter >= state.config.targets.length
 
-    // ⚠️ Contrairement au Cricket, `apres.finished` n'entre PAS dans la formule :
-    // au Tour du monde on finit le tour de table, donc la partie continue après
-    // un bouclage. Ce qui clôt la volée, c'est que **ce joueur** n'ait plus de
-    // cible, pas que la partie s'arrête.
+    // ⚠️ `apres.finished` n'entre pas ici (on finit le tour de table) : la volée se clôt quand ce joueur n'a plus de cible.
     return { state: apres, complete: boucle || darts.length >= 3, completesTour: boucle }
   }
 }

@@ -20,16 +20,10 @@ type Props = {
   readonly cibles: readonly SegmentNumber[]
   /** 5 colonnes (1 à 20) ou 3 (les six cibles du Cricket). */
   readonly colonnes: 5 | 3
-  /**
-   * La bascule S/D/T. Absente (Tour du monde) : pas de rail, pas de touche armée,
-   * et toutes les fléchettes partent en Simple.
-   */
+  /** Bascule S/D/T ; absente (Tour du monde) : pas de rail, tout part en Simple. */
   readonly multiplicateur?: Multiplier
   readonly onMultiplicateur?: (valeur: Multiplier) => void
-  /**
-   * Ce que dit le petit chiffre d'une touche armée : les `points` de la
-   * fléchette (X01, entraînement) ou les `marques` qu'elle fait (Cricket).
-   */
+  /** Petit chiffre d'une touche armée : les `points` (X01, entraînement) ou les `marques` (Cricket). */
   readonly exposant?: 'points' | 'marques'
   readonly onFlechette: (dart: Dart) => void
   readonly onAnnuler: () => void
@@ -38,36 +32,8 @@ type Props = {
   readonly annulation?: Annulation
 }
 
-/**
- * LE pavé de saisie des quatre jeux (X01, entraînement, Cricket, Tour du monde) :
- * mêmes mots, mêmes tailles, Annuler au même endroit. La mémoire musculaire ne
- * change plus d'un jeu à l'autre.
- *
- * De haut en bas :
- *  1. la grille des cibles ;
- *  2. la rangée **Bulle · Hors · Annuler** (5 colonnes : 2 · 1 · 2) — ses x et ses
- *     largeurs viennent de ce seul conteneur, donc identiques dans les quatre jeux ;
- *  3. le rail Simple / Double / Triple en pleine largeur, seulement s'il y a une
- *     bascule. Sans rail (Tour du monde), la rangée est la dernière.
- *
- * Le multiplicateur est **momentané** : il retombe sur Simple dès qu'une
- * fléchette est saisie (la remise à zéro vit dans le hook du mode, pas ici). Il
- * se lit sur la `<section>` (`data-multiplicateur`) ; la classe `touche-armee`
- * désigne les touches qui s'en parent : les cibles et la Bulle, jamais Hors ni
- * Annuler (voir `index.css`).
- *
- * « Bulle » enregistre `BULL_SIMPLE` en Simple et `BULL_DOUBLE` en Double ; elle
- * se grise en Triple (il n'existe pas de triple bull) plutôt que de refuser le
- * coup après l'avoir accepté. « Hors » enregistre `MISS` et ignore la bascule.
- *
- * ⚠️ **Aucune touche ne porte d'utilitaire `text-craie*` / `text-laiton*`** : il
- * battrait `.touche:active` et l'inversion à l'appui (P1) ne se verrait plus.
- * La couleur de repos passe par `--texte-touche` ; garde `appuiBoundary`.
- *
- * ⚠️ **Le pavé ne se grise jamais pendant l'écriture d'une volée** (la garde vit
- * dans le hook : un appui pendant l'écriture n'enregistre rien). Les seules
- * touches éteintes sont la Bulle en Triple et « Annuler » sans rien à annuler.
- */
+/** Pavé de saisie commun des quatre jeux : grille des cibles, rangée Bulle · Hors · Annuler, rail S/D/T s'il y a une bascule. */
+// ⚠️ Aucune touche ne porte `text-craie*`/`text-laiton*` (il battrait `.touche:active`) ; le pavé ne se grise jamais pendant l'écriture d'une volée.
 export const PaveSaisie = ({
   libelleSection,
   cibles,
@@ -107,8 +73,6 @@ export const PaveSaisie = ({
             onClick={() => onFlechette(Dart.of(numero, choisi))}
             className={`touche ${armee} chiffres relative min-h-[3.25rem] text-xl font-bold paysage:min-h-12 paysage:text-lg`}
           >
-            {/* La valeur n'apparaît que si elle diffère du numéro : en simple elle
-                serait du bruit, en triple elle évite la faute. */}
             {avecBascule && facteur > 1 && (
               <span
                 aria-hidden="true"
@@ -175,9 +139,6 @@ export const PaveSaisie = ({
         </button>
       </div>
 
-      {/* Le rail, en pleine largeur sous la rangée : le bord bas, là où le pouce
-          retombe. Le curseur de laiton glisse d'un onglet à l'autre — et revient
-          tout seul sur Simple, ce qui rend la remise à zéro visible. */}
       {avecBascule && (
         <div className="relative grid grid-cols-3 border border-chene/60 bg-feutre/70 p-[var(--rail-p)] [--rail-p:0.25rem] paysage:[--rail-p:0.125rem]">
           <span

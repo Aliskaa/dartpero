@@ -21,15 +21,7 @@ import { EnTeteEtape } from './EnTeteEtape'
 import { ListeOrdonnable } from './ListeOrdonnable'
 import { deplacer } from './ordre'
 
-/**
- * Étape 3 — l'ordre de jeu, à partir de deux joueurs : une feuille numérotée,
- * le premier en laiton. « Tirer au sort » rebat la feuille **tout de suite** : on
- * voit qui commence, et on peut encore réordonner à la poignée.
- *
- * ⚠️ Le tirage part d'un geste (`onClick`), jamais d'un effet : le `StrictMode`
- * le jouerait deux fois. C'est un vrai tirage — il peut redonner l'ordre
- * d'avant — d'où le bref mouvement de la feuille, qui dit qu'il a eu lieu.
- */
+/** Étape 3 — l'ordre de jeu. ⚠️ Le tirage part d'un geste, jamais d'un effet (`StrictMode`) ; il peut redonner l'ordre d'avant. */
 export const EtapeOrdre = ({
   mode,
   partie,

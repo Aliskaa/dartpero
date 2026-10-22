@@ -1,15 +1,6 @@
 import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
 
-/**
- * Wake Lock API.
- *
- * Deux pièges du monde réel traités ici :
- * - l'API n'existe pas partout (Safari ancien, contexte non sécurisé) → on ne
- *   fait rien plutôt que de planter ;
- * - le verrou est **relâché par le navigateur** dès que l'onglet passe en
- *   arrière-plan. Sans reprise sur `visibilitychange`, l'écran se rendort dès
- *   qu'on a répondu à un message pendant la partie.
- */
+/** ⚠️ Le navigateur relâche le verrou en arrière-plan : reprise sur `visibilitychange`. Muet si l'API manque. */
 export class WakeLockScreenLock implements ScreenLock {
   private sentinel: WakeLockSentinel | null = null
   private voulu = false
@@ -33,7 +24,6 @@ export class WakeLockScreenLock implements ScreenLock {
         this.sentinel = null
       })
     } catch {
-      // Refus de l'utilisateur, batterie faible, onglet caché : sans gravité.
       this.sentinel = null
     }
   }

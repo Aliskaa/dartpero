@@ -17,7 +17,6 @@ const ligne = (id: string, champs: Partial<LigneClassement>): LigneClassement =>
   ...champs,
 })
 
-/** Les morceaux d'une ligne de barre : piste, remplissage, valeur, complément. */
 const morceaux = (li: HTMLElement) => {
   const piste = li.children[2] as HTMLElement
   const colonneValeur = li.children[3] as HTMLElement
@@ -35,7 +34,6 @@ const grandChiffre = (texte: string) => {
   return trouve
 }
 
-/** Toutes les lignes visibles : le cas d'une carte non coupée. */
 const classement = (lignes: readonly LigneClassement[], complement?: string) =>
   render(
     <ClassementPodium lignes={lignes} visibles={lignes} {...(complement ? { complement } : {})} />,
@@ -58,7 +56,6 @@ describe('ClassementPodium — le rendu', () => {
     }
     expect(lignes[2]?.remplissage).toHaveClass('bg-craie/72')
     expect(lignes[2]?.valeur).toHaveClass('text-craie')
-    // « — » est une information : craie-3, jamais du décor.
     expect(lignes[3]?.valeur).toHaveTextContent('—')
     expect(lignes[3]?.valeur).toHaveClass('text-craie-3')
 
@@ -81,7 +78,6 @@ describe('ClassementPodium — le rendu', () => {
   it('les pistes de barre sont muettes au lecteur d’écran (T-M1)', () => {
     classement([ligne('Kevin', { largeur: 1, enTete: true, texte: '3' }), ligne('Sarah', {})])
     const items = screen.getAllByRole('listitem')
-    // Témoin : il y a bien une piste par ligne, puis chacune est `aria-hidden`.
     expect(items).toHaveLength(2)
     for (const li of items) {
       const { piste } = morceaux(li)
@@ -125,7 +121,6 @@ describe('BarresPodium — le complément par ligne (Victoires, R1-Q7)', () => {
       />,
     )
     const grilles = screen.getAllByRole('listitem').map((li) => li.className)
-    // Une seule grille pour toute la carte, en pixels fixes hors de la piste.
     expect(new Set(grilles).size).toBe(1)
     expect(grilles[0]).toContain('grid-cols-[24px_54px_1fr_72px]')
   })

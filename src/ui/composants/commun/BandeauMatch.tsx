@@ -5,10 +5,7 @@ import { LivreRegles } from '@/ui/composants/commun/LivreRegles'
 import { type NomPictogramme, Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import type { ReglesDeLaPartie } from '@/ui/reglesDuJeu'
 
-/**
- * Une étiquette cerclée du bandeau (DI, DO, « Dernier tour ») : bordure de laiton
- * à demi-teinte, **sans fond**, texte en laiton clair.
- */
+/** Étiquette cerclée du bandeau (DI, DO, « Dernier tour »). */
 export const BadgeBandeau = ({ children }: { readonly children: ReactNode }) => (
   <span className="grave border border-laiton/50 px-1.5 font-score text-etiquette uppercase leading-4 tracking-wider text-laiton-clair">
     {children}
@@ -21,29 +18,13 @@ type Props = {
   readonly sousTitre: string
   /** Sous le sous-titre en portrait, à sa suite en paysage (DI / DO du X01). */
   readonly complement?: ReactNode
-  /**
-   * Où l'on en est, à droite : des lignes (« Manche 2 » / « Set 1 »), empilées en
-   * portrait et côte à côte en paysage. Absent : rien à droite.
-   */
+  /** Où l'on en est, à droite (« Manche 2 » / « Set 1 »). Absent : rien. */
   readonly droite?: ReactNode
-  /**
-   * Les règles de la partie, lues dans sa configuration : le livre ouvert, à
-   * l'extrême droite. Obligatoire — un écran de partie qui l'oublierait ne
-   * compilerait pas (lot `regles-du-jeu`).
-   */
+  /** Les règles de la partie, pour le livre ouvert. Obligatoire. */
   readonly regles: ReglesDeLaPartie
 }
 
-/**
- * Le bandeau de chêne des quatre écrans de partie, en quatre zones : le retour, le
- * jeu (pictogramme, titre, règles), où l'on en est, et le livre des règles.
- *
- * Portrait : le bloc central s'empile (titre, sous-titre, puis le complément
- * sous le sous-titre). **Paysage** : il tient en UNE rangée, la droite aussi — la
- * hauteur est ce qui manque, le pavé est déjà au plancher de 48 px.
- *
- * Il se pose dans l'emplacement `enTete` de `DispositionPartie`.
- */
+/** Bandeau de chêne des écrans de partie ; se pose dans l'emplacement `enTete` de `DispositionPartie`. */
 export const BandeauMatch = ({
   pictogramme,
   titre,
@@ -77,18 +58,12 @@ export const BandeauMatch = ({
       </div>
     </div>
 
-    {/* Où l'on en est : en craie, comme la planche. Le laiton reste au repère du
-        joueur qui lance et au rail du pavé. */}
     {droite && (
       <div className="grave flex shrink-0 flex-col items-end font-score text-etiquette font-semibold uppercase leading-4 tracking-[0.14em] text-craie-2 paysage:flex-row paysage:gap-x-3">
         {droite}
       </div>
     )}
 
-    {/* Le livre, hors de `.grave` et des capitales : la feuille de règles,
-        enfant du livre dans le DOM, n'en hérite pas. Sa cible reste à 48 px,
-        mais il mord sur le rembourrage du bandeau (marges négatives) : la rangée
-        ne grandit pas de 40 à 48 px (mesures : 02-dev-notes du lot). */}
     <div className="-my-1 -mr-1 shrink-0 paysage:-mb-0.5">
       <LivreRegles regles={regles} hauteur="moitie" />
     </div>

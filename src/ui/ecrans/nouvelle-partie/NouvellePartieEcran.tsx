@@ -10,10 +10,7 @@ import { EtapeJeu } from './EtapeJeu'
 import { EtapeJoueurs } from './EtapeJoueurs'
 import { EtapeOrdre } from './EtapeOrdre'
 
-/**
- * Lit le jeu dans l'URL. Un slug inconnu renvoie à l'étape 1, en **remplaçant**
- * l'entrée : le retour ne doit pas y ramener.
- */
+/** Lit le jeu dans l'URL ; un slug inconnu renvoie à l'étape 1 en remplaçant l'entrée. */
 const AvecJeu = ({ children }: { readonly children: (mode: GameModeId) => ReactNode }) => {
   const { jeu } = useParams()
   const mode = modeDuSlug(jeu)
@@ -21,13 +18,7 @@ const AvecJeu = ({ children }: { readonly children: (mode: GameModeId) => ReactN
   return <>{children(mode)}</>
 }
 
-/**
- * L'étape 3 n'existe qu'à partir de deux joueurs, et jamais à l'entraînement.
- *
- * ⚠️ La garde attend les profils : tant qu'ils chargent, la sélection dérivée
- * vaut `[]`, et rediriger à ce moment renverrait à l'étape 2 quelqu'un qui a
- * bien deux joueurs.
- */
+/** L'étape 3 n'existe qu'à partir de deux joueurs. ⚠️ La garde attend les profils : sélection vide pendant le chargement. */
 const GardeOrdre = ({
   mode,
   partie,
@@ -43,22 +34,12 @@ const GardeOrdre = ({
   return <EtapeOrdre mode={mode} partie={partie} />
 }
 
-/**
- * « Nouvelle partie » en trois étapes : le jeu, puis joueurs et réglages, puis
- * l'ordre de jeu.
- *
- * ⚠️ **Chaque étape est une route** descendante de `/nouvelle-partie/*`, jamais
- * un état interne : c'est ce qui fait que le retour du téléphone ramène à
- * l'étape précédente. Ce composant reste monté d'une étape à l'autre, et c'est
- * lui seul qui appelle `useNouvellePartie` : les choix survivent au retour —
- * le nom tapé à l'étape 2 compris.
- */
+/** « Nouvelle partie » en trois étapes. ⚠️ Chaque étape est une route ; ce composant reste monté et seul appelle `useNouvellePartie`. */
 export const NouvellePartieEcran = () => {
   const partie = useNouvellePartie()
   const { pathname } = useLocation()
 
-  // Chaque étape s'ouvre en haut de page. Appel optionnel : jsdom n'implémente
-  // pas `scrollTo`.
+  // Chaque étape s'ouvre en haut de page (appel optionnel : jsdom sans `scrollTo`).
   // biome-ignore lint/correctness/useExhaustiveDependencies: on remonte à chaque changement d'étape.
   useEffect(() => {
     document.scrollingElement?.scrollTo?.({ top: 0 })

@@ -3,13 +3,7 @@ import { KILLER_NUMBERS } from '../../domain/games/killer/config'
 import type { SegmentNumber } from '../../domain/value-objects/Dart'
 import type { RandomSource } from '../ports/driven/RandomSource'
 
-/**
- * Tire `count` numéros de Killer distincts parmi ceux qui ne sont pas exclus.
- *
- * Tirage sans remise, un `nextInt` par numéro : chaque numéro libre a la même
- * chance. ⚠️ Le résultat est **écrit** dans l'ouverture de la partie, jamais
- * retiré au rejeu (même règle que `shufflePlayers`).
- */
+// ⚠️ Le résultat est écrit dans l'ouverture de la partie, jamais retiré au rejeu.
 export const drawKillerNumbers = (
   count: number,
   excluded: readonly SegmentNumber[],

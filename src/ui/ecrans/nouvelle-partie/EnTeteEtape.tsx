@@ -3,14 +3,7 @@ import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { vientDuParcours } from '@/ui/chemins'
 
-/**
- * Le retour de l'écran, aligné sur celui du téléphone.
- *
- * Arrivé par le parcours (`ETAT_PARCOURS`), on recule d'une entrée — le même
- * geste que le bouton du téléphone, donc les deux ne divergent jamais. Arrivé
- * par un lien profond ou un rechargement, il n'y a pas d'entrée précédente
- * fiable : on **remplace** par l'étape précédente, sans empiler de doublon.
- */
+/** Le retour, aligné sur celui du téléphone : recul par le parcours (`ETAT_PARCOURS`), sinon remplacement par l'étape précédente. */
 export const useRetour = (cheminPrecedent: string) => {
   const navigate = useNavigate()
   const { state } = useLocation()

@@ -1,13 +1,4 @@
-/**
- * La géométrie d'un plateau de fléchettes — l'ordre des secteurs et les rayons
- * des anneaux, en proportions d'une vraie cible.
- *
- * Extraite de `Cible` le jour où un **deuxième** dessin en a eu besoin (la
- * carte des impacts). Deux copies de ces rayons, ce serait deux plateaux qui
- * finiraient par ne plus se superposer.
- *
- * Tout est exprimé sur une `viewBox` de 100 × 100, centre (50, 50).
- */
+/** Géométrie du plateau (ordre des secteurs, rayons) sur une `viewBox` de 100 × 100, centre (50, 50). */
 
 /** L'ordre officiel des secteurs, en partant du 20 et dans le sens horaire. */
 export const ORDRE = [

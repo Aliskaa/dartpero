@@ -22,14 +22,11 @@ describe('Meneur d’une ligne', () => {
     expect(rangDuMeneur([ligne(10), ligne(40), ligne(20)], PAR_VALEUR)).toBe(1)
   })
 
-  /**
-   * ⚠️ Le cas le plus fréquent d'un match entre potes : « 180 » vaut zéro pour
-   * tout le monde. Dorer le premier de la liste lui inventerait un exploit.
-   */
+  // ⚠️ Le cas le plus fréquent d'un match entre potes : « 180 » vaut zéro pour
+  // tout le monde. Dorer le premier de la liste lui inventerait un exploit.
   it('ne désigne personne à égalité', () => {
     expect(rangDuMeneur([ligne(0), ligne(0), ligne(0)], PAR_VALEUR)).toBe(-1)
     expect(rangDuMeneur([ligne(7), ligne(7)], PAR_VALEUR)).toBe(-1)
-    // Une égalité en tête suffit, même si quelqu'un est derrière.
     expect(rangDuMeneur([ligne(9), ligne(9), ligne(2)], PAR_VALEUR)).toBe(-1)
   })
 
@@ -37,10 +34,6 @@ describe('Meneur d’une ligne', () => {
     expect(rangDuMeneur([ligne(0)], PAR_VALEUR)).toBe(0)
   })
 
-  /**
-   * La meilleure manche est le seul classement du projet où **petit** vaut
-   * mieux que grand : l'appelant rend l'opposé, le composant n'a pas à le savoir.
-   */
   it('suit la clé qu’on lui donne, pas la valeur affichée', () => {
     const meilleureManche: LigneStat<Ligne> = {
       libelle: 'Meilleure manche',
@@ -73,12 +66,9 @@ describe('La feuille de match (tableau transposé)', () => {
 
     const tableau = screen.getByRole('table', { name: 'Statistiques de la partie' })
 
-    // ⚠️ Par le **nom accessible**, pas par `textContent` : la pastille
-    // d'avatar est `aria-hidden` et ses initiales n'entrent donc pas dans
-    // l'annonce, mais elles sont bien dans le texte brut du DOM.
+    // ⚠️ Par le nom accessible, pas `textContent` : la pastille d'avatar est `aria-hidden`.
     const enTetes = within(tableau).getAllByRole('columnheader')
     expect(enTetes).toHaveLength(2)
-    // Kevin gagne : sa colonne porte « vainqueur » pour les lecteurs d'écran.
     expect(
       within(tableau).getByRole('columnheader', { name: 'Kevin, vainqueur' }),
     ).toBeInTheDocument()
@@ -111,7 +101,6 @@ describe('La feuille de match (tableau transposé)', () => {
 })
 
 describe('Le résumé de partie, de bout en bout', () => {
-  /** Un 501 en tête-à-tête, gagné par Kevin, avec de quoi remplir la feuille. */
   const partieJouee = async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
@@ -128,7 +117,6 @@ describe('Le résumé de partie, de bout en bout', () => {
     await services.recordVisit.execute({ matchId, darts: PETIT })
     await services.recordVisit.execute({ matchId, darts: T20 })
     await services.recordVisit.execute({ matchId, darts: PETIT })
-    // 141 restants : Kevin sort.
     await services.recordVisit.execute({
       matchId,
       darts: [Dart.triple(20), Dart.triple(19), Dart.double(12)],
@@ -143,43 +131,27 @@ describe('Le résumé de partie, de bout en bout', () => {
 
     const feuille = await screen.findByRole('table', { name: 'Statistiques de la partie' })
 
-    // Kevin gagne : sa colonne porte « vainqueur » pour les lecteurs d'écran.
     expect(
       within(feuille).getByRole('columnheader', { name: 'Kevin, vainqueur' }),
     ).toBeInTheDocument()
     expect(within(feuille).getByRole('columnheader', { name: 'Julien' })).toBeInTheDocument()
 
-    // 501 en 9 fléchettes : la manche la plus courte possible.
     const meilleure = within(feuille).getByRole('row', { name: /Meilleure manche/ })
     expect(within(meilleure).getAllByRole('cell')[0]).toHaveTextContent('9')
-    // Julien n'a gagné aucune manche : il n'a pas « 0 fléchette », il n'a rien.
     expect(within(meilleure).getAllByRole('cell')[1]).toHaveTextContent('—')
   })
 
-  /**
-   * ⚠️ La question que le résumé doit savoir poser : « t'as tapé où ce soir ».
-   * Elle a plus de sens par match que sur un cumul de carrière, où six mois de
-   * parties finissent par se ressembler.
-   */
+  // ⚠️ « T'as tapé où ce soir » : plus de sens par match que sur un cumul de carrière.
   it('montre où les fléchettes de CETTE partie se sont plantées', async () => {
     const { services, matchId } = await partieJouee()
     renderWithServices(<App />, { services, route: `/partie/${matchId}/resume` })
 
-    // Kevin : 7 T20 sur 9 fléchettes. Le nom accessible porte la donnée.
     expect(await screen.findByRole('img', { name: /^Kevin : T20 7 fois/ })).toBeInTheDocument()
-    // Julien : deux fléchettes hors cible, comptées sans chauffer de case.
     expect(screen.getByRole('img', { name: /^Julien : / })).toBeInTheDocument()
     expect(screen.getByText('Hors cible ×2')).toBeInTheDocument()
   })
 
-  /**
-   * ⚠️ Cas signalé par Archi comme plus grave que prévu : cette fixture
-   * joue en `doubleOut: false`, donc Kevin GAGNE son leg sur un D12 sans que
-   * les stats l'enregistrent jamais comme « sur un double » — `doubleAttempts`
-   * reste à 0 pour tout le monde. Un tiret est donc dû aux DEUX joueurs, y
-   * compris au vainqueur : surtout pas « 0 % », qui mentirait sur celui qui
-   * vient de sortir.
-   */
+  // ⚠️ Cette fixture joue en `doubleOut: false` : Kevin GAGNE son leg sur un D12.
   it('écrit un tiret pour « % doubles » quand double out est désactivé, même pour le vainqueur du leg', async () => {
     const { services, matchId } = await partieJouee()
     renderWithServices(<App />, { services, route: `/partie/${matchId}/resume` })
@@ -194,12 +166,6 @@ describe('Le résumé de partie, de bout en bout', () => {
 })
 
 describe('% doubles — pourcentage réel vs zéro réel vs absence de tentative', () => {
-  /**
-   * Kevin part déjà « sur un double » (reste 40, double out actif par
-   * défaut) : deux fléchettes ratées comptent comme tentatives, la
-   * troisième sort le leg — 1 réussite sur 3, donc 33 %. Il gagne dès son
-   * premier tour, Julien ne rejoue donc jamais : aucune tentative pour lui.
-   */
   const partieAvecCheckoutReussi = async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
@@ -217,11 +183,6 @@ describe('% doubles — pourcentage réel vs zéro réel vs absence de tentative
     return { services, matchId }
   }
 
-  /**
-   * Même point de départ, mais Kevin rate ses trois fléchettes : le reste ne
-   * bouge pas (aucun bust), et chacune compte quand même comme une tentative
-   * de double ratée — 0 réussite sur 3, donc 0 %, pas un tiret.
-   */
   const partieAvecDoubleRate = async () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
@@ -251,10 +212,6 @@ describe('% doubles — pourcentage réel vs zéro réel vs absence de tentative
     expect(cellules[1]).toHaveTextContent('—')
   })
 
-  /**
-   * Le cas discriminant du lot : sans lui, rien ne prouve que `pourcent()`
-   * ne s'est pas contenté de remplacer TOUS les zéros par des tirets.
-   */
   it('affiche « 0 % », jamais un tiret, pour un joueur qui a tenté un double et raté toutes ses tentatives', async () => {
     const { services, matchId } = await partieAvecDoubleRate()
     renderWithServices(<App />, { services, route: `/partie/${matchId}/resume` })
@@ -265,7 +222,6 @@ describe('% doubles — pourcentage réel vs zéro réel vs absence de tentative
 
     expect(cellules[0]).toHaveTextContent('0 %')
     expect(cellules[0]).not.toHaveTextContent('—')
-    // Julien n'a pas rejoué : aucune tentative, donc un tiret — pas « 0 % ».
     expect(cellules[1]).toHaveTextContent('—')
   })
 })

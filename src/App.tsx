@@ -7,9 +7,7 @@ import { AccueilEcran } from '@/ui/ecrans/AccueilEcran'
 import { useThemeSysteme } from '@/ui/hooks/useAppareil'
 import { useDemandeStockageAuDemarrage } from '@/ui/hooks/useStockagePersistant'
 
-// Seul `AccueilEcran` reste statique : `start_url` du manifeste, route par
-// défaut ET fourre-tout `*` — le rendre lazy ajouterait une cascade sur le
-// geste le plus fréquent de l'app, pour ~3 kB (voir 01-architecture.md).
+// Seul `AccueilEcran` reste statique : `start_url`, route par défaut et `*` (lazy = cascade inutile).
 const JoueursEcran = lazy(() =>
   import('@/ui/ecrans/JoueursEcran').then((m) => ({ default: m.JoueursEcran })),
 )
@@ -25,8 +23,7 @@ const ReglagesEcran = lazy(() =>
 const ConfidentialiteEcran = lazy(() =>
   import('@/ui/ecrans/ConfidentialiteEcran').then((m) => ({ default: m.ConfidentialiteEcran })),
 )
-// Les trois étapes de « Nouvelle partie » vivent derrière ce seul `lazy()` :
-// ce sont des routes descendantes de `/nouvelle-partie/*`.
+// Les étapes de « Nouvelle partie » vivent derrière ce seul `lazy()` (routes `/nouvelle-partie/*`).
 const NouvellePartieEcran = lazy(() =>
   import('@/ui/ecrans/nouvelle-partie/NouvellePartieEcran').then((m) => ({
     default: m.NouvellePartieEcran,
@@ -39,17 +36,7 @@ const ResumePartieEcran = lazy(() =>
   import('@/ui/ecrans/games/PartieEcran').then((m) => ({ default: m.ResumePartieEcran })),
 )
 
-/**
- * Deux familles d'écrans :
- *
- * - ceux de **navigation**, qui partagent la barre du bas ;
- * - ceux de **partie** (configuration, match, résumé), en plein écran. Pendant
- *   une volée, chaque pixel sert à jouer et un onglet mal visé ferait perdre la
- *   saisie en cours.
- *
- * Le thème est posé ici, à la racine : `useThemeSysteme` rattrape le script
- * d'amorçage et reste branché sur le réglage du téléphone.
- */
+/** Écrans de navigation (barre du bas) et écrans de partie en plein écran ; le thème est posé ici, à la racine. */
 export default function App() {
   useThemeSysteme()
   useDemandeStockageAuDemarrage()

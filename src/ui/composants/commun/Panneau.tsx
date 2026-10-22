@@ -12,11 +12,7 @@ type Props = {
   readonly 'aria-label'?: string
 }
 
-/**
- * Conteneur secondaire : ardoise + filet, sans bandeau de bois systématique.
- * Le veinage bois reste réservé au bandeau de match et à la nav — là où il
- * ancre « on est en partie », pas sur chaque carte de réglages.
- */
+/** Conteneur secondaire : ardoise + filet ; le veinage bois est réservé au bandeau de match et à la nav. */
 export const Panneau = ({
   titre,
   enTete,

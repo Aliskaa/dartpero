@@ -13,35 +13,7 @@ const surLeVoile = (dialogue: HTMLDialogElement, x: number, y: number): boolean 
   return x < boite.left || x > boite.right || y < boite.top || y > boite.bottom
 }
 
-/**
- * La discipline d'un `<dialog>` natif ouvert par `showModal()` — couche
- * supérieure, fond inerte, `::backdrop` et Échap viennent du navigateur.
- * Partagée par `Modale` (Statistiques) et `FeuilleRegles` (lot
- * `regles-du-jeu`, Révision 1) : un seul exemplaire des pièges.
- *
- * L'état « ouvert » ne vit pas ici : il vient de l'historique
- * (`useModaleAuRetour`), et **toute** fermeture passe par `onFermer`, qui
- * recule d'une entrée.
- *
- * ⚠️ Pièges tenus ici :
- * - le `<dialog>` est **monté en permanence** par l'appelant, son contenu
- *   seulement ouvert ;
- * - **un seul effet, sans nettoyage qui ferme** : sous `StrictMode`, un
- *   nettoyage refermerait la boîte rouverte après un rechargement ;
- * - `cancel` (Échap, retour sur Chrome Android) est annulé puis relayé à
- *   `onFermer` ; un `close` du navigateur pendant qu'on est encore ouvert
- *   aussi. Un `close` provoqué par nous (`ouvert` passé à faux) ne relaie rien ;
- * - focus : sur ✕ à l'ouverture (explicite : le polyfill jsdom ne le fait
- *   pas) ; à la fermeture, rendu à `retour` s'il est donné, sinon à l'élément
- *   d'origine — **seulement après une ouverture faite ici**, sinon le bouton
- *   `retour` prendrait le focus à chaque montage. `retour` existe pour
- *   Safari, qui ne donne pas le focus à un bouton touché : l'origine y
- *   serait `body` ;
- * - un appui à côté ferme : il arrive au `<dialog>` lui-même, et l'on ne
- *   ferme que s'il **commence et finit** hors de sa boîte (`pointerdown` puis
- *   `click`, coordonnées contre `getBoundingClientRect()`). Un appui sur la
- *   bordure ou un glisser parti du contenu ne ferme pas.
- */
+/** La discipline du `<dialog>` natif de `Modale` et `FeuilleRegles`. ⚠️ Monté en permanence, un seul effet sans nettoyage (`StrictMode`). */
 export const useDialogueNatif = (
   ouvert: boolean,
   onFermer: () => void,

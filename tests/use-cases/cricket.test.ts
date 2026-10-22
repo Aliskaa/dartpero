@@ -46,7 +46,6 @@ describe('Cricket (use case)', () => {
 
     expect(fin.state.finished).toBe(true)
     expect(fin.state.winnerId).toBe(kevin)
-    // Le 20 fermé puis retouché : 60 points, marqués avant que Julien ne ferme.
     expect(fin.state.players[0]?.score).toBe(60)
     expect(fin.milestones.at(-1)).toEqual({ type: 'MatchFinished', winnerId: kevin })
   })
@@ -86,10 +85,6 @@ describe('Cricket (use case)', () => {
     ).rejects.toThrow(DomainError)
   })
 
-  /**
-   * La variante décide du vainqueur : elle voyage donc dans le journal, et non
-   * dans un réglage d'affichage qui pourrait changer entre deux reprises.
-   */
   it('rejoue une partie cut-throat avec sa variante intacte', async () => {
     const id = await demarrer(
       CricketConfig.create({ targets: [20, 19, 'BULL'], variant: 'CUT_THROAT' }),
@@ -98,7 +93,6 @@ describe('Cricket (use case)', () => {
 
     const state = await services.playCricket.getState(id)
     expect(state.config.variant).toBe('CUT_THROAT')
-    // Les 60 points partent chez l'adversaire, pas chez celui qui les marque.
     expect(state.players[0]?.score).toBe(0)
     expect(state.players[1]?.score).toBe(60)
   })
@@ -116,7 +110,6 @@ describe('Cricket (use case)', () => {
     expect(partie.players[0]?.closedTargets).toBe(1)
     expect(partie.players[0]?.score).toBe(20)
 
-    // Moyenne 3 fléchettes et 180 n'ont aucun sens ici : la carrière reste au X01.
     expect(await services.getPlayerStats.execute()).toEqual([])
   })
 

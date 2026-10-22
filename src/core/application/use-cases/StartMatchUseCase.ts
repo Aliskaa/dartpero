@@ -22,9 +22,7 @@ export class StartMatchUseCase implements StartMatch {
 
   async execute(command: StartMatchCommand): Promise<MatchId> {
     const { config, startingPlayerIndex = 0, shuffle = false } = command
-    // Le nom d'abord : trop long, rien n'est tiré ni écrit.
     const name = nameField(command.name)
-    // Le tirage a lieu ici, une fois, et son résultat part dans le journal.
     const playerIds = shuffle ? shufflePlayers(command.playerIds, this.random) : command.playerIds
 
     const profils = await Promise.all(playerIds.map((id) => this.players.findById(id)))
@@ -40,7 +38,6 @@ export class StartMatchUseCase implements StartMatch {
       startingPlayerIndex,
       ...name,
     }
-    // Valide la composition du match AVANT de persister quoi que ce soit.
     X01Rules.start(started)
 
     const id = MatchId.of(this.ids.newId())

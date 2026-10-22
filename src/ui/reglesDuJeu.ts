@@ -26,10 +26,8 @@ import {
 } from '@/ui/labels'
 
 /**
- * Les règles d'une partie, telles que la feuille de règles les lit : une union
- * discriminée par mode, faite de primitives. Elle se construit depuis la fiche
- * de l'étape 2 (`reglesDeLaFiche`) ou depuis la configuration d'une partie en
- * cours (`reglesDeLaConfig…`), jamais depuis un `localStorage` relu à part.
+ * Les règles d'une partie, telles que la feuille de règles les lit : une union discriminée par mode, faite
+ * de primitives.
  */
 export type ReglesDeLaPartie =
   | {
@@ -63,8 +61,8 @@ export type SortiesDuJeu = {
 const plage = ({ max, noFinish }: CheckoutRange): PlageSorties => ({ max, sansFinish: noFinish })
 
 /**
- * Le texte de la feuille, pour les règles de ce soir. Le **seul** `switch` sur
- * l'union : un mode ajouté sans sa branche ne compile pas (CONVENTIONS § 13).
+ * Le texte de la feuille, pour les règles de ce soir. Le **seul** `switch` sur l'union : un mode ajouté
+ * sans sa branche ne compile pas.
  */
 export const contenuRegles = (regles: ReglesDeLaPartie, sorties: SortiesDuJeu): ContenuRegles => {
   switch (regles.mode) {
@@ -122,9 +120,6 @@ export const reglesDeLaFiche = (
     }
   }
 }
-
-/* Les règles d'une partie en cours : lues dans SA configuration, donc dans son
-   journal — une vieille partie garde ses règles même si les défauts changent. */
 
 export const reglesDeLaConfigX01 = (config: X01Config): ReglesDeLaPartie => ({
   mode: 'X01',

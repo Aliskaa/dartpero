@@ -2,10 +2,7 @@ import type { RecordVisitResult } from '@/core/application/ports/driving/RecordV
 import type { MomentCelebratifData } from '@/ui/composants/commun/MomentCelebratif'
 import { pluriel, TITRE_MOMENT_MANCHE } from '@/ui/labels'
 
-/**
- * Déduit le bandeau de récompense d'une volée X01.
- * Priorité : partie > set > manche (un checkout est déjà une manche).
- */
+/** Bandeau de récompense d'une volée X01 ; priorité partie > set > manche. */
 export const momentDepuisVoleeX01 = (
   resultat: RecordVisitResult | null,
   nomVainqueur?: string,

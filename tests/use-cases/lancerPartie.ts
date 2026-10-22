@@ -8,12 +8,6 @@ import { TourDuMondeConfig } from '@/core/domain/games/tour-du-monde/config'
 import { X01Config } from '@/core/domain/games/x01/config'
 import type { MatchId, PlayerId } from '@/core/domain/value-objects/ids'
 
-/**
- * Lance une partie du mode demandé, avec ou sans nom tapé (la clé `name` n'est
- * posée que si fournie). Les modes viennent de la couture (`GameModeId`), pas
- * d'une liste recopiée : un cinquième mode fait échouer la compilation ici
- * (le `switch` n'a plus de retour pour lui) tant qu'il n'a pas son cas.
- */
 export const lancer = (
   services: Services,
   mode: GameModeId,

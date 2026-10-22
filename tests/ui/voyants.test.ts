@@ -3,7 +3,6 @@ import { joursCalendairesEntre } from '@/ui/jourCalendaire'
 import { libelleDureeSauvegarde } from '@/ui/labels'
 import { guideInstallationVisible, vueVoyantApplication, vueVoyantSauvegarde } from '@/ui/voyants'
 
-/** Un instant en heure LOCALE du test (`test.env.TZ = 'Europe/Paris'`). */
 const le = (jour: number, heure = 10, minute = 0) =>
   new Date(2026, 9, jour, heure, minute).getTime()
 
@@ -41,7 +40,6 @@ describe('Voyant « Dernier export »', () => {
   })
 
   it('le passage à l’heure d’hiver (jour de 25 h) ne décale rien', () => {
-    // Précondition : sans elle, le test serait vert sous UTC sans rien prouver.
     expect(le(26, 0) - le(25, 0)).toBe(25 * 3_600_000)
 
     expect(voyant(le(24, 23, 30), le(25, 23, 30)).texte).toBe('Hier')
@@ -60,7 +58,6 @@ describe('Voyant « Dernier export »', () => {
 
   it('un jour de 25 h reste un seul jour : 0 h 10 → 23 h 50, « Aujourd’hui »', () => {
     expect(le(26, 0) - le(25, 0)).toBe(25 * 3_600_000)
-    // Une division naïve par 24 h donnerait 1 (« Hier ») : 23 h 40 + l'heure rendue.
     expect(voyant(le(25, 0, 10), le(25, 23, 50)).texte).toBe('Aujourd’hui')
   })
 

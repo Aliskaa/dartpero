@@ -135,11 +135,6 @@ describe('nameOf — le nom lu sur l’ouverture', () => {
     expect(nameOf([{ type: 'RoundStarted', target: 40 }])).toBeNull()
   })
 
-  /**
-   * Un événement suivant qui porterait un nom — une seconde ouverture nommée,
-   * ou un `name` égaré sur une volée (journal abîmé) — ne compte pas : seule
-   * l'ouverture nomme la partie.
-   */
   it('ne lit que l’ouverture, jamais un événement suivant qui porterait un nom', () => {
     const [, events] = OUVERTURES[0] ?? ['', []]
     const [, cricket] = OUVERTURES[2] ?? ['', []]

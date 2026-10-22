@@ -7,7 +7,6 @@ import type { MatchRecord } from '../ports/driven/MatchRepository'
 import type { PlayerRepository } from '../ports/driven/PlayerRepository'
 import type { MatchSummary } from '../ports/driving/MatchSummary'
 
-/** Index pseudo par identifiant, pour éviter une lecture par joueur et par match. */
 export const nameIndex = async (
   players: PlayerRepository,
 ): Promise<ReadonlyMap<PlayerId, string>> => {
@@ -17,20 +16,7 @@ export const nameIndex = async (
 
 export type MatchStatus = 'FINISHED' | 'ONGOING' | 'ABANDONED'
 
-/**
- * Le statut d'une partie, **calculé ici et nulle part ailleurs** : l'Accueil
- * comme l'Historique l'appellent, avec le même `ongoingId`.
- *
- * `ongoingId` est l'identifiant de la partie en cours **globale** (celle de
- * `GetOngoingMatch`), jamais filtrée par mode : sous un filtre de mode, la
- * plus récente non terminée *de ce mode* serait faussement « en cours ».
- * Une partie non terminée qui n'est pas celle-là est « abandonnée » (elle
- * reste reprenable). Rien n'est enregistré.
- *
- * ⚠️ `GetOngoingMatch` ne regarde que les 20 parties les plus récentes : si
- * aucune non terminée ne s'y trouve, `ongoingId` vaut `null` et toute non
- * terminée est « abandonnée ».
- */
+// ⚠️ `ongoingId` est la partie en cours globale (`GetOngoingMatch`, 20 dernières parties), jamais filtrée par mode.
 export const matchStatus = (
   summary: Pick<MatchSummary, 'id' | 'finished'>,
   ongoingId: MatchSummary['id'] | null,
@@ -39,14 +25,7 @@ export const matchStatus = (
   return summary.id === ongoingId ? 'ONGOING' : 'ABANDONED'
 }
 
-/**
- * Condense un match en rejouant son journal, quel que soit son mode.
- *
- * Le `name` d'un joueur vaut `null` quand le profil local a été supprimé
- * depuis ; le `name` de la partie vaut `null` quand aucun nom n'a été tapé.
- * Dans les deux cas, c'est à l'UI de choisir le libellé : le cœur ne connaît
- * pas le français.
- */
+/** Condense un match en rejouant son journal ; les `name` à `null` laissent le libellé à l'UI. */
 export const summarize = (
   record: MatchRecord,
   names: ReadonlyMap<PlayerId, string>,
@@ -59,7 +38,6 @@ export const summarize = (
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
     finished: GameModes.isFinished(state),
-    // Un exercice solo n'a pas de vainqueur : on ne bat personne.
     winnerId: state.mode === 'CHECKOUT_PRACTICE' ? null : state.winnerId,
     totalVisits: GameModes.visitCount(state),
   }
@@ -92,7 +70,6 @@ export const summarize = (
   }
 
   if (state.mode === 'KILLER') {
-    // Le rang vient du domaine : une seule implémentation de la règle 9.
     const rangs = new Map(KillerRules.ranking(state).map((r) => [r.playerId, r.rank]))
     return {
       ...commun,

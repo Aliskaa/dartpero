@@ -18,11 +18,6 @@ import {
   SARAH,
 } from './helpers'
 
-/**
- * Les règles du Killer, validées par l'utilisateur (`request.md`, règles 1 à
- * 12). Kevin a le 8, Julien le 14, Sarah le 3, Paul le 11, Léa le 17, Marc le 20.
- */
-
 const A_TROIS = ouverture({ playerIds: [KEVIN, JULIEN, SARAH] })
 
 describe('Killer — devenir killer (règle 4)', () => {
@@ -100,7 +95,6 @@ describe('Killer — frapper un adversaire (règles 5 et 6)', () => {
   })
 
   it('plancher à 0 : un triple sur 1 vie n’en retire qu’une (« −1 », vies réellement perdues)', () => {
-    // Julien à 1 vie : D8 puis D14 (−2), au tour suivant T14.
     const etat = jouer(ouverture({ playerIds: [KEVIN, JULIEN, SARAH] }), [
       [Dart.double(8), Dart.double(14), Dart.miss()],
       [Dart.miss(), Dart.miss(), Dart.miss()],
@@ -234,7 +228,6 @@ describe('Killer — la variante « son propre numéro coûte des vies » (règl
     ['triple', Dart.triple(8), 3],
   ])('désactivée : un killer qui touche son %s ne perd rien', (_, dart) => {
     const etat = jouer(ouverture(), [[Dart.double(8), dart]])
-    // Précondition : Kevin est bien killer avant la fléchette.
     expect(joueur(etat, KEVIN).killer).toBe(true)
     expect(joueur(etat, KEVIN).lives).toBe(3)
     expect(derniereVolee(etat).effects[1]).toEqual({ type: 'NONE' })
@@ -275,7 +268,6 @@ describe('Killer — la variante « son propre numéro coûte des vies » (règl
     const etat = KillerRules.applyVisit(avant, [dart, Dart.triple(14)])
 
     expect(joueur(etat, KEVIN)).toMatchObject({ lives: 0, eliminated: true })
-    // La volée s'arrête : le T14 n'est jamais joué.
     expect(derniereVolee(etat).darts).toEqual([dart])
     expect(joueur(etat, JULIEN).lives).toBe(3)
     expect(etat.eliminations).toEqual([{ playerId: KEVIN, by: KEVIN }])
@@ -299,7 +291,6 @@ describe('Killer — la variante « son propre numéro coûte des vies » (règl
   })
 
   it('activée : à 0 vie le lanceur est éliminé et sa volée s’arrête', () => {
-    // Trois joueurs : Kevin se rend killer puis se met un triple (3 vies).
     const etat = jouer(ouverture({ config: VARIANTE, playerIds: [KEVIN, JULIEN, SARAH] }), [
       [Dart.double(8), Dart.triple(8), Dart.single(14)],
     ])
@@ -452,7 +443,6 @@ describe('Killer — annulation = projection du journal privé de sa dernière v
   it('deux éliminations dans la même volée, puis annulation : volée entière, puis fléchette', () => {
     const SIX = ouverture({ playerIds: [KEVIN, JULIEN, SARAH, PAUL, LEA, MARC] })
     const events = journal(SIX, [[Dart.double(8), Dart.triple(14), Dart.triple(3)]])
-    // Précondition : les deux éliminations ont bien eu lieu.
     const apres = KillerRules.project(events)
     expect(apres.eliminations).toEqual([
       { playerId: JULIEN, by: KEVIN },
@@ -464,7 +454,6 @@ describe('Killer — annulation = projection du journal privé de sa dernière v
     expect(annulee.players.every((p) => p.lives === 3 && !p.eliminated && !p.killer)).toBe(true)
     expect(KillerRules.currentPlayer(annulee).playerId).toBe(KEVIN)
 
-    // Volée rouverte sans sa dernière fléchette : Sarah revit, Julien reste éliminé.
     const rouverte = KillerRules.applyVisit(annulee, [Dart.double(8), Dart.triple(14)])
     expect(rouverte.eliminations).toEqual([{ playerId: JULIEN, by: KEVIN }])
     expect(joueur(rouverte, SARAH)).toMatchObject({ lives: 3, eliminated: false })
@@ -477,14 +466,11 @@ describe('Killer — annulation = projection du journal privé de sa dernière v
     const etat = KillerRules.project(events)
     expect(joueur(etat, KEVIN).eliminated).toBe(true)
     expect(etat.eliminations).toEqual([{ playerId: KEVIN, by: SARAH }])
-    // Julien a joué après Sarah ; Kevin (index 0) est sauté : retour à Sarah.
     expect(KillerRules.currentPlayer(etat).playerId).toBe(SARAH)
-    // Annuler la volée de Julien : c'est à lui, Kevin toujours éliminé.
     const sansJulien = KillerRules.project(events.slice(0, -1))
     expect(KillerRules.currentPlayer(sansJulien).playerId).toBe(JULIEN)
     expect(joueur(sansJulien, KEVIN).eliminated).toBe(true)
 
-    // Annuler aussi celle de Sarah : la main revient à la joueuse désignée.
     const annulee = KillerRules.project(events.slice(0, 1))
     expect(annulee.startingPlayerIndex).toBe(2)
     expect(KillerRules.currentPlayer(annulee).playerId).toBe(SARAH)
@@ -550,7 +536,6 @@ describe('Killer — propriété de préfixe : l’aperçu égale le rejeu', () 
           }
         }
       }
-      // Plancher : la boucle a bien tourné.
       expect(verifiees).toBeGreaterThan(CANDIDATES.length ** 3)
     },
   )

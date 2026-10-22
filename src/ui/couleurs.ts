@@ -1,15 +1,6 @@
 import type { PlayerColor } from '@/core/domain/value-objects/PlayerColor'
 
-/**
- * La traduction des couleurs de profil en pixels.
- *
- * Le domaine ne connaît que des noms (`brique`, `sapin`…) : c'est ici, et
- * nulle part ailleurs, qu'ils deviennent des teintes. Changer la charte ne
- * touche donc aucune donnée persistée.
- *
- * Toutes tiennent sur du feutre sombre sans concurrencer le laiton, qui reste
- * la couleur de l'application elle-même.
- */
+/** La traduction des couleurs de profil en pixels. */
 export type CouleurJoueur = {
   readonly fond: string
   readonly bord: string
@@ -33,7 +24,6 @@ const EFFACE: CouleurJoueur = { fond: '#5A3E24', bord: '#8B6238', texte: '#F2E8D
 export const couleurJoueur = (couleur: PlayerColor | null | undefined): CouleurJoueur =>
   couleur ? COULEURS[couleur] : EFFACE
 
-/** Les libellés français des couleurs — le cœur ne parle pas français. */
 export const NOM_COULEUR: Record<PlayerColor, string> = {
   brique: 'Brique',
   sapin: 'Sapin',
@@ -46,8 +36,8 @@ export const NOM_COULEUR: Record<PlayerColor, string> = {
 }
 
 /**
- * Deux lettres maximum : « Jean-Michel » → « JM », « Kevin » → « KE ».
- * Lues à 3 mètres dans une pastille de 40 px, trois lettres ne passent pas.
+ * Deux lettres maximum : « Jean-Michel » → « JM », « Kevin » → « KE ». Lues à 3 mètres dans une pastille de
+ * 40 px, trois lettres ne passent pas.
  */
 export const initiales = (nom: string): string => {
   const mots = nom

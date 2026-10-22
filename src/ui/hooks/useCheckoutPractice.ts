@@ -13,19 +13,7 @@ import { type EtatVolee, useVoleeEnCours } from './useVoleeEnCours'
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
 
-/**
- * Une session d'entraînement au checkout, côté écran.
- *
- * La volée s'accumule localement puis part d'un coup : contrairement au X01,
- * inutile de prévoir le reste à chaque fléchette, puisqu'une manche se joue en
- * une seule volée. On s'arrête dès que la sortie tombe — poursuivre n'aurait
- * aucun sens.
- *
- * La volée en cours reste hors du journal, doublée du brouillon de volée
- * (`useVoleeEnCours`, lot `volee-partielle`), rattaché au nombre de manches
- * jouées : après un rechargement, même reste à viser (il est au journal,
- * `RoundStarted`), aucun nouveau tirage.
- */
+/** Une session d'entraînement au checkout : une manche = une volée, hors journal jusqu'à sa clôture. */
 export const useCheckoutPractice = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
@@ -41,10 +29,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
 
   const state = requete.data ?? null
 
-  /**
-   * La manche se clôt à la sortie, au bust, ou à la troisième fléchette — et
-   * jamais de confirmation à l'entraînement : rien n'est `en-attente`.
-   */
+  /** Close à la sortie, au bust ou à la 3e fléchette ; jamais `en-attente` à l'entraînement. */
   const evaluer = useCallback((base: CheckoutPracticeState, darts: readonly Dart[]): EtatVolee => {
     const cibleDeLaManche = base.current?.target ?? null
     if (cibleDeLaManche === null) return 'close'
@@ -111,16 +96,14 @@ export const useCheckoutPractice = (matchId: MatchId) => {
       if (!state) return
       services.devices.haptics.tap()
       poser(dartsEnCours.slice(0, -1), state)
-      // La dernière fléchette vient de partir : un second appui réflexe ne doit
-      // pas défaire la manche précédente (voir `usePauseAnnulation`).
+      // Un second appui réflexe ne doit pas défaire la manche précédente (`usePauseAnnulation`).
       if (dartsEnCours.length === 1) armer()
       return
     }
     if (!ecoulee()) return
     if (!state || state.roundsPlayed === 0) return
 
-    // La manche se rouvre (lot `annulation-volee`) : même reste à viser, ses
-    // fléchettes restantes reviennent en saisie. Pas de confirmation ici.
+    // La manche se rouvre : même reste à viser, fléchettes restantes en saisie.
     setOccupe(true)
     try {
       const { state: revenu, darts } = await services.playCheckoutPractice.undoLastVisit(matchId)
@@ -136,10 +119,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
     }
   }, [services, state, matchId, dartsEnCours, queryClient, occupe, armer, ecoulee, poser])
 
-  /**
-   * Ce que le bouton va retirer, écrit dessus — voir `libelleAnnulation`. Seul,
-   * le joueur est toujours le même : celui de la séance.
-   */
+  /** Ce que le bouton va retirer, voir `libelleAnnulation`. */
   const annulation = useMemo(() => {
     const joueur = state ? nomJoueur(profils.get(state.playerId)?.name ?? null) : null
     const flechette =

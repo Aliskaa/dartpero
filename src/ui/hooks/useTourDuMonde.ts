@@ -24,29 +24,14 @@ import { type EtatVolee, useVoleeEnCours } from './useVoleeEnCours'
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
 
-/**
- * L'état d'une partie de Tour du monde, côté écran.
- *
- * Même principe qu'au X01 : TanStack Query sert de **cache**, la volée
- * enregistrée renvoie déjà le nouvel état, qu'on injecte directement.
- *
- * La volée en cours passe par le port `PreviewTourDuMondeVisit` : la progression
- * affichée suit chaque fléchette sans que l'écran recopie la règle « toucher,
- * c'est atteindre le secteur », et la volée se clôt dès la fléchette qui boucle
- * le parcours — réclamer les suivantes fausserait le départage, qui se joue au
- * nombre de fléchettes.
- *
- * La volée en cours reste hors du journal, doublée du brouillon de volée
- * (`useVoleeEnCours`, lot `volee-partielle`) qui la fait survivre à un rechargement.
- */
+/** L'état d'une partie de Tour du monde : la volée en cours est prévue par `PreviewTourDuMondeVisit`, hors journal. */
 export const useTourDuMonde = (matchId: MatchId) => {
   const services = useServices()
   const queryClient = useQueryClient()
   const dire = useVoix()
   const { enPause, armer, ecoulee } = usePauseAnnulation()
 
-  // Les pseudos, pour appeler le joueur suivant par son nom. Gardés dans une
-  // ref : la Map est reconstruite à chaque rendu.
+  // Pseudos en ref : la Map est reconstruite à chaque rendu.
   const profils = useProfils()
   const profilsRef = useRef(profils)
   profilsRef.current = profils
@@ -59,10 +44,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
 
   const state = requete.data ?? null
 
-  /**
-   * La volée est close à trois fléchettes — ou dès celle qui boucle le
-   * parcours, qui attend *Valider*. Lu sur `PreviewTourDuMondeVisit`.
-   */
+  /** Close à trois fléchettes ou à celle qui boucle le parcours (elle attend *Valider*). */
   const evaluer = useCallback(
     (base: TourDuMondeState, darts: readonly Dart[]): EtatVolee => {
       const evaluation = services.previewTourDuMondeVisit.execute({ state: base, darts })
@@ -83,11 +65,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
   const joueurCourant = state?.players[state.currentPlayerIndex] ?? null
   const termine = state?.finished ?? false
 
-  /**
-   * Le tableau **tel qu'il doit s'afficher** : progression, cible courante et
-   * compteur de fléchettes suivent chaque fléchette, avant même que la volée ne
-   * soit enregistrée. Le calcul vient du port, jamais d'une règle recopiée ici.
-   */
+  /** Le tableau tel qu'il s'affiche, calculé par le port avant l'enregistrement de la volée. */
   const apercu = useMemo(() => {
     if (!state || termine) return null
     return services.previewTourDuMondeVisit.execute({ state, darts: dartsEnCours })
@@ -108,11 +86,9 @@ export const useTourDuMonde = (matchId: MatchId) => {
         const boucle = resultat.milestones.some((jalon) => jalon.type === 'TourCompleted')
         if (boucle) services.devices.haptics.success()
 
-        // Le résultat, puis à qui c'est le tour. Une volée sans touche ne se
-        // commente pas, mais elle passe quand même la main.
+        // Une volée sans touche passe quand même la main.
         const touches = resultat.visit.hits
-        // La phrase suit la **fin de partie** (une fois le tour de table fini),
-        // pas la fléchette qui boucle ; un nul (`winnerId` nul) n'en a pas.
+        // La phrase suit la fin de partie, pas la fléchette qui boucle ; un nul n'en a pas.
         const gagnee = resultat.milestones.some(
           (jalon) => jalon.type === 'MatchFinished' && jalon.winnerId !== null,
         )
@@ -136,11 +112,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     [services, matchId, queryClient, dire, poser],
   )
 
-  /**
-   * La fléchette qui **boucle le parcours** attend sa confirmation (lot
-   * `annulation-volee`). Lue sur `completesTour`, jamais sur `state.finished` :
-   * la fin du tour de table, elle, ne se confirme pas.
-   */
+  /** ⚠️ Lue sur `completesTour`, jamais sur `state.finished` : la fin du tour de table ne se confirme pas. */
   const sortieEnAttente = dartsEnCours.length > 0 && (apercu?.completesTour ?? false)
 
   /** « Kevin boucle le parcours sur 25 ? » — la partie, elle, continue. */
@@ -174,9 +146,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
       poser(suite, state)
       setDerniereVolee(null)
 
-      // La volée est close à trois fléchettes — ou dès celle qui boucle le
-      // parcours : les suivantes n'auraient plus de cible. Celle-là attend
-      // *Valider* avant d'être écrite.
+      // Close à trois fléchettes ou à celle qui boucle le parcours, qui attend *Valider*.
       switch (evaluer(state, suite)) {
         case 'ouverte':
           return false
@@ -202,10 +172,7 @@ export const useTourDuMonde = (matchId: MatchId) => {
     void enregistrer(dartsEnCours)
   }, [sortieEnAttente, occupe, enregistrer, dartsEnCours])
 
-  /**
-   * Une fléchette par appui : la dernière en cours, sinon la dernière de la
-   * volée enregistrée juste avant, qui se rouvre (voir `useX01`).
-   */
+  /** Une fléchette par appui, comme `useX01`. */
   const annuler = useCallback(async () => {
     if (occupe) return
     setErreur(null)

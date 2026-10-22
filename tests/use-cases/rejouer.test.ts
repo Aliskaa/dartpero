@@ -46,7 +46,6 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
     expect(await lire()).toEqual([])
   })
 
-  /** Lot `killer` : la configuration = vies + variante + joueurs ; ni numéros, ni ordre, ni nom. */
   it('Killer : fusionne malgré d’autres numéros, un autre ordre ou un nom ; sépare vies et variante', async () => {
     const paul = (await services.managePlayers.create('Paul')).id
     const lea = (await services.managePlayers.create('Léa')).id
@@ -151,7 +150,6 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
 
     const configurations = await lire()
     expect(configurations).toHaveLength(4)
-    // La plus récente d'abord : la variante / le nombre jouée en dernier, deux fois.
     expect(configurations.filter((c) => c.mode === 'CRICKET').map((c) => c.count)).toEqual([2, 1])
     expect(
       configurations.filter((c) => c.mode === 'CHECKOUT_PRACTICE').map((c) => c.count),
@@ -180,11 +178,6 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
     for (const configuration of configurations) expect(configuration.playerIds).toEqual([kevin])
   })
 
-  /**
-   * Constat #31 : un mode nouveau ne passe plus inaperçu. Le `Record` force à dire
-   * comment le lancer ; chaque mode est soit rejouable (rendu ET reproductible par
-   * le parcours), soit écarté explicitement dans `ECARTES`.
-   */
   const ECARTES: readonly GameModeId[] = []
   const LANCER: Record<GameModeId, () => Promise<MatchId>> = {
     X01: () => x01([kevin, julien]),
@@ -212,7 +205,6 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
     await LANCER[mode]()
 
     const configurations = await lire()
-    // Précondition : la partie a bien été lancée dans le mode voulu.
     const historique = await services.getMatchHistory.execute()
     expect(historique).toHaveLength(1)
 
@@ -228,7 +220,6 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
     const reglages = { legsToWin: 1, doubleOut: false, startingScore: 301 }
     const terminee = await x01([kevin], reglages)
     const T20 = Dart.triple(20)
-    // 301 : 180, puis T20 + T19 + D2 = 121 → la partie se termine.
     await services.recordVisit.execute({ matchId: terminee, darts: [T20, T20, T20] })
     await services.recordVisit.execute({
       matchId: terminee,
@@ -237,7 +228,6 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
     const abandonnee = await x01([kevin], reglages)
     const enCours = await x01([kevin], reglages)
 
-    // Les trois statuts sont bien ceux qu'on croit (sinon le test serait vert à vide).
     const historique = await services.getMatchHistory.execute()
     const fini = (id: MatchId) => historique.find((partie) => partie.id === id)?.finished
     expect(fini(terminee)).toBe(true)
@@ -308,7 +298,6 @@ describe('Configurations à rejouer (GetReplayableConfigurations)', () => {
   })
 
   it('date et classe sur la date de lancement (createdAt), jamais sur la dernière modification', async () => {
-    // X lancée la première, puis modifiée en dernier ; Y lancée entre les deux.
     const lanceeX = await x01([kevin])
     const lancementX = horloge.now()
     await x01([kevin], { startingScore: 301 })

@@ -14,15 +14,8 @@ import { libelleFlechetteTourDuMonde } from '@/ui/labels'
 import { fakeServices } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Lot `pave-unifie` — un seul pavé pour les quatre jeux.
- *
- * ⚠️ Angle mort assumé : jsdom ne mesure rien. Ces tests vérifient les fléchettes
- * REÇUES, les états, les classes et l'ordre du DOM ; les x, y, largeurs et
- * contrastes se relèvent dans Chrome (voir le dossier du lot).
- */
+// ⚠️ jsdom ne mesure rien : on vérifie les fléchettes reçues, les états et l'ordre du DOM.
 
-/** Un enregistreur de fléchettes : ce que le pavé envoie au hook du mode. */
 const enregistreur = () => {
   const recues: Dart[] = []
   return { recues, onFlechette: (dart: Dart) => void recues.push(dart) }
@@ -109,7 +102,6 @@ describe('Pavé Cricket', () => {
       .map((bouton) => bouton.textContent)
     expect(noms.slice(0, 6)).toEqual(['20', '19', '18', '17', '16', '15'])
     expect(noms.slice(6, 9)).toEqual(['Bulle', 'Hors', 'Annuler'])
-    // La grille des cibles : 3 colonnes (3 × 2).
     expect(screen.getByRole('button', { name: '20' }).parentElement).toHaveClass('grid-cols-3')
   })
 
@@ -127,11 +119,9 @@ describe('Pavé Cricket', () => {
         screen.getByRole('button', { name: '20' }).querySelector('[aria-hidden="true"]')
           ?.textContent,
       ).toBe(marques)
-      // Les touches de score s'arment, ni Hors ni Annuler.
       expect(screen.getByRole('button', { name: '20' })).toHaveClass('touche-armee')
       expect(screen.getByRole('button', { name: 'Bulle' })).toHaveClass('touche-armee')
       expect(screen.getByRole('button', { name: 'Hors' })).not.toHaveClass('touche-armee')
-      // « Hors » porte la bordure rouge ; la Bulle ne la porte pas.
       expect(screen.getByRole('button', { name: 'Hors' })).toHaveClass('touche-hors')
       expect(screen.getByRole('button', { name: 'Bulle' })).not.toHaveClass('touche-hors')
       expect(screen.getByRole('button', { name: 'Annuler' })).not.toHaveClass('touche-armee')
@@ -211,7 +201,6 @@ describe('Pavé Tour du monde', () => {
 
     await utilisateur.click(await screen.findByRole('button', { name: '16' }))
 
-    // Le court sur la touche ; le joueur dans le nom accessible (lot `annulation-volee`).
     expect(screen.getByRole('button', { name: 'Annuler 16 de Kevin' })).toHaveTextContent(
       'Annuler 16',
     )
@@ -238,7 +227,6 @@ describe.each([
     const hors = screen.getByRole('button', { name: 'Hors' })
     const annuler = screen.getByRole('button', { name: /^Annuler/ })
 
-    // Même rangée, module 5 colonnes, dans cet ordre.
     const rangee = bulle.parentElement as HTMLElement
     expect(hors.parentElement).toBe(rangee)
     expect(annuler.parentElement).toBe(rangee)
@@ -248,7 +236,6 @@ describe.each([
     expect(hors).toHaveClass('col-span-1')
     expect(annuler).toHaveClass('col-span-2')
 
-    // Le rail vient APRÈS la rangée (pleine largeur) ; sans rail, la rangée est la dernière.
     const suivant = rangee.nextElementSibling
     if (avecRail) {
       expect(suivant).not.toBeNull()

@@ -7,13 +7,6 @@ import type { Services } from '@/composition/container'
 import { fakeServices } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Lot `killer` : le genre d'un profil, côté écran (planche `genre-profil`,
- * piste B). Il sert seulement à accorder « éliminé / éliminée » au Killer ; il
- * se choisit à la création depuis l'étape 2 (ligne repliée) et à la
- * modification de la carte, jamais au repos.
- */
-
 type Utilisateur = ReturnType<typeof userEvent.setup>
 
 const profil = async (services: Services, nom: string) => {
@@ -71,7 +64,6 @@ describe('Genre — la boîte « Nouveau joueur »', () => {
     )
     await utilisateur.click(cases.getByRole('button', { name: 'Féminin' }))
     expect(cases.getByRole('button', { name: 'Féminin' })).toHaveAttribute('aria-pressed', 'true')
-    // La ligne reste ouverte et dit la valeur choisie.
     const ligne = boite.getByRole('button', { name: 'Genre Féminin' })
     expect(ligne).toHaveAttribute('aria-expanded', 'true')
     expect(
@@ -81,7 +73,6 @@ describe('Genre — la boîte « Nouveau joueur »', () => {
     await utilisateur.click(boite.getByRole('button', { name: 'Terminé' }))
     await waitFor(async () => expect((await profil(services, 'Sarah')).gender).toBe('FEMININE'))
 
-    // Réouverture : de nouveau « non précisé », replié.
     boite = await ouvrirBoite(utilisateur)
     const repliee = boite.getByRole('button', { name: 'Genre Non précisé' })
     expect(repliee).toHaveAttribute('aria-expanded', 'false')
@@ -115,7 +106,6 @@ describe('Genre — la carte du profil', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer' }))
     await waitFor(async () => expect((await profil(services, 'Sarah')).gender).toBe('MASCULINE'))
 
-    // « Rechargement » : mêmes services, nouveau cache de requêtes.
     unmount()
     renderWithServices(<App />, {
       services,

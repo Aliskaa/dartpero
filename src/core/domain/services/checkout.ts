@@ -2,13 +2,7 @@ import { DomainError } from '../DomainError'
 import { Dart, type SegmentNumber } from '../value-objects/Dart'
 import { SETUP_DARTS } from './dartSearch'
 
-/**
- * Sortir sur un double : la seule règle dont le calcul de checkout a besoin.
- *
- * Volontairement plus étroit que `X01Config` — ainsi ce module reste
- * **transverse** et peut servir aussi bien au X01 qu'à l'entraînement au
- * checkout, sans qu'un mode de jeu en importe un autre.
- */
+/** Plus étroit que `X01Config` : le module reste transverse (X01 et entraînement). */
 export type SortieRules = {
   readonly doubleOut: boolean
 }
@@ -19,40 +13,23 @@ export const MAX_CHECKOUT = 170
 /** Checkout maximal en 3 fléchettes, en sortie libre : T20 · T20 · T20. */
 export const MAX_CHECKOUT_FREE_OUT = 180
 
-/**
- * Les « bogey numbers » : impossibles à finir en 3 fléchettes sur un double
- * malgré un reste ≤ 170. L'app affiche « Pas de finish » plutôt qu'une
- * suggestion bidon, et la feuille de règles les montre.
- *
- * Cette liste est une **référence de test** : l'algorithme ne la consulte pas,
- * il les redécouvre. `checkout.test.ts` vérifie que les deux sont d'accord.
- */
+/** Référence de test : l'algorithme ne la lit pas, `checkout.test.ts` vérifie l'accord. */
 export const BOGEY_NUMBERS: readonly number[] = [169, 168, 166, 165, 163, 162, 159]
 
-/**
- * Les restes ≤ 180 qu'aucune volée de 3 fléchettes ne fait pile, en sortie
- * libre. Même statut que `BOGEY_NUMBERS` : une **référence de test**, jamais
- * consultée par l'algorithme, vérifiée contre lui par `checkout.test.ts`.
- */
+/** Référence de test, comme `BOGEY_NUMBERS`. */
 export const FREE_OUT_NO_FINISH: readonly number[] = [179, 178, 176, 175, 173, 172, 169, 166, 163]
 
-/** Jusqu'où l'app propose une sortie, et les restes sans finish en dessous. */
 export type CheckoutRange = {
   readonly max: number
   readonly noFinish: readonly number[]
 }
 
-/** La plage des sorties selon la règle de sortie : 170 sur un double, 180 en sortie libre. */
 export const checkoutRange = (config: SortieRules): CheckoutRange =>
   config.doubleOut
     ? { max: MAX_CHECKOUT, noFinish: BOGEY_NUMBERS }
     : { max: MAX_CHECKOUT_FREE_OUT, noFinish: FREE_OUT_NO_FINISH }
 
-/**
- * Ordre de préférence des doubles de sortie : la « route en puissances de 2 »
- * (D20 → D16 → D8 → D4 → D2 → D1), puis les autres doubles pairs, puis les
- * impairs, et le bullseye en dernier (c'est la cible la plus petite).
- */
+// Préférence : puissances de 2 (D20, D16, D8…), puis pairs, puis impairs, bullseye en dernier.
 const DOUBLE_PREFERENCE: readonly SegmentNumber[] = [
   20, 16, 8, 4, 2, 1, 18, 12, 10, 6, 14, 19, 17, 15, 13, 11, 9, 7, 5, 3,
 ]
@@ -70,10 +47,8 @@ const setupPour = (points: number, autoriserDouble: boolean): Dart | undefined =
     (dart) => Dart.points(dart) === points && (autoriserDouble || dart.multiplier !== 'DOUBLE'),
   )
 
-/** Sortie en 2 fléchettes : on choisit d'abord le double, puis de quoi l'amener. */
 const finishEnDeux = (target: number, finishers: readonly Dart[]): readonly Dart[] | null => {
-  // Deux passes : on évite de proposer un double comme fléchette d'approche,
-  // sauf s'il n'existe aucune autre route.
+  // Deux passes : un double n'est fléchette d'approche que faute d'autre route.
   for (const autoriserDouble of [false, true]) {
     for (const final of finishers) {
       const reste = target - Dart.points(final)
@@ -85,16 +60,7 @@ const finishEnDeux = (target: number, finishers: readonly Dart[]): readonly Dart
   return null
 }
 
-/**
- * Chemin de sortie conseillé, ou `null` s'il n'y en a pas.
- *
- * Stratégie : la route **légale la plus courte**. En 3 fléchettes, on marque
- * gros d'abord puis on cherche la meilleure sortie en 2 ; en 2 fléchettes, on
- * choisit le double le plus confortable et on l'amène.
- *
- * ⚠️ Ce n'est pas la table professionnelle : la route proposée est toujours
- * valide et laisse un double usuel, mais elle peut différer de la table PDC.
- */
+/** Route légale la plus courte, ou `null`. ⚠️ Pas la table PDC : toujours valide mais peut différer. */
 export const suggestCheckout = (
   remaining: number,
   dartsLeft: number,
@@ -129,10 +95,7 @@ export const suggestCheckout = (
   return null
 }
 
-/**
- * Le joueur est-il « sur un double », c'est-à-dire à un reste qu'une seule
- * fléchette peut clore ? Sert à compter les tentatives de double dans les stats.
- */
+/** Reste qu'une seule fléchette peut clore (tentative de double des stats). */
 export const isOnACheckoutDouble = (remaining: number, config: SortieRules): boolean => {
   if (!config.doubleOut) return false
   if (remaining === 50) return true

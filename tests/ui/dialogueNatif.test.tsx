@@ -3,11 +3,6 @@ import { StrictMode, useRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { useDialogueNatif } from '@/ui/hooks/useDialogueNatif'
 
-/**
- * `useDialogueNatif` : la discipline du `<dialog>` natif, partagée par la
- * `Modale` des Statistiques et la feuille de règles (lot `regles-du-jeu`,
- * Révision 1). Ces tests visent le hook seul, sur un `<dialog>` minimal.
- */
 const Harnais = ({
   ouvert,
   onFermer,
@@ -57,7 +52,6 @@ describe('useDialogueNatif — la discipline du <dialog> natif', () => {
   it('monté fermé, il ne prend ni ne déplace le focus', () => {
     render(<Harnais ouvert={false} onFermer={vi.fn()} avecRetour />)
     expect(dialogue().open).toBe(false)
-    // Le livre (`retour`) ne prend pas le focus au montage : aucune ouverture n'a eu lieu.
     expect(screen.getByRole('button', { name: 'Livre' })).not.toHaveFocus()
     expect(document.body).toHaveFocus()
   })
@@ -140,10 +134,8 @@ describe('useDialogueNatif — la discipline du <dialog> natif', () => {
     const d = dialogue()
     d.getBoundingClientRect = () => new DOMRect(0, 210, 390, 634)
 
-    // Lâché sur la bordure : la cible est le <dialog>, mais le point est dans sa boîte.
     fireEvent.pointerDown(d, { clientX: 50, clientY: 100 })
     fireEvent.click(d, { clientX: 50, clientY: 300 })
-    // Lâché sur le contenu.
     fireEvent.pointerDown(d, { clientX: 50, clientY: 100 })
     fireEvent.click(screen.getByText('Contenu'), { clientX: 50, clientY: 300 })
     expect(onFermer).not.toHaveBeenCalled()

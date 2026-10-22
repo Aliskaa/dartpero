@@ -2,18 +2,7 @@ import type { VisitOutcome } from '../entities/Visit'
 import { Dart } from '../value-objects/Dart'
 import type { SortieRules } from './checkout'
 
-/**
- * Comment une volée se résout face à un reste — **la** règle centrale des
- * fléchettes, et la plus facile à se tromper.
- *
- * Ce module est **transverse** : le X01 s'en sert pour décompter un 501,
- * l'entraînement au checkout pour juger une manche. Une seule implémentation,
- * donc aucune chance que les deux divergent — c'est précisément le genre
- * d'écart qu'un joueur ne remarquerait qu'après avoir perdu une partie.
- *
- * Il ne dépend volontairement d'aucune configuration de mode, seulement des
- * deux options qui changent le résultat.
- */
+// Module transverse partagé par le X01 et l'entraînement : une seule implémentation du bust/checkout.
 export type OuvertureRules = SortieRules & {
   readonly doubleIn: boolean
 }
@@ -26,11 +15,7 @@ export type VisitResolution = {
   readonly dartsUsed: number
 }
 
-/**
- * Bust : la volée entière est annulée et le score revient à sa valeur d'avant
- * la visite. L'ouverture (`double in`) est annulée elle aussi — la visite n'a
- * pas eu lieu, donc le double d'ouverture non plus.
- */
+// Bust : volée annulée, y compris l'ouverture `double in`.
 const bust = (remainingBefore: number, hasOpened: boolean, dartsUsed: number): VisitResolution => ({
   outcome: 'BUSTED',
   scored: 0,
@@ -39,12 +24,7 @@ const bust = (remainingBefore: number, hasOpened: boolean, dartsUsed: number): V
   dartsUsed,
 })
 
-/**
- * Voir la spécification dans CLAUDE.md.
- *
- * Bust si : reste < 0, reste == 1 (infinissable sur un double), ou reste == 0
- * sans que la dernière fléchette soit un double.
- */
+/** Bust si reste < 0, reste == 1 (double out) ou reste == 0 sans double (double out). */
 export const resolveVisit = (
   config: OuvertureRules,
   remainingBefore: number,
@@ -58,7 +38,7 @@ export const resolveVisit = (
   for (const dart of darts) {
     dartsUsed += 1
 
-    // Double in : tant qu'aucun double n'a été touché, la fléchette est perdue.
+    // Double in : tant qu'aucun double n'est touché, la fléchette est perdue.
     if (config.doubleIn && !opened) {
       if (!Dart.isDouble(dart)) continue
       opened = true

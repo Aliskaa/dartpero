@@ -50,7 +50,6 @@ const rubrique = (contenu: ContenuRegles, titre: string): readonly BlocRegles[] 
   return trouvee.blocs
 }
 
-/** Les lignes d'une rubrique en liste : `[texte, gris ?]`. */
 const lignes = (contenu: ContenuRegles, titre: string): (readonly [string, boolean])[] =>
   rubrique(contenu, titre).flatMap((bloc) =>
     bloc.type === 'liste'
@@ -84,7 +83,6 @@ const texteBloc = (bloc: BlocRegles): string => {
   }
 }
 
-/** Tout le texte d'un contenu, pour les recherches de phrases et d'absences. */
 const toutLeTexte = (contenu: ContenuRegles): string =>
   [
     contenu.titre,
@@ -184,7 +182,6 @@ describe('Feuille de règles — le texte suit les réglages', () => {
     expect(troisManches.some(([t]) => t.endsWith('peut en durer plus de 5.'))).toBe(true)
   })
 
-  /** D10 : une vieille partie hors des listes n'allume aucune valeur. */
   it('ne met en laiton qu’une valeur de la liste', () => {
     const contenu = contenuRegles({ ...X01_PLANCHE, score: 1001, legs: 7 }, SORTIES)
     expect(contenu.ceSoir.startsWith('1001 · premier à 7 manches')).toBe(true)
@@ -207,7 +204,6 @@ describe('Feuille de règles — le texte suit les réglages', () => {
     expect(auLaiton(ct)).toEqual(['Cut-throat'])
     expect(toutLeTexte(ct)).toContain('+60 pour Julien')
 
-    // DV4 : le +60 est vert en standard (pour soi), rouge en cut-throat (pour l'adversaire).
     const tonDuPlus60 = (contenu: ContenuRegles) =>
       rubrique(contenu, 'Un exemple').flatMap((bloc) =>
         bloc.type === 'exemple' ? [bloc.lignes[0]?.[2]?.ton] : [],
@@ -273,7 +269,6 @@ describe('Feuille de règles — le texte suit les réglages', () => {
   })
 })
 
-/** T5 : les exemples de la feuille, rejoués par les vraies règles. */
 describe('Feuille de règles — les exemples tiennent aux vraies règles', () => {
   const ouverte = { doubleIn: false } as const
 
@@ -343,8 +338,6 @@ describe('Feuille de règles — les exemples tiennent aux vraies règles', () =
     expect(sarah && TourDuMondeRules.currentTarget(etat, sarah)).toBe(16)
   })
 })
-
-/* ------------------------------------------------------------------------ */
 
 const nomJeu: Record<GameModeId, string> = TITRE_REGLES
 
@@ -441,7 +434,6 @@ describe('Le livre ouvert, sur le match', () => {
     expect(locationCourante().pathname).toBe('/')
   })
 
-  /** T2 : Échap, ou le retour Android capté par le navigateur (CloseWatcher). */
   it('une fermeture native dépile l’entrée, une seule fois', async () => {
     const utilisateur = userEvent.setup()
     const { services, matchId } = await partieX01()
@@ -558,10 +550,6 @@ describe('« Pas de finish » suit la sortie de la partie', () => {
   })
 })
 
-/* ------------------------------------------------------------------------
- * Boucle Test → Dev, tour 1 : constats C1 à C5 de 03-plan-de-test.md.
- * ---------------------------------------------------------------------- */
-
 const feuilleOuverte = () => screen.getByRole('dialog')
 const ceSoir = () => within(feuilleOuverte()).getByText('Ce soir').nextElementSibling?.textContent
 
@@ -606,7 +594,6 @@ describe('C1 — la feuille se referme sur chaque entrée d’historique', () =>
     await fermerParLaCroix(utilisateur)
     await avancerTelephone()
     act(() => (feuilleOuverte() as HTMLDialogElement).close())
-    // Le `<dialog>` reste monté (même discipline que la `Modale`) : fermé et vide.
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(document.querySelector('dialog[open]')).toBeNull()
     expect(screen.getByRole('button', { name: 'Règles du X01' })).toHaveAttribute(
@@ -766,11 +753,6 @@ describe('C4 — le retour à l’étape 2', () => {
   })
 })
 
-/**
- * C5 — le texte de la planche `regles-rubriques.html` (objet `JEUX`), balises
- * retirées, recopié ici mot pour mot. Seules différences : les trois phrases X01
- * corrigées d'après le code (Q1), marquées « Q1 ».
- */
 describe('C5 — le texte de la planche, mot pour mot', () => {
   it('X01 : 501, premier à 2, checkout libre, entrée libre, sans sets', () => {
     expect(toutLeTexte(contenuRegles(X01_PLANCHE, SORTIES)).split('\n')).toEqual([
@@ -879,11 +861,6 @@ describe('C5 — le texte de la planche, mot pour mot', () => {
   })
 })
 
-/* ------------------------------------------------------------------------
- * Révision 1 (boucle 7) : convergence sur `useModaleAuRetour` et
- * `useDialogueNatif`, appui à côté (U1), rechargement (U2), constats 2 à 8.
- * ---------------------------------------------------------------------- */
-
 const livreX01 = () => screen.getByRole('button', { name: 'Règles du X01' })
 
 describe('R1 — la feuille suit la discipline de la `Modale`', () => {
@@ -896,7 +873,6 @@ describe('R1 — la feuille suit la discipline de la `Modale`', () => {
     expect(boite.open).toBe(false)
     expect(boite.childElementCount).toBe(0)
     const classes = boite.className.split(/\s+/)
-    // Témoin : on lit bien la liste de classes de la feuille.
     expect(classes).toContain('animate-monter')
     const display =
       /^(?:flex|inline-flex|grid|inline-grid|block|inline-block|inline|contents|table)$/
@@ -928,7 +904,6 @@ describe('R1 — la feuille suit la discipline de la `Modale`', () => {
     const livre = await screen.findByRole('button', { name: 'Règles du X01' })
     expect(livre).not.toHaveFocus()
 
-    // `fireEvent.click` ne donne pas le focus au bouton, comme Safari au doigt.
     fireEvent.click(livre)
     const fermer = await screen.findByRole('button', { name: 'Fermer' })
     expect(fermer).toHaveFocus()
@@ -942,7 +917,6 @@ describe('R1 — la feuille suit la discipline de la `Modale`', () => {
     ouvrirMatch(services, matchId)
     const feuille = await ouvrirLivre(utilisateur)
     expect(feuille.querySelector('header')).toBeNull()
-    // Témoin : le bandeau, lui, est bien un <header> qui porte le repère.
     expect(livreX01().closest('header')).toHaveClass('bandeau-match')
   })
 
@@ -953,7 +927,6 @@ describe('R1 — la feuille suit la discipline de la `Modale`', () => {
     const bandeau = (await screen.findByRole('button', { name: 'Règles du X01' })).closest(
       '.bandeau-match',
     ) as HTMLElement
-    // Le haut à 0 : prendre `.top` au lieu de `.bottom` donnerait 0px.
     bandeau.getBoundingClientRect = () => new DOMRect(0, 0, 844, 51)
     const feuille = await ouvrirLivre(utilisateur)
     expect(feuille.style.getPropertyValue('--haut-feuille')).toBe('51px')
@@ -1027,7 +1000,6 @@ describe('R1 / U1 — un appui à côté ferme la feuille', () => {
     const { services, matchId } = await partieX01()
     ouvrirMatch(services, matchId, ['/', `/partie/${matchId}`])
     const feuille = (await ouvrirLivre(utilisateur)) as HTMLDialogElement
-    // Portrait sur le match : la feuille commence à 210 px.
     feuille.getBoundingClientRect = () => new DOMRect(0, 210, 390, 634)
 
     fireEvent.pointerDown(feuille, { clientX: 100, clientY: 80 })
@@ -1044,7 +1016,6 @@ describe('R1 / U1 — un appui à côté ferme la feuille', () => {
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/nouvelle-partie/x01' })
     const feuille = (await ouvrirLivre(utilisateur)) as HTMLDialogElement
-    // Paysage 844 × 390 : la feuille occupe le côté droit (52 %).
     feuille.getBoundingClientRect = () => new DOMRect(405, 0, 439, 390)
 
     fireEvent.pointerDown(feuille, { clientX: 100, clientY: 200 })
@@ -1063,13 +1034,10 @@ describe('R1 / U1 — un appui à côté ferme la feuille', () => {
 
     fireEvent.pointerDown(titre, { clientX: 100, clientY: 250 })
     fireEvent.click(titre, { clientX: 100, clientY: 250 })
-    // Sur la bordure : la cible est le <dialog>, mais le point est dans sa boîte.
     fireEvent.pointerDown(feuille, { clientX: 1, clientY: 211 })
     fireEvent.click(feuille, { clientX: 1, clientY: 211 })
-    // Un glisser parti de la feuille, lâché sur le voile.
     fireEvent.pointerDown(titre, { clientX: 100, clientY: 250 })
     fireEvent.click(feuille, { clientX: 100, clientY: 80 })
-    // P3-2 : un glisser parti du voile, lâché dans la feuille (sur sa bordure).
     fireEvent.pointerDown(feuille, { clientX: 100, clientY: 80 })
     fireEvent.click(feuille, { clientX: 100, clientY: 300 })
 
@@ -1181,7 +1149,6 @@ describe('R1 / constat 4 (C9) — « En bref » du Tour du monde lu dans le parc
     )
   })
 
-  /** P3-7 (tranché par l'utilisateur) : un parcours importé arbitraire se dit en liste neutre. */
   it.each([
     [[1, 2, 3], 'Le parcours de cette partie : 1, 2 et 3.', '1 → 3 · 3 cibles · rien à régler'],
     [['BULL'], 'Le parcours de cette partie : la bulle.', 'la bulle · 1 cible · rien à régler'],

@@ -1,19 +1,12 @@
 import { DomainError } from '../DomainError'
 
-/** Les 20 secteurs numérotés, dans l'ordre. */
 export const SEGMENT_NUMBERS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
 ] as const
 
 export type SegmentNumber = (typeof SEGMENT_NUMBERS)[number]
 
-/**
- * Ce qu'une fléchette peut toucher :
- * - un secteur numéroté de 1 à 20 ;
- * - `BULL` : simple = 25 (anneau extérieur), double = 50 (bullseye) ;
- * - `MISS` : hors cible. Modélisé explicitement car une fléchette manquée
- *   compte dans la moyenne et dans les tentatives de double.
- */
+/** `BULL` : simple 25, double 50. `MISS` explicite : une manquée compte dans la moyenne et les tentatives de double. */
 export type Segment = SegmentNumber | 'BULL' | 'MISS'
 
 export type Multiplier = 'SIMPLE' | 'DOUBLE' | 'TRIPLE'
@@ -33,10 +26,7 @@ const estSegmentNumerote = (segment: Segment): segment is SegmentNumber =>
   typeof segment === 'number'
 
 export const Dart = {
-  /**
-   * Seul point d'entrée validant. Refuse ce qui n'existe pas sur une cible :
-   * le triple bull, un secteur hors 1-20, et un « manqué » multiplié.
-   */
+  /** Seul point d'entrée validant. */
   of(segment: Segment, multiplier: Multiplier): Dart {
     if (segment === 'MISS' && multiplier !== 'SIMPLE') {
       throw new DomainError('A missed dart has no multiplier')
@@ -57,9 +47,9 @@ export const Dart = {
   double: (segment: SegmentNumber): Dart => Dart.of(segment, 'DOUBLE'),
   triple: (segment: SegmentNumber): Dart => Dart.of(segment, 'TRIPLE'),
 
-  /** Anneau extérieur du centre : 25 points, ce n'est PAS un double. */
+  /** 25 points, PAS un double. */
   bull: (): Dart => Dart.of('BULL', 'SIMPLE'),
-  /** Le centre : 50 points, et il COMPTE comme un double pour la sortie. */
+  /** 50 points, COMPTE comme un double. */
   bullseye: (): Dart => Dart.of('BULL', 'DOUBLE'),
   miss: (): Dart => Dart.of('MISS', 'SIMPLE'),
 

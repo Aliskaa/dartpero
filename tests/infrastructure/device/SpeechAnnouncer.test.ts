@@ -11,10 +11,6 @@ class FauxEnonce {
 
 const voix = (name: string, lang: string) => ({ name, lang }) as SpeechSynthesisVoice
 
-/**
- * Une vraie petite synthèse, pas un mock : elle garde l'ordre des appels
- * (`journal`) et une liste de voix que le test fait évoluer.
- */
 const fausseSynthese = (voixInstallees: SpeechSynthesisVoice[] = []) => {
   const journal: string[] = []
   const enonces: FauxEnonce[] = []
@@ -168,13 +164,11 @@ describe('SpeechAnnouncer', () => {
     expect(enonces[0]?.voice).toBeNull()
     expect(ecouteurs).toHaveLength(1)
 
-    // Chrome peuple la liste après coup : la voix en-US est trouvée au prochain appel.
     const americaine = voix('Samantha', 'en-US')
     synthese.voix = [voix('Thomas', 'fr-FR'), americaine]
     annonceur.say([{ texte: 'Checkout', langue: 'en-US' }])
 
     expect(enonces[1]?.voice).toBe(americaine)
-    // L'écoute de « voiceschanged » n'est installée qu'une fois.
     expect(ecouteurs).toHaveLength(1)
   })
 
@@ -184,13 +178,11 @@ describe('SpeechAnnouncer', () => {
     installer(synthese)
     const annonceur = new SpeechAnnouncer()
 
-    // L'écouteur n'existe qu'après un premier appel sans voix.
     annonceur.say([{ texte: '1', langue: 'fr-FR' }])
     synthese.voix = [francaise]
     annonceur.say([{ texte: '2', langue: 'fr-FR' }])
     expect(enonces[1]?.voice).toBe(francaise)
 
-    // Une voix en-US arrive : l'événement oublie le choix mémorisé.
     const americaine = voix('Samantha', 'en-US')
     synthese.voix = [francaise, americaine]
     for (const ecouteur of ecouteurs) ecouteur()

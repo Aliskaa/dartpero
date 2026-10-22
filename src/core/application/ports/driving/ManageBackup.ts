@@ -1,17 +1,8 @@
 import type { MatchEvent } from '../../../domain/events/MatchEvent'
 
-/**
- * La version du format de fichier. À incrémenter si sa forme change de façon
- * **incompatible**.
- *
- * Un ajout facultatif ne l'incrémente pas : le `name` des ouvertures (lot
- * `nom-de-partie`) est resté en version 1, comme les trois modes ajoutés avant
- * lui. Une version plus ancienne de l'app perd le nom (cosmétique) au lieu de
- * refuser tout le fichier.
- */
+/** À incrémenter seulement si le format change de façon incompatible (un ajout facultatif ne compte pas). */
 export const BACKUP_VERSION = 1
 
-/** Signature du fichier : évite d'importer par erreur un JSON qui n'a rien à voir. */
 export const BACKUP_FORMAT = 'dartpero-backup'
 
 export type BackupPlayer = {
@@ -19,11 +10,7 @@ export type BackupPlayer = {
   readonly name: string
   readonly color: string
   readonly createdAt: number
-  /**
-   * Facultatif (lot `killer`) : `MASCULINE` ou `FEMININE`, clé absente pour
-   * « non précisé ». Ajout facultatif : `BACKUP_VERSION` ne bouge pas, une
-   * sauvegarde sans la clé reste valide.
-   */
+  /** `MASCULINE` ou `FEMININE` ; clé absente = « non précisé ». */
   readonly gender?: string
 }
 
@@ -42,13 +29,7 @@ export type Backup = {
   readonly matches: readonly BackupMatch[]
 }
 
-/**
- * Ce qui est réellement entré, et ce qui a été laissé de côté.
- *
- * Un fichier à moitié abîmé restaure quand même ce qui est lisible : tout
- * rejeter pour une partie corrompue ferait perdre les cinquante autres. Les
- * compteurs remontent à l'UI pour qu'elle puisse le dire franchement.
- */
+/** Ce qui est entré et ce qui est écarté : un fichier abîmé restaure quand même le lisible. */
 export type ImportReport = {
   readonly playersImported: number
   readonly matchesImported: number
@@ -56,20 +37,9 @@ export type ImportReport = {
   readonly matchesSkipped: number
 }
 
-/**
- * Export / import JSON de toute la base — le filet de sécurité obligatoire des
- * profils locaux : sans compte ni serveur, c'est la seule façon de changer de
- * téléphone sans repartir de zéro. Profils et journaux seulement : le brouillon
- * de volée (lot `volee-partielle`) ne part jamais dans le fichier.
- */
+/** Export / import JSON des profils et des journaux ; le brouillon de volée n'y va jamais. */
 export interface ManageBackup {
   exportAll(): Promise<Backup>
-  /**
-   * Fusionne dans la base existante : un identifiant déjà connu est écrasé, un
-   * inconnu s'ajoute. Jamais d'effacement — on ne perd pas des parties parce
-   * qu'on s'est trompé de fichier. Sauf le brouillon de volée (lot
-   * `volee-partielle`) d'une partie que le fichier remplace : sa volée en cours
-   * prolongeait le journal écrasé, elle est effacée avec lui.
-   */
+  /** Fusionne sans jamais effacer, sauf le brouillon d'une partie que le fichier remplace. */
   importFrom(contenu: unknown): Promise<ImportReport>
 }

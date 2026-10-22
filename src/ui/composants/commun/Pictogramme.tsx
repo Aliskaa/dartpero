@@ -1,11 +1,7 @@
 import type { ReactNode } from 'react'
 import type { GameModeId } from '@/core/domain/games'
 
-/**
- * Les quatorze pictogrammes maison : cinq modes, neuf moments. Le mode se
- * reconnaît à sa forme, plus seulement à sa couleur (charte § Identité).
- * Les moments n'ont pas encore tous un emploi : leurs lots les attendent.
- */
+/** Les pictogrammes maison : cinq modes, neuf moments. */
 export const PICTOGRAMMES = [
   'x01',
   'cricket',
@@ -34,25 +30,10 @@ export const PICTOGRAMME_PAR_MODE: Record<GameModeId, NomPictogramme> = {
   CHECKOUT_PRACTICE: 'entrainement',
 }
 
-/**
- * Le plancher de 20 px est dans le type : une taille hors liste ne compile pas.
- * La liste s'élargit au besoin d'un lot, jamais par `className`.
- */
+/** Le plancher de 20 px est dans le type : une taille hors liste ne compile pas. */
 export type TaillePictogramme = 20 | 24 | 32 | 40 | 64
 
-/**
- * Provenance des tracés calculés : grille 24, centre (12, 12), angle 0 en haut,
- * sens horaire, P(r, a) = (12 + r·cos(a − 90°), 12 + r·sin(a − 90°)), arrondi à
- * 2 décimales ; secteur(ri, re, d, f) = M P(re,d) A re re 0 0 1 P(re,f)
- * L P(ri,f) A ri ri 0 0 0 P(ri,d) Z. Calculés une fois, figés ici.
- *
- * - X01     : secteur(5, 10, -20, 20)
- * - entraînement : secteur(7, 10, 72, 108)
- * - sortie  : secteur(7, 10, -24, 24)
- * - Tour du monde : arc r 8.5 de 30° à 320° (grand arc, sens horaire) ; tête
- *   triangulaire au bout E = P(8.5, 320°), tangente t = (cos 320°, sin 320°),
- *   normale n = (sin 320°, −cos 320°) : sommets E + 3n, E + 3,6t, E − 3n.
- */
+// Tracés calculés une fois, figés ici : grille 24, centre (12, 12), angle 0 en haut, sens horaire.
 const SECTEUR_X01 = 'M8.58 2.6 A10 10 0 0 1 15.42 2.6 L13.71 7.3 A5 5 0 0 0 10.29 7.3 Z'
 const SECTEUR_ENTRAINEMENT =
   'M21.51 8.91 A10 10 0 0 1 21.51 15.09 L18.66 14.16 A7 7 0 0 0 18.66 9.84 Z'
@@ -141,11 +122,7 @@ type Props = {
   readonly className?: string
 }
 
-/**
- * Un pictogramme maison : grille 24, trait de 2 px, extrémités et jonctions
- * vives, couleur du texte (`currentColor`) — jamais une couleur en dur.
- * Toujours `aria-hidden` : le sens est porté par un texte voisin.
- */
+/** Pictogramme maison : grille 24, trait de 2 px, `currentColor`, toujours `aria-hidden`. */
 export const Pictogramme = ({ nom, taille, className }: Props) => (
   <svg
     viewBox="0 0 24 24"

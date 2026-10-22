@@ -426,7 +426,6 @@ describe('CartePartie — la ligne de feuille', () => {
     const { container } = ligne(resumeCricket(joueurs))
     const rangees = container.querySelectorAll('li a div > span[aria-hidden="true"]')
     expect(rangees).toHaveLength(nombre)
-    // Le plus gros score d'abord.
     expect(rangees[0]).toHaveTextContent(String((nombre - 1) * 10))
   })
 
@@ -511,7 +510,6 @@ describe('CartePartie — la ligne de feuille', () => {
     expect(screen.queryByText('Reprendre')).not.toBeInTheDocument()
     enCours.unmount()
 
-    // À l'Accueil, sans `marquerEnCours`, aucune étiquette.
     ligne(resumeCricket([{ nom: 'Kevin', score: 1 }]), { statut: 'ONGOING' })
     expect(screen.queryByText('En cours')).not.toBeInTheDocument()
   })

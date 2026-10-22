@@ -15,7 +15,6 @@ import { ouverture } from '../use-cases/lancerPartie'
 import { locationCourante } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/** Un soir d'octobre 2026, en heure locale : les libellés de date en dépendent. */
 const SOIR = new Date(2026, 9, 14, 21).getTime()
 const HIER = new Date(2026, 9, 13, 21).getTime()
 const JOUR = 86_400_000
@@ -55,7 +54,6 @@ const base = async () => {
   return { services, dependencies, horloge, id, x01, entrainement }
 }
 
-/** « Maintenant » = ce soir : les parties ont été posées dans les jours d'avant. */
 const ouvrir = (services: Services) => {
   if (services.clock instanceof SettableClock) services.clock.regler(SOIR)
   return renderWithServices(<App />, { services, route: '/nouvelle-partie' })
@@ -70,7 +68,6 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
   it('sans aucune partie : les cinq tuiles, pas de section Rejouer', async () => {
     const { services } = await base()
     ouvrir(services)
-    // Les tuiles gardent « Entraînement » : « Solo » est propre à la rangée compacte.
     expect(await screen.findByRole('link', { name: /^Entraînement/ })).toBeInTheDocument()
 
     expect(await screen.findAllByRole('link')).toHaveLength(5)
@@ -86,7 +83,6 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
     await x01(['Kevin', 'Julien'])
     ouvrir(services)
 
-    // Au premier rendu : rien sous la barre d'étapes.
     expect(screen.queryAllByRole('link')).toHaveLength(0)
     expect(screen.queryByRole('heading', { name: 'Rejouer' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ou un autre jeu' })).not.toBeInTheDocument()
@@ -164,7 +160,6 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
     expect(screen.getByRole('heading', { name: 'Ou un autre jeu' })).toBeInTheDocument()
     const cricket = screen.getByRole('link', { name: 'Cricket' })
     expect(cricket).toHaveAttribute('href', '/nouvelle-partie/cricket')
-    // L'entraînement s'y dit « Solo » (comme au filtre de Parties), nulle part ailleurs.
     expect(screen.getByRole('link', { name: 'Solo' })).toHaveAttribute(
       'href',
       '/nouvelle-partie/entrainement',
@@ -194,7 +189,6 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
     })
     await utilisateur.click(lecture)
 
-    // L'Ordre : les trois joueurs dans l'ordre de la partie la plus récente.
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Ordre de jeu' }),
     ).toBeInTheDocument()
@@ -206,7 +200,6 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
         .map((ligne) => ligne.querySelector('.truncate')?.textContent),
     ).toEqual(['Sarah', 'Kevin', 'Julien'])
 
-    // Les réglages deviennent les réglages mémorisés.
     expect(preference(dependencies, 'partie:score')).toBe(301)
     expect(preference(dependencies, 'partie:legs')).toBe(3)
     expect(preference(dependencies, 'partie:double-out')).toBe(true)
@@ -226,7 +219,6 @@ describe('Nouvelle partie — étape 1, « Rejouer »', () => {
       config: { startingScore: 301, legsToWin: 3, doubleOut: true },
       playerIds: [id('Sarah'), id('Kevin'), id('Julien')],
     })
-    // Le nom n'est jamais repris : la clé est absente.
     expect('name' in debut).toBe(false)
   })
 
@@ -434,7 +426,6 @@ describe('Nouvelle partie — « Rejouer », les autres modes et les cas écart�
     await screen.findByRole('heading', { name: 'Rejouer' })
     expect(lignes().getAllByRole('listitem')).toHaveLength(2)
 
-    // Seuls les profils sont relus : la liste « Rejouer » du cache n'a pas bougé.
     await services.managePlayers.remove(id('Julien'))
     await queryClient.invalidateQueries({ queryKey: CLE_JOUEURS })
 

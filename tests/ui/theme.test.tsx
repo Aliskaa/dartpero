@@ -6,17 +6,11 @@ import { CLE_THEME } from '@/ui/theme'
 import { fakeServices } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 
-/** L'attribut que toute la feuille de style écoute. */
 const themePose = () => document.documentElement.dataset.theme
 
 const barreSysteme = () =>
   document.querySelector('meta[name="theme-color"]')?.getAttribute('content')
 
-/**
- * `matchMedia` n'existe pas en jsdom. On le remplace par un faux qui répond au
- * réglage demandé **et** qui garde ses abonnés sous la main : c'est la seule
- * façon de rejouer un coucher de soleil.
- */
 const faireCommeSiLeSystemeEtait = (systeme: 'clair' | 'sombre') => {
   const abonnes = new Set<() => void>()
   let courant = systeme
@@ -38,14 +32,12 @@ const faireCommeSiLeSystemeEtait = (systeme: 'clair' | 'sombre') => {
 
 const railTheme = async () => {
   await screen.findByRole('heading', { name: 'Réglages' })
-  // Les trois vignettes du groupe Affichage (lot `reglages-par-usage`).
   return screen.getByRole('group', { name: 'Thème' })
 }
 
 describe('Thème clair / sombre / système', () => {
   beforeEach(() => {
     document.documentElement.removeAttribute('data-theme')
-    // `index.html` n'est pas chargé en test : on repose la balise qu'il porte.
     const meta = document.createElement('meta')
     meta.setAttribute('name', 'theme-color')
     meta.setAttribute('content', '#0E1A13')
@@ -57,11 +49,7 @@ describe('Thème clair / sombre / système', () => {
     document.querySelector('meta[name="theme-color"]')?.remove()
   })
 
-  /**
-   * ⚠️ Le défaut est **sombre**, pas « système ». Le cadrage du projet est un
-   * garage mal éclairé : ouvrir la mise à jour sur un fond blanc parce que le
-   * téléphone est en clair serait un changement que personne n'a demandé.
-   */
+  // ⚠️ Le défaut est sombre, pas « système » : le cadrage est un garage mal éclairé.
   it('démarre en sombre, même si le téléphone est en clair', async () => {
     faireCommeSiLeSystemeEtait('clair')
     const { services } = fakeServices()
@@ -115,17 +103,11 @@ describe('Thème clair / sombre / système', () => {
     await utilisateur.click(within(await railTheme()).getByRole('button', { name: 'Système' }))
     expect(themePose()).toBe('clair')
 
-    // La nuit tombe, le téléphone bascule tout seul : l'app doit suivre.
     systeme.bascule('sombre')
     expect(themePose()).toBe('sombre')
   })
 
-  /**
-   * ⚠️ La préférence est RELUE à chaque bascule du système, jamais capturée en
-   * état au montage. Sans ça, l'écouteur posé par `App` alors que le réglage
-   * valait « Système » rappliquerait ce choix au premier coucher de soleil, et
-   * écraserait le « Clair » choisi entre-temps dans les Réglages.
-   */
+  // ⚠️ La préférence est relue à chaque bascule du système, jamais capturée au montage.
   it('cesse de suivre le système dès qu’un thème est choisi à la main', async () => {
     const utilisateur = userEvent.setup()
     const systeme = faireCommeSiLeSystemeEtait('clair')

@@ -12,12 +12,6 @@ import {
   texteConfirmationKillerVariante,
 } from '@/ui/labels'
 
-/**
- * Lot `killer`, règle 13 et réponse R1.2 : « éliminé / éliminée » s'accorde au
- * genre du joueur **éliminé**, partout où le mot apparaît (pastille, case de
- * volée, résumé, voix, boîte de sortie). Non précisé (genre absent) et profil
- * supprimé : le masculin. « Dernier en vie » ne s'accorde jamais.
- */
 const texte = (annonce: ReturnType<typeof annonceKiller>) =>
   (annonce ?? []).map((segment) => segment.texte).join('')
 
@@ -37,7 +31,6 @@ describe('Killer — l’accord d’« éliminé »', () => {
   it('la case de la ligne de volée', () => {
     expect(effetElimination('Sarah', 'FEMININE')).toBe('Sarah éliminée')
     expect(effetElimination('Julien', 'MASCULINE')).toBe('Julien éliminé')
-    // Profil supprimé : forme masculine (réponse R1.3).
     expect(effetElimination(JOUEUR_SUPPRIME, undefined)).toBe('Joueur supprimé éliminé')
   })
 

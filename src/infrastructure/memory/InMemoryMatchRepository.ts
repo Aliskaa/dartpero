@@ -1,10 +1,7 @@
 import type { MatchRecord, MatchRepository } from '@/core/application/ports/driven/MatchRepository'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 
-/**
- * Adapter mémoire : utilisé par les tests, et comme repli si IndexedDB est
- * indisponible (navigation privée sur certains navigateurs).
- */
+/** Adapter mémoire : tests, et repli si IndexedDB est indisponible. */
 export class InMemoryMatchRepository implements MatchRepository {
   private readonly records = new Map<MatchId, MatchRecord>()
   /** Ordre d'insertion, pour départager deux matchs de même `updatedAt`. */

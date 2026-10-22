@@ -1,11 +1,5 @@
 import type { PICTOGRAMMES } from '@/ui/composants/commun/Pictogramme'
 
-/**
- * Les tracés figés, tels que la planche les dessine : un `d`, un `stroke-width`,
- * un `fill-opacity` ou un aplat qui change, ou deux pictogrammes échangés,
- * fait échouer les tests qui les comparent. Un changement voulu se fait ici ET
- * dans la planche.
- */
 const SECTEUR_X01 = 'M8.58 2.6 A10 10 0 0 1 15.42 2.6 L13.71 7.3 A5 5 0 0 0 10.29 7.3 Z'
 const SECTEUR_ENTRAINEMENT =
   'M21.51 8.91 A10 10 0 0 1 21.51 15.09 L18.66 14.16 A7 7 0 0 0 18.66 9.84 Z'
@@ -20,7 +14,6 @@ export const TRACES_ATTENDUS: Record<(typeof PICTOGRAMMES)[number], string> = {
   cricket:
     '<circle cx="12" cy="12" r="9.5"></circle>' +
     '<path d="M7.5 7.5 L16.5 16.5 M16.5 7.5 L7.5 16.5"></path>',
-  // Planche `killer` : le viseur, tracé exact.
   killer:
     '<circle cx="12" cy="12" r="7.5"></circle>' +
     '<path d="M12 1.5 V6 M12 18 V22.5 M1.5 12 H6 M18 12 H22.5"></path>' +
@@ -52,7 +45,6 @@ export const TRACES_ATTENDUS: Record<(typeof PICTOGRAMMES)[number], string> = {
     '<circle cx="12" cy="13.5" r="8"></circle>' +
     '<path d="M12 2.5 V4.5 M9.5 2.5 H14.5 M12 13.5 V9"></path>',
   nul: '<path d="M4 9 H20 M4 15 H20"></path>',
-  // Lot `courbe` (U9 a) : trait de 3, bouts plats — l'exception documentée de la charte.
   evolution:
     '<path d="M2.4 19.2 L8.4 12 L13.2 15.6 L21.6 4.8" stroke-width="3" stroke-linecap="butt"></path>',
 }

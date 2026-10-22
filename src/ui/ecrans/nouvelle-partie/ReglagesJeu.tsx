@@ -55,11 +55,7 @@ const PhraseFiche = ({ segments }: { readonly segments: readonly Segment[] }) =>
   <Phrase segments={segments} classeFort="text-craie" />
 )
 
-/**
- * Un pli : fermé à chaque ouverture de l'écran (l'état est local, l'étape se
- * démonte en changeant de route). Le contenu n'existe que déplié. Sert à
- * « Plus de réglages » ; les règles complètes sont dans la feuille de règles.
- */
+/** Un pli, fermé à chaque ouverture de l'écran ; le contenu n'existe que déplié. */
 const Depliant = ({
   libelle,
   children,
@@ -224,13 +220,7 @@ type Props = {
   readonly joueurs: number
 }
 
-/**
- * La fiche de réglages du jeu choisi : pictogramme et récapitulatif en grand,
- * les réglages, une ligne de règles. Les règles complètes — sept cibles du
- * Cricket et parcours du Tour du monde compris — sont dans la feuille de règles,
- * derrière le livre de l'en-tête (lot `regles-du-jeu`). Un `switch` exhaustif :
- * un mode oublié ne compile pas.
- */
+/** La fiche de réglages du jeu choisi ; `switch` exhaustif, les règles complètes sont dans la feuille de règles. */
 export const ReglagesJeu = ({ mode, reglages, joueurs }: Props) => {
   const { minTarget, maxTarget } = DEFAUT_ENTRAINEMENT
 

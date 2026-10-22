@@ -18,20 +18,11 @@ export const libelleCible = (cible: Segment | null): string => {
   return String(cible)
 }
 
-/**
- * Les colonnes : JOUEUR (le nom et la volée), PARCOURS (6,5 rem) et CIBLE
- * (7 rem), le chiffre géant à droite — à la place du RESTE du X01. En paysage la
- * cible est plus petite, le parcours un peu plus large (planche).
- * ⚠️ Littéral complet : Tailwind ne scanne que le texte écrit.
- */
+/** Colonnes JOUEUR, PARCOURS, CIBLE (le chiffre géant). ⚠️ Littéral complet : Tailwind ne scanne que le texte écrit. */
 export const GRILLE_TOUR_DU_MONDE =
   'grid grid-cols-[minmax(0,1fr)_6.5rem_7rem] paysage:grid-cols-[minmax(0,1fr)_7.5rem_6.5rem]'
 
-/**
- * Hauteur minimale de CHAQUE ligne, la même pour toutes (le repère glisse par
- * `translateY(index * 100%)`) — planche : 104 px à 1-2 joueurs, 88 à 3, 80 à 4,
- * 62 en paysage.
- */
+/** Hauteur minimale de CHAQUE ligne, la même pour toutes (le repère glisse par `translateY(index * 100%)`). */
 const HAUTEUR = [
   'min-h-26 paysage:min-h-15.5',
   'min-h-26 paysage:min-h-15.5',
@@ -39,10 +30,7 @@ const HAUTEUR = [
   'min-h-20 paysage:min-h-15.5',
 ] as const
 
-/**
- * La cible : 4,5 rem jusqu'à 2 joueurs, 4,05 rem à 3 et 4, 3,25 rem en paysage.
- * Les paliers `text-score-*` existent déjà : aucune taille en dur.
- */
+/** Taille de la cible par palier ; les `text-score-*` existent déjà, aucune taille en dur. */
 const TAILLE_CIBLE = [
   'text-score-xl-portrait paysage:text-score-l leading-[0.86]',
   'text-score-xl-portrait paysage:text-score-l leading-[0.86]',
@@ -50,11 +38,7 @@ const TAILLE_CIBLE = [
   'text-score-l-portrait paysage:text-score-l leading-[0.88]',
 ] as const
 
-/**
- * La bulle, comme cible : un glyphe plein (anneau et cœur), sous lequel s'écrit
- * « BULLE ». Un pictogramme de plus dans la liste des douze n'est pas justifié
- * pour un seul emploi : il vit ici, en SVG local, `aria-hidden`.
- */
+/** La bulle comme cible : glyphe SVG local, `aria-hidden`, « BULLE » dessous. */
 const GlypheBulle = () => (
   <svg
     viewBox="0 0 24 24"
@@ -85,14 +69,7 @@ type Props = {
   readonly etiquetteVolee: string
 }
 
-/**
- * ZONE LECTURE du Tour du monde — une ligne de la feuille commune par joueur.
- *
- * Ce qui se lit à 3 mètres ici, ce n'est pas un score mais **la cible à
- * viser** : c'est elle qui prend la place du chiffre géant (colonne CIBLE, à
- * droite, comme le RESTE au X01). La progression (compte, barre, fléchettes
- * lancées) dit le reste du chemin ; la volée s'écrit sous le nom.
- */
+/** Zone lecture du Tour du monde : une ligne par joueur, la cible à viser prend la place du chiffre géant. */
 export const LigneCible = ({
   nom,
   couleur,
@@ -115,9 +92,6 @@ export const LigneCible = ({
       aria-current={actif ? 'true' : undefined}
       className={['ligne-tableau relative', GRILLE_TOUR_DU_MONDE, HAUTEUR[echelle]].join(' ')}
     >
-      {/* COLONNE 1 — qui joue, et ce qu'il vient d'écrire. Les cases sont
-          décalées du carré (12 px) et de son espace (6 px) : elles s'alignent
-          sur le nom. */}
       <div className="flex min-w-0 flex-col justify-center gap-2 px-3 py-2 paysage:gap-1.5 paysage:py-1">
         <NomJoueurFeuille
           nom={nom}
@@ -135,14 +109,11 @@ export const LigneCible = ({
         </div>
       </div>
 
-      {/* COLONNE 2 — le parcours : le compte, la barre, les fléchettes lancées. */}
       <div className="filet-colonne flex min-w-0 flex-col justify-center gap-1.5 px-2.5">
         <span className="chiffres text-sm text-craie-3">
           <span className="text-xl font-bold text-craie">{validees}</span>/{total}
         </span>
 
-        {/* La barre : on voit qui mène sans lire un chiffre. Laiton, puis
-            vert une fois le parcours bouclé. */}
         <div className="h-2 border border-craie/30 bg-feutre/70">
           <div
             aria-hidden="true"
@@ -159,7 +130,6 @@ export const LigneCible = ({
         </span>
       </div>
 
-      {/* COLONNE 3 — la cible du moment, à la place du score géant. */}
       <div className="filet-colonne flex min-w-0 items-center justify-center">
         <output
           aria-label={`Cible de ${nom}`}

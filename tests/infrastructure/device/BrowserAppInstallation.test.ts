@@ -193,7 +193,6 @@ describe('BrowserAppInstallation', () => {
 
       void installation.prompt()
 
-      // Synchrone : rien n'a encore été attendu.
       expect(installation.state()).toBe('unavailable')
       expect(vus).toEqual(['unavailable'])
     })

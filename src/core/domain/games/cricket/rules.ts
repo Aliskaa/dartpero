@@ -6,7 +6,7 @@ import { type CricketConfig, MARKS_TO_CLOSE, targetValue } from './config'
 
 export type CricketPlayerState = {
   readonly playerId: PlayerId
-  /** Marques par cible, dans l'ordre de `config.targets`. Une cible est fermée à 3. */
+  /** Dans l'ordre de `config.targets`. */
   readonly marks: readonly number[]
   readonly score: number
   readonly dartsThrown: number
@@ -14,15 +14,10 @@ export type CricketPlayerState = {
 
 export type CricketVisit = {
   readonly playerId: PlayerId
-  /** Tronquée à la fléchette qui gagne la partie, comme une volée de checkout. */
+  /** Tronquée à la fléchette qui gagne. */
   readonly darts: readonly Dart[]
-  /** Marques posées sur des cibles encore ouvertes (celles qui font avancer). */
   readonly marks: number
-  /**
-   * Les points produits par la volée. ⚠️ En cut-throat ils ne vont **pas** au
-   * lanceur mais à ses adversaires : c'est le même nombre, distribué à
-   * l'envers. L'UI a besoin de le montrer dans les deux cas.
-   */
+  /** ⚠️ En cut-throat ces points vont aux adversaires, pas au lanceur. */
   readonly points: number
   readonly closed: readonly Segment[]
 }
@@ -49,24 +44,14 @@ const at = <T>(items: readonly T[], index: number, label: string): T => {
   return item
 }
 
-/**
- * Une fléchette pose autant de marques que son multiplicateur : un triple 20
- * ferme le 20 d'un coup. Le bullseye compte pour deux marques — c'est un
- * double, et le triple bull n'existe pas (`Dart.of` le refuse déjà).
- */
+// Le bullseye vaut deux marques (c'est un double).
 const marksOf = (dart: Dart): number =>
   dart.multiplier === 'TRIPLE' ? 3 : dart.multiplier === 'DOUBLE' ? 2 : 1
 
 const closedAll = (player: CricketPlayerState): boolean =>
   player.marks.every((marks) => marks >= MARKS_TO_CLOSE)
 
-/**
- * A-t-on gagné ? Il faut avoir **tout fermé** et être devant — ou derrière en
- * cut-throat, où le plus petit score l'emporte.
- *
- * ⚠️ L'égalité au score suffit (`>=`, `<=`) : celui qui a fermé toutes les
- * cibles le premier n'a pas à creuser un écart artificiel pour conclure.
- */
+/** Tout fermé et devant (derrière en cut-throat). ⚠️ L'égalité au score suffit (`>=`, `<=`). */
 const wins = (
   player: CricketPlayerState,
   players: readonly CricketPlayerState[],
@@ -114,8 +99,6 @@ const start = (event: CricketStarted): CricketState => {
   }
 }
 
-/** Copie de travail : une volée touche potentiellement tous les joueurs (en
- * cut-throat, marquer alimente le score des autres). */
 type Brouillon = {
   playerId: PlayerId
   marks: number[]
@@ -157,8 +140,7 @@ const applyVisit = (state: CricketState, darts: readonly Dart[]): CricketState =
 
     const valeur = targetValue(at(targets, cible, 'targets'))
 
-    // Marque par marque, parce qu'un triple peut à la fois finir de fermer une
-    // cible ET marquer des points avec ce qui dépasse.
+    // Marque par marque : un triple peut finir de fermer ET marquer avec le surplus.
     for (let restantes = marksOf(dart); restantes > 0; restantes -= 1) {
       const posees = lanceur.marks[cible] ?? 0
 
@@ -169,8 +151,7 @@ const applyVisit = (state: CricketState, darts: readonly Dart[]): CricketState =
         continue
       }
 
-      // Cible fermée chez le lanceur : elle rapporte tant qu'un adversaire ne
-      // l'a pas fermée à son tour. Fermée par tout le monde, elle est morte.
+      // Ne rapporte que tant qu'un adversaire ne l'a pas fermée.
       const ouverte = brouillons.filter(
         (autre) =>
           autre.playerId !== lanceur.playerId && (autre.marks[cible] ?? 0) < MARKS_TO_CLOSE,
@@ -195,14 +176,8 @@ const applyVisit = (state: CricketState, darts: readonly Dart[]): CricketState =
     dartsThrown: brouillon.dartsThrown,
   }))
 
-  /**
-   * ⚠️ Le cas tordu du cut-throat : un joueur qui a tout fermé ne reçoit plus
-   * jamais de points, alors que ceux des autres montent. Il peut donc devenir
-   * le plus bas **pendant le tour de quelqu'un d'autre**. On vérifie donc la
-   * condition de victoire pour tout le monde à la fin de la volée, en donnant
-   * la priorité au lanceur — sinon la partie continuerait alors qu'elle est
-   * gagnée, et personne ne comprendrait pourquoi.
-   */
+  // ⚠️ Cut-throat : un joueur peut devenir le plus bas pendant le tour d'un autre ; on teste tout le
+  // monde en fin de volée, priorité au lanceur.
   const vainqueur =
     gagnant ?? players.find((player) => wins(player, players, state.config))?.playerId ?? null
 
@@ -234,11 +209,7 @@ const applyVisit = (state: CricketState, darts: readonly Dart[]): CricketState =
   }
 }
 
-/**
- * Rejoue le journal et renvoie l'état courant.
- *
- * C'est aussi l'implémentation de l'annulation : `project(events.slice(0, -1))`.
- */
+/** Rejoue le journal ; l'annulation est `project(events.slice(0, -1))`. */
 const project = (events: readonly MatchEvent[]): CricketState => {
   const [first, ...rest] = events
   if (first === undefined || first.type !== 'CricketStarted') {
@@ -263,7 +234,7 @@ export const CricketRules = {
     at(state.players, state.currentPlayerIndex, 'players'),
   isFinished: (state: CricketState): boolean => state.finished,
   closedAll,
-  /** Une cible fermée par **tous** les joueurs ne rapporte plus rien : morte. */
+  /** Fermée par tous : ne rapporte plus rien. */
   isDead: (state: CricketState, targetIndex: number): boolean =>
     state.players.every((player) => (player.marks[targetIndex] ?? 0) >= MARKS_TO_CLOSE),
 }

@@ -53,21 +53,22 @@ export const Dart = {
 déjà close) — jamais un résultat de jeu normal. Un bust ou un checkout sont des **données**
 (`VisitOutcome`), pas des exceptions : voir le commentaire en tête de `DomainError.ts`.
 
-## 3 · Commentaires — le « pourquoi », jamais le « quoi »
+## 3 · Commentaires — rares, le « pourquoi » jamais le « quoi »
 
-Ce projet documente **plus** que le réflexe habituel « pas de commentaire si le code est
-lisible ». Sur un symbole exporté ou un choix contre-intuitif, un court JSDoc explique la
-raison — souvent en citant explicitement la décision de `CLAUDE.md` dont il découle.
+**Un commentaire tient en une ou deux lignes, jamais un bloc** (décision de l'utilisateur,
+lot `elagage-commentaires` : la densité précédente noyait le code). Pas de commentaire si le
+code, son nom ou son type le disent déjà.
 
-- **`⚠️`** signale un piège : quelque chose qui a l'air cassé ou corrigeable, et qui ne l'est
-  pas — ou l'inverse, un endroit où « corriger » casserait une garantie voisine.
-- Côté UI, les commentaires portent des **chiffres mesurés** (largeurs en pixels, contrastes,
-  budgets de colonnes — voir `LigneJoueur.tsx`), pas une description vague. Le lecteur doit
-  pouvoir vérifier l'affirmation, pas seulement la croire.
-- En éditant ce code : **préserver cette densité** sur le code exporté ou non-évident plutôt
-  que l'élaguer par réflexe. Ce n'est pas une invitation à commenter ce qui est déjà lisible —
-  la barre reste « la raison n'est pas déductible du code », seulement posée plus souvent ici
-  qu'ailleurs.
+- Seul le « pourquoi » **non déductible du code** s'écrit : une contrainte cachée, un contournement,
+  une règle de jeu subtile.
+- **`⚠️`** signale un piège (quelque chose qui a l'air corrigeable et ne l'est pas), en **une ligne**.
+- Ne pas raconter l'historique d'un lot, ne pas recopier `CLAUDE.md` ni citer un commit : le
+  journal est dans `docs/PROJECT_PLAN.md` § 6 et dans git.
+- Pas de bannière de section, pas de liste de mesures : un chiffre n'entre que s'il est le
+  « pourquoi » (un seuil, un plancher).
+- JSDoc d'un symbole exporté : une ligne, ou rien si le nom suffit.
+- En éditant : **ne pas rallonger** un commentaire existant ; en ajouter un seulement si la raison
+  n'est pas déductible.
 
 ## 4 · Use cases (`core/application/use-cases/`)
 

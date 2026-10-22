@@ -16,11 +16,6 @@ import { fakeDependencies, SettableClock } from '../fakes'
 import { flechette, validerSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * Lot `phrases-victoire` : la voix dit la phrase du résumé, dans le même énoncé
- * que le résultat, à la victoire et après *Valider la sortie* seulement.
- */
-
 const banc = () => {
   const dites: string[] = []
   const announcer: Announcer = {
@@ -82,7 +77,6 @@ describe('X01 : la phrase à la victoire du match seulement', () => {
     await waitFor(() => expect(dites).toHaveLength(1))
     const phrase = phraseVictoire(matchId)
     expect(dites).toEqual([`Checkout. ${phrase}`])
-    // Le résumé affiche la même phrase.
     expect(await screen.findByText(phrase)).toBeInTheDocument()
   })
 
@@ -217,7 +211,6 @@ describe('Tour du monde : la phrase suit la fin de partie', () => {
     expect(dites[0]).toMatch(/^Tour bouclé !\. À toi, /)
     expect(contientPhrase(dites)).toBe(false)
 
-    // Julien ne boucle pas : le tour de table est fini, Kevin gagne.
     await screen.findByText('Dernier tour')
     clock.regler(clock.now() + GARDE_APRES_FERMETURE_MS)
     for (const _ of [0, 1, 2]) await flechette(utilisateur, 'Hors')
@@ -236,7 +229,6 @@ describe('Tour du monde : la phrase suit la fin de partie', () => {
       playerIds: [kevin, julien],
       config: TourDuMondeConfig.create({ targets: [20, 19] }),
     })
-    // Kevin boucle en 3 fléchettes (20, raté, 19) : sa volée est écrite avant l'écran.
     await services.playTourDuMonde.recordVisit(matchId, [
       Dart.single(20),
       Dart.miss(),
@@ -245,7 +237,6 @@ describe('Tour du monde : la phrase suit la fin de partie', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await screen.findByLabelText('Cible de Julien')
 
-    // Julien boucle en 2 fléchettes : il gagne, et la partie s'arrête là.
     await flechette(userEvent.setup(), '20')
     await flechette(userEvent.setup(), '19')
     await validerSortie(userEvent.setup())

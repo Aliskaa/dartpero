@@ -7,15 +7,11 @@ import type { ReopenedVisit } from './ReopenedVisit'
 export type StartKillerCommand = {
   readonly playerIds: readonly PlayerId[]
   readonly config: KillerConfig
-  /**
-   * Les numéros choisis à l'étape 2, `numbers[i]` pour `playerIds[i]`.
-   * ⚠️ Absents, ils sont **tirés ici** (`RandomSource`) puis écrits dans
-   * l'ouverture : un tirage ne se rejoue jamais.
-   */
+  /** `numbers[i]` pour `playerIds[i]` ; ⚠️ absents, tirés dans le use case puis écrits dans l'ouverture. */
   readonly numbers?: readonly SegmentNumber[]
-  /** Qui commence. Par défaut le premier de la liste. */
+  /** Par défaut le premier de la liste. */
   readonly startingPlayerIndex?: number
-  /** Le nom **tapé**, brut : absent si rien n'a été tapé (voir `nameField`). */
+  /** Le nom tapé, brut (voir `nameField`). */
   readonly name?: string
 }
 
@@ -26,17 +22,10 @@ export type KillerVisitResult = {
   readonly milestones: readonly KillerMilestone[]
 }
 
-/**
- * Tout ce qu'on fait d'une partie de Killer. Port **regroupé**, comme
- * `PlayCricket` : les quatre opérations partagent le même journal.
- */
 export interface PlayKiller {
   start(command: StartKillerCommand): Promise<MatchId>
   getState(matchId: MatchId): Promise<KillerState>
   recordVisit(matchId: MatchId, darts: readonly Dart[]): Promise<KillerVisitResult>
-  /**
-   * Retire la dernière fléchette jouée : la dernière volée quitte le journal et
-   * ses fléchettes restantes reviennent à la saisie (voir `ReopenedVisit`).
-   */
+  /** Retire la dernière fléchette jouée (voir `ReopenedVisit`). */
   undoLastVisit(matchId: MatchId): Promise<ReopenedVisit<KillerState>>
 }

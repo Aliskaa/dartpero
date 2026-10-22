@@ -3,17 +3,8 @@ import type {
   StorageProtection,
 } from '@/core/application/ports/driven/PersistentStorage'
 
-/**
- * `navigator.storage.persist()` / `persisted()`.
- *
- * Trois états, et aucun ne doit casser l'app :
- * - API absente (vieux navigateur, contexte non sécurisé) → `unavailable` ;
- * - refus ou rejet → `not-persisted` : un refus est attendu, pas un défaut
- *   (Chrome tranche selon l'engagement, Safari selon l'installation) ;
- * - accord → `persisted`.
- */
+/** API absente → `unavailable` ; refus ou rejet → `not-persisted` (un refus est attendu). */
 export class NavigatorPersistentStorage implements PersistentStorage {
-  /** Le `StorageManager` se passe au constructeur pour tester sans toucher le global. */
   constructor(
     private readonly storage: StorageManager | undefined = typeof navigator === 'undefined'
       ? undefined

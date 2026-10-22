@@ -33,7 +33,6 @@ const avec = (
 
 const invitation = () => screen.queryByRole('region', { name: 'Installer Dartpéro' })
 
-/** Laisse les promesses déjà résolues se dérouler. */
 const vider = () => act(async () => {})
 
 describe('Installation — Accueil', () => {
@@ -81,7 +80,6 @@ describe('Installation — Accueil', () => {
 
     await utilisateur.click(await screen.findByRole('button', { name: 'Installer' }))
 
-    // Le fake compte chaque appel : un second `prompt()` par clic ferait 2.
     expect(installation.promptCalls).toBe(1)
     expect(invitation()).toBeNull()
 
@@ -196,7 +194,6 @@ describe('Installation — Réglages, voyant Application et guide #installer', (
     expect(await voyant()).toHaveTextContent(valeur)
     expect(installer() !== null).toBe(action === 'installer')
     expect(comment() !== null).toBe(action === 'comment')
-    // Le guide n'est rendu que là où « Comment ? » y mène.
     expect(guide() !== null).toBe(action === 'comment')
   })
 
@@ -207,9 +204,7 @@ describe('Installation — Réglages, voyant Application et guide #installer', (
     await voyant()
     await utilisateur.click(installer() as HTMLElement)
 
-    // Le fake compte chaque appel : un second `prompt()` par clic ferait 2.
     expect(installation.promptCalls).toBe(1)
-    // L'invite consommée n'est plus proposée.
     expect(installer()).toBeNull()
     expect(comment()).toBeInTheDocument()
   })

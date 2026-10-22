@@ -16,11 +16,7 @@ type ExAequo = {
 }
 
 type Props = {
-  /**
-   * Le nom de la partie, en tête (« Finale des potes », « Dimanche soir ») ;
-   * `null` tant qu'il charge. Obligatoire : un résumé qui l'oublierait ne
-   * compilerait pas.
-   */
+  /** Nom de la partie, en tête ; `null` tant qu'il charge. Obligatoire. */
   readonly nomPartie: string | null
   readonly surtitre: string
   readonly vainqueur?: Vainqueur
@@ -31,10 +27,7 @@ type Props = {
   readonly phrase?: string
 }
 
-/**
- * Le tableau d'honneur commun aux résumés : on lit le vainqueur avant tout.
- * Laiton unique + filet vert qui se trace — célébration hors saisie, jamais pendant une volée.
- */
+/** Tableau d'honneur commun aux résumés : le vainqueur d'abord, célébration hors saisie. */
 export const TableauHonneur = ({
   nomPartie,
   surtitre,
@@ -54,9 +47,6 @@ export const TableauHonneur = ({
     />
 
     <div className="relative flex flex-col items-center">
-      {/* Le nom, au-dessus du surtitre. Un paragraphe et non un titre : le
-          seul `<h1>` du résumé reste le vainqueur. Hauteur réservée pendant le
-          chargement ; un nom long passe à la ligne, il y a la place. */}
       <p className="grave mb-1 min-h-6 max-w-full break-words font-score text-base font-bold tracking-wide text-craie-vive">
         {nomPartie}
       </p>

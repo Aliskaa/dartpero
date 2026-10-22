@@ -17,19 +17,7 @@ type Props = {
   readonly hauteur: 'pleine' | 'moitie'
 }
 
-/**
- * Le livre ouvert : un bouton de 48 px qui ouvre la feuille de règles
- * **par-dessus** l'écran, sans changer de route. Fond laiton tant que la
- * feuille est ouverte.
- *
- * Même mécanisme que la `Modale` des Statistiques, et lui seul : l'état vit
- * dans l'historique (`useModaleAuRetour`, clé `regles`), la boîte suit la
- * discipline de `useDialogueNatif`. Le focus revient au livre à la fermeture,
- * quel que soit le chemin (`retour`).
- *
- * ⚠️ Posé hors de tout conteneur `.grave` ou en capitales (bandeau de match) :
- * la feuille, enfant du livre dans le DOM, en hériterait.
- */
+/** Le livre ouvert : ouvre la feuille de règles par-dessus l'écran (`useModaleAuRetour`, clé `regles`). ⚠️ Hors de tout conteneur `.grave` ou en capitales : la feuille en hériterait. */
 export const LivreRegles = ({ regles, hauteur }: Props) => {
   const services = useServices()
   const feuille = useModaleAuRetour(CLE_REGLES, FEUILLE_REGLES)
@@ -38,9 +26,7 @@ export const LivreRegles = ({ regles, hauteur }: Props) => {
   const idFeuille = useId()
   const [hautPaysage, setHautPaysage] = useState<number | null>(null)
 
-  // Sur le match, en paysage, la feuille se pose sous le bandeau : on mesure son
-  // bas à l'ouverture et à chaque redimensionnement (rotation du téléphone).
-  // Le repère est la classe `bandeau-match` de `DispositionPartie`.
+  // En paysage sur le match, la feuille se pose sous le bandeau (`bandeau-match`) : on mesure son bas à l'ouverture et au redimensionnement.
   useLayoutEffect(() => {
     if (!ouverte || hauteur !== 'moitie') return
     const mesurer = () => {

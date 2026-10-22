@@ -36,34 +36,19 @@ import {
 import { usePreference } from './useAppareil'
 import { CLE_JOUEURS, useJoueurs } from './useJoueurs'
 
-/**
- * Les réglages de la dernière partie, relus au prochain lancement.
- *
- * Entre potes on enchaîne quatre ou cinq parties avec la même formule : les
- * re-choisir à chaque fois était une dizaine de taps pour rien.
- *
- * ⚠️ Les clés existantes ne se renomment pas. `partie:mode` est **abandonnée**
- * (le jeu vit désormais dans l'URL) : plus lue ni écrite, jamais réutilisée.
- */
+// ⚠️ Clés des réglages mémorisés : ne se renomment pas ; `partie:mode` est abandonnée, ne pas la réutiliser.
 const CLE_VARIANTE = 'partie:variante-cricket'
 const CLE_SCORE = 'partie:score'
-/**
- * ⚠️ Pas `partie:best-of` : l'ancienne clé contenait un best-of (3, 5, 7), qui
- * relu comme un nombre de manches à gagner ferait jouer des parties deux fois
- * plus longues sans prévenir.
- */
+// ⚠️ Pas `partie:best-of` : l'ancienne clé stockait un best-of, pas un nombre de manches à gagner.
 const CLE_LEGS = 'partie:legs'
 const CLE_SETS = 'partie:sets'
 const CLE_DOUBLE_OUT = 'partie:double-out'
 const CLE_DOUBLE_IN = 'partie:double-in'
 const CLE_SELECTION = 'partie:joueurs'
-// ⚠️ `partie:ordre-aleatoire` (l'ancien interrupteur) est **abandonnée** : plus lue
-// ni écrite, jamais réutilisée. « Tirer au sort » mélange l'ordre sur l'écran et
-// l'écrit dans `partie:joueurs`, comme un réordonnancement à la main.
-/** Un joueur à part pour l'entraînement : il se joue seul, la sélection de groupe reste intacte. */
+// ⚠️ `partie:ordre-aleatoire` est abandonnée : ne pas la réutiliser.
+// L'entraînement a son propre joueur : la sélection de groupe reste intacte.
 const CLE_ENTRAINEMENT_JOUEUR = 'entrainement:joueur'
 const CLE_ENTRAINEMENT_SORTIES = 'entrainement:sorties'
-/** Killer : les vies de départ (3 ou 5) et la variante (booléen). Jamais renommées. */
 const CLE_KILLER_VIES = 'partie:killer-vies'
 const CLE_KILLER_VARIANTE = 'partie:killer-variante'
 
@@ -77,13 +62,7 @@ const dansLaListe = <T>(liste: readonly T[], valeur: unknown, defaut: T): T =>
 const booleen = (valeur: unknown, defaut: boolean): boolean =>
   typeof valeur === 'boolean' ? valeur : defaut
 
-/**
- * Ce qui part dans la commande de lancement : le nom **tapé**, ou rien.
- *
- * Un champ vide, fait d'espaces, ou resté sur la proposition n'est pas un nom
- * tapé : rien n'est écrit, et la partie affichera le nom de sa propre date de
- * création. ⚠️ Écrire la proposition figerait un libellé dans le journal.
- */
+/** Le nom **tapé** ou rien. ⚠️ Écrire la proposition figerait un libellé dans le journal. */
 export const nomTape = (saisie: string, proposition: string): { readonly name?: string } => {
   const propre = saisie.trim()
   return propre === '' || propre === proposition ? {} : { name: propre }
@@ -105,13 +84,7 @@ type Lancement = {
   name: { readonly name?: string }
 }
 
-/**
- * L'état partagé des trois étapes de « Nouvelle partie ».
- *
- * ⚠️ Appelé **une seule fois**, par `NouvellePartieEcran`, qui reste monté d'une
- * étape à l'autre et passe les valeurs en props : deux `usePreference` sur la
- * même clé dans deux composants montés en même temps divergeraient.
- */
+/** ⚠️ Appelé une seule fois, par `NouvellePartieEcran` : deux `usePreference` sur la même clé divergeraient. */
 export const useNouvellePartie = () => {
   const services = useServices()
   const navigate = useNavigate()
@@ -120,8 +93,7 @@ export const useNouvellePartie = () => {
 
   const [memoriseeBrute, setMemorisee] = usePreference<readonly PlayerId[]>(CLE_SELECTION, [])
   const memorisee = Array.isArray(memoriseeBrute) ? memoriseeBrute : []
-  // Première lecture : repli sur le premier joueur de la dernière partie, mais
-  // seulement si la clé est absente — un × écrit `null`, qui doit rester `null`.
+  // Repli sur le premier joueur de la dernière partie, seulement si la clé est absente (un × écrit `null`).
   const [joueurEntrainement, setJoueurEntrainement] = usePreference<PlayerId | null>(
     CLE_ENTRAINEMENT_JOUEUR,
     memorisee[0] ?? null,
@@ -131,8 +103,7 @@ export const useNouvellePartie = () => {
   const [scoreBrut, setScore] = usePreference<(typeof SCORES)[number]>(CLE_SCORE, 501)
   const [legsBruts, setLegs] = usePreference<(typeof LEGS)[number]>(CLE_LEGS, 2)
   const [setsBruts, setSets] = usePreference<(typeof SETS)[number]>(CLE_SETS, 1)
-  // ⚠️ Double out DÉCOCHÉ par défaut à l'écran, alors que le domaine le garde
-  // activé : c'est voulu (`x01/config.ts`). La valeur est toujours passée.
+  // ⚠️ Double out décoché à l'écran alors que le domaine le garde activé : voulu.
   const [doubleOutBrut, setDoubleOut] = usePreference(CLE_DOUBLE_OUT, false)
   const [doubleInBrut, setDoubleIn] = usePreference(CLE_DOUBLE_IN, false)
   const [sortiesBrutes, setSorties] = usePreference<(typeof SORTIES)[number]>(
@@ -157,28 +128,17 @@ export const useNouvellePartie = () => {
     DEFAUT_ENTRAINEMENT.rounds as (typeof SORTIES)[number],
   )
 
-  /**
-   * Le nom proposé (« Dimanche soir »), calculé **une seule fois** par passage
-   * dans le parcours : l'horloge est lue dans un initialiseur paresseux, jamais
-   * à chaque rendu. Le nom tapé vit ici, à la racine du parcours, pour suivre
-   * de l'étape 2 à l'étape 3 et survivre au retour du téléphone — jamais dans une
-   * préférence : il ne se mémorise pas d'une partie à l'autre.
-   */
+  // Nom proposé calculé une fois (horloge lue en initialiseur) ; le nom tapé n'est jamais une préférence.
   const [proposition] = useState(() => nomParDefaut(services.clock.now()))
   const [saisieNom, setSaisieNom] = useState(proposition)
 
   const [erreur, setErreur] = useState<string | null>(null)
   const [occupe, setOccupe] = useState(false)
 
-  /**
-   * Les numéros de Killer, par joueur : un état du parcours, jamais une
-   * préférence (un nouveau passage, un nouveau tirage). Un joueur retiré garde
-   * son entrée, mais seule compte celle des joueurs retenus.
-   */
+  // Numéros de Killer : état du parcours, jamais une préférence (nouveau passage, nouveau tirage).
   const [numeros, setNumeros] = useState<NumerosKiller>(() => new Map())
 
-  // L'échec d'un démarrage ne concerne que l'étape où il a eu lieu : changer
-  // d'étape (retour, autre jeu) l'efface, sans quoi il suivrait le joueur.
+  // Un échec de démarrage s'efface au changement d'étape.
   const { pathname } = useLocation()
   // biome-ignore lint/correctness/useExhaustiveDependencies: on efface à chaque changement d'étape.
   useEffect(() => {
@@ -188,13 +148,7 @@ export const useNouvellePartie = () => {
   const profils: readonly Player[] = joueurs.data ?? []
   const existe = (id: PlayerId) => profils.some((profil) => profil.id === id)
 
-  /**
-   * ⚠️ La sélection mémorisée est **filtrée sur les profils qui existent
-   * encore** : un joueur supprimé resterait sinon en fantôme, et le lancement
-   * échouerait sur un profil inconnu. Dérivée plutôt que stockée en état, elle
-   * se répare toute seule dès que la liste des profils arrive — et vaut `[]`
-   * tant qu'elle n'est pas arrivée.
-   */
+  // ⚠️ Sélection filtrée sur les profils existants : un joueur supprimé resterait en fantôme. Vaut `[]` avant l'arrivée des profils.
   const selectionGroupe = joueurs.data ? memorisee.filter(existe) : []
   const selectionEntrainement =
     joueurs.data && joueurEntrainement !== null && existe(joueurEntrainement)
@@ -218,20 +172,11 @@ export const useNouvellePartie = () => {
     }
   }
 
-  /**
-   * La sélection du jeu, jamais au-delà de sa limite. La coupe est aussi
-   * **écrite** à l'arrivée à l'étape 2 (`couperSelection`, réponse R1.4) : un
-   * Killer à 6 suivi d'un X01 perd les 5e et 6e joueurs. La tranche ici ne sert
-   * qu'au rendu qui précède cette écriture.
-   */
+  /** La sélection du jeu, coupée à sa limite (la coupe est aussi écrite par `couperSelection`). */
   const selection = (mode: GameModeId): readonly PlayerId[] =>
     mode === 'CHECKOUT_PRACTICE' ? selectionEntrainement : selectionGroupe.slice(0, max(mode))
 
-  /**
-   * Écrit la coupe de la sélection de groupe à la limite du jeu. Idempotente :
-   * rien n'est écrit si la sélection tient déjà (sûr sous `StrictMode`).
-   * Attend les profils, sans quoi la sélection dérivée vaut `[]`.
-   */
+  /** Écrit la coupe à la limite du jeu ; idempotente, attend les profils. */
   const couperSelection = (mode: GameModeId): void => {
     if (mode === 'CHECKOUT_PRACTICE' || !joueurs.data) return
     if (selectionGroupe.length > max(mode)) setMemorisee(selectionGroupe.slice(0, max(mode)))
@@ -261,18 +206,14 @@ export const useNouvellePartie = () => {
 
   const reordonner = (ordre: readonly PlayerId[]) => setMemorisee(ordre)
 
-  /**
-   * Crée le profil, rafraîchit la liste, puis l'ajoute à la partie s'il reste
-   * une place. Lève l'erreur du domaine (pseudo pris, vide…) : la boîte de
-   * dialogue la traduit et reste ouverte.
-   */
+  /** Crée le profil puis l'ajoute à la partie s'il reste une place ; lève l'erreur du domaine. */
   const creerJoueur = async (
     mode: GameModeId,
     nom: string,
     genre?: PlayerGender,
   ): Promise<void> => {
     const base = selection(mode)
-    // Sans genre choisi, rien ne part : la clé reste absente (« non précisé »).
+    // Sans genre choisi, la clé reste absente.
     const joueur = genre
       ? await services.managePlayers.create(nom, undefined, genre)
       : await services.managePlayers.create(nom)
@@ -280,25 +221,14 @@ export const useNouvellePartie = () => {
     ajouter(mode, joueur.id, base)
   }
 
-  /**
-   * « Tirer au sort » : l'aléa passe par le use case, jamais par `Math.random`.
-   * L'ordre obtenu s'écrit comme un réordonnancement à la main — il peut être
-   * l'ordre d'avant, c'est un vrai tirage. Rend le nouvel ordre, pour l'annoncer.
-   *
-   * ⚠️ À appeler depuis un geste, jamais depuis un effet ni un rendu : le
-   * `StrictMode` le jouerait deux fois.
-   */
+  /** « Tirer au sort » : rend le nouvel ordre. ⚠️ À appeler depuis un geste : `StrictMode` le jouerait deux fois. */
   const tirerAuSort = (mode: GameModeId): readonly PlayerId[] => {
     const ordre = services.shuffleOrder.execute(selection(mode))
     reordonner(ordre)
     return ordre
   }
 
-  /**
-   * Donne un numéro à chaque joueur retenu qui n'en a pas (ou dont le numéro est
-   * déjà pris par un joueur placé avant lui), tiré parmi les numéros libres.
-   * Rend la **même** table si rien ne manque : l'appelant n'écrit alors rien.
-   */
+  /** Numérote les joueurs sans numéro (ou en doublon) parmi les libres ; rend la même table si rien ne manque. */
   const completer = (table: NumerosKiller, ids: readonly PlayerId[]): NumerosKiller => {
     const pris = new Set<SegmentNumber>()
     const manquants: PlayerId[] = []
@@ -320,11 +250,7 @@ export const useNouvellePartie = () => {
     return suite
   }
 
-  /**
-   * À l'arrivée à l'étape 2 et à chaque joueur ajouté : le tirage est déjà fait.
-   * Appelé depuis un effet : idempotent (sous `StrictMode`, le second passage
-   * peut retirer, mais les invariants tiennent — tous numérotés, tous différents).
-   */
+  /** Appelé depuis un effet : idempotent (tous numérotés, tous différents). */
   const completerNumeros = (): void => {
     const suite = completer(numeros, selection('KILLER'))
     if (suite !== numeros) setNumeros(suite)
@@ -370,16 +296,8 @@ export const useNouvellePartie = () => {
     name: nomTape(saisieNom, proposition),
   })
 
-  /**
-   * Un mode, un use case : l'aiguillage de la couture `GameMode`, côté départ.
-   *
-   * ⚠️ **Le seul chemin de lancement.** `valeurs` vaut par défaut celles du rendu
-   * courant ; « Rejouer » les passe en argument, parce qu'un `setX` de
-   * `usePreference` ne se lit qu'au rendu suivant — relire `score` juste après
-   * `setScore` lancerait la partie d'avant.
-   */
+  /** ⚠️ Le seul chemin de lancement ; « Rejouer » passe `valeurs`, un `setX` ne se lit qu'au rendu suivant. */
   const lancer = (mode: GameModeId, valeurs: Lancement = courants(mode)): Promise<MatchId> => {
-    // L'ordre part tel quel dans le journal : le tirage a déjà eu lieu à l'écran.
     const { playerIds, name } = valeurs
     switch (mode) {
       case 'X01':
@@ -407,8 +325,7 @@ export const useNouvellePartie = () => {
           ...name,
         })
       case 'KILLER': {
-        // Les numéros choisis à l'étape 2 ; un joueur sans numéro (arrivé par un
-        // lien profond, par exemple) en reçoit un libre ici.
+        // Un joueur sans numéro (lien profond) en reçoit un libre ici.
         const table = completer(valeurs.numeros, playerIds)
         const numbers = playerIds.flatMap((id) => {
           const numero = table.get(id)
@@ -446,7 +363,6 @@ export const useNouvellePartie = () => {
     try {
       const matchId = await lancer(mode, valeurs)
       await queryClient.invalidateQueries({ queryKey: CLE_MATCH_EN_COURS })
-      // La nouvelle partie est une carte de plus à l'Accueil et à l'Historique.
       await queryClient.invalidateQueries({ queryKey: CLE_HISTORIQUE })
       navigate(`/partie/${matchId}`)
     } catch {
@@ -455,16 +371,7 @@ export const useNouvellePartie = () => {
     }
   }
 
-  /**
-   * ▶ de « Rejouer » : la configuration devient **les réglages mémorisés**, comme
-   * si elle avait été choisie à la main, puis solo → on lance, à deux ou plus →
-   * on ouvre l'Ordre (avec « Tirer au sort » et « Commencer »).
-   *
-   * ⚠️ Le **nom n'est jamais repris** : `{}` explicite, et la saisie revient à la
-   * proposition — un nom tapé avant un retour fuirait sinon dans la nouvelle partie.
-   * ⚠️ Les valeurs partent **en argument** de `lancer` (la lecture des préférences
-   * serait périmée), mais s'écrivent aussi, pour l'étape 2 et la prochaine partie.
-   */
+  /** ▶ de « Rejouer » : préremplit les réglages mémorisés, puis lance (solo) ou ouvre l'Ordre. ⚠️ Le nom n'est jamais repris. */
   const rejouer = (configuration: ReplayableConfiguration): void => {
     const { mode, playerIds } = configuration
     let valeurs: Lancement = { ...courants(mode), playerIds, name: {} }
@@ -477,7 +384,6 @@ export const useNouvellePartie = () => {
           doubleOut: sortie,
           doubleIn: entree,
         } = configuration.config
-        // Reproductible (`estReproductible`) : les valeurs sont dans les listes de l'étape 2.
         setScore(startingScore as (typeof SCORES)[number])
         setLegs(legsToWin as (typeof LEGS)[number])
         setSets(setsToWin as (typeof SETS)[number])
@@ -507,7 +413,7 @@ export const useNouvellePartie = () => {
         const { startingLives, selfHitCostsLives } = configuration.config
         setVies(startingLives)
         setVarianteKiller(selfHitCostsLives)
-        // Rejouer = **nouveau tirage** des numéros (réponse 3), jamais ceux d'avant.
+        // Nouveau tirage des numéros, jamais ceux d'avant.
         const tirage = tirerNumeros(playerIds)
         valeurs = {
           ...valeurs,

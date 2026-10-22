@@ -20,7 +20,6 @@ export class RecordVisitUseCase implements RecordVisit {
     const record = await loadMatch(this.matches, matchId)
 
     const avant = X01Rules.project(record.events)
-    // Applique les règles d'abord : si la volée est illégale, rien n'est écrit.
     const apres = X01Rules.applyVisit(avant, darts)
 
     const events: readonly MatchEvent[] = [...record.events, { type: 'VisitRecorded', darts }]
@@ -32,7 +31,6 @@ export class RecordVisitUseCase implements RecordVisit {
     return {
       state: apres,
       visit,
-      // Uniquement ce que CETTE volée a déclenché.
       milestones: apres.milestones.slice(avant.milestones.length),
     }
   }

@@ -10,19 +10,12 @@ import { FakeAnnouncer, fakeDependencies, fakeServices } from '../fakes'
 import { flechetteDeSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/** « leg » ou « legs », mot entier, quelle que soit la casse. */
 const LEG = /\blegs?\b/i
 
-/**
- * Tout ce qu'un joueur lit ou entend d'un écran : le texte, mais aussi les noms
- * accessibles (`aria-label`) et les infobulles (`title`).
- */
 const texteAffiche = (): string => {
   const attributs = [...document.body.querySelectorAll('[aria-label], [title]')].flatMap(
     (element) => [element.getAttribute('aria-label') ?? '', element.getAttribute('title') ?? ''],
   )
-  // Un nœud de texte après l'autre, séparés d'une espace : `textContent` colle les éléments
-  // voisins (« legCommencer ») et `\b` ne verrait plus la fin du mot.
   const noeuds: string[] = []
   const parcours = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
   for (let noeud = parcours.nextNode(); noeud; noeud = parcours.nextNode()) {
@@ -31,7 +24,6 @@ const texteAffiche = (): string => {
   return [...noeuds, ...attributs].join(' ')
 }
 
-/** Témoin positif d'abord : un test d'absence doit pouvoir échouer. */
 const sansLeg = (temoin: RegExp = /manche/i) => {
   const texte = texteAffiche()
   expect(texte).toMatch(temoin)
@@ -48,7 +40,6 @@ const avecVoix = () => {
   }
 }
 
-/** Une partie à sets : Kevin et Julien, 40 à faire, premier à 2 manches, 2 sets. */
 const partieASets = async (services: Services) => {
   const kevin = await services.managePlayers.create('Kevin')
   const julien = await services.managePlayers.create('Julien')
@@ -78,17 +69,11 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     sansLeg()
   })
 
-  /**
-   * Chaque page de « Nouvelle partie », tout déplié — feuille de règles comprise,
-   * toutes ses rubriques ouvertes : ni « leg » ni « best of », à l'œil comme au
-   * lecteur d'écran.
-   */
   it('à l’étape 1 de Nouvelle partie', async () => {
     const { services } = fakeServices()
     renderWithServices(<App />, { services, route: '/nouvelle-partie' })
 
     await screen.findAllByRole('link')
-    // Témoin positif : les tuiles sont bien là (le X01 se dit « zéro pile »).
     sansLeg(/zéro pile/i)
   })
 
@@ -110,7 +95,6 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     for (const rubrique of within(feuille).getAllByRole('button', { expanded: false })) {
       await utilisateur.click(rubrique)
     }
-    // Rien ne reste replié : la preuve que le dépliage a eu lieu.
     expect(within(feuille).queryAllByRole('button', { expanded: false })).toEqual([])
     expect(within(feuille).getAllByRole('button', { expanded: true }).length).toBeGreaterThan(5)
     sansLeg(temoin)
@@ -124,7 +108,6 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     renderWithServices(<App />, { services, route: '/nouvelle-partie/x01/ordre' })
 
     await screen.findByRole('list', { name: 'Ordre de passage' })
-    // Témoin positif : la feuille d'ordre est affichée (« Tirer au sort »).
     sansLeg(/tirer au sort/i)
   })
 
@@ -162,7 +145,6 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
 
     renderWithServices(<App />, { services, route: '/historique' })
     const lignes = await screen.findAllByRole('listitem')
-    // Seule partie, non finie : c'est la partie en cours, et sa ligne le dit.
     expect(lignes).toHaveLength(1)
     expect(lignes[0]).toHaveTextContent('En cours')
     sansLeg()
@@ -187,8 +169,6 @@ describe('« Manche » à l’écran, jamais « leg »', () => {
     resume.unmount()
 
     renderWithServices(<App />, { services, route: '/statistiques' })
-    // Révision 1 : les manches ont quitté Victoires ; la meilleure manche reste
-    // dans la bascule « Manche » de Finitions — le témoin de `sansLeg`.
     const finitions = await screen.findByRole('region', { name: 'Finitions' })
     await waitFor(() =>
       expect(

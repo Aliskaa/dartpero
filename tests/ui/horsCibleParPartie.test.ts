@@ -41,7 +41,6 @@ describe('horsCibleParPartie — les trois morceaux de la ligne', () => {
 
   it('aucune partie : « sur 0 partie » — cas non atteint (la cible suppose une fléchette lancée), documenté', () => {
     expect(horsCibleParPartie(0, 0).base).toBe('sur 0 partie')
-    // Même convention que `pluriel`, qui ne met au pluriel qu'à partir de 2.
     expect(pluriel(0, 'partie')).toBe('0 partie')
   })
 

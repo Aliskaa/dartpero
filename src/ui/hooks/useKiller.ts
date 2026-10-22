@@ -27,11 +27,7 @@ import { type EtatVolee, useVoleeEnCours } from './useVoleeEnCours'
 const message = (erreur: unknown): string =>
   erreur instanceof Error ? erreur.message : 'Volée refusée'
 
-/**
- * Les jalons d'une volée, tels que la voix les dit : le genre est celui du
- * joueur **éliminé** (règle 13), lu sur son profil ; un profil supprimé n'en a
- * pas, donc le masculin (réponse R1.3).
- */
+/** Les jalons d'une volée tels que la voix les dit ; genre de l'éliminé, masculin si le profil est supprimé. */
 const jalonsDites = (
   jalons: readonly KillerMilestone[],
   profils: ReadonlyMap<PlayerId, Player>,
@@ -48,18 +44,8 @@ const jalonsDites = (
   })
 
 /**
- * L'état d'une partie de Killer, côté écran — le cinquième hook de mode.
- *
- * Même principe qu'au Cricket : TanStack Query sert de **cache**, la volée
- * enregistrée renvoie déjà le nouvel état. La volée en cours reste hors du
- * journal, doublée du brouillon (`useVoleeEnCours`) ; son effet — killer, vies,
- * éliminations — se lit sur `PreviewKillerVisit`, la même `applyVisit` que le
- * journal rejouera : l'écran ne montre jamais autre chose.
- *
- * La volée est close à trois fléchettes, à la fléchette qui gagne (elle attend
- * *Valider la sortie*), ou à celle qui élimine son lanceur (variante) : celle-là
- * s'enregistre tout de suite, sans boîte, comme un bust — sauf si elle fait
- * gagner l'adversaire.
+ * L'état d'une partie de Killer ; l'effet de la volée en cours se lit sur `PreviewKillerVisit`.
+ * Close à trois fléchettes, à celle qui gagne (boîte), ou à l'auto-élimination (enregistrée sans boîte, sauf si elle fait gagner).
  */
 export const useKiller = (matchId: MatchId) => {
   const services = useServices()
@@ -67,8 +53,7 @@ export const useKiller = (matchId: MatchId) => {
   const dire = useVoix()
   const { enPause, armer, ecoulee } = usePauseAnnulation()
 
-  // Les pseudos (et le genre, pour l'accord), gardés dans une ref : la Map est
-  // reconstruite à chaque rendu.
+  // Pseudos et genres en ref : la Map est reconstruite à chaque rendu.
   const profils = useProfils()
   const profilsRef = useRef(profils)
   profilsRef.current = profils
@@ -124,8 +109,7 @@ export const useKiller = (matchId: MatchId) => {
         const gagnee = resultat.milestones.some((jalon) => jalon.type === 'MatchFinished')
         if (gagnee || resultat.milestones.length > 0) services.devices.haptics.success()
 
-        // Un seul énoncé : les jalons, puis « À toi, X » — ou, à la victoire, la
-        // phrase seule, sans « À toi » ni « Partie gagnée ! » (réponse 11).
+        // Un seul énoncé : jalons puis « À toi, X » ; à la victoire, la phrase seule.
         dire(
           annonceFinDeVolee(
             annonceKiller(jalonsDites(resultat.milestones, profilsRef.current)),
@@ -145,10 +129,7 @@ export const useKiller = (matchId: MatchId) => {
   /** La fléchette qui gagne attend sa confirmation : lue sur l'aperçu, jamais recopiée. */
   const sortieEnAttente = dartsEnCours.length > 0 && (apercu?.state.finished ?? false)
 
-  /**
-   * « Kevin gagne sur D8 ? », au nom du **gagnant** de l'aperçu. Variante : le
-   * dernier adversaire s'élimine sur son propre numéro, « Kevin gagne ? ».
-   */
+  /** « Kevin gagne sur D8 ? » au nom du gagnant ; auto-élimination du dernier adversaire : « Kevin gagne ? ». */
   const confirmation = useMemo(() => {
     const flechette = dartsEnCours.at(-1)
     const gagnant = apercu?.state.winnerId ?? null
@@ -224,11 +205,7 @@ export const useKiller = (matchId: MatchId) => {
     void enregistrer(dartsEnCours)
   }, [sortieEnAttente, occupe, enregistrer, dartsEnCours])
 
-  /**
-   * Une fléchette par appui : la dernière en cours, sinon la dernière de la
-   * volée enregistrée juste avant, qui se rouvre — vies, killer et éliminations
-   * reviennent d'eux-mêmes (projection du journal privé de sa dernière volée).
-   */
+  /** Une fléchette par appui, comme `useX01` ; vies et éliminations reviennent par projection. */
   const annuler = useCallback(async () => {
     if (occupe) return
     setErreur(null)

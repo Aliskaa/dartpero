@@ -8,17 +8,8 @@ import type { MesureMoyenne } from '@/ui/labels'
 import { defilementPourMontrer } from '@/ui/podium'
 
 /**
- * LA CARTE ÉVOLUTION (lot `courbe`) — des fonctions pures, sans React : la
- * géométrie de la courbe, son axe vertical, et ce que l'on voit quand elle
- * défile. Les valeurs arrivent calculées par le cœur (`GetPlayerProgress`) :
- * rien ici n'est une règle de jeu, seulement du dessin.
- *
- * Le repère est celui de la planche (`courbe.html`, piste A) : une `viewBox`
- * de 320 × 190, marges L 30, R 10, T 10, B 24. Il est coupé en deux SVG à la
- * même échelle : la **gouttière** (les 25 premières unités, l'axe vertical,
- * fixe) et la **fenêtre** (les 295 suivantes, le tracé, qui défile). Dans la
- * fenêtre, les abscisses partent donc de 0 à x = 25 de la planche : le premier
- * point est à 5, le dernier à 285 quand la courbe tient.
+ * LA CARTE ÉVOLUTION — des fonctions pures, sans React : la géométrie de la courbe, son axe vertical, et ce
+ * que l'on voit quand elle défile.
  */
 
 export const PLANCHE = {
@@ -34,21 +25,19 @@ export const PLANCHE = {
 export const LARGEUR_GOUTTIERE = 25
 /** La fenêtre visible du tracé, en unités : ce qui reste de la planche. */
 export const LARGEUR_FENETRE = PLANCHE.largeur - LARGEUR_GOUTTIERE
-/** Du bord gauche de la fenêtre au premier point (et le début des lignes de grille). */
 export const MARGE_GAUCHE = PLANCHE.gauche - LARGEUR_GOUTTIERE
 /** De la première à la dernière partie, quand la courbe tient. */
 const ETENDUE = PLANCHE.largeur - PLANCHE.gauche - PLANCHE.droite
 
 /**
- * Le nombre de parties visibles d'un coup (décision de l'utilisateur, N2) :
- * ≈ 20 px par partie à 390 px, la planche à l'identique. Au-delà, la courbe
- * défile dans sa fenêtre, au même pas.
+ * Le nombre de parties visibles d'un coup : ≈ 20 px par partie à 390 px, la
+ * planche à l'identique. Au-delà, la courbe défile dans sa fenêtre, au même pas.
  */
 export const PARTIES_VISIBLES = 14
 
 /**
- * Au-delà de ce déplacement entre l'appui et le lâcher, c'est un glissé : il
- * ne sélectionne jamais (N1, appui seul), même quand rien ne défile.
+ * Au-delà de ce déplacement entre l'appui et le lâcher, c'est un glissé : il ne sélectionne jamais (N1,
+ * appui seul), même quand rien ne défile.
  */
 export const SEUIL_GLISSE_PX = 10
 
@@ -56,18 +45,15 @@ export const SEUIL_GLISSE_PX = 10
 const MARGE_VUE = 10
 
 export type GeometrieCourbe = {
-  /** Le nombre de parties tracées. */
   readonly parties: number
-  /** L'écart entre deux parties, en unités ; 0 pour une seule partie. */
   readonly pas: number
-  /** La largeur du tracé, en unités : 295 quand il tient, davantage quand il défile. */
   readonly largeurContenu: number
   readonly defile: boolean
 }
 
 /**
- * Jusqu'à 14 parties, la planche : les points de 5 à 285, sans défilement. Au-delà,
- * le pas de 14 parties (280 / 13 unités), et un contenu de 5 + (n − 1)·pas + 10.
+ * Jusqu'à 14 parties, la planche : les points de 5 à 285, sans défilement. Au-delà, le pas de 14 parties
+ * (280 / 13 unités), et un contenu de 5 + (n − 1)·pas + 10.
  */
 export const geometrieCourbe = (parties: number): GeometrieCourbe => {
   if (parties <= PARTIES_VISIBLES) {
@@ -92,17 +78,15 @@ export const abscisse = (geometrie: GeometrieCourbe, index: number): number =>
   geometrie.parties <= 1 ? MARGE_GAUCHE + ETENDUE / 2 : MARGE_GAUCHE + index * geometrie.pas
 
 /**
- * La largeur CSS du SVG tracé, en % de la fenêtre : la fenêtre montre toujours
- * 295 unités, donc le tracé garde l'échelle de la gouttière (hauteur `auto`).
+ * La largeur CSS du SVG tracé, en % de la fenêtre : la fenêtre montre toujours 295 unités, donc le tracé
+ * garde l'échelle de la gouttière (hauteur `auto`).
  */
 export const pourcentageLargeur = (geometrie: GeometrieCourbe): number =>
   (100 * geometrie.largeurContenu) / LARGEUR_FENETRE
 
 /** Ce que l'on sait de la fenêtre qui défile, en pixels. */
 export type Defilement = {
-  /** `scrollLeft`. */
   readonly defilement: number
-  /** `clientWidth` : la largeur visible, qui vaut 295 unités. */
   readonly largeurVisible: number
 }
 
@@ -145,9 +129,8 @@ export const indicesVisibles = (
 export type AncreDate = 'start' | 'middle' | 'end'
 
 /**
- * Les trois dates sous la courbe : début, milieu (⌊(premier + dernier) / 2⌋) et
- * fin de la **portion visible** (N4 a) ; quand la courbe tient, celles de la
- * planche. Deux parties : la première et la dernière ; une seule : la sienne, centrée.
+ * Les trois dates sous la courbe : début, milieu (⌊(premier + dernier) / 2⌋) et fin de la **portion
+ * visible** ; quand la courbe tient, celles de la planche.
  */
 export const datesSousLaCourbe = (
   geometrie: GeometrieCourbe,
@@ -166,8 +149,8 @@ export const datesSousLaCourbe = (
 }
 
 /**
- * Le `scrollLeft` qui ramène une partie dans la vue (sélection au clavier), ou
- * `null` si elle y est déjà : le défilement **minimal** des onglets de joueurs.
+ * Le `scrollLeft` qui ramène une partie dans la vue (sélection au clavier), ou `null` si elle y est déjà :
+ * le défilement **minimal** des onglets de joueurs.
  */
 export const defilementPourPoint = (
   geometrie: GeometrieCourbe,
@@ -185,13 +168,10 @@ export const defilementPourPoint = (
   })
 }
 
-/* L'axe vertical. */
-
 export type AxeVertical = {
   readonly bas: number
   readonly haut: number
   readonly pas: number
-  /** Une ligne de grille, et sa valeur dans la gouttière, à chaque pas de `bas` à `haut`. */
   readonly graduations: readonly number[]
 }
 
@@ -201,16 +181,8 @@ const INTERVALLES_MAX = 6
 const DOUBLEMENTS_MAX = 40
 
 /**
- * L'axe vertical de toute la courbe (U7) — le même pendant le défilement :
- *
- * - pas de 5 (Moyenne, First 9) ou de 40 (Meilleure volée) ;
- * - bornes au multiple du pas qui encadrent **toutes** les valeurs reçues
- *   (points, tendances, ligne pointillée) ;
- * - un pas de marge en bas pour Moyenne et First 9, aucun pour Meilleure volée ;
- * - pas doublé tant qu'il y a plus de 6 intervalles.
- *
- * ⚠️ Ajustement hors planche : le bas ne descend jamais sous 0 (une moyenne n'est
- * jamais négative), et un axe plat (une seule valeur, multiple du pas) gagne un pas en haut.
+ * ⚠️ Ajustement hors planche : le bas ne descend jamais sous 0 (une moyenne n'est jamais négative), et un
+ * axe plat (une seule valeur, multiple du pas) gagne un pas en haut.
  */
 export const axeVertical = (mesure: MesureMoyenne, valeurs: readonly number[]): AxeVertical => {
   // Garde défensive : une valeur non finie (`NaN`, `Infinity`) ferait boucler le
@@ -248,9 +220,6 @@ export const ordonnee = (axe: AxeVertical, valeur: number): number =>
   PLANCHE.haut +
   ((axe.haut - valeur) / (axe.haut - axe.bas)) * (PLANCHE.hauteur - PLANCHE.haut - PLANCHE.bas)
 
-/* Les mesures. */
-
-/** Ce qu'une bascule lit d'une partie, et à quelle précision elle s'écrit. */
 export const MESURE_EVOLUTION: Record<
   MesureMoyenne,
   { readonly valeur: (mesures: ProgressMeasures) => number; readonly decimales: 0 | 1 }
@@ -260,7 +229,7 @@ export const MESURE_EVOLUTION: Record<
   VOLEE: { valeur: (m) => m.highestVisit, decimales: 0 },
 }
 
-/** La tendance démarre à la 3ᵉ partie : en deçà, l'état « peu de parties » (planche C). */
+/** La tendance démarre à la 3ᵉ partie : en deçà, l'état « peu de parties ». */
 export const PARTIES_POUR_TENDANCE = TREND_SPAN
 
 /** La moyenne de la période (ligne pointillée) : Moyenne et First 9 seulement. */
@@ -295,8 +264,8 @@ export const valeursTracees = (
 }
 
 /**
- * La courbe franchit-elle un changement d'année ? Alors les dates portent
- * l'année, partout (axe et lecture) ; sinon jamais (U5 b-i).
+ * La courbe franchit-elle un changement d'année ? Alors les dates portent l'année, partout (axe et lecture)
+ * ; sinon jamais.
  */
 export const franchitUneAnnee = (points: readonly ProgressPoint[]): boolean => {
   const premier = points[0]

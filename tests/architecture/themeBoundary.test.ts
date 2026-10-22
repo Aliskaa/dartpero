@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
+// ⚠️ Une couleur en dur ne suit aucun thème : tout passe par un token, sinon le thème clair casse en silence.
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const UI = resolve(RACINE, 'src/ui')
 
@@ -15,37 +16,14 @@ const fichiers = (dossier: string): string[] =>
 
 const enUi = (chemin: string) => relative(UI, chemin).replaceAll('\\', '/')
 
-/**
- * Une couleur écrite en dur ne suit aucun thème. Le noir et le blanc de
- * Tailwind non plus — `bg-black/40` reste noir sur du papier.
- */
 const EN_DUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bbg-(?:black|white)\b/g
 
-/**
- * Les trois seuls endroits où une couleur littérale est légitime, parce
- * qu'aucun des trois ne décrit une surface de l'app :
- *
- * - `couleurs.ts` : la palette des profils. Ce sont des teintes **symboliques**
- *   (`brique`, `sapin`…) posées sur leur propre pastille — elles portent leur
- *   fond avec elles, donc les deux thèmes les rendent pareil.
- * - `Cible.tsx` : un vrai plateau de fléchettes. Le rouge du double 20 est la
- *   couleur de l'objet, pas celle du décor ; il ne s'éclaircit pas le jour.
- * - `theme.ts` : les deux teintes de barre système — une par thème, par
- *   définition.
- */
 const EXCEPTIONS = ['couleurs.ts', 'composants/commun/Cible.tsx', 'theme.ts']
 
 describe('Frontière des thèmes', () => {
-  /**
-   * Le lot du thème clair a coûté ce qu'il a coûté à cause d'une trentaine de
-   * couleurs écrites en dur, disséminées et invisibles au vert des tests.
-   * Cette garde évite d'en réintroduire une : tout ce qui peint une surface
-   * doit passer par un token, donc suivre `html[data-theme]`.
-   */
   it('aucune couleur en dur dans src/ui, hors palettes d’objets', () => {
     const tous = fichiers(UI)
 
-    // Garde-fou : un test vert à vide ne vérifie rien.
     expect(tous.length).toBeGreaterThan(40)
 
     const fautes = tous.flatMap((fichier) => {
@@ -58,14 +36,6 @@ describe('Frontière des thèmes', () => {
     expect(fautes).toEqual([])
   })
 
-  /**
-   * Le texte secondaire s'écrit en couleur PLEINE (`text-craie-2`,
-   * `text-craie-3`), jamais en alpha : sur papier, l'encre transparente tombe
-   * sous 4,5:1. Le motif vise `text-craie` et toutes ses variantes
-   * (`-2`, `-3`, `-decor`, `-vive`…) suivies d'une barre : il laisse passer
-   * `border-craie/25` et `bg-craie/…`, dont l'alpha est un filet ou un fond,
-   * pas un texte.
-   */
   const ALPHA_TEXTE = /\btext-craie(?:-[a-z0-9]+)?\/(?:\d+|\[)/g
 
   it('aucun texte en alpha (text-craie/NN) dans src/ui', () => {
@@ -101,15 +71,6 @@ describe('Frontière des thèmes', () => {
     }
   })
 
-  /**
-   * Les neuf jetons de la feuille de règles (lot `regles-du-jeu`, constat 6 de
-   * la Revue) sont **réservés** à la feuille (`voile` est élargi à la boîte de
-   * confirmation, voir plus bas, et n'est plus autorisé dans `LivreRegles`) : leurs noms sont génériques
-   * (`filet`, `voile`, `rouge-texte`…), mais leurs valeurs n'ont été vérifiées
-   * que sur les surfaces de la feuille — `rouge-texte` / `vert-texte` tombent
-   * à 4,2 / 3,7:1 sur `feutre-nuit` en clair. `rules/theme-colors.md`
-   * § Jetons réservés.
-   */
   const utilitaires = (jetons: readonly string[]) =>
     new RegExp(
       `\\b(?:text|bg|border(?:-[trblxy])?|outline|ring|divide|fill|stroke|decoration|shadow|accent|caret)-(?:${jetons.join('|')})(?![\\w-])`,
@@ -128,24 +89,10 @@ describe('Frontière des thèmes', () => {
     'voile',
   ]
   const UTILITAIRE_FEUILLE = utilitaires(JETONS_FEUILLE)
-  /**
-   * Le `voile` a sa propre entrée de garde, à part des autres jetons de la feuille (lot `annulation-volee`) : il
-   * dimme aussi l'écran sous la boîte de confirmation de la sortie. Il ne colore
-   * qu'un `::backdrop` — aucun texte ne s'y pose, le texte de la boîte reste sur
-   * son `ardoise` — et ses deux valeurs ont été relues sur l'écran de match.
-   */
   const UTILITAIRE_FEUILLE_SANS_VOILE = utilitaires(
     JETONS_FEUILLE.filter((jeton) => jeton !== 'voile'),
   )
 
-  /**
-   * Les jetons réservés, entrée par entrée : trois familles de sens (la feuille
-   * de règles, dont le `voile` a sa propre entrée depuis le lot
-   * `annulation-volee` — quatre entrées en tout), le vert de « Installée » (contraste vérifié sur l'ardoise seulement) et les
-   * aperçus de thème, CONSTANTS à dessein (lot `reglages-par-usage`) — employés
-   * ailleurs, ils ne suivraient pas le thème. Chaque entrée a son témoin : le
-   * fichier qui l'emploie, et le nombre d'emplois au moins attendus.
-   */
   const RESERVES = [
     {
       famille: 'feuille de règles',
@@ -179,7 +126,6 @@ describe('Frontière des thèmes', () => {
       const tous = fichiers(UI)
       expect(tous.length).toBeGreaterThan(40)
 
-      // Témoin : le premier fichier emploie bien ces jetons, le motif les trouve.
       const premier = readFileSync(resolve(UI, reserves[0]), 'utf8')
       expect((premier.match(motif) ?? []).length).toBeGreaterThanOrEqual(temoin)
 
@@ -211,12 +157,6 @@ describe('Frontière des thèmes', () => {
     }
   })
 
-  /**
-   * L'aperçu d'une vignette ne peint QU'AVEC des `apercu-*` : un `bg-feutre`
-   * suivrait le thème courant, et la vignette « Clair » virerait au sombre.
-   * Le cadre de la vignette (`border-laiton`, `border-craie/25`) et son libellé
-   * vivent hors du composant `Apercu` et ne sont pas visés.
-   */
   const COULEUR_DE_TOKEN =
     /\b(?:bg|text|border(?:-[trblxy])?|fill|stroke|outline|ring)-(?:feutre|ardoise|chene|laiton|craie|rouge|vert|sur-laiton|apercu)[\w-]*(?:\/\d+)?/g
   const couleursHorsApercu = (source: string): string[] =>
@@ -233,10 +173,8 @@ describe('Frontière des thèmes', () => {
     const source = readFileSync(resolve(UI, 'composants/commun/VignetteTheme.tsx'), 'utf8')
     const apercu = corpsApercu(source)
 
-    // Témoin : l'aperçu emploie bien des couleurs, le motif les voit.
     expect((apercu.match(COULEUR_DE_TOKEN) ?? []).length).toBeGreaterThanOrEqual(6)
     expect(couleursHorsApercu(apercu)).toEqual([])
-    // Le cadre permis existe bien, hors de l'aperçu.
     expect(source).toContain('border-laiton')
     expect(source).toContain('border-craie/25')
   })
@@ -251,12 +189,6 @@ describe('Frontière des thèmes', () => {
     ])
   })
 
-  /**
-   * Les aperçus de thème sont des COPIES : chacun doit valoir exactement le
-   * jeton qu'il montre (feutre, craie, laiton du thème montré), et la même
-   * valeur dans les deux blocs — sinon la vignette « Clair » changerait de
-   * couleur avec le thème courant, ou mentirait sur le thème qu'elle montre.
-   */
   it('chaque aperçu de thème vaut le jeton qu’il montre, à l’identique dans les deux blocs', () => {
     const css = readFileSync(resolve(RACINE, 'src/index.css'), 'utf8')
     const valeurs = (depuis: string): Map<string, string> => {
@@ -289,11 +221,6 @@ describe('Frontière des thèmes', () => {
     }
   })
 
-  /**
-   * Le rouge de la touche « Hors » (lot `hors-statistique`) : un jeton général,
-   * défini dans les deux thèmes, et qui n'est pas un fond. Sa valeur claire doit
-   * tenir 4,5:1 sur `feutre` (le fond réel du pavé) : mesuré à 5,2:1 pour #a81f25.
-   */
   it('rouge-touche est défini dans les deux thèmes et sert la touche Hors', () => {
     const css = readFileSync(resolve(RACINE, 'src/index.css'), 'utf8')
     const valeur = (depuis: string, jeton: string): string | undefined => {
@@ -310,7 +237,6 @@ describe('Frontière des thèmes', () => {
 
     const pave = readFileSync(resolve(UI, 'composants/commun/PaveSaisie.tsx'), 'utf8')
     expect(pave).toContain('[--texte-touche:var(--color-rouge-touche)]')
-    // La classe est posée sur le bouton rendu : voir tests/ui/paveUnifie.test.tsx.
     const regle = css.match(/\.touche-hors\s*\{([^}]*)\}/)?.[1]
     expect(regle).toBeDefined()
     expect(regle).toMatch(/border-color:\s*var\(--color-rouge-touche\)/)
@@ -344,9 +270,6 @@ describe('Frontière des thèmes', () => {
     }
   })
 
-  /** Le CSS a le droit d'écrire des couleurs : c'est lui qui les définit. Mais
-   *  les deux thèmes doivent définir EXACTEMENT les mêmes tokens, sinon l'un
-   *  des deux hérite silencieusement d'une valeur de l'autre. */
   it('le thème clair redéfinit tous les tokens de couleur du thème sombre', () => {
     const css = readFileSync(resolve(RACINE, 'src/index.css'), 'utf8')
 

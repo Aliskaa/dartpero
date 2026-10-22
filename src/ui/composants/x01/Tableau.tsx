@@ -29,14 +29,7 @@ type Props = {
 
 const ECHELLES: readonly Echelle[] = ['large', 'large', 'moyen', 'compact']
 
-/**
- * La dernière volée de chaque joueur **dans le leg en cours**, avec le rang de
- * cette volée dans l'historique.
- *
- * Le rang sert de clé de rendu : il ne change que lorsque ce joueur-là rejoue,
- * ce qui rejoue les animations (le « pop » du score, la secousse d'un bust) au
- * bon moment — et seulement pour lui, pas à chaque volée des adversaires.
- */
+/** Dernière volée de chaque joueur dans la manche en cours, avec son rang : clé de rendu qui rejoue les animations pour lui seul. */
 const dernieresVolees = (state: X01State): ReadonlyMap<PlayerId, { visit: Visit; rang: number }> =>
   state.history.reduce((acc, visit, rang) => {
     if (visit.legNumber === state.legNumber) acc.set(visit.playerId, { visit, rang })
@@ -89,21 +82,7 @@ const RubanSortie = ({
   return null
 }
 
-/**
- * ZONE LECTURE — elle se lit depuis la ligne de lancer, à 2-3 mètres.
- *
- * Une ligne par joueur, toujours : la disposition ne change pas avec le nombre
- * de joueurs, seule l'échelle du score suit.
- *
- * Le moment célébré n'est PAS rendu ici : l'écran le superpose au bas de
- * ce tableau, hors du flux (`MomentCelebratif`).
- *
- * Il n'y a **pas** de bandeau « ce qui vient de se passer » : chaque ligne porte
- * déjà sa dernière volée et son total. Seul le bust garde un signal fort — sa
- * ligne passe au rouge, ses fléchettes sont barrées et elle encaisse la
- * secousse — parce que c'est le seul cas où l'app doit annoncer que des points
- * viennent d'être retirés.
- */
+/** Zone lecture du X01 : une ligne par joueur ; seul le bust a un signal fort (ligne rouge, fléchettes barrées, secousse). */
 export const Tableau = ({
   state,
   resteAffiche,
@@ -125,8 +104,6 @@ export const Tableau = ({
         <>
           <span className="entete-colonne px-3 text-feutre/70">{LIBELLE_JOUEUR}</span>
           <span className="entete-colonne px-1 text-center text-feutre/70">{LIBELLE_VOLEE}</span>
-          {/* « Manches » tient dans ses 44 px à 0,75 rem à condition de relâcher
-              tout son interlettrage : la colonne la plus étroite. */}
           <span className="entete-colonne px-0.5 text-center tracking-normal text-feutre/70">
             {LIBELLE_MANCHES}
           </span>
@@ -148,11 +125,7 @@ export const Tableau = ({
         const nom = nomJoueur(profil?.name ?? null)
         const derniere = volees.get(joueur.playerId)
 
-        // Tant que le joueur actif n'a pas planté sa première fléchette, sa
-        // ligne continue d'afficher sa volée précédente — sans quoi un bust
-        // en solo ne serait jamais annoncé, la main ne passant à personne.
-        // Le total de la volée en cours se déduit du reste projeté : aucune
-        // règle de calcul n'est réimplémentée ici.
+        // Avant sa première fléchette, le joueur actif garde sa volée précédente (sinon un bust solo ne serait jamais annoncé).
         const volee: VoleeAffichee | null =
           actif && dartsEnCours.length > 0
             ? { darts: dartsEnCours, total: joueur.remaining - resteAffiche, outcome: null }

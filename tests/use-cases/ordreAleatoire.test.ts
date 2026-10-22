@@ -25,8 +25,6 @@ const ids = (...noms: readonly string[]) => noms as unknown as readonly PlayerId
 
 describe('Tirage de l’ordre de passage', () => {
   it('applique un Fisher-Yates, tirage par tirage', () => {
-    // 3 joueurs : rang 2 tire dans [0,3[, puis rang 1 dans [0,2[.
-    // 0 puis 1 → on échange A et C, puis B avec lui-même.
     expect(shufflePlayers(ids('A', 'B', 'C'), tirages(0, 1))).toEqual(['C', 'B', 'A'])
   })
 
@@ -39,7 +37,6 @@ describe('Tirage de l’ordre de passage', () => {
   })
 
   it('laisse tranquille une liste d’un seul joueur', () => {
-    // La boucle ne tourne pas : aucun tirage n'est même demandé.
     expect(shufflePlayers(ids('A'), tirages())).toEqual(['A'])
   })
 
@@ -76,7 +73,6 @@ describe('Ordre aléatoire au lancement', () => {
 
     const retenu = await ordre(matchId)
     expect([...retenu].sort()).toEqual([kevin, julien, maiwenn].sort())
-    // Le fake d'aléa est déterministe : il place bien quelqu'un d'autre devant.
     expect(retenu[0]).not.toBe(kevin)
   })
 
@@ -89,14 +85,6 @@ describe('Ordre aléatoire au lancement', () => {
     expect(await ordre(matchId)).toEqual([kevin, julien, maiwenn])
   })
 
-  /**
-   * ⚠️ LE test du lot : le tirage est **écrit**, jamais rejoué.
-   *
-   * Même règle qu'au lot 5b pour les cibles d'entraînement. Si l'ordre se
-   * retirait à la projection, annuler une volée redistribuerait les joueurs en
-   * pleine partie — et rejouer une partie ancienne ne rendrait pas la partie
-   * qu'on a jouée.
-   */
   it('fige l’ordre tiré : ni l’annulation ni le rejeu ne le redistribuent', async () => {
     const matchId = await services.startMatch.execute({
       playerIds: [kevin, julien, maiwenn],
@@ -111,17 +99,9 @@ describe('Ordre aléatoire au lancement', () => {
     await services.undoLastVisit.execute(matchId)
     expect(await ordre(matchId)).toEqual(retenu)
 
-    // Et une relecture à froid, comme au prochain lancement de l'app.
     expect(await ordre(matchId)).toEqual(retenu)
   })
 
-  /**
-   * ⚠️ Décision : « On remet ça » NE rebat PAS les cartes.
-   *
-   * Le journal ne dit pas si l'ordre avait été tiré ou choisi à la main — le
-   * redistribuer serait deviner. Et l'ordre qui vient de jouer est un ordre
-   * que tout le monde a accepté.
-   */
   it('ne retire pas l’ordre quand on remet ça', async () => {
     const ancienne = await services.startMatch.execute({
       playerIds: [kevin, julien, maiwenn],
@@ -157,7 +137,6 @@ describe('Ordre aléatoire au lancement', () => {
   })
 
   it('refuse toujours un profil inconnu, tirage ou pas', async () => {
-    // Le tirage a lieu AVANT la validation : il ne doit pas la court-circuiter.
     await expect(
       services.startMatch.execute({
         playerIds: [kevin, 'fantome' as PlayerId],

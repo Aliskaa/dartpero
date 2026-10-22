@@ -10,14 +10,6 @@ import type { PlayerId } from '@/core/domain/value-objects/ids'
 import { fakeServices, SettableClock } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 
-/*
- * jsdom ne met rien en page : la fenêtre de la courbe n'a ni largeur ni
- * défilement. On les pose sur le prototype, à l'échelle la plus simple — la
- * fenêtre visible fait 295 px, soit **un pixel par unité** de la planche — et
- * `scrollWidth` se déduit de la largeur CSS du SVG tracé (un pourcentage de la
- * fenêtre), comme le ferait le navigateur. `scrollLeft` est borné comme lui.
- * Le vrai rendu, les vrais gestes et la barre native restent à voir à l'écran.
- */
 const LARGEUR_VISIBLE = 295
 const PAS = 280 / 13
 const defilements = new WeakMap<Element, number>()
@@ -67,13 +59,8 @@ beforeEach(() => {
 
 afterEach(() => restaurer())
 
-/** Le 22 octobre 2026 au soir : « aujourd'hui » des tests. */
 const MAINTENANT = new Date(2026, 9, 22, 22).getTime()
 
-/**
- * `nombre` parties de Kevin (et des autres), une par jour à partir du 1er septembre :
- * la k-ième fait une volée de trois simples k (moyenne 3k, de 3 à 60 en boucle).
- */
 const avecParties = async (nombre: number, autres: readonly string[] = []) => {
   const horloge = new SettableClock(MAINTENANT)
   const { services, dependencies } = fakeServices({ clock: horloge })
@@ -116,7 +103,6 @@ const curseur = () => screen.getByRole('slider', { name: 'Partie lue sur la cour
 const datesAffichees = async () =>
   [...(await trace()).querySelectorAll('text')].map((texte) => texte.textContent)
 
-/** Un appui bref, au même endroit : la sélection au lâcher. */
 const appuyer = (cible: HTMLElement, clientX: number) => {
   fireEvent.pointerDown(cible, { clientX, clientY: 80, pointerId: 1, button: 0 })
   fireEvent.pointerUp(cible, { clientX, clientY: 80, pointerId: 1, button: 0 })
@@ -130,7 +116,6 @@ describe('Évolution — la carte et ses états', () => {
     const evolution = await carte()
     const podium = screen.getByRole('region', { name: 'Moyenne 3 fl., Moyenne 3 fléchettes' })
     const plateau = screen.getByRole('img', { name: /fléchettes$/ })
-    // L'ordre du document : cible, Évolution, podium.
     expect(
       plateau.compareDocumentPosition(evolution) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
@@ -150,7 +135,6 @@ describe('Évolution — la carte et ses états', () => {
       ['F9, First 9', 'F9', 'false'],
       ['Volée, Meilleure volée', 'Volée', 'false'],
     ])
-    // Le pictogramme est muet : le titre seul nomme la carte.
     expect(
       within(evolution).getByRole('heading', { level: 2, name: 'Évolution' }),
     ).toBeInTheDocument()
@@ -160,7 +144,6 @@ describe('Évolution — la carte et ses états', () => {
     const { services } = await avecParties(3)
     ouvrir(services)
 
-    // Moyennes 3, 6, 9 ; la tendance au rang 3 est la base : écart « 0 ».
     expect(await lecture()).toBe(
       'Moyenne : 9,0 Partie 3 sur 3 · 3 sept 0 tendance depuis les 3 premières parties',
     )
@@ -169,7 +152,6 @@ describe('Évolution — la carte et ses états', () => {
     const evolution = await carte()
     expect(within(evolution).getByText('Une partie')).toBeInTheDocument()
     expect(within(evolution).getByText('Tendance, 3 parties')).toBeInTheDocument()
-    // Sa moyenne : 18 points ÷ 9 fléchettes × 3.
     expect(within(evolution).getByText('Sa moyenne 6,0')).toBeInTheDocument()
     expect(await datesAffichees()).toEqual(['1 sept', '2 sept', '3 sept'])
   })
@@ -190,7 +172,6 @@ describe('Évolution — la carte et ses états', () => {
     expect(phrase?.textContent).toBe('La tendance apparaît à la 3e partie.')
     expect(phrase?.querySelector('sup')?.textContent).toBe('e')
     expect(within(evolution).queryByText('Une partie')).toBeNull()
-    // Ni défilement : pas de fenêtre qui défile.
     expect((await fenetre()).className).not.toMatch(/overflow-x-auto/)
   })
 
@@ -209,7 +190,6 @@ describe('Évolution — la carte et ses états', () => {
     expect(within(evolution).queryByRole('group', { name: 'Mesure tracée' })).toBeNull()
     expect(screen.queryByRole('slider')).toBeNull()
     expect(await datesAffichees()).toEqual(['1 sept', '2 sept'])
-    // Un appui ne sélectionne rien : il n'y a rien à choisir.
     appuyer(await fenetre(), 5)
     expect(await lecture()).toBe('Moyenne : 6,0 Partie 2 sur 2 · 2 sept')
   })
@@ -231,7 +211,6 @@ describe('Évolution — la carte et ses états', () => {
     const { services } = fakeServices({ clock: horloge })
     const kevin = await services.managePlayers.create('Kevin')
     const sarah = await services.managePlayers.create('Sarah')
-    // Sarah est à la partie, mais elle n'a pas encore lancé.
     await partie(
       services,
       [kevin.id, sarah.id],
@@ -261,7 +240,6 @@ describe('Évolution — la carte et ses états', () => {
     horloge.regler(new Date(2026, 6, 3, 20).getTime())
     await partie(services, [kevin.id], [[Dart.single(1), Dart.single(1), Dart.single(1)]])
     horloge.regler(new Date(2026, 9, 22, 20).getTime())
-    // Ce soir : 100, 41 → 141 points en 6 fléchettes, moyenne 70,5.
     await partie(
       services,
       [kevin.id],
@@ -296,7 +274,6 @@ describe('Évolution — au-delà de 14 parties, la courbe défile', () => {
     expect(await lecture()).toMatch(/Partie 31 sur 31 · 1 oct/)
     expect((curseur() as HTMLInputElement).value).toBe('30')
     expect(screen.queryByText(/dernières parties/)).toBeNull()
-    // Les dates de la portion visible : de la 18ᵉ partie à la 31ᵉ.
     expect(await datesAffichees()).toEqual(['18 sept', '24 sept', '1 oct'])
   })
 
@@ -307,7 +284,6 @@ describe('Évolution — au-delà de 14 parties, la courbe défile', () => {
     const vue = await fenetre()
     vue.getBoundingClientRect = () => new DOMRect(10, 0, LARGEUR_VISIBLE, 200)
     const fin = vue.scrollWidth - vue.clientWidth
-    // 5 px dans la fenêtre (15 à l'écran), défilée de `fin` : la partie au plus près.
     appuyer(vue, 15)
     const attendu = Math.round(fin / PAS) + 1
     expect(await lecture()).toMatch(new RegExp(`Partie ${attendu} sur 16`))
@@ -334,7 +310,6 @@ describe('Évolution — au-delà de 14 parties, la courbe défile', () => {
     fireEvent.pointerMove(vue, { clientX: 60, clientY: 80, pointerId: 1, buttons: 1 })
     fireEvent.pointerUp(vue, { clientX: 120, clientY: 80, pointerId: 1, button: 0 })
     expect(await lecture()).toMatch(/Partie 5 sur 5/)
-    // L'appui, lui, sélectionne.
     appuyer(vue, 5)
     expect(await lecture()).toMatch(/Partie 1 sur 5/)
   })
@@ -344,7 +319,6 @@ describe('Évolution — au-delà de 14 parties, la courbe défile', () => {
     ouvrir(services)
 
     const vue = await fenetre()
-    // En fin de courbe, 5 px dans la fenêtre : la 18ᵉ partie.
     appuyer(vue, 5)
     expect(await lecture()).toMatch(/Partie 18 sur 31/)
     vue.scrollLeft = 0
@@ -363,7 +337,6 @@ describe('Évolution — au-delà de 14 parties, la courbe défile', () => {
     const fin = vue.scrollWidth - vue.clientWidth
     fireEvent.change(curseur(), { target: { value: '29' } })
     expect(await lecture()).toMatch(/Partie 30 sur 31 · 30 sept/)
-    // Déjà visible : la vue ne bouge pas.
     expect(vue.scrollLeft).toBe(fin)
 
     fireEvent.change(curseur(), { target: { value: '0' } })
@@ -390,7 +363,6 @@ describe('Évolution — remises à zéro', () => {
       'aria-pressed',
       'true',
     )
-    // La ligne pointillée suit la mesure ; Meilleure volée n'en a pas.
     expect(within(await carte()).getByText(/^Son First 9 moyen/)).toBeInTheDocument()
     await utilisateur.click(
       within(await carte()).getByRole('button', { name: 'Volée, Meilleure volée' }),
@@ -427,7 +399,6 @@ describe('Évolution — remises à zéro', () => {
   it('changer de période remet la dernière partie', async () => {
     const utilisateur = userEvent.setup()
     const { services, horloge, kevin } = await avecParties(4)
-    // Deux parties de plus ce mois-ci, pour que « 30 jours » en garde trois.
     horloge.regler(new Date(2026, 9, 20, 20).getTime())
     await partie(services, [kevin.id], [[Dart.single(5), Dart.single(5), Dart.single(5)]])
     horloge.regler(new Date(2026, 9, 21, 20).getTime())
@@ -467,7 +438,6 @@ describe('Évolution — les bords du défilement (14 et 15 parties)', () => {
     expect(vue.scrollWidth).toBeGreaterThan(vue.clientWidth)
     expect(vue.scrollLeft).toBe(vue.scrollWidth - vue.clientWidth)
     expect(await lecture()).toMatch(/Partie 15 sur 15 · 15 sept/)
-    // La première partie est sortie de la vue : de la 2ᵉ à la 15ᵉ.
     expect(await datesAffichees()).toEqual(['2 sept', '8 sept', '15 sept'])
   })
 })
@@ -519,7 +489,6 @@ describe('Évolution — au clavier, de vraies touches', () => {
     await utilisateur.keyboard('{ArrowLeft}')
     expect(await lecture()).toMatch(/Partie 30 sur 31/)
     await utilisateur.keyboard('{ArrowRight}{ArrowRight}')
-    // Bornée à la dernière.
     expect(await lecture()).toMatch(/Partie 31 sur 31/)
     expect(vue.scrollLeft).toBe(fin)
     await utilisateur.keyboard('{Home}')
@@ -566,12 +535,10 @@ describe('Évolution — un cache périmé relu en fond (constat B1)', () => {
       expect(await lecture()).toMatch(new RegExp(`Partie ${nombre} sur ${nombre} `))
       premier.unmount()
 
-      // Une partie de plus, jouée pendant qu'on était ailleurs.
       horloge.regler(new Date(2026, 9, 22, 21).getTime())
       await partie(services, [kevin.id], [[Dart.single(20), Dart.single(20), Dart.single(20)]])
       horloge.regler(MAINTENANT)
 
-      // Même QueryClient : l'écran s'ouvre sur l'ancienne série, puis la relit.
       renderWithServices(<App />, { services, route: '/statistiques', queryClient })
       const total = nombre + 1
       await waitFor(async () =>

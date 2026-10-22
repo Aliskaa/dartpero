@@ -25,14 +25,7 @@ type Props = {
   readonly versExistants: string
 }
 
-/**
- * Les joueurs de la partie, en rangée d'avatars carrés.
- *
- * Le × retire **de la partie**, jamais de la base. Le + ouvre un panneau de
- * divulgation en ligne à deux entrées — pas un `role="menu"` : deux boutons
- * n'ont pas besoin d'un focus itinérant, et le panneau ne flotte au-dessus de
- * rien. Il disparaît quand la partie est pleine.
- */
+/** Les joueurs de la partie en rangée d'avatars ; le × retire de la partie, le + ouvre un panneau en ligne (pas un `role="menu"`). */
 export const RangeeJoueurs = ({ joueurs, max, onRetirer, onNouveau, versExistants }: Props) => {
   const idMenu = useId()
   const [menuOuvert, setMenuOuvert] = useState(false)
@@ -51,13 +44,10 @@ export const RangeeJoueurs = ({ joueurs, max, onRetirer, onNouveau, versExistant
       <ul aria-label={LEGENDE_JOUEURS_PARTIE} className="flex flex-wrap gap-x-3 gap-y-3 pt-3">
         {joueurs.map((joueur) => (
           <li key={joueur.id} className="flex w-16 flex-col items-center gap-1">
-            {/* Rangée compacte : une pastille de 40 px, le pseudo dessous sur une
-                seule ligne. Tronqué « … » à la largeur de la pastille ; le nom
-                complet est dans le libellé du ×. */}
+            {/* Pseudo tronqué sous la pastille ; le nom complet est dans le libellé du ×. */}
             <span className="relative">
               <Avatar nom={joueur.name} couleur={joueur.color} taille="md" />
-              {/* Une cible de 48 px autour d'une pastille visible plus petite :
-                  le doigt n'a pas à viser le dessin. Le × est à cheval sur le coin. */}
+              {/* Cible de 48 px autour d'une pastille plus petite ; le × est à cheval sur le coin. */}
               <button
                 type="button"
                 aria-label={retirerDeLaPartie(joueur.name)}

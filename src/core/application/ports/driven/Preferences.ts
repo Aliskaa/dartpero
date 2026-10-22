@@ -1,9 +1,4 @@
-/**
- * Préférences locales de l'appareil (mode de saisie, derniers réglages de
- * partie…). Synchrone : ce sont de petites valeurs lues au rendu.
- *
- * Ce ne sont PAS des données de jeu — celles-ci vivent dans les dépôts.
- */
+/** Préférences d'appareil, synchrones ; pas des données de jeu. */
 export interface Preferences {
   read<T>(key: string, fallback: T): T
   write<T>(key: string, value: T): void

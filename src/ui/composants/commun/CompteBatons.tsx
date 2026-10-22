@@ -1,23 +1,11 @@
 import { nombre, VALEUR_ABSENTE } from '@/ui/labels'
 
-/**
- * LES BÂTONS DE CRAIE — un compte, groupé par cinq : quatre traits barrés par
- * un cinquième, comme les tournées sur l'ardoise du pub (carte Grosses volées
- * des statistiques).
- *
- * ⚠️ À ne pas confondre avec `Batons` : celui-là montre des manches **gagnées
- * sur requises** (traits acquis et tirets à gagner), dessiné en CSS sur la
- * feuille de match. Celui-ci compte un total, sans plafond de sens, dessiné en
- * SVG d'après la planche.
- */
+/** Bâtons de craie : un total groupé par cinq, en SVG. ⚠️ Pas `Batons`, qui montre des manches gagnées sur requises. */
 
 /** Au-delà de 10 groupes (50 bâtons), la rangée ne s'allonge plus : le nombre dit le reste. */
 export const PLAFOND_GROUPES_BATONS = 10
 
-/**
- * Le dessin d'un compte : des groupes de cinq, puis le reste.
- * 49 → 9 groupes + 4 ; 50 → 10 + 0 ; 51 et 312 → 10 + 0, le nombre exact écrit après.
- */
+/** Le dessin d'un compte : des groupes de cinq, puis le reste. */
 export const decompteBatons = (
   n: number,
 ): { readonly groupes: number; readonly reste: number } => ({
@@ -48,11 +36,7 @@ const Groupe = ({ traits, barre }: { readonly traits: number; readonly barre: bo
   )
 }
 
-/**
- * La couleur d'une rangée, par seuil : 180 en laiton, 140+ en craie, 100+ en
- * `craie-2` — des tokens **pleins**, jamais d'alpha (la planche posait la craie
- * à 70 %). Elle ne teint que les traits : le nombre reste en craie.
- */
+/** Couleur d'une rangée par seuil (180 laiton, 140+ craie, 100+ `craie-2`) : tokens pleins, jamais d'alpha. */
 export type TeinteBatons = 'text-laiton' | 'text-craie' | 'text-craie-2'
 
 type Props = {

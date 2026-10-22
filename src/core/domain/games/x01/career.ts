@@ -2,27 +2,17 @@ import { DartboardHits } from '../../services/dartboardHits'
 import type { PlayerId } from '../../value-objects/ids'
 import type { X01PlayerStats, X01Stats } from './stats'
 
-/**
- * Ce qu'un joueur a accompli sur **toutes** ses parties.
- *
- * ⚠️ Les moyennes sont recalculées depuis les totaux bruts, jamais moyennées
- * entre elles : la moyenne des moyennes est fausse dès que les parties n'ont
- * pas la même longueur — et elles n'en ont jamais.
- */
+/** ⚠️ Moyennes et pourcentages recalculés depuis les totaux bruts, jamais moyennés entre eux. */
 export type CareerStats = {
   readonly playerId: PlayerId
   readonly matchesPlayed: number
   readonly matchesWon: number
-  /** En pourcentage (0-100). 0 si aucune partie. */
+  /** 0-100 ; 0 si aucune partie. */
   readonly matchWinPercent: number
   readonly legsWon: number
-  /**
-   * Legs terminés auxquels le joueur a participé — le dénominateur qui manquait.
-   * « 12 legs gagnés » ne dit rien sans lui : sur 14, c'est une razzia ; sur 40,
-   * c'est une saison difficile.
-   */
+  /** Legs terminés auxquels le joueur a participé (dénominateur de `legsWon`). */
   readonly legsPlayed: number
-  /** En pourcentage (0-100). 0 si aucun leg terminé. */
+  /** 0-100 ; 0 si aucun leg terminé. */
   readonly legWinPercent: number
   readonly visits: number
   readonly dartsThrown: number
@@ -39,7 +29,6 @@ export type CareerStats = {
   readonly bestLegDarts: number | null
   readonly highestCheckout: number
   readonly highestVisit: number
-  /** Où ses fléchettes se sont plantées, toutes parties cumulées. */
   readonly hits: DartboardHits
 }
 
@@ -89,13 +78,6 @@ const nouvelAccumulateur = (): Accumulator => ({
 
 const moyenne = (points: number, darts: number): number => (darts === 0 ? 0 : (points / darts) * 3)
 
-/**
- * Un ratio en pourcentage, brut — l'UI arrondit.
- *
- * ⚠️ Comme les moyennes, il se recalcule depuis les **totaux bruts** : moyenner
- * les pourcentages de chaque partie serait faux dès qu'elles n'ont pas la même
- * longueur, et elles n'en ont jamais.
- */
 const pourcentage = (reussis: number, total: number): number =>
   total === 0 ? 0 : (reussis / total) * 100
 
@@ -124,20 +106,10 @@ const cumuler = (acc: Accumulator, joueur: X01PlayerStats, gagnant: boolean): vo
   acc.bestLegDarts = plusCourt(acc.bestLegDarts, joueur.bestLegDarts)
   acc.highestCheckout = Math.max(acc.highestCheckout, joueur.highestCheckout)
   acc.highestVisit = Math.max(acc.highestVisit, joueur.highestVisit)
-  // La carrière ADDITIONNE les cartes de chaque match ; elle ne relit jamais
-  // les fléchettes de la base. Une seule façon de compter, donc aucune chance
-  // que le résumé d'une partie et le cumul se contredisent.
   acc.hits = DartboardHits.merge(acc.hits, joueur.hits)
 }
 
-/**
- * Agrège les statistiques de plusieurs parties, joueur par joueur.
- *
- * Une partie **en cours** compte comme les autres : ses fléchettes ont bien été
- * lancées, et attendre la fin d'un leg pour voir sa moyenne bouger serait
- * frustrant. Seul `matchesWon` distingue les parties terminées, puisqu'un match
- * sans vainqueur n'en a tout simplement pas.
- */
+/** Une partie en cours compte comme les autres ; seul `matchesWon` distingue les terminées. */
 export const computeCareerStats = (matches: readonly X01Stats[]): readonly CareerStats[] => {
   const accumulateurs = new Map<PlayerId, Accumulator>()
 

@@ -15,20 +15,11 @@ export type StoredPlayer = {
   name: string
   color: string
   createdAt: number
-  /**
-   * Facultatif (lot `killer`) : `MASCULINE` ou `FEMININE`, clé absente pour
-   * « non précisé ». Champ **non indexé** : pas de `db.version` (comme `color`
-   * et `createdAt`, absents des `.stores()`) ; un profil ancien sans la clé
-   * reste valide tel quel, il n'y a rien à compléter.
-   */
+  /** `MASCULINE` ou `FEMININE`, clé absente si non précisé. Non indexé : pas de `db.version`. */
   gender?: string
 }
 
-/**
- * La volée en cours d'une partie (lot `volee-partielle`), hors du journal.
- * `darts` a la forme de `VisitRecorded.darts`. Aucun horodatage : rien à
- * expirer, rien de plus à garder que ce qui se rend à l'écran.
- */
+/** La volée en cours, hors du journal ; `darts` a la forme de `VisitRecorded.darts`. */
 export type StoredVisitDraft = {
   matchId: string
   visitCount: number
@@ -41,11 +32,7 @@ export type DartperoDatabase = Dexie & {
   visitDrafts: EntityTable<StoredVisitDraft, 'matchId'>
 }
 
-/**
- * Base locale (IndexedDB). On passe par une fonction plutôt qu'une sous-classe :
- * avec `useDefineForClassFields`, les champs de classe écraseraient les tables
- * que Dexie installe sur l'instance.
- */
+// Fonction plutôt que sous-classe : `useDefineForClassFields` écraserait les tables installées par Dexie.
 export const createDatabase = (name = 'dartpero'): DartperoDatabase => {
   const db = new Dexie(name) as DartperoDatabase
 
@@ -54,18 +41,8 @@ export const createDatabase = (name = 'dartpero'): DartperoDatabase => {
     players: 'id, name',
   })
 
-  /**
-   * v2 — les profils gagnent une couleur et une date de création (lot 4).
-   *
-   * Les joueurs déjà en base n'en ont pas : on leur en attribue une plutôt que
-   * de les laisser invalides, sinon `Player.create` les rejetterait à la
-   * lecture et l'utilisateur perdrait ses profils en mettant l'app à jour. La
-   * couleur est distribuée en tourniquet sur l'ordre de lecture, et la date de
-   * création retombe sur « maintenant » — c'est faux, mais c'est monotone et ça
-   * ne sert qu'à trier.
-   *
-   * Le schéma des tables ne change pas : seules les données sont complétées.
-   */
+  // v2 : couleur (en tourniquet) et date (« maintenant ») attribuées aux anciens profils,
+  // sinon `Player.create` les rejetterait à la lecture.
   db.version(2).upgrade(async (transaction) => {
     const maintenant = Date.now()
     let rang = 0
@@ -82,16 +59,7 @@ export const createDatabase = (name = 'dartpero'): DartperoDatabase => {
       })
   })
 
-  /**
-   * v3 — le brouillon de volée (lot `volee-partielle`) : une table de plus,
-   * une ligne par partie, clé `matchId`, sans index.
-   *
-   * **Sans `upgrade`** : la table naît vide et rien d'existant n'est transformé.
-   * `matches` et `players` ne sont pas redéclarées : Dexie garde le schéma
-   * d'une table que la nouvelle version ne mentionne pas (prouvé par le test de
-   * migration v2 → v3). Les redéclarer à l'identique ne changerait rien ; les
-   * redéclarer **autrement** toucherait aux index des parties.
-   */
+  // v3 : table neuve, sans `upgrade`. ⚠️ `matches` et `players` ne sont pas redéclarées : Dexie garde leur schéma.
   db.version(3).stores({ visitDrafts: 'matchId' })
 
   return db

@@ -1,13 +1,6 @@
 import { angles, ORDRE, point, R, trace } from './geometrieCible'
 
-/**
- * Une vraie cible de fléchettes, dessinée en SVG — zéro image à charger, donc
- * zéro octet de plus dans le précache de la PWA, et net à toutes les tailles.
- *
- * Toujours décorative (`aria-hidden`) : elle n'est jamais cliquable et ne porte
- * aucune information que le tableau ne donne déjà. La cible qui *porte* une
- * information, c'est `CarteImpacts` — et elle, elle a un nom accessible.
- */
+/** Cible de fléchettes en SVG, toujours décorative (`aria-hidden`) ; celle qui porte une information est `CarteImpacts`. */
 
 const TEINTES = {
   creme: '#E8DCC0',
@@ -39,7 +32,6 @@ type Props = {
 
 export const Cible = ({ className = '', avecNumeros = false }: Props) => (
   <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false" className={className}>
-    {/* Le fond du plateau et son cadre de bois. */}
     <circle cx="50" cy="50" r={R.bordExterieur} fill="#0B0B0B" />
     <circle
       cx="50"
@@ -71,11 +63,9 @@ export const Cible = ({ className = '', avecNumeros = false }: Props) => (
       </g>
     ))}
 
-    {/* Le centre : anneau à 25, bullseye à 50. */}
     <circle cx="50" cy="50" r={R.anneau25} fill={TEINTES.vert} />
     <circle cx="50" cy="50" r={R.bullseye} fill={TEINTES.rouge} />
 
-    {/* Les fils métalliques qui séparent les secteurs. */}
     <g stroke="#B9B3A4" strokeOpacity="0.55" strokeWidth="0.35" fill="none">
       {SECTEURS.map((secteur) => {
         const [x1, y1] = point(R.anneau25, secteur.debut)

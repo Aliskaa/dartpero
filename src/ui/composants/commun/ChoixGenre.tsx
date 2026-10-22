@@ -13,20 +13,11 @@ const depuisUi = (choix: ChoixGenreUi): PlayerGender | undefined =>
 type Props = {
   readonly valeur: PlayerGender | undefined
   readonly onChange: (genre: PlayerGender | undefined) => void
-  /**
-   * L'étiquette « Genre » au-dessus des cases. Masquée à l'œil (gardée pour le
-   * lecteur d'écran) quand elle est déjà écrite juste au-dessus — la ligne
-   * repliée de la boîte « Nouveau joueur ».
-   */
+  /** Étiquette « Genre », masquée à l'œil (gardée pour le lecteur d'écran) quand elle est déjà écrite au-dessus. */
   readonly legendeVisible?: boolean
 }
 
-/**
- * Le choix du genre d'un profil (planche `genre-profil`, dessin exact) : trois
- * cases **jointives** de 48 px, texte `craie-vive`, la valeur choisie en laiton
- * plein, puis l'aide en `craie-2`. Un composant à part, pas `ChoixSegmente` :
- * décision de l'utilisateur (dessin de la planche, réponse R1.5).
- */
+/** Choix du genre d'un profil : trois cases jointives de 48 px (pas `ChoixSegmente`, décision de l'utilisateur). */
 export const ChoixGenre = ({ valeur, onChange, legendeVisible = true }: Props) => {
   const idAide = useId()
   const choisi = versUi(valeur)

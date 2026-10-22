@@ -72,10 +72,7 @@ import {
   vueVoyantSauvegarde,
 } from '@/ui/voyants'
 
-/**
- * Le nom du fichier porte la date : on finit toujours par en avoir plusieurs
- * dans son dossier de téléchargements.
- */
+/** Le nom du fichier porte la date. */
 const nomFichier = (horodatage: number): string => {
   const date = new Date(horodatage)
   const deuxChiffres = (valeur: number) => String(valeur).padStart(2, '0')
@@ -87,13 +84,7 @@ const nomFichier = (horodatage: number): string => {
   ].join('-')
 }
 
-/**
- * Déclenche un téléchargement depuis un objet en mémoire.
- *
- * C'est du DOM pur, pas une capacité métier : le use case `ManageBackup` ne
- * connaît que des objets JavaScript, et reste donc testable sans navigateur.
- * Seule la coquille UI sait ce qu'est un fichier.
- */
+/** Déclenche un téléchargement depuis un objet en mémoire (DOM pur : le use case ne connaît pas les fichiers). */
 const telecharger = (contenu: unknown, nom: string): void => {
   const blob = new Blob([JSON.stringify(contenu, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -136,15 +127,7 @@ const TitreGroupe = ({ id, children }: { readonly id: string; readonly children:
   </h2>
 )
 
-/**
- * La phrase de protection du stockage, sous Exporter / Restaurer. Rien n'est
- * rendu tant que `status()` n'a pas répondu : la réponse est locale et quasi
- * instantanée, un texte provisoire ne ferait que clignoter.
- *
- * « Demander la protection » suit l'`<output>`, dans le même paragraphe mais
- * hors de lui : aucun contrôle dans une région live. Son pseudo-élément porte
- * la zone d'appui à 48 px de haut.
- */
+/** La phrase de protection du stockage ; rien tant que `status()` n'a pas répondu. ⚠️ Aucun contrôle dans l'`<output>` live. */
 const PhraseProtection = ({ installation }: { readonly installation: InstallState }) => {
   const { etat, redemander, refusee } = useProtectionStockage()
   if (etat === null) return null
@@ -182,14 +165,7 @@ const PhraseProtection = ({ installation }: { readonly installation: InstallStat
 /** Les icônes des gestes iOS, dans l'ordre des étapes ; la dernière n'en a pas. */
 const ICONES_ETAPES_IOS = [Share, SquarePlus, null] as const
 
-/**
- * Le guide `#installer`, sous la ligne de contenu : rendu seulement là où
- * « Comment ? » y mène (iOS, autre navigateur iOS, navigateur sans invite) —
- * et donc là où aboutit la ligne de l'Accueil (iOS). Sans cadre : la phrase,
- * puis les trois gestes sur iOS.
- *
- * Le défilement est relancé à chaque navigation (`key`), même vers la même ancre.
- */
+/** Le guide `#installer`, rendu seulement là où « Comment ? » y mène ; défilement relancé à chaque navigation (`key`). */
 const GuideInstallation = ({ etat }: { readonly etat: EtatGuideInstallation }) => {
   const { hash, key } = useLocation()
   const ancre = useRef<HTMLDivElement>(null)
@@ -265,8 +241,7 @@ export const ReglagesEcran = () => {
     try {
       const sauvegarde = await services.manageBackup.exportAll()
       telecharger(sauvegarde, nomFichier(sauvegarde.exportedAt))
-      // Après le téléchargement, jamais avant : un export qui échoue n'écrit
-      // rien. Même instant que le nom du fichier, même horloge que l'écran.
+      // Après le téléchargement, jamais avant : un export qui échoue n'écrit rien.
       noterExport(sauvegarde.exportedAt)
     } catch {
       setErreur(ERREUR_EXPORT)
@@ -366,8 +341,7 @@ export const ReglagesEcran = () => {
             valeur={theme}
             onChange={(choix) => {
               setTheme(choix)
-              // Posé tout de suite : la préférence seule ne repeint rien, et un
-              // thème qui n'arriverait qu'au rechargement passerait pour un bug.
+              // Posé tout de suite : la préférence seule ne repeint rien.
               appliquerTheme(choix)
             }}
           />

@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
+// ⚠️ Un utilitaire de couche `utilities` bat la règle `.touche:active` de `components` : la couleur de repos ne se pose que par `--texte-touche`.
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const UI = resolve(RACINE, 'src/ui')
 
@@ -13,11 +14,6 @@ const fichiers = (dossier: string): string[] =>
     return /\.tsx$/.test(entree.name) ? [chemin] : []
   })
 
-/**
- * Toutes les expressions `className=…` d'un source : `className="…"` ou
- * `className={…}` (accolades équilibrées, tableaux et gabarits compris — les
- * classes d'un bouton sont souvent éclatées en plusieurs chaînes).
- */
 const expressionsClassName = (source: string): string[] => {
   const trouvees: string[] = []
   for (const debut of source.matchAll(/className=/g)) {
@@ -47,23 +43,15 @@ const mauvaisesTouches = (source: string): string[] =>
     (expression) => POSE_TOUCHE.test(expression) && COULEUR_DE_TEXTE.test(expression),
   )
 
-/**
- * P1 (relevé au lot 5) : `.touche:active` inversait le fond mais pas le texte,
- * parce que l'utilitaire `text-craie-vive` (couche `utilities`) battait la règle
- * de `index.css` (couche `components`). La couleur de repos vit désormais dans
- * `.touche` (`--texte-touche`) ; un bouton ne la pose que par cette variable.
- */
 describe('Frontière de l’appui (P1)', () => {
   it('aucune .touche ne porte text-craie* / text-laiton* : la couleur passe par --texte-touche', () => {
     const tous = fichiers(UI)
-    // Garde-fou : un test vert à vide ne vérifie rien.
     expect(tous.length).toBeGreaterThan(40)
 
     const touches = tous.flatMap((fichier) => {
       const source = readFileSync(fichier, 'utf8')
       return expressionsClassName(source).filter((expression) => POSE_TOUCHE.test(expression))
     })
-    // Au moins le pavé commun (cibles, Bulle, Hors, Annuler) et JoueursEcran.
     expect(touches.length).toBeGreaterThanOrEqual(5)
 
     const fautes = tous.flatMap((fichier) =>
@@ -84,7 +72,6 @@ describe('Frontière de l’appui (P1)', () => {
     expect(
       mauvaisesTouches('<button className={`touche $' + '{a} text-laiton-clair`}>'),
     ).toHaveLength(1)
-    // Les cas sains : la variable, les autres classes `touche-*`, un bouton qui n'est pas une touche.
     expect(
       mauvaisesTouches('<b className="touche [--texte-touche:var(--color-craie-3)]">'),
     ).toEqual([])
@@ -104,7 +91,6 @@ describe('Frontière de l’appui (P1)', () => {
     expect(bloc('  .touche')).toMatch(/color:\s*var\(--texte-touche,/)
     expect(bloc('  .touche:active:not(:disabled)')).toMatch(/color:\s*var\(--color-feutre\)/)
     expect(bloc('  .exposant-touche')).toMatch(/color:\s*var\(--color-laiton-clair\)/)
-    // À l'appui, l'exposant suit le texte (sinon : laiton clair sur craie).
     expect(css).toMatch(
       /\.touche:active:not\(:disabled\) \.exposant-touche[^{]*\{\s*color:\s*inherit/,
     )

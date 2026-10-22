@@ -1,14 +1,7 @@
 import { LIBELLE_THEME } from '@/ui/labels'
 import { THEMES, type Theme } from '@/ui/theme'
 
-/**
- * L'aperçu d'un thème : un fond, deux barres d'encre et une d'accent.
- *
- * ⚠️ Les jetons `apercu-*` sont CONSTANTS (redéfinis à l'identique sous le
- * clair) : la vignette « Clair » montre du papier même sous le sombre. Ils ne
- * servent qu'ici — garde `themeBoundary`. Ni dégradé ni halo : le Système est
- * un bloc clair posé à droite d'un fond sombre.
- */
+/** Aperçu d'un thème. ⚠️ Les jetons `apercu-*` sont constants sous les deux thèmes ; ils ne servent qu'ici (garde `themeBoundary`). */
 const Apercu = ({ theme }: { readonly theme: Theme }) => {
   const barre = 'block h-1.25'
   switch (theme) {
@@ -58,11 +51,7 @@ type Props = {
   readonly onChange: (theme: Theme) => void
 }
 
-/**
- * Le choix du thème en trois vignettes (planche `#rg4`), dans l'ordre de
- * `THEMES`. La vignette active est cerclée de laiton ; chacune est un bouton
- * `aria-pressed` nommé par son libellé, l'aperçu restant décoratif.
- */
+/** Choix du thème en trois vignettes `aria-pressed`, dans l'ordre de `THEMES`. */
 export const VignetteTheme = ({ legende, valeur, onChange }: Props) => (
   <fieldset aria-label={legende} className="grid min-w-0 grid-cols-3 gap-1.5">
     {THEMES.map((theme) => {

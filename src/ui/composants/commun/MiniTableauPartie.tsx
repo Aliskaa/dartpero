@@ -108,16 +108,7 @@ const Jauge = ({ jauge }: { readonly jauge: JaugeCarte }) => {
   }
 }
 
-/**
- * La partie en cours de l'Accueil : un mini tableau, une ligne par joueur
- * **classée** (`rankPlayers`), toutes gardées même à quatre (un peu
- * resserrées) — avatar, nom, jauge de son jeu, chiffre. Le premier sur un fond
- * teinté laiton. « Reprendre » en est le visuel : **toute la carte est une
- * seule cible**, comme la ligne de feuille.
- *
- * Les lignes sont `aria-hidden` : une phrase `sr-only` dit la même chose aux
- * lecteurs d'écran, nom par nom.
- */
+/** Partie en cours de l'Accueil : mini tableau classé, toute la carte est une seule cible ; lignes `aria-hidden` doublées par une phrase `sr-only`. */
 export const MiniTableauPartie = ({ partie, profils, quand, niveauTitre = 3 }: Props) => {
   const Titre = niveauTitre === 3 ? 'h3' : 'h2'
   const vue = vueCarte(partie)

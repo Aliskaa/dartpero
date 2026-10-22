@@ -7,10 +7,6 @@ import { LIBELLE_VAINQUEUR } from '@/ui/labels'
 import { fakeServices } from '../fakes'
 import { renderWithServices } from './renderWithServices'
 
-/**
- * La couronne est décorative (`aria-hidden`) : c'est le texte réservé aux
- * lecteurs d'écran qui porte le sens, juste après le nom (« Kevin, vainqueur »).
- */
 const MENTION = `, ${LIBELLE_VAINQUEUR}`
 
 const LIGNE_X01 = {

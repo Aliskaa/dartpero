@@ -15,12 +15,7 @@ import { useProfils } from '@/ui/hooks/useJoueurs'
 import { LIBELLE_MODE, LIBELLE_MODE_COURT, pluriel } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-/**
- * `'TOUS'` n'est pas un mode : c'est l'absence de filtre.
- *
- * Il vit dans l'UI et ne descend jamais dans le port — `GetMatchHistory` prend
- * un `GameModeId` ou rien, et « rien » est déjà la façon de tout demander.
- */
+/** `'TOUS'` n'est pas un mode, c'est l'absence de filtre : il ne descend jamais dans le port. */
 const TOUS = 'TOUS' as const
 
 type FiltreMode = typeof TOUS | GameModeId
@@ -73,8 +68,7 @@ export const HistoriqueEcran = () => {
     queryFn: () => services.getMatchHistory.execute(50, filtre === TOUS ? undefined : filtre),
   })
 
-  // ⚠️ La partie en cours est **globale**, jamais filtrée par mode : c'est ce
-  // qui rend « Abandonnée » identique ici et à l'Accueil, même sous un filtre.
+  // ⚠️ La partie en cours est globale, jamais filtrée par mode : « Abandonnée » reste identique à l'Accueil.
   const encours = useQuery({
     queryKey: CLE_MATCH_EN_COURS,
     queryFn: () => services.getOngoingMatch.execute(),
@@ -85,8 +79,7 @@ export const HistoriqueEcran = () => {
     setErreur(null)
     try {
       await services.deleteMatch.execute(id)
-      // Supprimer la partie en cours change aussi celle de l'Accueil et le
-      // statut des autres : les deux requêtes repartent.
+      // Supprimer la partie en cours change aussi l'Accueil et le statut des autres.
       await queryClient.invalidateQueries({ queryKey: CLE_HISTORIQUE })
       await queryClient.invalidateQueries({ queryKey: CLE_MATCH_EN_COURS })
     } catch {
@@ -124,8 +117,7 @@ export const HistoriqueEcran = () => {
         {historique.isPending || encours.isPending ? (
           <SpinnerLigne label="Chargement de l’historique…" />
         ) : parties.length === 0 ? (
-          // ⚠️ Deux vides à ne pas confondre, comme sur l'écran Statistiques :
-          // un filtre sans résultat ne veut pas dire une base vide.
+          // ⚠️ Un filtre sans résultat n'est pas une base vide.
           filtre === TOUS ? (
             <EmptyState
               titre="Rien au tableau"

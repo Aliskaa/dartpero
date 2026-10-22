@@ -41,7 +41,6 @@ describe('Partie complète de 501 en best-of 3, via les use cases', () => {
   const volee = (darts: readonly Dart[]) => services.recordVisit.execute({ matchId, darts })
 
   it('joue le match de bout en bout et le persiste', async () => {
-    // --- Leg 0 : Kevin commence et sort en 9 fléchettes ---
     await volee(NEUF_FLECHETTES[0])
     await volee(PETITE)
     await volee(NEUF_FLECHETTES[1])
@@ -53,7 +52,6 @@ describe('Partie complète de 501 en best-of 3, via les use cases', () => {
       { type: 'LegWon', playerId: kevin, legNumber: 0, dartsUsed: 9 },
     ])
 
-    // --- Leg 1 : c'est au tour de Julien de commencer ---
     await volee(PETITE)
     await volee(NEUF_FLECHETTES[0])
     await volee(PETITE)
@@ -64,7 +62,6 @@ describe('Partie complète de 501 en best-of 3, via les use cases', () => {
     expect(fin.state.winnerId).toBe(kevin)
     expect(fin.milestones.map((m) => m.type)).toEqual(['LegWon', 'SetWon', 'MatchFinished'])
 
-    // --- Le match est bien retrouvé tel quel depuis le dépôt ---
     const relu = await services.getMatchState.execute(matchId)
     expect(relu.winnerId).toBe(kevin)
     expect(relu.history).toHaveLength(11)
@@ -102,7 +99,6 @@ describe('Partie complète de 501 en best-of 3, via les use cases', () => {
       config: etat.config,
     })
 
-    // Le contrat est « une route valide », pas « la route de la table PDC ».
     expect(suggestion).not.toBeNull()
     expect(suggestion?.length).toBeLessThanOrEqual(3)
     expect(suggestion?.reduce((somme, dart) => somme + Dart.points(dart), 0)).toBe(141)

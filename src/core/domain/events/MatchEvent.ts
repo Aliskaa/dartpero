@@ -7,41 +7,9 @@ import type { Dart, SegmentNumber } from '../value-objects/Dart'
 import type { PlayerId } from '../value-objects/ids'
 import type { MatchName } from '../value-objects/MatchName'
 
-/**
- * Le journal d'un match.
- *
- * ⚠️ Décision d'architecture : le journal ne contient QUE des faits bruts —
- * le match a démarré, telles fléchettes ont été lancées. Les legs gagnés, les
- * sets et la fin du match sont **déduits** par les règles (voir `X01Milestone`),
- * jamais stockés.
- *
- * Pourquoi : c'est ce qui rend l'annulation exacte et sans piège. Annuler,
- * c'est projeter le journal privé de sa dernière volée — `events.slice(0, -1)`
- * au X01, au Cricket et au Tour du monde ; à l'entraînement, le `RoundStarted`
- * de la manche suivante part avec le `VisitRecorded`, s'il existe (deux
- * événements, pas un) : la dernière volée quitte le journal,
- * et depuis le lot `annulation-volee` ses fléchettes restantes (la dernière
- * en moins) reviennent à la saisie, hors du journal comme toute volée en cours
- * (dans le brouillon de volée depuis le lot `volee-partielle`) — aucun
- * événement nouveau. Si le journal contenait aussi les conséquences,
- * il faudrait retirer « la dernière volée ET les événements qu'elle a
- * déclenchés » — précisément la classe de bug qu'on veut éliminer.
- *
- * Corollaire : `VisitRecorded` ne porte pas de `playerId`. À qui est le tour se
- * déduit de la projection, donc le journal ne peut pas être en désaccord avec
- * les règles.
- */
-/**
- * L'ouverture d'une partie de X01.
- *
- * ⚠️ Le type s'appelle `X01Started`, mais son discriminant vaut toujours
- * **`'MatchStarted'`** — et c'est volontaire. Cette chaîne est une **donnée
- * persistée** : elle est écrite dans IndexedDB et dans les sauvegardes JSON
- * déjà exportées par les utilisateurs. La renommer invaliderait toutes les
- * parties enregistrées avant le lot 5a. On corrige donc le nom du **type**, qui
- * mentait (X01 était le seul mode et s'appelait « Match »), sans toucher à un
- * seul octet sur le disque.
- */
+// Le journal ne contient que des faits bruts (ouverture, fléchettes) : manches, sets et fin
+// de partie sont déduits par les règles, ce qui rend l'annulation exacte.
+/** ⚠️ Le discriminant reste `'MatchStarted'` : donnée persistée, ne se renomme pas. */
 export type X01Started = {
   readonly type: 'MatchStarted'
   readonly config: X01Config
@@ -52,14 +20,7 @@ export type X01Started = {
   readonly name?: MatchName
 }
 
-/**
- * L'ouverture d'une partie de Tour du monde.
- *
- * ⚠️ C'est un **événement distinct**, pas un champ `mode` ajouté à l'ouverture
- * X01 : les journaux déjà en base portent `'MatchStarted'` et doivent continuer
- * à se rejouer en X01 pour toujours, sans migration ni valeur par défaut à
- * deviner. Le mode se lit donc sur le premier événement du journal.
- */
+/** ⚠️ Événement distinct d'un champ `mode` : les anciens journaux `'MatchStarted'` restent du X01. */
 export type TourDuMondeStarted = {
   readonly type: 'TourDuMondeStarted'
   readonly config: TourDuMondeConfig
@@ -70,9 +31,6 @@ export type TourDuMondeStarted = {
   readonly name?: MatchName
 }
 
-/** L'ouverture d'une partie de Cricket. La variante (standard ou cut-throat)
- * voyage dans la configuration : elle décide du vainqueur, elle appartient donc
- * au journal et non à un réglage d'affichage. */
 export type CricketStarted = {
   readonly type: 'CricketStarted'
   readonly config: CricketConfig
@@ -83,7 +41,6 @@ export type CricketStarted = {
   readonly name?: MatchName
 }
 
-/** L'ouverture d'une session d'entraînement au checkout (solo). */
 export type CheckoutPracticeStarted = {
   readonly type: 'CheckoutPracticeStarted'
   readonly config: CheckoutPracticeConfig
@@ -93,17 +50,7 @@ export type CheckoutPracticeStarted = {
   readonly name?: MatchName
 }
 
-/**
- * L'ouverture d'une partie de Killer (lot `killer`).
- *
- * ⚠️ Les numéros sont **tirés au sort puis écrits** ici, jamais recalculés au
- * rejeu : `numbers[i]` est le numéro de `playerIds[i]`. Ils vivent hors de
- * `config` : une configuration rejouable (mode + réglages + ensemble de
- * joueurs) ne les compte pas, et « Rejouer » en tire de nouveaux.
- *
- * Aucun autre événement : devenir killer, perdre des vies, être éliminé, la
- * victoire — tout se **déduit** des volées.
- */
+/** ⚠️ Les numéros sont tirés puis écrits ici, hors de `config` : `numbers[i]` va à `playerIds[i]`. */
 export type KillerStarted = {
   readonly type: 'KillerStarted'
   readonly config: KillerConfig
@@ -116,14 +63,7 @@ export type KillerStarted = {
   readonly name?: MatchName
 }
 
-/**
- * Une manche s'ouvre sur un reste **tiré au sort**.
- *
- * ⚠️ Le tirage est **stocké**, jamais rejoué : l'aléa vient du port
- * `RandomSource` au moment où la manche commence, et le journal n'en garde que
- * le résultat. Rejouer une session ancienne redonne donc exactement la même
- * chose — sans quoi l'annulation changerait les cibles sous les pieds du joueur.
- */
+/** ⚠️ Le reste tiré au sort est stocké, jamais rejoué : l'annulation ne doit pas changer la cible. */
 export type RoundStarted = {
   readonly type: 'RoundStarted'
   readonly target: number
@@ -135,11 +75,7 @@ export type VisitRecorded = {
   readonly darts: readonly Dart[]
 }
 
-/**
- * `VisitRecorded` est **partagé par tous les modes** : une volée, c'est une à
- * trois fléchettes, que l'on décompte un 501 ou que l'on remonte le plateau.
- * Seule l'interprétation change, et elle appartient aux règles du mode.
- */
+// `VisitRecorded` est partagé par tous les modes ; sans `playerId` : le tour se déduit de la projection.
 export type MatchEvent =
   | X01Started
   | TourDuMondeStarted
@@ -149,18 +85,7 @@ export type MatchEvent =
   | RoundStarted
   | VisitRecorded
 
-/**
- * Le nom tapé d'une partie, lu sur son événement d'ouverture.
- *
- * ⚠️ Le champ `name` des quatre ouvertures est **facultatif** et, sans nom
- * tapé, la clé est **absente** — jamais `name: undefined`, jamais le nom par
- * défaut. Les journaux d'avant le lot `nom-de-partie` n'ont pas la clé et
- * restent valides : ils rendent `null`, et l'UI calcule leur nom à
- * l'affichage depuis la date de création.
- *
- * `switch` exhaustif : un cinquième mode qui oublierait son ouverture ici ne
- * compilerait pas.
- */
+/** ⚠️ Sans nom tapé la clé `name` est absente (jamais `undefined`) : on rend `null`. */
 export const nameOf = (events: readonly MatchEvent[]): MatchName | null => {
   const [ouverture] = events
   if (ouverture === undefined) return null
@@ -182,11 +107,7 @@ export const nameOf = (events: readonly MatchEvent[]): MatchName | null => {
   }
 }
 
-/**
- * Les conséquences déduites d'une volée. Elles ne sont pas persistées : l'UI
- * s'en sert pour les moments de récompense (leg gagné, match fini) et le lot 5
- * pour l'annonce vocale.
- */
+/** Conséquences déduites d'une volée, jamais persistées. */
 export type X01Milestone =
   | {
       readonly type: 'LegWon'

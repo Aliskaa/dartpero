@@ -5,19 +5,11 @@ type Props = {
   readonly etapes: readonly string[]
   /** L'étape courante, comptée depuis 0. */
   readonly courante: number
-  /**
-   * Les dernières étapes qui n'auront pas lieu (l'ordre, seul en piste) : elles
-   * restent écrites mais s'effacent d'un cran. Un `grise` de plus, jamais un
-   * texte sous `craie-3`.
-   */
+  /** Les dernières étapes qui n'auront pas lieu : écrites mais grisées, jamais sous `craie-3`. */
   readonly grisees?: number
 }
 
-/**
- * Où l'on en est dans « Nouvelle partie » : un trait par étape, faite en craie,
- * courante en laiton, à venir en retrait. **Non interactive** — on revient par
- * le retour, jamais en touchant la barre.
- */
+/** Où l'on en est dans « Nouvelle partie » : un trait par étape. Non interactive, on revient par le retour. */
 export const BarreEtapes = ({ etapes, courante, grisees = 0 }: Props) => (
   <ol
     aria-label={LEGENDE_ETAPES}

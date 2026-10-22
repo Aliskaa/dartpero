@@ -33,14 +33,7 @@ type Props = {
   readonly onCreer: CreerJoueur
 }
 
-/**
- * « Sélectionner un joueur existant » — un écran plein, une liste cochable.
- *
- * Sous chaque nom, ses manches X01 jouées ; **rien** pour qui n'a jamais joué
- * au X01 (pas « 0 manche »). Les stats arrivent du même cache que l'écran
- * Statistiques, et la liste ne les attend jamais : un nom sans sa ligne vaut
- * mieux qu'un écran qui patiente.
- */
+/** « Sélectionner un joueur existant » : sous chaque nom, ses manches X01 (rien si jamais joué) ; la liste n'attend pas les stats. */
 export const ChoixJoueursExistants = ({
   mode,
   profils,

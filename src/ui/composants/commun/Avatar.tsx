@@ -22,11 +22,7 @@ type Props = {
   readonly className?: string
 }
 
-/**
- * Pastille de couleur + initiales. **Toujours décorative** : le nom du joueur
- * est écrit juste à côté, la répéter au lecteur d'écran ne ferait que doubler
- * l'annonce — et casserait le nom accessible des boutons qui la contiennent.
- */
+/** Pastille + initiales. ⚠️ Toujours décorative : le nom est écrit à côté, la répéter casserait le nom accessible des boutons. */
 export const Avatar = ({ nom, couleur, taille = 'md', className = '' }: Props) => {
   const teinte = couleurJoueur(couleur)
 

@@ -3,14 +3,7 @@ import type { MatchId } from '@/core/domain/value-objects/ids'
 import { nomDePartie } from '@/ui/labels'
 import { useServices } from '@/ui/providers/ServicesProvider'
 
-/**
- * Le nom à afficher d'une partie : le nom tapé, ou celui de sa date de
- * création (« Dimanche soir »). `null` tant qu'il charge.
- *
- * Une lecture en cache d'une donnée **immuable** — une partie ne se renomme
- * pas —, pas l'orchestration du match en cours : `staleTime` infini. L'import
- * d'une sauvegarde invalide déjà tout le cache.
- */
+/** Le nom à afficher : tapé, ou celui de la date de création ; `null` au chargement. `staleTime` infini (une partie ne se renomme pas). */
 export const useNomDePartie = (matchId: MatchId): string | null => {
   const services = useServices()
   const requete = useQuery({

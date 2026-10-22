@@ -3,17 +3,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-/**
- * Garde de `firebase.json` (lot `confidentialite-assetlinks`).
- *
- * - **En-têtes** : la DERNIÈRE règle qui correspond l'emporte (vérifié en vrai
- *   avec `curl -I`). Le fourre-tout `**` reste donc en tête, et les règles
- *   précises — cache long des assets, `assetlinks.json` — passent après lui.
- * - **`ignore`** : jamais de négation `!`. Sous glob ≥ 9 (firebase-tools 15),
- *   `!**\/.well-known/**` est un no-op silencieux ; sous glob 7 il aurait
- *   inversé le filtre. L'exception passe par les extglobs `.!(well-known)`.
- */
-
+// ⚠️ La dernière règle `headers` qui correspond l'emporte, et un `!` dans `ignore` est un no-op silencieux sous glob 10.
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 
 type RegleEnTetes = {
@@ -42,7 +32,6 @@ const valeur = (regle: RegleEnTetes | undefined, cle: string) =>
 describe('firebase.json — en-têtes', () => {
   it('le fourre-tout ** est la première règle', () => {
     const { headers } = hosting()
-    // Plancher : les cinq règles sont bien lues.
     expect(headers.length).toBeGreaterThanOrEqual(5)
     expect(headers[0]?.source).toBe('**')
     expect(valeur(headers[0], 'Cache-Control')).toBe('no-cache')

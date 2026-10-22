@@ -1,10 +1,7 @@
 import { LIBELLE_COMPTEUR_FLECHETTES } from '@/ui/labels'
 import { Cible } from './Cible'
 
-/**
- * L'enseigne du pub. Le mot est en laiton plein, posé sur son ombre portée
- * comme une plaque vissée au mur.
- */
+/** L'enseigne du pub : le mot en laiton plein sur son ombre portée. */
 export const Enseigne = ({ className = '' }: { readonly className?: string }) => (
   <span
     className={[
@@ -17,15 +14,11 @@ export const Enseigne = ({ className = '' }: { readonly className?: string }) =>
   </span>
 )
 
-/**
- * Le bloc d'accueil : la cible fait un tour derrière l'enseigne à l'ouverture,
- * puis se pose. Elle ne tourne plus en boucle : rien ne distrait pendant qu'on lit.
- */
+/** Bloc d'accueil : la cible fait un tour derrière l'enseigne à l'ouverture, puis se pose. */
 export const LogoHero = () => (
   <div className="relative flex flex-col items-center">
     <div className="pointer-events-none absolute -top-6 flex w-full justify-center opacity-[var(--voile-cible)]">
-      {/* Pas de `blur` ici : un filtre sur un SVG en rotation force un repaint
-          à chaque image, et l'app doit rester fluide sur vieux mobile. */}
+      {/* ⚠️ Pas de `blur` : un filtre sur un SVG en rotation force un repaint à chaque image. */}
       <Cible className="size-56 animate-tour-logo" avecNumeros />
     </div>
 

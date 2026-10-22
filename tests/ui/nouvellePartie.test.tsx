@@ -17,7 +17,6 @@ import { ouverture } from '../use-cases/lancerPartie'
 import { retourTelephone } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/** Une base de profils ; `retenus` pré-remplit la sélection de la dernière partie. */
 const base = async (noms: readonly string[], retenus: readonly string[] = []) => {
   const { services, dependencies } = fakeServices()
   const ids = new Map<string, PlayerId>()
@@ -48,22 +47,18 @@ const poignee = (nom: string) => screen.getByRole('button', { name: `Déplacer $
 
 type Utilisateur = ReturnType<typeof userEvent.setup>
 
-/** Déplie « Plus de réglages » (sortie, entrée, sets) : replié à chaque ouverture de l'étape. */
 const deplierPlus = (utilisateur: Utilisateur) =>
   utilisateur.click(screen.getByRole('button', { name: /plus de réglages/i }))
 
 const lignesOrdre = () =>
   within(screen.getByRole('list', { name: 'Ordre de passage' })).getAllByRole('listitem')
 
-/** Les pseudos de la feuille d'ordre, de haut en bas. */
 const ordreAffiche = () =>
   lignesOrdre().map((ligne) => ligne.querySelector('.truncate')?.textContent)
 
-/** Le joueur sous lequel la feuille écrit « COMMENCE ». */
 const quiCommence = () =>
   screen.getByText('Commence').closest('li')?.querySelector('.truncate')?.textContent
 
-/** Le focus sur une poignée, comme après une tabulation. */
 const focaliser = (element: HTMLElement) =>
   act(() => {
     element.focus()
@@ -83,11 +78,6 @@ describe('Nouvelle partie — étape 1, le jeu', () => {
     expect(titre()).toHaveTextContent('Nouvelle partie')
   })
 
-  /**
-   * Critère 3 : les jeux à plusieurs en tuiles 2 × 2, l'entraînement en pleine
-   * largeur dessous (planche `killer`, option B), un seul lien chacune, une seule
-   * phrase, plus de champ nom.
-   */
   it('pose les jeux en tuiles 2 × 2 et l’entraînement en pleine largeur, sans champ nom', async () => {
     const { services } = await base([])
     ouvrir(services)
@@ -105,7 +95,6 @@ describe('Nouvelle partie — étape 1, le jeu', () => {
     expect(screen.queryByRole('textbox')).toBeNull()
   })
 
-  /** Critère 2 : la barre marque l'étape courante, sans rien d'interactif. */
   it('marque l’étape 1 dans la barre, sans rien de touchable', async () => {
     const { services } = await base([])
     ouvrir(services)
@@ -132,7 +121,6 @@ describe('Nouvelle partie — étape 1, le jeu', () => {
 })
 
 describe('Nouvelle partie — parcours complet', () => {
-  /** Critère 1 : trois étapes, et la partie démarre avec le bon jeu, les bons réglages, le bon ordre. */
   it('démarre un X01 à deux avec les réglages et l’ordre choisis', async () => {
     const utilisateur = userEvent.setup()
     const { services, dependencies } = await base(['Kevin', 'Julien'])
@@ -142,14 +130,12 @@ describe('Nouvelle partie — parcours complet', () => {
     await utilisateur.click(await screen.findByRole('link', { name: /^X01/ }))
     expect(titre()).toHaveTextContent('X01')
 
-    // Les joueurs, depuis la liste des profils existants.
     await utilisateur.click(screen.getByRole('button', { name: 'Ajouter un joueur' }))
     await utilisateur.click(screen.getByRole('link', { name: 'Sélectionner un joueur existant' }))
     await utilisateur.click(await screen.findByRole('button', { name: /^Kevin/ }))
     await utilisateur.click(screen.getByRole('button', { name: /^Julien/ }))
     await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
 
-    // Les réglages.
     expect(await screen.findByRole('list', { name: 'Joueurs de la partie' })).toBeInTheDocument()
     await utilisateur.click(rail('Score de départ').getByRole('button', { name: '301' }))
     await utilisateur.click(rail('Manches à gagner').getByRole('button', { name: '3' }))
@@ -160,7 +146,6 @@ describe('Nouvelle partie — parcours complet', () => {
     await utilisateur.click(rail('Entrée').getByRole('button', { name: 'Sur un double' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Continuer' }))
 
-    // L'ordre : Julien passe devant.
     expect(titre()).toHaveTextContent('Ordre de jeu')
     expect(quiCommence()).toBe('Kevin')
     await focaliser(poignee('Julien'))
@@ -181,20 +166,17 @@ describe('Nouvelle partie — parcours complet', () => {
       doubleOut: true,
       doubleIn: true,
     })
-    // Le journal, lui aussi : c'est lui qui est rejoué.
     const premier = await ouverture(dependencies, partie.id)
     if (premier.type !== 'MatchStarted') throw new Error('événement d’ouverture inattendu')
     expect(premier.config).toMatchObject({ doubleOut: true, doubleIn: true })
   })
 
-  /** Critère 9. */
   it('fait arriver les sets dans `X01Config.setsToWin`', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin'], ['Kevin'])
     ouvrir(services, '/nouvelle-partie/x01')
 
     await screen.findByRole('list', { name: 'Joueurs de la partie' })
-    // Replié : le récap dit quand même « sans sets ».
     expect(screen.getByText(/sans sets/i)).toBeInTheDocument()
     await deplierPlus(utilisateur)
     expect(rail('Sets à gagner').getByRole('button', { name: 'Sans' })).toHaveAttribute(
@@ -212,14 +194,12 @@ describe('Nouvelle partie — parcours complet', () => {
     expect(partie.config.setsToWin).toBe(3)
   })
 
-  /** T1 : la variante choisie à l'étape 2 arrive dans la config du Cricket. */
   it('démarre un Cricket cut-throat avec la variante choisie', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin'], ['Kevin'])
     ouvrir(services, '/nouvelle-partie/cricket')
 
     await screen.findByRole('list', { name: 'Joueurs de la partie' })
-    // Deux cartes : Standard est choisie d'abord, Cut-throat la remplace.
     expect(rail('Comptage').getByRole('button', { name: /^Standard/ })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -234,14 +214,12 @@ describe('Nouvelle partie — parcours complet', () => {
     expect(partie.config.variant).toBe('CUT_THROAT')
   })
 
-  /** Critère 11 : double out décoché sur des préférences vierges. */
   it('décoche le double out par défaut et le passe à `false`', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin'], ['Kevin'])
     ouvrir(services, '/nouvelle-partie/x01')
 
     await screen.findByRole('list', { name: 'Joueurs de la partie' })
-    // Replié, le récap dit quand même la sortie et l'entrée.
     expect(screen.getByText(/checkout libre/i)).toBeInTheDocument()
     expect(screen.getByText(/entrée libre/i)).toBeInTheDocument()
     await deplierPlus(utilisateur)
@@ -260,7 +238,6 @@ describe('Nouvelle partie — parcours complet', () => {
 })
 
 describe('Nouvelle partie — entraînement', () => {
-  /** Critère 2 : étape 2 en solo, pas d'étape 3, puis la séance démarre. */
   it('se règle en solo et démarre sans étape d’ordre', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base([])
@@ -275,11 +252,9 @@ describe('Nouvelle partie — entraînement', () => {
     await utilisateur.type(screen.getByLabelText('Pseudo'), 'Kevin')
     await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
 
-    // Un seul joueur : le + disparaît, et il n'y a pas d'ordre à régler.
     expect(await screen.findByText('1 / 1')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Ajouter un joueur' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Continuer' })).toBeNull()
-    // Deux étapes seulement à l'entraînement.
     const etapes = within(screen.getByRole('list', { name: 'Étapes de la partie' }))
     expect(etapes.getAllByRole('listitem').map((etape) => etape.textContent)).toEqual([
       '1 · Jeu',
@@ -310,14 +285,6 @@ describe('Nouvelle partie — entraînement', () => {
     expect(screen.queryByRole('list', { name: 'Ordre de passage' })).toBeNull()
   })
 
-  /**
-   * T2 : redondance défensive contre une fuite de la sélection de groupe dans
-   * l'entraînement. L'entraînement lit sa propre sélection (un joueur au plus),
-   * donc la garde générale « moins de deux joueurs » suffit déjà à le renvoyer
-   * à l'étape 2 — ce test n'isole pas la garde propre à l'entraînement. Il ne
-   * tomberait que si les deux gardes cédaient ensemble : la sélection de groupe
-   * (ici à deux joueurs) servant aussi à l'entraînement, sans garde de mode.
-   */
   it('n’a pas d’étape 3 même quand la sélection de groupe compte deux joueurs', async () => {
     const { services } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
     ouvrir(services, '/nouvelle-partie/entrainement/ordre')
@@ -328,7 +295,6 @@ describe('Nouvelle partie — entraînement', () => {
     expect(screen.queryByRole('list', { name: 'Ordre de passage' })).toBeNull()
   })
 
-  /** T6 : l'entraînement se joue seul — un coché, les autres désactivés. */
   it('ne laisse sélectionner qu’un joueur existant', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin', 'Julien'])
@@ -366,7 +332,6 @@ describe('Nouvelle partie — entraînement', () => {
 })
 
 describe('Nouvelle partie — ordre de jeu', () => {
-  /** Critère 3 : l'ordre réglé à la poignée (ici au clavier), partie démarrée dans cet ordre. */
   it.each([
     ['cricket', 'CRICKET'],
     ['tour-du-monde', 'TOUR_DU_MONDE'],
@@ -387,7 +352,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
     expect(partie.players.map((joueur) => joueur.name)).toEqual(['Paul', 'Kevin', 'Julien'])
   })
 
-  /** Critère 2 : à l'étape Ordre, les deux premières sont faites et la troisième est courante. */
   it('marque l’étape 3 courante et les deux premières faites dans la barre', async () => {
     const { services } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
     ouvrir(services, '/nouvelle-partie/x01/ordre')
@@ -400,7 +364,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
     expect(barre.getByText('2 · Joueurs')).not.toHaveAttribute('aria-current')
   })
 
-  /** Le sous-titre de l'étape Ordre rappelle le jeu et, quand il y en a, la variante. */
   it.each([
     ['x01', 'X01 · 501'],
     ['cricket', 'Cricket · Standard'],
@@ -426,7 +389,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
     expect(screen.getByText('Cricket · Cut-throat', { selector: 'p' })).toBeInTheDocument()
   })
 
-  /** Le nom tapé à l'étape 2 survit jusqu'au lancement depuis l'étape Ordre. */
   it('lance depuis l’étape Ordre avec le nom tapé à l’étape 2', async () => {
     const utilisateur = userEvent.setup()
     const { services, dependencies } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
@@ -444,7 +406,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
     expect(await ouverture(dependencies, partie.id)).toMatchObject({ name: 'Finale des potes' })
   })
 
-  /** Critère 5 : un nom accessible, ↑ / ↓, le focus qui suit, l'annonce. */
   it('répond au clavier sur une poignée nommée, garde le focus et annonce la place', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin', 'Julien', 'Paul'], ['Kevin', 'Julien', 'Paul'])
@@ -453,7 +414,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
     const kevin = await screen.findByRole('button', { name: 'Déplacer Kevin' })
     expect(kevin).toHaveAccessibleDescription('Glissez, ou flèches haut et bas')
 
-    // En tête, ↑ ne fait rien.
     await focaliser(kevin)
     await utilisateur.keyboard('{ArrowUp}')
     const ordre = () => lignesOrdre().map((ligne) => ligne.textContent)
@@ -461,17 +421,11 @@ describe('Nouvelle partie — ordre de jeu', () => {
 
     await utilisateur.keyboard('{ArrowDown}')
     expect(ordre()[1]).toContain('Kevin')
-    // Le grand rang de la feuille : 2, devant le pseudo.
     expect(ordre()[1]).toMatch(/^2/)
     expect(poignee('Kevin')).toHaveFocus()
     expect(screen.getByText('Kevin : position 2 sur 3')).toBeInTheDocument()
   })
 
-  /**
-   * Critère 8 : « Tirer au sort » rebat la feuille tout de suite (l'aléa des
-   * fakes est déterministe), « COMMENCE » suit le premier, et la partie part
-   * dans l'ordre affiché. Plus d'interrupteur « Ordre aléatoire ».
-   */
   it('rebat la feuille au tirage, annonce le nouvel ordre et lance la partie dans cet ordre', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin', 'Julien', 'Paul'], ['Kevin', 'Julien', 'Paul'])
@@ -485,7 +439,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
 
     expect(ordreAffiche()).toEqual(['Paul', 'Julien', 'Kevin'])
     expect(quiCommence()).toBe('Paul')
-    // Les poignées restent : on peut encore réordonner.
     expect(screen.getAllByRole('button', { name: /^Déplacer/ })).toHaveLength(3)
     expect(
       screen.getByText('Ordre tiré au sort : Paul, Julien, Kevin. Paul commence.'),
@@ -498,7 +451,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
     expect(noms).toEqual(['Paul', 'Julien', 'Kevin'])
   })
 
-  /** Q1 : vrai hasard, aucune relance. Le 2e tirage du fake redonne l'ordre d'avant, et c'est permis. */
   it('accepte un tirage qui redonne le même ordre, et rejoue le mouvement de la feuille', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin', 'Julien', 'Paul'], ['Kevin', 'Julien', 'Paul'])
@@ -514,7 +466,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
     expect(ordreAffiche()).toEqual(['Paul', 'Julien', 'Kevin'])
 
     await utilisateur.click(screen.getByRole('button', { name: 'Tirer au sort' }))
-    // Même ordre qu'avant le geste, mais la feuille est remontée : le mouvement a rejoué.
     expect(ordreAffiche()).toEqual(['Paul', 'Julien', 'Kevin'])
     expect(feuille()).not.toBe(premiere)
     expect(feuille()).toHaveClass('animate-monter')
@@ -540,11 +491,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
     expect(quiCommence()).toBe('Paul')
   })
 
-  /**
-   * B1 : au relâcher, les lignes enjambées changent de place dans le DOM et
-   * perdent leur décalage dans le même rendu. Animé, ce retour les ferait
-   * sauter : la transition ne vit donc que **pendant** le geste.
-   */
   it('n’anime les lignes que pendant le glisser, jamais au relâcher', async () => {
     const { services } = await base(['Kevin', 'Julien', 'Paul'], ['Kevin', 'Julien', 'Paul'])
     ouvrir(services, '/nouvelle-partie/x01/ordre')
@@ -557,21 +503,13 @@ describe('Nouvelle partie — ordre de jeu', () => {
     expect(animees()).toBe(0)
 
     fireEvent.pointerDown(kevin, { isPrimary: true, button: 0, pointerId: 1, clientY: 0 })
-    // Les deux autres s'écartent en douceur ; la ligne tenue suit le doigt sans retard.
     expect(animees()).toBe(2)
 
     fireEvent.pointerUp(kevin, { isPrimary: true, button: 0, pointerId: 1, clientY: 0 })
     expect(animees()).toBe(0)
   })
 
-  /**
-   * Constat n° 1 de la revue : la borne du geste arrête le centre de la ligne
-   * tenue **exactement** sur le milieu de la première / dernière ligne. Le seuil
-   * doit donc être atteignable à cette borne, sans quoi la première et la
-   * dernière place ne se gagnent jamais au doigt — et à deux, rien ne bouge.
-   */
   describe('glisser au doigt jusqu’au bout de la liste', () => {
-    // Lignes de 56 px séparées de 8 px, comme `min-h-14` + `gap-2`.
     const HAUTEUR = 56
     const PAS = 64
 
@@ -580,7 +518,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
 
     const noms = () => lignes().map((ligne) => ligne.querySelector('.truncate')?.textContent)
 
-    /** Une fausse mise en page : jsdom ne mesure rien, chaque ligne reçoit sa boîte. */
     const mettreEnPage = () => {
       lignes().forEach((ligne, rang) => {
         const top = rang * PAS
@@ -643,7 +580,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
       const joueurs = ['Kevin', 'Julien', 'Paul', 'Marie'].slice(0, nombre)
       const { dependencies, ids } = await ouvrirOrdre(joueurs)
 
-      // L'écran numérote depuis n°1 ; `glisser` attend l'index de la ligne.
       glisser(nom, numero - 1, sens === 'bas' ? 5000 : -5000)()
 
       expect(noms()).toEqual(attendu)
@@ -654,7 +590,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
       await ouvrirOrdre(['Kevin', 'Julien', 'Paul'])
 
       const relacher = glisser('Kevin', 0, 5000)
-      // Kevin, tenu, suit le doigt jusqu'à la borne : deux pas plus bas.
       expect(lignes().map((ligne) => ligne.style.transform)).toEqual([
         `translateY(${2 * PAS}px)`,
         `translateY(-${PAS}px)`,
@@ -687,7 +622,6 @@ describe('Nouvelle partie — ordre de jeu', () => {
 })
 
 describe('Nouvelle partie — joueurs', () => {
-  /** Critère 6 : le × retire de la partie, jamais de la base. */
   it('retire un joueur de la partie sans le supprimer', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
@@ -703,7 +637,6 @@ describe('Nouvelle partie — joueurs', () => {
     expect(await services.managePlayers.listAll()).toHaveLength(2)
   })
 
-  /** Sans joueur, rien à lancer : « Commencer » est grisé et l'état vide le dit. */
   it('grise « Commencer » à zéro joueur et le rallume dès qu’un joueur est ajouté', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin'])
@@ -723,7 +656,6 @@ describe('Nouvelle partie — joueurs', () => {
     expect(screen.getByRole('button', { name: 'Commencer' })).toBeEnabled()
   })
 
-  /** Le × garde sa zone d'appui de 48 px, à cheval sur le coin de la pastille. */
   it('garde un × de 48 px à cheval sur la pastille, nommé d’après le joueur', async () => {
     const { services } = await base(['Kevin'], ['Kevin'])
     ouvrir(services, '/nouvelle-partie/x01')
@@ -732,7 +664,6 @@ describe('Nouvelle partie — joueurs', () => {
     expect(retirer).toHaveClass('size-12', '-right-6', '-top-6')
   })
 
-  /** Q4 : le pseudo reste sur une ligne, tronqué ; le nom complet vit dans le libellé du ×. */
   it('tronque un long pseudo sur une ligne, sans perdre le nom complet', async () => {
     const { services } = await base(['Alexandrine-Marie'], ['Alexandrine-Marie'])
     ouvrir(services, '/nouvelle-partie/x01')
@@ -744,7 +675,6 @@ describe('Nouvelle partie — joueurs', () => {
     ).toBeInTheDocument()
   })
 
-  /** Critère 2 : seul en piste, les trois étapes restent, Ordre grisé ; à deux, il s'allume. */
   it('grise l’étape Ordre sous deux joueurs, et pas à partir de deux', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin', 'Julien'], ['Kevin'])
@@ -771,7 +701,6 @@ describe('Nouvelle partie — joueurs', () => {
     expect(etapes().getByText('3 · Ordre')).toHaveAttribute('data-etat', 'avenir')
   })
 
-  /** Critère 7 : la boîte crée et ajoute ; un pseudo pris affiche l'erreur actuelle. */
   it('crée un joueur depuis la boîte de dialogue, et refuse un pseudo pris', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin'])
@@ -821,7 +750,6 @@ describe('Nouvelle partie — joueurs', () => {
     expect(screen.queryByRole('button', { name: 'Nouveau joueur' })).toBeNull()
   })
 
-  /** Critère 8 : quatre au plus ; « N manches » sous qui a joué au X01, rien sinon. */
   it('respecte le maximum de quatre joueurs et montre les manches jouées', async () => {
     const utilisateur = userEvent.setup()
     const { services, ids } = await base(['Kevin', 'Julien', 'Paul', 'Marie', 'Lea'])
@@ -842,7 +770,6 @@ describe('Nouvelle partie — joueurs', () => {
       await utilisateur.click(screen.getByRole('button', { name: new RegExp(`^${nom}`) }))
     }
     expect(screen.getByRole('button', { name: /^Lea/ })).toBeDisabled()
-    // Un joueur retenu, lui, se décoche toujours.
     expect(screen.getByRole('button', { name: /^Marie/ })).toBeEnabled()
 
     await utilisateur.click(screen.getByRole('button', { name: 'Terminé' }))
@@ -865,7 +792,6 @@ describe('Nouvelle partie — retour', () => {
     expect(titre()).toHaveTextContent('Ordre de jeu')
   }
 
-  /** Critère 13 : le retour du téléphone ramène à l'étape précédente, choix conservés. */
   it('remonte les étapes au retour du téléphone jusqu’à l’Accueil', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
@@ -901,7 +827,6 @@ describe('Nouvelle partie — retour', () => {
     expect(await screen.findByRole('heading', { name: /dartpéro/i })).toBeInTheDocument()
   })
 
-  /** T4 : « Plus de réglages » est replié à chaque ouverture, retour depuis l'étape Ordre compris. */
   it('replie « Plus de réglages » au retour depuis l’étape Ordre', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
@@ -912,11 +837,6 @@ describe('Nouvelle partie — retour', () => {
     expect(pli).toHaveAttribute('aria-expanded', 'false')
   })
 
-  /**
-   * T8 (O1) : l'échec d'un démarrage ne concerne que l'étape où il a eu lieu.
-   * Sans mock : le profil est supprimé derrière le dos de l'écran, dont le
-   * cache des profils n'est pas invalidé — « Commencer » échoue pour de vrai.
-   */
   it('efface l’erreur de démarrage quand on change d’étape', async () => {
     const utilisateur = userEvent.setup()
     const { services, ids } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
@@ -949,7 +869,6 @@ describe('Nouvelle partie — retour', () => {
 describe('Nouvelle partie — gardes et mémoire', () => {
   it('renvoie un jeu inconnu à l’étape 1', async () => {
     const { services } = await base([])
-    // `killer` est devenu un jeu (lot `killer`) : un slug toujours inconnu.
     ouvrir(services, '/nouvelle-partie/shanghai')
 
     expect(await screen.findByRole('link', { name: /^X01/ })).toBeInTheDocument()
@@ -972,7 +891,6 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     const rangee = await screen.findByRole('list', { name: 'Joueurs de la partie' })
     expect(within(rangee).getByText('Kevin')).toBeInTheDocument()
     expect(within(rangee).getByText('Julien')).toBeInTheDocument()
-    // Replié à la réouverture, mais la préférence est bien relue.
     expect(screen.getByRole('button', { name: /plus de réglages/i })).toHaveAttribute(
       'aria-expanded',
       'false',
@@ -990,7 +908,6 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     }
   })
 
-  /** T5 : les bascules, la variante et le nombre de checkouts survivent aussi. */
   it('mémorise sortie, entrée, variante et sorties', async () => {
     const utilisateur = userEvent.setup()
     const { services, dependencies } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
@@ -1033,7 +950,6 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     pressee(rail('Nombre de checkouts').getByRole('button', { name: '20' }))
   })
 
-  /** Dette assumée : l'ancienne clé de l'interrupteur reste orpheline, sans effet. */
   it('ignore l’ancienne clé `partie:ordre-aleatoire` et n’en écrit plus', async () => {
     const utilisateur = userEvent.setup()
     const { services, dependencies } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
@@ -1042,7 +958,6 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     ouvrir(services, '/nouvelle-partie/x01/ordre')
 
     await screen.findByRole('list', { name: 'Ordre de passage' })
-    // L'ordre n'est pas rebattu : la clé orpheline ne fait rien.
     expect(ordreAffiche()).toEqual(['Kevin', 'Julien'])
     await utilisateur.click(screen.getByRole('button', { name: 'Commencer' }))
     await screen.findAllByLabelText(/^Score restant de/)
@@ -1053,7 +968,6 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     expect(preferences.read('partie:ordre-aleatoire', null)).toBe(true)
   })
 
-  /** Critère 5 : « Plus de réglages » replié, le récap suit chaque appui. */
   it('replie « Plus de réglages » par défaut, le déplie, et garde le récap à jour', async () => {
     const utilisateur = userEvent.setup()
     const { services } = await base(['Kevin'], ['Kevin'])
@@ -1081,14 +995,9 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     await utilisateur.click(pli())
     expect(pli()).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByRole('group', { name: 'Checkout' })).toBeNull()
-    // Replié, le récap continue de tout dire.
     expect(recap).toHaveTextContent('Checkout sur un double')
   })
 
-  /**
-   * Lot `regles-du-jeu` : « Les règles en entier » a quitté la fiche ; le livre de
-   * l'en-tête ouvre la feuille de règles par-dessus l'étape, sans en sortir.
-   */
   it.each(GAME_MODE_IDS)('ouvre la feuille de règles par le livre pour %s', async (mode) => {
     const nom = LIBELLE_MODE[mode]
     const regles = TITRE_REGLES[mode]
@@ -1110,7 +1019,7 @@ describe('Nouvelle partie — gardes et mémoire', () => {
     expect(titre()).toHaveTextContent(nom)
   })
 
-  /** ⚠️ Un profil supprimé ne doit pas rester retenu en fantôme : le lancement échouerait. */
+  // ⚠️ Un profil supprimé ne doit pas rester retenu en fantôme : le lancement échouerait.
   it('oublie un joueur supprimé depuis la dernière partie', async () => {
     const { services, ids } = await base(['Kevin', 'Julien'], ['Kevin', 'Julien'])
     await services.managePlayers.remove(ids.get('Julien') as PlayerId)
@@ -1142,7 +1051,6 @@ describe('Nouvelle partie — gardes et mémoire', () => {
 })
 
 describe('Nouvelle partie — plein écran', () => {
-  /** T3 : les étapes ne montrent pas la barre du bas — elle est bien là ailleurs. */
   it.each([
     '/nouvelle-partie',
     '/nouvelle-partie/x01',
@@ -1167,7 +1075,6 @@ describe('Nouvelle partie — plein écran', () => {
 })
 
 describe('Nouvelle partie — depuis un résumé', () => {
-  /** T4 : « Changer les règles » / « Changer l’exercice » → étape 2 du mode qu’on vient de jouer. */
   it.each([
     ['X01', 'Changer les règles', 'X01'],
     ['CRICKET', 'Changer les règles', 'Cricket'],

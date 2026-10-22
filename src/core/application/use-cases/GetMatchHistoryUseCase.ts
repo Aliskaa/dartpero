@@ -13,10 +13,7 @@ export class GetMatchHistoryUseCase implements GetMatchHistory {
   ) {}
 
   async execute(limit = 20, mode?: GameModeId): Promise<readonly MatchSummary[]> {
-    // Sans filtre, on garde le chemin court : le dépôt sait déjà rendre les N
-    // plus récentes, inutile de désérialiser toute la base pour les jeter.
-    // Avec un filtre, en revanche, il FAUT tout lire — le mode se lit sur le
-    // premier événement du journal, aucun index ne peut le connaître.
+    // Avec un filtre il faut tout lire : le mode se lit sur le premier événement, aucun index ne l'a.
     const [records, names] = await Promise.all([
       mode ? this.matches.listAll() : this.matches.listRecent(limit),
       nameIndex(this.players),

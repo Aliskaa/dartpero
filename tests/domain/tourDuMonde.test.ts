@@ -86,14 +86,9 @@ describe('Tour du monde — progression', () => {
 })
 
 describe('Tour du monde — fin de partie', () => {
-  /**
-   * La règle choisie : quand quelqu'un boucle, les autres finissent leur volée.
-   * Sans ça, celui qui commence part avec une longueur d'avance imméritée.
-   */
   it('laisse les autres finir le tour de table avant de conclure', () => {
     const bouclage = [Dart.single(20), Dart.single(19), Dart.bull()]
 
-    // Kevin boucle sur sa première volée, mais Julien n'a pas encore joué.
     const apresKevin = jouer([KEVIN, JULIEN], [bouclage])
     expect(apresKevin.finished).toBe(false)
     expect(apresKevin.lastRound).toBe(true)
@@ -113,8 +108,6 @@ describe('Tour du monde — fin de partie', () => {
   })
 
   it('départage deux joueurs arrivés dans le même tour de table', () => {
-    // Kevin boucle à sa 4ᵉ fléchette, Julien à sa 5ᵉ dans le même tour de
-    // table : c'est le nombre de fléchettes qui tranche, pas l'ordre d'arrivée.
     const state = jouer(
       [KEVIN, JULIEN],
       [
@@ -145,7 +138,6 @@ describe('Tour du monde — fin de partie', () => {
 
     expect(joueur(state, KEVIN).dartsThrown).toBe(3)
 
-    // Bouclé en deux fléchettes : la troisième n'est pas lancée.
     const rapide = jouer(
       [KEVIN],
       [
@@ -218,10 +210,6 @@ describe('Couture GameMode', () => {
     expect(GameModes.modeOf(journal(COURT, [KEVIN], []))).toBe('TOUR_DU_MONDE')
   })
 
-  /**
-   * La garantie de non-régression du lot 5 : les parties enregistrées avant
-   * l'arrivée des modes n'ont pas de marqueur et doivent rester du X01.
-   */
   it('rejoue en X01 un journal qui n’a jamais entendu parler des modes', () => {
     const ancien: readonly MatchEvent[] = [
       {

@@ -3,14 +3,7 @@ import { MATCH_NAME_MAX_LENGTH } from '@/core/domain/value-objects/MatchName'
 import type { NomPartieSaisi } from '@/ui/hooks/useNouvellePartie'
 import { LIBELLE_NOM_PARTIE } from '@/ui/labels'
 
-/**
- * Le nom de la partie : prérempli avec la proposition (« Dimanche soir »),
- * modifiable, jamais obligatoire. Il vit à l'étape 2, sous les réglages.
- *
- * ⚠️ Pas d'`autoFocus` : le clavier masquerait la fiche de réglages, alors que
- * la plupart des parties gardent le nom proposé. Vidé, le champ montre la
- * proposition en filigrane — c'est elle que la partie portera.
- */
+/** Le nom de la partie, facultatif. ⚠️ Pas d'`autoFocus` : le clavier masquerait la fiche de réglages. */
 export const ChampNom = ({ nom }: { readonly nom: NomPartieSaisi }) => {
   const idChamp = useId()
   return (

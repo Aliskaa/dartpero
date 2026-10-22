@@ -10,7 +10,6 @@ import { fakeServices } from '../fakes'
 import { validerSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/** Un parcours court, pour que le test tienne en quelques clics : 20, 19, bulle. */
 const COURT = TourDuMondeConfig.create({ targets: [20, 19, 'BULL'] })
 
 const partieCourte = async (services: Services, noms = ['Kevin', 'Julien']) => {
@@ -26,14 +25,12 @@ const partieCourte = async (services: Services, noms = ['Kevin', 'Julien']) => {
 
 const cibleDe = (nom: string) => screen.getByLabelText(`Cible de ${nom}`)
 
-/** La ligne entière d'un joueur, pour y lire son compteur de fléchettes. */
 const ligneDe = (nom: string): HTMLElement => {
   const ligne = cibleDe(nom).closest('article')
   if (!ligne) throw new Error(`Ligne introuvable pour ${nom}`)
   return ligne
 }
 
-/** Une volée blanche : trois fléchettes consommées, aucune cible validée. */
 const RATE = [Dart.miss(), Dart.miss(), Dart.miss()]
 
 describe('Tour du monde — écran de jeu', () => {
@@ -46,7 +43,6 @@ describe('Tour du monde — écran de jeu', () => {
 
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('20'))
 
-    // Le tableau réagit dès la première fléchette, sans attendre la fin de volée.
     await utilisateur.click(screen.getByRole('button', { name: '20' }))
     expect(cibleDe('Kevin')).toHaveTextContent('19')
 
@@ -94,7 +90,6 @@ describe('Tour du monde — écran de jeu', () => {
     await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
   })
 
-  /** La règle qui distingue ce mode : on ne coupe pas la partie au milieu du tour. */
   it('annonce le dernier tour quand quelqu’un boucle, puis conclut', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -103,18 +98,15 @@ describe('Tour du monde — écran de jeu', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await waitFor(() => expect(cibleDe('Kevin')).toHaveTextContent('20'))
 
-    // Kevin boucle du premier coup : 20, 19, bulle.
     await utilisateur.click(screen.getByRole('button', { name: '20' }))
     await utilisateur.click(screen.getByRole('button', { name: '19' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
     await validerSortie(utilisateur)
 
-    // La partie n'est pas finie : Julien a droit à sa volée.
     expect(await screen.findByText('Dernier tour')).toBeInTheDocument()
 
     for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: '1' }))
 
-    // L'écran de résumé arrive tout seul.
     expect(await screen.findByText('Vainqueur')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Kevin' })).toBeInTheDocument()
     expect(screen.getByText(/bouclé en 3 fléchettes/i)).toBeInTheDocument()
@@ -133,21 +125,11 @@ describe('Tour du monde — écran de jeu', () => {
     expect(screen.queryByText('Vainqueur')).toBeNull()
   })
 
-  /**
-   * LE cas du lot : la volée s’arrête sur la fléchette qui boucle le parcours,
-   * comme une volée de checkout au X01 — sans réclamer deux fléchettes fantômes.
-   *
-   * Le montage amène Kevin sur la bulle en un tour de table complet, pour que la
-   * main lui revienne : un seul clic doit alors suffire à clore sa volée. C’est
-   * ce cas, et lui seul, qui distingue `targetIndexAfter` d’un `state.finished`
-   * recopié du Cricket — ici la partie continue, mais la volée est finie.
-   */
   it('clôt la volée dès la première fléchette quand c’est elle qui boucle', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
     const { matchId } = await partieCourte(services)
 
-    // Kevin touche 20 puis 19 ; le miss consomme sa 3ᵉ fléchette sans boucler.
     await services.playTourDuMonde.recordVisit(matchId, [
       Dart.single(20),
       Dart.single(19),
@@ -161,11 +143,9 @@ describe('Tour du monde — écran de jeu', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
     await validerSortie(utilisateur)
 
-    // Un seul clic, et la main est déjà passée.
     await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
     expect(ligneDe('Kevin')).not.toHaveAttribute('aria-current')
 
-    // « On finit le tour de table » : boucler n’arrête pas la partie.
     expect(await screen.findByText('Dernier tour')).toBeInTheDocument()
     expect(screen.queryByText('Vainqueur')).toBeNull()
   })
@@ -185,14 +165,9 @@ describe('Tour du monde — écran de jeu', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
     await validerSortie(utilisateur)
 
-    // Deux clics, pas trois.
     await waitFor(() => expect(cibleDe('Julien').closest('[aria-current]')).not.toBeNull())
   })
 
-  /**
-   * Le compteur départage le mode : il ne doit compter que les fléchettes
-   * réellement lancées. Trois fantômes de plus, et le classement ment.
-   */
   it('compte les fléchettes réellement lancées après une clôture anticipée', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -211,20 +186,15 @@ describe('Tour du monde — écran de jeu', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
     await validerSortie(utilisateur)
 
-    // 3 au premier tour + celle qui boucle. Jamais 6.
     await waitFor(() => expect(ligneDe('Kevin')).toHaveTextContent('4 fléchettes'))
 
-    // Le chiffre n'est juste que parce que la volée est CLOSE : sans clôture
-    // anticipée, il compterait une volée encore en cours et serait un hasard.
     expect(ligneDe('Kevin')).not.toHaveAttribute('aria-current')
 
-    // Et c'est bien ce qui est enregistré, pas seulement ce qui s'affiche.
     const etat = await services.playTourDuMonde.getState(matchId)
     expect(etat.players[0]?.dartsThrown).toBe(4)
     expect(etat.players[0]?.finishedInDarts).toBe(4)
   })
 
-  /** À trois joueurs, un décalage d’un tour se verrait tout de suite. */
   it('rend la main au joueur suivant, et à lui seul, à trois joueurs', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -250,11 +220,6 @@ describe('Tour du monde — écran de jeu', () => {
     expect(screen.queryByText('Vainqueur')).toBeNull()
   })
 
-  /**
-   * Après un bouclage anticipé, il n’y a plus de fléchette en cours : le bouton
-   * nomme la dernière fléchette de la volée enregistrée, qu’un appui rouvrirait
-   * (lot nnulation-volee).
-   */
   it('bascule le bouton d’annulation sur la volée dès le bouclage', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -276,10 +241,6 @@ describe('Tour du monde — écran de jeu', () => {
     expect(await screen.findByRole('button', { name: 'Annuler 25 de Kevin' })).toBeInTheDocument()
   })
 
-  /**
-   * Le pendant à l’écran : ce que le bouton défait, c’est bien la volée d’une
-   * seule fléchette, et l’écran remonté depuis le journal dit la même chose.
-   */
   it('annule la volée close sur la première fléchette, et le rejeu confirme', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -301,13 +262,11 @@ describe('Tour du monde — écran de jeu', () => {
 
     await utilisateur.click(await screen.findByRole('button', { name: 'Annuler 25 de Kevin' }))
 
-    // Kevin retrouve sa bulle, ses 3 fléchettes, et la main.
     await waitFor(() => expect(cibleDe('Kevin').closest('[aria-current]')).not.toBeNull())
     expect(cibleDe('Kevin')).toHaveTextContent('Bulle')
     expect(ligneDe('Kevin')).toHaveTextContent('3 fléchettes')
     expect(screen.queryByText('Dernier tour')).toBeNull()
 
-    // Rejeu à froid : on remonte l’écran, tout revient du journal.
     vue.unmount()
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
 
@@ -361,13 +320,10 @@ describe('Couture GameMode — côté écrans', () => {
     const parties = await screen.findAllByRole('listitem')
     const libelles = parties.map((partie) => partie.textContent ?? '')
 
-    // Le mode se lit dans la colonne de gauche : son détail (« 20→B », « 501 »).
     expect(libelles.some((texte) => texte.includes('20→B'))).toBe(true)
     expect(libelles.some((texte) => texte.includes('501'))).toBe(true)
-    // Le Tour du monde, lancé en dernier, est la partie en cours ; le X01 est abandonné.
     expect(libelles.some((texte) => texte.includes('En cours'))).toBe(true)
     expect(libelles.some((texte) => texte.includes('Abandonnée'))).toBe(true)
-    // Et chaque statut sur la bonne ligne.
     const ligneMonde = libelles.find((texte) => texte.includes('20→B'))
     const ligneX01 = libelles.find((texte) => texte.includes('501'))
     expect(ligneMonde).toContain('En cours')
@@ -380,7 +336,6 @@ describe('Couture GameMode — côté écrans', () => {
     const { services } = fakeServices()
     const kevin = await services.managePlayers.create('Kevin')
 
-    // Une seule partie, en Tour du monde : rien à cumuler côté moyennes.
     const tour = await services.playTourDuMonde.start({ playerIds: [kevin.id], config: COURT })
     await services.playTourDuMonde.recordVisit(tour, [Dart.single(20)])
 
@@ -398,10 +353,8 @@ describe('Création de partie', () => {
 
     renderWithServices(<App />, { services, route: '/nouvelle-partie/tour-du-monde' })
 
-    // Score de départ et double out n'ont aucun sens ici : ils n'y sont pas.
     const regles = await screen.findByRole('region', { name: 'Réglages du jeu' })
     expect(within(regles).queryByRole('button', { name: '501' })).toBeNull()
-    // Ni sortie ni « Plus de réglages » : ces réglages sont ceux du X01.
     expect(within(regles).queryByRole('button', { name: /plus de réglages/i })).toBeNull()
     expect(within(regles).queryByText(/sur un double/i)).toBeNull()
     expect(within(regles).queryByRole('group', { name: 'Checkout' })).toBeNull()

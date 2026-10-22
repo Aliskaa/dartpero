@@ -497,6 +497,8 @@ anglais** (`core/`, `infrastructure/`).
 - **UI → use cases UNIQUEMENT.** Un composant n'accède jamais à Dexie directement (ça
 court-circuiterait les ports). Use cases fournis par un Context (`useServices()`) alimenté
 par le composition root.
+- **Commentaires : une ou deux lignes, jamais un bloc** (lot `elagage-commentaires`) — le « pourquoi »
+  non déductible seulement, pas d'historique de lot ni de rappel de ce fichier. CONVENTIONS § 3.
 - → détail : Value Objects, branded types, use cases, fakes, 48 px : [CONVENTIONS](.claude/CONVENTIONS.md)
   § 1, 4, 5, 7, 11, `rules/typescript.md`, `rules/testing.md`, charte § Les trois planchers.
 

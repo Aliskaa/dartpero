@@ -6,20 +6,16 @@ import type { TourDuMondeConfig } from './config'
 
 export type TourDuMondePlayerState = {
   readonly playerId: PlayerId
-  /** Cibles déjà validées. Égal à `config.targets.length` quand le tour est bouclé. */
+  /** Cibles validées ; `config.targets.length` une fois le tour bouclé. */
   readonly targetIndex: number
   readonly dartsThrown: number
-  /**
-   * Rang de la fléchette qui a bouclé le tour, pour ce joueur. `null` tant
-   * qu'il n'a pas fini. C'est ce nombre qui départage deux joueurs arrivés
-   * dans le même tour de table.
-   */
+  /** Rang de la fléchette qui a bouclé (départage) ; `null` tant qu'il n'a pas fini. */
   readonly finishedInDarts: number | null
 }
 
 export type TourDuMondeVisit = {
   readonly playerId: PlayerId
-  /** Tronquée à la fléchette qui boucle le tour, comme une volée de checkout. */
+  /** Tronquée à la fléchette qui boucle le tour. */
   readonly darts: readonly Dart[]
   readonly hits: number
   readonly targetIndexBefore: number
@@ -39,10 +35,7 @@ export type TourDuMondeState = {
   /** `null` sur une partie en cours **comme sur un match nul**. */
   readonly winnerId: PlayerId | null
   readonly finished: boolean
-  /**
-   * Quelqu'un a bouclé, mais le tour de table n'est pas terminé : les joueurs
-   * restants ont droit à leur volée. C'est ce qui rend les égalités possibles.
-   */
+  /** Quelqu'un a bouclé mais le tour de table n'est pas fini : les autres jouent leur volée. */
   readonly lastRound: boolean
   readonly history: readonly TourDuMondeVisit[]
   readonly milestones: readonly TourDuMondeMilestone[]
@@ -54,11 +47,7 @@ const at = <T>(items: readonly T[], index: number, label: string): T => {
   return item
 }
 
-/**
- * Toucher, c'est atteindre le secteur — simple, double ou triple, peu importe.
- * Une fléchette hors cible a le segment `MISS`, elle ne vaut donc jamais.
- * Le bull est validé aussi bien par l'anneau à 25 que par le centre à 50.
- */
+// Toucher = atteindre le secteur, quel que soit l'anneau (la bulle : 25 comme 50).
 const touche = (dart: Dart, target: Segment): boolean => dart.segment === target
 
 const start = (event: TourDuMondeStarted): TourDuMondeState => {
@@ -95,11 +84,7 @@ const start = (event: TourDuMondeStarted): TourDuMondeState => {
   }
 }
 
-/**
- * Le vainqueur : parmi ceux qui ont bouclé, celui qui y a mis le moins de
- * fléchettes. À égalité parfaite, **match nul** — on ne départage pas au
- * hasard ni à l'ordre de passage, qui n'est pas mérité.
- */
+/** Le moins de fléchettes parmi ceux qui ont bouclé ; ⚠️ égalité parfaite = nul (`null`). */
 const departager = (players: readonly TourDuMondePlayerState[]): PlayerId | null => {
   const arrives = players.filter((player) => player.finishedInDarts !== null)
   if (arrives.length === 0) return null
@@ -124,15 +109,12 @@ const applyVisit = (state: TourDuMondeState, darts: readonly Dart[]): TourDuMond
   let dartsUsed = 0
 
   for (const dart of darts) {
-    // Un joueur qui a déjà bouclé n'a plus de cible : garde-fou, car le tour de
-    // table s'arrête normalement avant qu'il ne rejoue.
+    // Garde-fou : un joueur qui a bouclé n'a plus de cible.
     if (cible >= targets.length) break
     dartsUsed += 1
     if (touche(dart, at(targets, cible, 'targets'))) {
       cible += 1
       hits += 1
-      // Le tour est bouclé : la volée s'arrête là, les fléchettes suivantes
-      // n'ont plus de cible.
       if (cible >= targets.length) break
     }
   }
@@ -157,9 +139,7 @@ const applyVisit = (state: TourDuMondeState, darts: readonly Dart[]): TourDuMond
     },
   ]
 
-  // « On finit le tour de table » : la partie ne s'arrête qu'une fois que tout
-  // le monde a joué le même nombre de volées. Comme les volées s'enchaînent
-  // toujours dans le même ordre, le compte suffit à le savoir.
+  // ⚠️ On finit le tour de table : fin seulement quand tout le monde a joué autant de volées.
   const quelquUnABoucle = players.some((autre) => autre.finishedInDarts !== null)
   const tourDeTableComplet = history.length % players.length === 0
   const finished = quelquUnABoucle && tourDeTableComplet
@@ -187,11 +167,7 @@ const applyVisit = (state: TourDuMondeState, darts: readonly Dart[]): TourDuMond
   }
 }
 
-/**
- * Rejoue le journal et renvoie l'état courant.
- *
- * C'est aussi l'implémentation de l'annulation : `project(events.slice(0, -1))`.
- */
+/** Rejoue le journal ; l'annulation est `project(events.slice(0, -1))`. */
 const project = (events: readonly MatchEvent[]): TourDuMondeState => {
   const [first, ...rest] = events
   if (first === undefined || first.type !== 'TourDuMondeStarted') {
@@ -215,7 +191,6 @@ export const TourDuMondeRules = {
   currentPlayer: (state: TourDuMondeState): TourDuMondePlayerState =>
     at(state.players, state.currentPlayerIndex, 'players'),
   isFinished: (state: TourDuMondeState): boolean => state.finished,
-  /** La cible du joueur courant, ou `null` s'il a déjà bouclé. */
   currentTarget: (state: TourDuMondeState, player: TourDuMondePlayerState): Segment | null =>
     state.config.targets[player.targetIndex] ?? null,
 }

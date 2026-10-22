@@ -5,10 +5,7 @@ import type {
 import { MatchId } from '@/core/domain/value-objects/ids'
 import type { DartperoDatabase, StoredVisitDraft } from './database'
 
-/**
- * ⚠️ Ce qui revient du disque n'est pas revalidé ici : c'est le travail de
- * `ManageVisitDraftUseCase.restore`, avec la validation de l'import.
- */
+// ⚠️ Pas de revalidation ici : c'est `ManageVisitDraftUseCase.restore`.
 const versDraft = (stored: StoredVisitDraft): VisitDraft => ({
   matchId: MatchId.of(stored.matchId),
   visitCount: stored.visitCount,

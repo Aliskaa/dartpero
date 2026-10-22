@@ -9,15 +9,10 @@ export type X01PlayerStats = {
   readonly visits: number
   readonly dartsThrown: number
   readonly pointsScored: number
-  /** Moyenne 3 fléchettes : (points ÷ fléchettes) × 3. Brute, l'UI arrondit. */
+  /** Brute, l'UI arrondit. */
   readonly average3: number
-  /** Moyenne sur les 3 premières volées de chaque leg (les « 9 premières fléchettes »). */
   readonly first9Average: number
-  /**
-   * Points et fléchettes bruts des 9 premières, exposés pour que les stats de
-   * carrière puissent agréger plusieurs matchs : faire la moyenne de moyennes
-   * donnerait un résultat faux dès que les legs n'ont pas la même longueur.
-   */
+  // Exposés pour agréger la carrière : une moyenne de moyennes serait fausse.
   readonly first9Points: number
   readonly first9Darts: number
   readonly count180: number
@@ -27,33 +22,19 @@ export type X01PlayerStats = {
   readonly count60plus: number
   readonly doubleAttempts: number
   readonly doublesHit: number
-  /** En pourcentage (0-100). 0 si aucune tentative. */
+  /** 0-100 ; 0 sans tentative. */
   readonly checkoutPercent: number
-  /** Plus petit nombre de fléchettes pour gagner un leg. `null` si aucun leg gagné. */
+  /** `null` si aucun leg gagné. */
   readonly bestLegDarts: number | null
   readonly highestCheckout: number
   readonly highestVisit: number
-  /**
-   * Où ses fléchettes se sont plantées **sur ce match**.
-   *
-   * Elle vit ici plutôt que dans le use case des statistiques : c'est le résumé
-   * de partie qui en a besoin en premier, et la carrière n'a plus qu'à
-   * additionner les cartes de chaque match au lieu de recollecter toutes les
-   * fléchettes de la base.
-   */
+  /** Impacts de ce match ; la carrière additionne ces cartes. */
   readonly hits: DartboardHits
-  /** Legs gagnés dans le **set en cours** — ce qu'affiche le tableau. */
+  /** Dans le set en cours. */
   readonly legsWonInSet: number
-  /** Legs gagnés sur **tout le match**, tous sets confondus. */
+  /** Sur tout le match, tous sets confondus. */
   readonly legsWon: number
-  /**
-   * Legs **terminés** du match — le dénominateur de `legsWon`.
-   *
-   * ⚠️ Terminés, pas commencés : un leg en cours n'est ni gagné ni perdu, et
-   * l'inclure ferait plafonner tout le monde sous 100 % sans raison. Tous les
-   * joueurs d'un match ont joué les mêmes legs, la valeur est donc la même
-   * pour chacun — c'est ce qui la rend comparable d'un joueur à l'autre.
-   */
+  /** ⚠️ Legs terminés (dénominateur de `legsWon`), pas commencés : identique pour tous les joueurs. */
   readonly legsPlayed: number
   readonly setsWon: number
 }
@@ -78,7 +59,6 @@ type Accumulator = {
   highestCheckout: number
   highestVisit: number
   darts: Dart[]
-  /** Nombre de volées déjà comptées par leg, pour isoler les 9 premières fléchettes. */
   visitsParLeg: Map<number, number>
 }
 
@@ -102,12 +82,7 @@ const nouvelAccumulateur = (): Accumulator => ({
 
 const moyenne = (points: number, darts: number): number => (darts === 0 ? 0 : (points / darts) * 3)
 
-/**
- * Toutes les statistiques d'un match, dérivées de l'historique projeté.
- *
- * ⚠️ Une volée *busted* marque 0 point mais ses fléchettes sont comptées :
- * c'est la définition standard de la moyenne 3 fléchettes.
- */
+/** ⚠️ Une volée bust marque 0 point mais ses fléchettes sont comptées. */
 export const computeX01Stats = (state: X01State): X01Stats => {
   const accumulateurs = new Map<PlayerId, Accumulator>(
     state.players.map((player) => [player.playerId, nouvelAccumulateur()]),
@@ -119,8 +94,6 @@ export const computeX01Stats = (state: X01State): X01Stats => {
 
     acc.visits += 1
     acc.dartsThrown += visit.darts.length
-    // ⚠️ Toutes les fléchettes, **celle qui fait bust comprise** : elle a bien
-    // touché le plateau. Même convention que la moyenne 3 fléchettes.
     acc.darts.push(...visit.darts)
     acc.pointsScored += visit.scored
     acc.highestVisit = Math.max(acc.highestVisit, visit.scored)
@@ -130,7 +103,6 @@ export const computeX01Stats = (state: X01State): X01Stats => {
     if (visit.scored >= 100) acc.count100plus += 1
     if (visit.scored >= 60) acc.count60plus += 1
 
-    // Les 9 premières fléchettes du leg ≈ les 3 premières volées.
     const dejaComptees = acc.visitsParLeg.get(visit.legNumber) ?? 0
     if (dejaComptees < 3) {
       acc.first9Points += visit.scored
@@ -138,8 +110,6 @@ export const computeX01Stats = (state: X01State): X01Stats => {
     }
     acc.visitsParLeg.set(visit.legNumber, dejaComptees + 1)
 
-    // Tentatives de double : chaque fléchette lancée depuis un reste qu'une
-    // seule fléchette peut clore.
     let reste: number = visit.remainingBefore
     for (const dart of visit.darts) {
       if (isOnACheckoutDouble(reste, state.config)) acc.doubleAttempts += 1

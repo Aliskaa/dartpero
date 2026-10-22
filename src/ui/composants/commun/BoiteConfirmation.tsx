@@ -15,20 +15,7 @@ type Props = {
   readonly occupe: boolean
 }
 
-/**
- * La confirmation de la sortie (lot `annulation-volee`, forme B de la planche
- * `annulation`) : un `<dialog>` natif par-dessus l'écran de partie, deux
- * boutons, *Corriger* et *Valider la sortie*.
- *
- * Les pièges du `<dialog>` sont tenus par `useDialogueNatif`, partagé avec la
- * `Modale` et la feuille de règles ; l'état « ouvert » vient de l'historique
- * (`useConfirmationSortie`). Tenu ici :
- * - monté en permanence, contenu seulement quand il est ouvert ;
- * - **jamais `flex` ni `grid` sur le `<dialog>`** : la mise en page vit dans
- *   un conteneur intérieur ;
- * - pas de ✕ : le focus d'ouverture (la référence `croix`) va sur *Corriger*,
- *   le choix sans conséquence ; fermer sans choisir vaut *Corriger*.
- */
+/** Confirmation de la sortie : `<dialog>` natif, fermer sans choisir vaut *Corriger*. ⚠️ Jamais `flex`/`grid` sur le `<dialog>`. */
 export const BoiteConfirmation = ({
   ouvert,
   titre,

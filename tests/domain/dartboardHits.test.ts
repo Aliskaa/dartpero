@@ -18,8 +18,6 @@ describe('Carte des impacts', () => {
   })
 
   it('sépare le simple, le double et le triple d’un même secteur', () => {
-    // « 14 fois dans le 20 » ne dit pas si c'étaient des triples : c'est
-    // précisément l'écart que la carte doit montrer.
     const hits = DartboardHits.of([
       Dart.triple(20),
       Dart.triple(20),
@@ -45,9 +43,7 @@ describe('Carte des impacts', () => {
     const hits = DartboardHits.of([Dart.miss(), Dart.miss(), Dart.single(1)])
 
     expect(hits.missed).toBe(2)
-    // Elle a bien été lancée : elle compte dans le total.
     expect(hits.total).toBe(3)
-    // Mais elle ne doit chauffer aucune case du plateau.
     expect(hits.busiest).toBe(1)
     expect(hits.zones.reduce((somme, zone) => somme + zone.hits, 0)).toBe(1)
   })
@@ -80,13 +76,10 @@ describe('Carte des impacts', () => {
       ['D16', 2],
       ['S5', 1],
     ])
-    // 62 cases existent, 3 seulement ont été touchées : le classement s'arrête là.
     expect(DartboardHits.top(hits, 10)).toHaveLength(3)
   })
 
   it('départage deux cases à égalité par ce qu’elles valent', () => {
-    // Trois touches partout : sans départage l'ordre retomberait sur celui du
-    // plateau (S1, S2, S3…), qui ne veut rien dire pour un joueur.
     const hits = DartboardHits.of([
       Dart.single(1),
       Dart.single(1),

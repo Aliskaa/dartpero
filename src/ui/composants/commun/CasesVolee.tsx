@@ -6,32 +6,13 @@ type Props = {
   readonly 'aria-label': string
   /** Volée annulée (bust du X01) : fléchettes barrées, en rouge. */
   readonly bust?: boolean
-  /**
-   * `ligne` : trois cases sous le nom, à gauche, `text-sm` (X01, Tour du monde).
-   * `ruban` : trois cases poussées à droite d'une ligne dédiée, 48 px de large,
-   * `text-base` (la ligne « VOLÉE » du Cricket).
-   */
+  /** `ligne` : trois cases sous le nom ; `ruban` : poussées à droite d'une ligne dédiée (Cricket). */
   readonly variante?: 'ligne' | 'ruban'
-  /**
-   * Comment s'écrit une fléchette dans sa case. Par défaut `Dart.label` ; le Tour
-   * du monde passe un libellé sans « S » (`libelleFlechetteTourDuMonde`).
-   */
+  /** Écriture d'une fléchette dans sa case ; défaut `Dart.label`. */
   readonly libelle?: (dart: Dart) => string
 }
 
-/**
- * Les trois fléchettes d'une volée, écrites sur leur ligne comme au stylo.
- *
- * Le libellé vient de `Dart.label` (« T20 », « D16 », « BULL », « 0 »), jamais
- * recopié ici. Les fléchettes qui n'avancent pas ne sont **pas** grisées : on
- * veut voir ce qui a été lancé, pas ce qui a servi.
- *
- * Variante `ligne` : trois cases de grille `minmax(0, 2.75rem)` — une largeur de
- * case à fléchette, PLAFONNÉE, et qui se resserre d'elle-même si la colonne
- * maigrit. Sans le plafond, les cases s'étalent sur toute la colonne ; sans le
- * plancher à 0, elles refusent de rétrécir et débordent sur la colonne d'à côté.
- * Le `gap-1` est ce qui laisse tenir « BULL » (29,4 px) dans sa case.
- */
+/** Les trois fléchettes d'une volée, jamais grisées. ⚠️ Cases `minmax(0, 2.75rem)` : plafonnées, mais elles rétrécissent sans déborder. */
 export const CasesVolee = ({
   darts,
   bust = false,

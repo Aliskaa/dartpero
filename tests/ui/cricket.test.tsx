@@ -8,7 +8,6 @@ import { fakeServices } from '../fakes'
 import { flechette, validerSortie } from './gestes'
 import { renderWithServices } from './renderWithServices'
 
-/** Trois cibles, pour qu'une partie complète tienne en quelques clics. */
 const COURT = CricketConfig.create({ targets: [20, 19, 'BULL'] })
 const CUT = CricketConfig.create({ targets: [20, 19, 'BULL'], variant: 'CUT_THROAT' })
 
@@ -34,12 +33,10 @@ describe('Cricket — écran de jeu', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await waitFor(() => expect(pointsDe('Kevin')).toHaveTextContent('0'))
 
-    // Un triple ferme la cible d'un coup, et le tableau le montre tout de suite.
     await flechette(utilisateur, '20', 'Triple')
     expect(screen.getByText('20 : fermée')).toBeInTheDocument()
     expect(pointsDe('Kevin')).toHaveTextContent('0')
 
-    // La cible est fermée : ce qui suit se transforme en points.
     await flechette(utilisateur, '20', 'Triple')
     expect(pointsDe('Kevin')).toHaveTextContent('60')
   })
@@ -59,7 +56,6 @@ describe('Cricket — écran de jeu', () => {
     expect(screen.getByRole('button', { name: 'Simple' })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  /** Dix-neuf secteurs ne servent à rien ici : les proposer ferait douter. */
   it('ne propose que les sept cibles du jeu', async () => {
     const { services } = fakeServices()
     const { matchId } = await partieCourte(services)
@@ -101,10 +97,6 @@ describe('Cricket — écran de jeu', () => {
     await waitFor(() => expect(pointsDe('Julien').closest('[aria-current]')).not.toBeNull())
   })
 
-  /**
-   * Le vrai apport du port d'aperçu : la partie peut se gagner sur la deuxième
-   * fléchette, et l'écran ne doit pas rester à réclamer la troisième.
-   */
   it('conclut sur la fléchette qui gagne, sans réclamer la suivante', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -113,7 +105,6 @@ describe('Cricket — écran de jeu', () => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     await waitFor(() => expect(pointsDe('Kevin')).toHaveTextContent('0'))
 
-    // Kevin ferme le 20 et le 19, puis rend la main.
     await flechette(utilisateur, '20', 'Triple')
     await flechette(utilisateur, '19', 'Triple')
     await utilisateur.click(screen.getByRole('button', { name: 'Hors' }))
@@ -121,10 +112,8 @@ describe('Cricket — écran de jeu', () => {
     for (const _ of [0, 1, 2]) await utilisateur.click(screen.getByRole('button', { name: 'Hors' }))
     await waitFor(() => expect(pointsDe('Kevin').closest('[aria-current]')).not.toBeNull())
 
-    // La bulle en deux fléchettes : tout est fermé, la partie est jouée.
     await flechette(utilisateur, 'Bulle', 'Double')
     await utilisateur.click(screen.getByRole('button', { name: 'Bulle' }))
-    // La fléchette qui gagne attend sa confirmation (lot `annulation-volee`).
     await validerSortie(utilisateur)
 
     expect(await screen.findByText('Vainqueur')).toBeInTheDocument()
@@ -164,7 +153,6 @@ describe('Cricket — création et historique', () => {
 
     const regles = screen.getByRole('region', { name: 'Réglages du jeu' })
     expect(within(regles).getByRole('button', { name: /^Cut-throat/ })).toBeInTheDocument()
-    // Les réglages X01 n'ont rien à faire ici.
     expect(within(regles).queryByRole('button', { name: '501' })).toBeNull()
 
     await utilisateur.click(within(regles).getByRole('button', { name: /^Cut-throat/ }))
@@ -189,14 +177,11 @@ describe('Cricket — création et historique', () => {
     const parties = await screen.findAllByRole('listitem')
     const libelles = parties.map((partie) => partie.textContent ?? '')
 
-    // Le nom du jeu est dans la colonne de gauche (pictogramme) : la ligne ne garde que les règles.
     expect(libelles.some((texte) => texte.includes('Standard · '))).toBe(true)
     expect(libelles.some((texte) => texte.includes('STD'))).toBe(true)
-    // La ligne du Cricket (colonne « STD ») est celle qui porte « En cours ».
     const ligne = libelles.find((texte) => texte.includes('STD'))
     expect(ligne).toContain('Standard · ')
     expect(ligne).toContain('En cours')
-    // La carte commune dit l'avancement, plus le détail par joueur (le résumé le garde).
     expect(libelles.some((texte) => texte.includes('En cours'))).toBe(true)
   })
 })

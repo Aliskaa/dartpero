@@ -15,21 +15,8 @@ type Props = {
 
 const estNumerote = (cible: Segment): cible is SegmentNumber => typeof cible === 'number'
 
-/**
- * ZONE SAISIE du Cricket — **seulement les sept cibles**, dans le pavé commun
- * (`PaveSaisie`) sur 3 colonnes : les six numéros en 3 × 2 (20 19 18 / 17 16 15,
- * l'ordre de la feuille), puis la Bulle dans la rangée Bulle · Hors · Annuler.
- *
- * Le pavé du X01 aligne les vingt secteurs ; ici dix-neuf d'entre eux ne font
- * strictement rien. Les proposer inviterait à saisir des fléchettes sans effet.
- * Tout ce qui tombe hors des sept cibles se saisit avec « Hors », qui dit
- * exactement ce qui s'est passé au jeu : rien.
- *
- * La bascule S/D/T est momentanée (remise à Simple dans `useCricket`), graduée
- * comme au X01 ; l'exposant annonce les **marques** (« ×2 », « ×3 »), pas les
- * points. Le filtrage de la bulle (elle n'est pas dans la grille) ne change
- * aucune règle : elle part en `Dart.of('BULL', multiplicateur)`.
- */
+/** Zone saisie du Cricket : seulement les sept cibles dans `PaveSaisie` ; le reste se saisit avec « Hors ». */
+// L'exposant annonce les marques, pas les points.
 export const PaveCricket = ({
   cibles,
   multiplicateur,

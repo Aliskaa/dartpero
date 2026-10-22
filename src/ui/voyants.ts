@@ -2,18 +2,13 @@ import type { InstallState } from '@/core/application/ports/driven/AppInstallati
 import { joursCalendairesEntre } from './jourCalendaire'
 
 /**
- * Les deux voyants en tête des Réglages, en fonctions pures : ce qu'ils disent
- * et sur quel ton, sans React ni français (le texte vit dans `labels.ts`).
- *
- * Un voyant est `ok` (filet vert) quand tout va bien, `attention` (filet
- * laiton) quand une action est attendue.
+ * Les deux voyants en tête des Réglages, en fonctions pures : ce qu'ils disent et sur quel ton, sans React
+ * ni français (le texte vit dans `labels.ts`).
  */
 export type TonVoyant = 'ok' | 'attention'
 
-/** Au-delà de 30 jours sans export, le voyant passe au laiton. */
 export const SEUIL_SAUVEGARDE_ANCIENNE = 30
 
-/** À partir de 60 jours, la durée se dit en mois (« Il y a 2 mois »). */
 export const SEUIL_EN_MOIS = 60
 
 /** Un mois, pour le voyant : 30 jours, arrondi en dessous (60-89 → 2 mois). */
@@ -32,14 +27,8 @@ export type VueVoyantSauvegarde = {
 }
 
 /**
- * Depuis quand le dernier export a eu lieu, en jours du **calendrier local** :
- * « Hier » est la veille, même à quelques minutes d'écart de part et d'autre de
- * minuit. Aucun minuteur : la durée se recalcule au rendu.
- *
- * - `null` (aucun export, ou valeur illisible) ou un instant hors de la plage
- *   de `Date` : « Jamais », en attention ;
- * - une date dans le futur (horloge déréglée) : « Aujourd'hui », sans alerte —
- *   on ne sait pas mieux, et un voyant qui crie pour une horloge n'aide pas.
+ * Depuis quand le dernier export a eu lieu, en jours du **calendrier local** : « Hier » est la veille, même
+ * à quelques minutes d'écart de part et d'autre de minuit.
  */
 export const vueVoyantSauvegarde = (
   dernierExport: number | null,
@@ -68,10 +57,8 @@ export type VueVoyantApplication = {
 }
 
 /**
- * - `installed` : « Installée », sans action ;
- * - `installable` : « Installer » ouvre l'invite native ;
- * - iOS, autre navigateur iOS, navigateur sans invite : « Comment ? » mène au
- *   guide `#installer` de la même page.
+ * - `installed` : « Installée », sans action ; - `installable` : « Installer » ouvre l'invite native ; -
+ * iOS, autre navigateur iOS, navigateur sans invite.
  */
 export const vueVoyantApplication = (etat: InstallState): VueVoyantApplication => {
   switch (etat) {
@@ -90,11 +77,7 @@ export const vueVoyantApplication = (etat: InstallState): VueVoyantApplication =
   }
 }
 
-/**
- * Le guide `#installer` est rendu là où « Comment ? » y mène — et où mène la
- * ligne de l'Accueil (iOS). ⚠️ Différent de `installationPossible`, que
- * l'Accueil garde : un navigateur sans invite a un guide, pas de ligne.
- */
+/** Le guide `#installer` est rendu là où « Comment ? » y mène — et où mène la ligne de l'Accueil (iOS). */
 export const guideInstallationVisible = (etat: InstallState): etat is EtatGuideInstallation =>
   vueVoyantApplication(etat).action === 'comment'
 

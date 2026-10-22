@@ -34,8 +34,6 @@ describe('X01Summary.legsPlayed — le nombre de LegWon du journal', () => {
 
   it('compte les manches gagnées en cours de partie, tous sets confondus', async () => {
     const { services } = fakeServices()
-    // Deux manches par set, deux sets : le set 1 se joue en deux manches, le
-    // set 2 est entamé — trois manches jouées, la partie n'est pas finie.
     const { sortir, legsPlayed } = await partieSolo(services, { legsToWin: 2, setsToWin: 2 })
 
     await sortir()
@@ -173,7 +171,6 @@ describe('matchStatus — une règle, un endroit', () => {
       const autreMode = GAME_MODE_IDS.find((candidat) => candidat !== mode)
       if (!autreMode) throw new Error('un second mode est attendu')
 
-      // Le mode filtré est le plus ancien ; un autre mode est plus récent.
       const duMode = await lancer(services, mode, joueurs)
       const ailleurs = await lancer(
         services,
@@ -184,8 +181,6 @@ describe('matchStatus — une règle, un endroit', () => {
       const enCours = await services.getOngoingMatch.execute()
       expect(enCours?.id).toBe(ailleurs)
 
-      // Filtré, l'historique ne voit que `duMode` : y chercher « la plus récente
-      // non terminée » la dirait en cours à tort.
       const filtre = await services.getMatchHistory.execute(50, mode)
       expect(filtre.map((partie) => partie.id)).toEqual([duMode])
       expect(matchStatus(filtre[0] as (typeof filtre)[number], enCours?.id ?? null)).toBe(

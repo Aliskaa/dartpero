@@ -6,11 +6,7 @@ type Props = {
   readonly classeFort: string
 }
 
-/**
- * Une phrase écrite dans `labels.ts`, ses mots forts compris (fiche de
- * réglages de l'étape 2, feuille de règles). Jamais de HTML brut : le texte
- * arrive en segments typés, un mot fort devient un `<strong>`.
- */
+/** Phrase de `labels.ts` en segments typés ; un mot fort devient un `<strong>`, jamais de HTML brut. */
 export const Phrase = ({ segments, classeFort }: Props) => (
   <>
     {segments.map((segment, rang) =>

@@ -37,14 +37,7 @@ import { NumerosKiller } from './NumerosKiller'
 import { RangeeJoueurs } from './RangeeJoueurs'
 import { ReglagesJeu } from './ReglagesJeu'
 
-/**
- * Étape 2 — les joueurs, la fiche de réglages du jeu choisi, puis le nom de la
- * partie (facultatif).
- *
- * Seul en piste (ou à l'entraînement), on commence d'ici : il n'y a pas
- * d'ordre à régler, et la barre le grise. À deux et plus, « Continuer » mène à
- * l'ordre de jeu.
- */
+/** Étape 2 — les joueurs, la fiche de réglages, le nom (facultatif) ; seul en piste, on commence d'ici sans ordre. */
 export const EtapeJoueurs = ({
   mode,
   partie,
@@ -62,7 +55,7 @@ export const EtapeJoueurs = ({
   const sousLeMinimum = killer && n < KILLER_MIN_PLAYERS
   const versOrdre = !entrainement && (n >= 2 || killer)
 
-  // La coupe **écrite** de la sélection à la limite du jeu (réponse R1.4).
+  // La coupe écrite de la sélection à la limite du jeu.
   // biome-ignore lint/correctness/useExhaustiveDependencies: écrite à l'arrivée et quand les profils arrivent.
   useEffect(() => {
     partie.couperSelection(mode)

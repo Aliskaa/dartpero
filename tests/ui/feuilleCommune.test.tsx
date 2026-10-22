@@ -34,7 +34,6 @@ const creerJoueurs = async (services: Services, noms: readonly string[] = NOMS) 
   return ids
 }
 
-/** Les trois jeux à feuille : de quoi démarrer, et de quoi passer la main d'une volée. */
 type Jeu = {
   readonly nom: string
   readonly demarrer: (services: Services, joueurs: readonly PlayerId[]) => Promise<MatchId>
@@ -89,7 +88,6 @@ describe.each(JEUX)('$nom — la feuille commune', (jeu) => {
     expect(reperes).toHaveLength(1)
     const repere = reperes[0] as HTMLElement
     expect(repere).toHaveAttribute('aria-hidden', 'true')
-    // Trois joueurs, la main est à Julien (index 1) : une ligne de haut, décalée d'une.
     expect(repere.style.transform).toBe('translateY(100%)')
     expect(parseFloat(repere.style.height)).toBeCloseTo(100 / 3, 1)
 
@@ -123,7 +121,6 @@ describe.each(JEUX)('$nom — la feuille commune', (jeu) => {
       const carre = ligne.querySelector('span.size-3[aria-hidden="true"]') as HTMLElement | null
       expect(carre, ligne.textContent ?? '').not.toBeNull()
       expect(carre?.style.backgroundColor).not.toBe('')
-      // Le liseré de la maquette (une barre pleine hauteur à gauche) est écarté.
       expect(ligne.querySelector('.absolute.inset-y-0.left-0')).toBeNull()
     }
   })
@@ -135,7 +132,6 @@ describe.each(JEUX)('$nom — la feuille commune', (jeu) => {
     expect(document.querySelector('.au-lancer')).toBeNull()
     const css = readFileSync(resolve(RACINE, 'src/index.css'), 'utf8')
     expect(css).not.toMatch(/\.au-lancer\b/)
-    // Le garde peut échouer : le repère, lui, est bien défini.
     expect(css).toMatch(/\.repere-lancer\s*\{/)
   })
 })
@@ -166,7 +162,6 @@ describe('FeuilleMatch — le repère', () => {
     expect(repere.style.height).toBe('50%')
   })
 
-  // Mutation : `1fr` -> `auto` (ou `minmax(0, 1fr)` oublié) : le repère ne tomberait plus sur les lignes.
   it('les lignes ont une hauteur strictement égale : `repeat(n, 1fr)`', () => {
     const { container } = rendre(0)
     const grille = (container.querySelector('.repere-lancer') as HTMLElement)
@@ -200,7 +195,6 @@ describe('Cricket — la volée sur la dernière ligne', () => {
 
     const volee = await screen.findByLabelText('Volée de Kevin')
     expect(volee).toHaveTextContent('S20T19D18')
-    // La main est à Julien, mais c'est la volée de Kevin qu'on lit.
     expect(screen.getByLabelText('Points de Julien').closest('[aria-current]')).not.toBeNull()
     expect(volee.parentElement).toHaveTextContent('Volée')
     expect(volee.parentElement).toHaveTextContent('Kevin')
@@ -379,7 +373,6 @@ describe('Bandeau Cricket — sous-titre et rappel de la condition, sans cadre',
     await afficher('STANDARD')
     const ligne = screen.getByLabelText('Points de Kevin').closest('article') as HTMLElement
     const colonnes = [...ligne.children] as HTMLElement[]
-    // JOUEUR, 7 cibles, PTS.
     expect(colonnes).toHaveLength(9)
     const filets = colonnes.map((colonne) => colonne.classList.contains('filet-colonne'))
     expect(filets).toEqual([false, true, false, false, false, false, false, false, true])
@@ -401,7 +394,6 @@ describe('Bandeau Entraînement — sous-titre et « Manche N/total »', () => {
     expect(await screen.findByText(/^2 checkouts · \d+ à \d+$/)).toBeInTheDocument()
     expect(screen.getByText('Manche 1/2')).toBeInTheDocument()
 
-    // Une manche ratée : trois fléchettes, la suivante commence.
     for (const _ of [0, 1, 2]) await flechette(utilisateur, '1')
     await waitFor(() => expect(screen.getByText('Manche 2/2')).toBeInTheDocument())
   })
@@ -423,7 +415,6 @@ describe('Moment célébré — une rangée de 44 px', () => {
     expect(rangee).toHaveClass('h-11', 'flex', 'items-center')
     expect(within(rangee).getByText('Fermée !')).toBeInTheDocument()
     expect(within(rangee).getByText('19')).toBeInTheDocument()
-    // Le titre ne rétrécit pas, le détail se tronque en dernier recours.
     expect(within(rangee).getByText('Fermée !')).toHaveClass('shrink-0')
     expect(within(rangee).getByText('19')).toHaveClass('truncate')
   })
@@ -460,7 +451,6 @@ describe('Moment célébré — une rangée de 44 px', () => {
     await screen.findByLabelText('Cible de Kevin')
     await flechetteDeSortie(utilisateur, '20')
 
-    // (<output> a aussi le rôle « status » : on part du texte du moment.)
     const moment = (await screen.findByText('Bouclé !')).closest('[role="status"]')
     expect(moment).toHaveClass('top-full', 'absolute', 'pointer-events-none')
   })
@@ -499,7 +489,6 @@ describe('Moment célébré — une rangée de 44 px', () => {
 })
 
 describe.each(JEUX)('$nom — le carré porte la couleur du profil', (jeu) => {
-  // Mutation : le carré prend une teinte fixe (ou `couleurJoueur(null)`) au lieu de celle du profil.
   it('chaque carré est de la couleur de son joueur', async () => {
     const { services } = fakeServices()
     const couleurs = ['brique', 'sapin', 'lagon'] as const
@@ -511,7 +500,6 @@ describe.each(JEUX)('$nom — le carré porte la couleur du profil', (jeu) => {
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     const feuille = await screen.findByRole('region', { name: 'Tableau des scores' })
 
-    // jsdom normalise les couleurs : on fait passer l'attendu par le même chemin.
     const normaliser = (couleur: string) => {
       const sonde = document.createElement('span')
       sonde.style.backgroundColor = couleur
@@ -526,7 +514,6 @@ describe.each(JEUX)('$nom — le carré porte la couleur du profil', (jeu) => {
 })
 
 describe('Cricket — cible morte', () => {
-  // Mutation : `mortes` toujours faux dans CricketEcran / TableauCricket (câblage retiré).
   it('quand les deux joueurs ont fermé le 20 : état « morte », colonne à 30 %, en-tête barré', async () => {
     const { services } = fakeServices()
     const [kevin, julien] = await creerJoueurs(services, ['Kevin', 'Julien'])
@@ -547,7 +534,6 @@ describe('Cricket — cible morte', () => {
     const entetes = [...(feuille.querySelector('.bandeau-feuille')?.children ?? [])]
     const entete20 = entetes.find((e) => e.textContent === '20') as HTMLElement
     expect(entete20).toHaveClass('line-through')
-    // Les autres cibles restent vivantes.
     const entete19 = entetes.find((e) => e.textContent === '19') as HTMLElement
     expect(entete19).not.toHaveClass('line-through')
     expect(screen.queryByText('19 : cible morte')).toBeNull()
@@ -582,7 +568,6 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     return { matchId, kevin: kevin as PlayerId, julien: julien as PlayerId }
   }
 
-  // Mutation : la volée lue ailleurs que dans l'historique rechargé (état périmé après annulation).
   it('annuler fléchette par fléchette : la volée se rouvre, puis la ligne revient à la volée d’avant', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -593,7 +578,6 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     expect(await screen.findByLabelText('Volée de Julien')).toHaveTextContent('S17S16S15')
 
-    // Lot `annulation-volee` : un appui retire S15 seul, la volée de Julien se rouvre.
     await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
     await waitFor(() =>
       expect(screen.getByLabelText('Volée de Julien')).toHaveTextContent('S17S16—'),
@@ -605,7 +589,6 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     expect(screen.queryByLabelText('Volée de Julien')).toBeNull()
   })
 
-  // Mutation : `proprietaire` figé sur le joueur courant, ou darts non revenues à la volée précédente.
   it('annuler la 1ʳᵉ fléchette d’une volée : la ligne redonne la volée du joueur précédent', async () => {
     const utilisateur = userEvent.setup()
     const { services } = fakeServices()
@@ -624,7 +607,6 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     expect(screen.queryByLabelText('Volée de Julien')).toBeNull()
   })
 
-  // Mutation : la volée vient d'un état local au lieu du journal -> vide / mauvais nom après remontage.
   it('rejeu à froid : l’écran remonté depuis le dépôt dit la même chose, avant et après annulation', async () => {
     const utilisateur = userEvent.setup()
     const { services, dependencies } = fakeServices()
@@ -639,9 +621,6 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     const remonte = renderWithServices(<App />, { services, route: `/partie/${matchId}` })
     expect(await screen.findByLabelText('Volée de Julien')).toHaveTextContent('S17S16S15')
 
-    // La volée de Julien se rouvre (S17, S16 en saisie) : elle a quitté le journal.
-    // Depuis le lot `volee-partielle`, elle vit dans le brouillon de volée et
-    // survit au remontage (la limite U9 « perdue si l'app se ferme » est levée).
     await utilisateur.click(screen.getByRole('button', { name: /^Annuler/ }))
     await waitFor(() =>
       expect(screen.getByLabelText('Volée de Julien')).toHaveTextContent('S17S16—'),
@@ -655,7 +634,6 @@ describe('Cricket — la ligne VOLÉE : annulation, rejeu, joueur supprimé', ()
     expect(await screen.findByLabelText('Volée de Julien')).toHaveTextContent('S17S16—')
   })
 
-  // Mutation : `nomJoueur(...)` retiré -> « Volée de undefined » / ligne vide.
   it('joueur supprimé : la volée garde un nom de repli', async () => {
     const { services } = fakeServices()
     const { matchId, kevin } = await partie(services)
@@ -676,7 +654,6 @@ describe('Bandeau — le pictogramme du mode', () => {
     return bloc.previousElementSibling as SVGElement | null
   }
 
-  // Mutation : la taille passe à 20, l'`aria-hidden` saute, ou le pictogramme redevient une icône lucide.
   const verifier = (titre: string) => {
     const svg = pictogrammeDe(titre)
     expect(svg, titre).not.toBeNull()

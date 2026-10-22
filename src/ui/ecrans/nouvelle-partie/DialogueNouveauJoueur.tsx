@@ -13,18 +13,10 @@ import {
   LIBELLE_TERMINE,
 } from '@/ui/labels'
 
-/**
- * La longueur maximale d'un pseudo — un confort de saisie seulement. La règle,
- * elle, reste dans le domaine (`Player.cleanName`, 20 caractères), qui est le
- * seul à valider.
- */
+/** Longueur maximale d'un pseudo : confort de saisie, la règle reste dans le domaine (`Player.cleanName`). */
 const LONGUEUR_MAX_PSEUDO = 20
 
-/**
- * Crée le profil : le pseudo et le genre choisi (`undefined` = non précisé,
- * rien n'est écrit). Lève l'erreur du domaine en cas d'échec : la boîte reste
- * alors ouverte.
- */
+/** Crée le profil (`undefined` = genre non précisé) ; lève l'erreur du domaine, la boîte reste ouverte. */
 export type CreerJoueur = (nom: string, genre: PlayerGender | undefined) => Promise<void>
 
 type Props = {
@@ -33,11 +25,7 @@ type Props = {
   readonly onCreer: CreerJoueur
 }
 
-/**
- * La ligne repliée « Genre » (planche `genre-profil`, piste B) : la valeur en
- * capitales, « Modifier ▾ » en petit. Ouverte, elle reste en tête et montre la
- * valeur choisie, comme le dépliant de l'étape 2 ; un choix ne la referme pas.
- */
+/** La ligne repliée « Genre » : ouverte, elle reste en tête ; un choix ne la referme pas. */
 const LigneGenre = ({
   genre,
   ouverte,
@@ -72,14 +60,7 @@ const LigneGenre = ({
   )
 }
 
-/**
- * « Nouveau joueur » : un champ, « Annuler » / « Terminé ».
- *
- * Un `<dialog>` natif ouvert par `showModal()` : couche supérieure, fond
- * inerte, Échap et `::backdrop` viennent du navigateur, sans piège à focus
- * réécrit à la main. `onClose` resynchronise l'état quand c'est le navigateur
- * qui ferme (Échap).
- */
+/** « Nouveau joueur » : un `<dialog>` natif ; `onClose` resynchronise l'état quand le navigateur ferme (Échap). */
 export const DialogueNouveauJoueur = ({ ouvert, onFermer, onCreer }: Props) => {
   const boite = useRef<HTMLDialogElement>(null)
   const champ = useRef<HTMLInputElement>(null)

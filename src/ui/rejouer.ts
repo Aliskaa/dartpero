@@ -16,7 +16,6 @@ import {
   VIES,
 } from './reglagesPossibles'
 
-/** Les trois lignes de la section « Rejouer ». */
 export const LIGNES_REJOUER = 3
 
 const dans = (liste: readonly number[], valeur: number): boolean => liste.includes(valeur)
@@ -43,12 +42,7 @@ const maxJoueurs = (mode: GameModeId): number => {
 const memesCibles = (a: readonly unknown[], b: readonly unknown[]): boolean =>
   a.length === b.length && a.every((cible, rang) => cible === b[rang])
 
-/**
- * Le parcours sait-il refaire cette configuration ? Un module neutre, sans React :
- * `application` ne peut pas lire `reglagesPossibles.ts`, c'est donc l'UI qui écarte
- * ce qu'elle ne sait pas régler (une partie importée hors des listes, des cibles
- * qui ne sont pas celles du défaut) — jamais rejouée faussement.
- */
+/** Le parcours sait-il refaire cette configuration ? */
 export const estReproductible = (configuration: ReplayableConfiguration): boolean => {
   // Plus de joueurs que le parcours n'en accepte pour CE jeu : jamais rejouée faussement.
   if (configuration.playerIds.length > maxJoueurs(configuration.mode)) return false
@@ -93,8 +87,8 @@ export const estReproductible = (configuration: ReplayableConfiguration): boolea
 }
 
 /**
- * Filtrer **d'abord**, couper ensuite : une configuration écartée laisse sa place à la suivante.
- * `existe` écarte aussi celle dont un profil a disparu depuis la lecture de l'historique.
+ * Filtrer **d'abord**, couper ensuite : une configuration écartée laisse sa place à la suivante. `existe`
+ * écarte aussi celle dont un profil a disparu depuis la lecture de l'historique.
  */
 export const configurationsAffichees = (
   configurations: readonly ReplayableConfiguration[],

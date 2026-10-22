@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
+// ⚠️ Aucune taille de texte arbitraire : le plancher `text-etiquette` garde l'écran lisible à 2-3 m.
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const UI = resolve(RACINE, 'src/ui')
 const CSS = readFileSync(resolve(RACINE, 'src/index.css'), 'utf8')
@@ -28,16 +29,10 @@ const sources = () =>
   fichiers(UI).map((fichier) => ({ chemin: enUi(fichier), texte: readFileSync(fichier, 'utf8') }))
 
 describe('Échelle typographique', () => {
-  /**
-   * Aucune taille en dur dans `src/ui` : le plancher est `text-etiquette`
-   * (0,75 rem), les grands chiffres sont des paliers `text-score-*`. Une
-   * taille arbitraire rouvrirait la porte aux 0,5 rem illisibles à distance.
-   */
   const TAILLE_ARBITRAIRE = /\btext-\[[0-9.]+(?:rem|px|em)\]/g
 
   it('aucune taille arbitraire text-[…] dans src/ui', () => {
     const tous = sources()
-    // Garde-fou : un test vert à vide ne vérifie rien.
     expect(tous.length).toBeGreaterThan(40)
 
     const fautes = tous.flatMap(({ chemin, texte }) =>
@@ -113,11 +108,6 @@ describe('Zéro dégradé de décor', () => {
 })
 
 describe('Zéro halo', () => {
-  /**
-   * Un halo est une lueur sans décalage (`shadow-[0_0_…]`). Les ombres PORTÉES
-   * (`drop-shadow-[0_3px_0_…]`, `0_2px_2px`) restent permises : elles posent une
-   * plaque sur un mur, elles ne rayonnent pas.
-   */
   const HALO = /shadow-\[0_0_/g
 
   /** Un `text-shadow` à flou non nul (un souffle) : seul `.trace-craie` en a le droit. */
@@ -157,7 +147,6 @@ describe('Zéro halo', () => {
   })
 
   it('seul .trace-craie a un text-shadow à flou non nul dans index.css', () => {
-    // Le plancher : la règle réservée existe bien, et elle seule souffle.
     expect(souffles(CSS).length).toBeGreaterThan(0)
     expect(souffles(sansBloc(CSS, '.trace-craie'))).toEqual([])
   })

@@ -7,18 +7,10 @@ import type {
 import type { MatchSummary } from '../ports/driving/MatchSummary'
 import { nameIndex, summarize } from './summarize'
 
-/**
- * La fenêtre d'historique lue, comme la liste de Parties : « N fois » compte
- * dans cette fenêtre, pas sur toute la base (risque accepté).
- */
+/** Fenêtre d'historique lue : « N fois » compte dans cette fenêtre, pas sur toute la base. */
 export const REPLAY_WINDOW = 50
 
-/**
- * La clé d'un groupe : le mode, ses réglages, les joueurs **triés**. L'ordre de
- * passage et le nom n'y sont pas. Les cibles (Cricket, Tour du monde) et la plage
- * des restes y sont : deux parties aux cibles différentes ne sont pas la même
- * configuration, et l'UI écarte celles qu'elle ne sait pas reproduire.
- */
+/** Clé d'un groupe : mode, réglages (cibles comprises), joueurs triés ; ni ordre de passage ni nom. */
 const groupKey = (summary: MatchSummary): string => {
   const players = summary.players
     .map((player) => String(player.playerId))
@@ -65,10 +57,9 @@ export class GetReplayableConfigurationsUseCase implements GetReplayableConfigur
 
     const summaries = records
       .map((record) => summarize(record, names))
-      // Un profil supprimé : la configuration ne se rejouerait pas, elle est écartée
-      // avant la fusion — le compteur ne compte que les parties gardées.
+      // Profil supprimé : configuration écartée avant la fusion.
       .filter((summary) => summary.players.every((player) => player.name !== null))
-      // Tri stable, le plus récent d'abord : le premier de chaque groupe en est le représentant.
+      // Le plus récent d'abord : il représente son groupe.
       .sort((a, b) => b.createdAt - a.createdAt)
 
     const groups = new Map<string, ReplayableConfiguration>()

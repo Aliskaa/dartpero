@@ -29,7 +29,6 @@ import {
   valeurEvolution,
 } from '@/ui/labels'
 
-/** Le pas de la planche au-delà de 14 parties : 280 unités pour 13 intervalles. */
 const PAS = 280 / 13
 
 const mesures = (
@@ -67,7 +66,6 @@ describe('Évolution — la géométrie de la planche', () => {
     expect(abscisse(quatorze, 13)).toBeCloseTo(285)
     expect(pourcentageLargeur(quatorze)).toBe(100)
 
-    // Deux parties : aux deux bouts, comme la planche C.
     const deux = geometrieCourbe(2)
     expect([abscisse(deux, 0), abscisse(deux, 1)]).toEqual([5, 285])
   })
@@ -101,9 +99,7 @@ describe('Évolution — l’appui et le défilement', () => {
     expect(a(285)).toBe(13)
     expect(a(5 + 6 * PAS + PAS / 3)).toBe(6)
     expect(a(5 + 6 * PAS + (2 * PAS) / 3)).toBe(7)
-    // À deux pixels par unité, la même partie à la position double.
     expect(a(2 * (5 + 6 * PAS), 590)).toBe(6)
-    // Bornée aux deux bouts.
     expect(a(-50)).toBe(0)
     expect(a(10_000)).toBe(13)
   })
@@ -116,7 +112,6 @@ describe('Évolution — l’appui et le défilement', () => {
       29,
     )
     expect(indexDepuisPosition(geometrie, { position: 5, defilement: 0, largeurVisible })).toBe(0)
-    // Le même point de la fenêtre, défilé d'un pas : la partie suivante.
     expect(
       indexDepuisPosition(geometrie, { position: 5 + 3 * PAS, defilement: PAS, largeurVisible }),
     ).toBe(4)
@@ -162,12 +157,9 @@ describe('Évolution — l’appui et le défilement', () => {
       defilementPourPoint(geometrie, index, { defilement, largeurVisible })
 
     expect(pour(29, fin)).toBeNull()
-    // Vers la gauche : on aligne le bord gauche, 10 unités avant le point.
     expect(pour(15, fin)).toBeCloseTo(abscisse(geometrie, 15) - 10)
     expect(pour(0, fin)).toBe(0)
-    // Vers la droite : le bord droit, 10 unités après le point.
     expect(pour(20, 0)).toBeCloseTo(abscisse(geometrie, 20) + 10 - largeurVisible)
-    // Une courbe qui tient ne défile jamais.
     expect(
       defilementPourPoint(geometrieCourbe(14), 0, { defilement: 0, largeurVisible }),
     ).toBeNull()
@@ -240,7 +232,6 @@ describe('Évolution — l’axe vertical (U7), sur toute la courbe', () => {
       pas: 40,
       graduations: [40, 80, 120, 160, 200],
     })
-    // Planche C : deux parties, 25-40.
     expect(axeVertical('MOYENNE', [33.2, 36.1])).toMatchObject({ bas: 25, haut: 40 })
   })
 
@@ -265,7 +256,6 @@ describe('Évolution — l’axe vertical (U7), sur toute la courbe', () => {
       bas: 0,
       haut: 5,
     })
-    // Une valeur finie mais démesurée : le doublement est borné, l'axe rend ses deux bornes.
     const demesure = axeVertical('MOYENNE', [0, Number.MAX_VALUE])
     expect(demesure.graduations.length).toBeLessThanOrEqual(7)
   })
@@ -283,10 +273,8 @@ describe('Évolution — l’axe vertical (U7), sur toute la courbe', () => {
     const progression = courbe(points)
     expect(valeursTracees(progression, 'MOYENNE')).toEqual([30, 50, 40, 41, 42])
     expect(valeursTracees(progression, 'FIRST_9')).toEqual([31, 51, 41, 42, 47])
-    // Meilleure volée : pas de ligne pointillée.
     expect(valeursTracees(progression, 'VOLEE')).toEqual([100, 140, 60, 100])
     expect(referenceDe(progression, 'VOLEE')).toBeNull()
-    // Deux parties : ni tendance ni ligne pointillée.
     expect(referenceDe(courbe(points.slice(0, 2)), 'MOYENNE')).toBeNull()
   })
 

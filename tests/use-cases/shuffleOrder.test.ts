@@ -21,7 +21,6 @@ const ids = (...noms: readonly string[]) => noms as unknown as readonly PlayerId
 
 describe('ShuffleOrder — « Tirer au sort » de l’étape Ordre', () => {
   it('rend la permutation que dicte la source aléatoire', () => {
-    // 3 joueurs : rang 2 tire 0 (A et C s'échangent), rang 1 tire 1 (B reste).
     const ordre = new ShuffleOrderUseCase(tirages(0, 1)).execute(ids('A', 'B', 'C'))
     expect(ordre).toEqual(['C', 'B', 'A'])
   })
@@ -51,7 +50,6 @@ describe('ShuffleOrder — « Tirer au sort » de l’étape Ordre', () => {
   })
 
   it('peut redonner l’ordre reçu : vrai hasard, aucune relance', () => {
-    // Chaque rang tire sa propre place : rien ne bouge, et c'est un résultat permis.
     const ordre = new ShuffleOrderUseCase(tirages(2, 1)).execute(ids('A', 'B', 'C'))
     expect(ordre).toEqual(['A', 'B', 'C'])
   })
@@ -59,7 +57,6 @@ describe('ShuffleOrder — « Tirer au sort » de l’étape Ordre', () => {
   it('est câblé dans le composition root, sur la source aléatoire des autres use cases', () => {
     const { services } = fakeServices()
     const profils = ids('A', 'B', 'C')
-    // `CyclingRandomSource` : 0 puis 1 au premier tirage, comme `tirages(0, 1)`.
     expect(services.shuffleOrder.execute(profils)).toEqual(['C', 'B', 'A'])
   })
 })

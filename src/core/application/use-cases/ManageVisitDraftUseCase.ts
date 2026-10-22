@@ -11,7 +11,6 @@ import type {
 } from '../ports/driving/ManageVisitDraft'
 import { versDart } from './backupSchema'
 
-/** Une volée compte 1 à 3 fléchettes : au-delà, ce n'est pas une volée. */
 const MAX_FLECHETTES = 3
 
 export class ManageVisitDraftUseCase implements ManageVisitDraft {
@@ -20,14 +19,8 @@ export class ManageVisitDraftUseCase implements ManageVisitDraft {
     private readonly drafts: VisitDraftRepository,
   ) {}
 
-  /**
-   * ⚠️ Aucune lecture du journal, et aucun `await` avant l'appel au dépôt : le
-   * brouillon est estampillé avec l'état **que l'écran affichait** quand la
-   * fléchette a été posée (`base`), jamais relu à l'écriture. Une écriture
-   * lancée avant l'enregistrement d'une volée, et terminée après, porte donc
-   * l'ancien nombre de volées : périmée, elle ne sera jamais rendue au joueur
-   * suivant. C'est toute la raison de la clé `visitCount`.
-   */
+  // ⚠️ Ni lecture du journal ni `await` avant le dépôt : `visitCount` vient de `base`, l'état affiché,
+  // pour qu'une écriture tardive reste périmée.
   async save({ matchId, base, darts }: SaveVisitDraftCommand): Promise<void> {
     if (darts.length === 0) return this.drafts.delete(matchId)
     if (darts.length > MAX_FLECHETTES) {
@@ -36,14 +29,7 @@ export class ManageVisitDraftUseCase implements ManageVisitDraft {
     return this.drafts.save({ matchId, visitCount: GameModes.visitCount(base), darts: [...darts] })
   }
 
-  /**
-   * Rendu seulement s'il est cohérent : 1 à 3 fléchettes valides (la validation
-   * de l'import), une partie qui existe, se rejoue et n'est pas terminée, du
-   * même mode que l'état chargé, et le même nombre de volées dans le brouillon,
-   * le journal et l'état chargé. Sinon il est effacé — au mieux — et rien n'est
-   * rendu. La légalité de chaque fléchette dans la volée se juge côté écran,
-   * avec le port de prévisualisation du mode.
-   */
+  // Rendu seulement s'il est cohérent avec le journal et l'état chargé ; sinon effacé (au mieux) et ignoré.
   async restore({ matchId, base }: RestoreVisitDraftQuery): Promise<readonly Dart[]> {
     const draft = await this.drafts.findById(matchId)
     if (draft === null) return []
@@ -54,8 +40,7 @@ export class ManageVisitDraftUseCase implements ManageVisitDraft {
     try {
       await this.drafts.delete(matchId)
     } catch {
-      // Un brouillon qu'on n'arrive pas à effacer reste écarté : la prochaine
-      // fléchette l'écrasera.
+      // Écarté quand même : la prochaine fléchette l'écrasera.
     }
     return []
   }

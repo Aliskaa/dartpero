@@ -10,7 +10,7 @@ import type { X01Config } from './config'
 export type X01PlayerState = {
   readonly playerId: PlayerId
   readonly remaining: Score
-  /** `double in` : le joueur a-t-il déjà touché un double ? Toujours vrai sinon. */
+  /** `double in` : a déjà touché un double (toujours vrai sans `double in`). */
   readonly hasOpened: boolean
   readonly dartsThrownInLeg: number
   readonly legsWonInSet: number
@@ -18,13 +18,12 @@ export type X01PlayerState = {
 }
 
 export type X01State = {
-  /** Le discriminant de la couture `GameMode` : il rend l'union d'états sûre. */
   readonly mode: 'X01'
   readonly config: X01Config
   readonly players: readonly X01PlayerState[]
   readonly currentPlayerIndex: number
   readonly startingPlayerIndex: number
-  /** Numéro de leg global (0-based), tous sets confondus. */
+  /** Global (0-based), tous sets confondus. */
   readonly legNumber: number
   readonly setNumber: number
   readonly winnerId: PlayerId | null
@@ -113,7 +112,6 @@ const applyVisit = (state: X01State, darts: readonly Dart[]): X01State => {
     }
   }
 
-  // ---- Le leg est gagné ----
   const milestones: X01Milestone[] = [
     {
       type: 'LegWon',
@@ -176,11 +174,7 @@ const applyVisit = (state: X01State, darts: readonly Dart[]): X01State => {
   }
 }
 
-/**
- * Rejoue le journal et renvoie l'état courant.
- *
- * C'est aussi l'implémentation de l'annulation : `project(events.slice(0, -1))`.
- */
+/** Rejoue le journal ; l'annulation est `project(events.slice(0, -1))`. */
 const project = (events: readonly MatchEvent[]): X01State => {
   const [first, ...rest] = events
   if (first === undefined || first.type !== 'MatchStarted') {
@@ -189,8 +183,6 @@ const project = (events: readonly MatchEvent[]): X01State => {
 
   let state = start(first)
   for (const event of rest) {
-    // Un journal n'a qu'un seul événement d'ouverture, quel que soit le mode :
-    // tout le reste est une volée.
     if (event.type !== 'VisitRecorded') {
       throw new DomainError(`A match log holds a single opening event, got ${event.type}`)
     }

@@ -21,15 +21,7 @@ import { PlayerGender } from '../../domain/value-objects/PlayerGender'
 import type { MatchRecord } from '../ports/driven/MatchRepository'
 import { BACKUP_FORMAT, BACKUP_VERSION } from '../ports/driving/ManageBackup'
 
-/**
- * La frontière entre un fichier venu de nulle part et le domaine.
- *
- * Un JSON importé n'est **rien** tant qu'il n'a pas été validé : ni un backup,
- * ni même un objet. Tout passe donc par les fabriques du domaine (`Dart.of`,
- * `X01Config.create`, `PlayerColor.of`…), qui savent déjà refuser un triple
- * bull ou un score de départ absurde. On ne réécrit aucune règle ici, on ne
- * fait que traduire.
- */
+// Un JSON importé n'est rien tant qu'il n'est pas validé : tout passe par les fabriques du domaine.
 
 const estObjet = (valeur: unknown): valeur is Record<string, unknown> =>
   typeof valeur === 'object' && valeur !== null && !Array.isArray(valeur)
@@ -53,11 +45,7 @@ const liste = (valeur: unknown, champ: string): readonly unknown[] => {
 
 const MULTIPLICATEURS: readonly Multiplier[] = ['SIMPLE', 'DOUBLE', 'TRIPLE']
 
-/**
- * Une fléchette venue du disque, revalidée. Exportée pour le brouillon de volée
- * (lot `volee-partielle`) : il se relit avec **la même** validation que
- * l'import, une seule règle pour tout ce qui revient d'un stockage.
- */
+/** Une fléchette venue du disque, revalidée (partagée avec le brouillon de volée). */
 export const versDart = (valeur: unknown): Dart => {
   if (!estObjet(valeur)) throw new DomainError('dart must be an object')
 
@@ -70,8 +58,6 @@ export const versDart = (valeur: unknown): Dart => {
     throw new DomainError(`invalid dart multiplier: ${String(multiplier)}`)
   }
 
-  // `Dart.of` refuse le triple bull et les secteurs hors 1-20 : la règle vit là,
-  // pas ici.
   return Dart.of(segment as Segment, multiplier as Multiplier)
 }
 
@@ -83,7 +69,6 @@ const versSegment = (valeur: unknown): Segment => {
   throw new DomainError(`invalid segment: ${String(valeur)}`)
 }
 
-/** Un numéro de Killer : un entier de 1 à 20, jamais la bulle ni `MISS`. */
 const versNumeroKiller = (valeur: unknown): SegmentNumber => {
   if (typeof valeur === 'number' && Number.isInteger(valeur) && valeur >= 1 && valeur <= 20) {
     return valeur as SegmentNumber
@@ -91,15 +76,7 @@ const versNumeroKiller = (valeur: unknown): SegmentNumber => {
   throw new DomainError(`invalid Killer number: ${String(valeur)}`)
 }
 
-/**
- * La partie commune à toutes les ouvertures : qui joue, qui commence, et le
- * nom tapé s'il y en a un.
- *
- * Le nom est facultatif : une sauvegarde d'avant le lot `nom-de-partie` n'a
- * pas la clé et s'importe sans nom. Présent, il doit être du texte (sinon la
- * partie est écartée) et passe par `MatchName.of` — un nom trop long est
- * refusé, un nom vide ou fait d'espaces revient à « pas de nom » (clé absente).
- */
+// Le nom est facultatif ; un nom vide revient à « pas de nom » (clé absente), un nom trop long est refusé.
 const versOuverture = (
   valeur: Record<string, unknown>,
   type: string,
@@ -123,14 +100,7 @@ const versOuverture = (
   }
 }
 
-/**
- * Les événements qui ouvrent une partie, un par mode.
- *
- * ⚠️ Un mode absent d'ici est un mode **impossible à réimporter** : sa
- * sauvegarde partirait bien du téléphone mais serait refusée au retour, et le
- * joueur perdrait ses parties en changeant d'appareil. Ajouter un mode, c'est
- * donc aussi ajouter sa ligne ici.
- */
+// ⚠️ Un mode absent d'ici est impossible à réimporter : ajouter un mode, c'est ajouter sa ligne ici.
 const OUVERTURES = [
   'MatchStarted',
   'TourDuMondeStarted',
@@ -147,7 +117,6 @@ const versEvenement = (valeur: unknown): MatchEvent => {
   if (valeur.type === 'MatchStarted') {
     return {
       type: 'MatchStarted',
-      // `X01Config.create` valide le score de départ, les legs et les sets.
       config: X01Config.create({
         startingScore: config.startingScore as number | undefined,
         legsToWin: config.legsToWin as number | undefined,
@@ -172,7 +141,6 @@ const versEvenement = (valeur: unknown): MatchEvent => {
   if (valeur.type === 'CricketStarted') {
     return {
       type: 'CricketStarted',
-      // `CricketConfig.create` refuse une cible en double et une variante inconnue.
       config: CricketConfig.create({
         targets: liste(config.targets, 'config.targets').map(versSegment),
         variant: config.variant as CricketVariant | undefined,
@@ -196,7 +164,6 @@ const versEvenement = (valeur: unknown): MatchEvent => {
   if (valeur.type === 'KillerStarted') {
     const event: KillerStarted = {
       type: 'KillerStarted',
-      // `KillerConfig.create` refuse des vies hors liste (3 ou 5) et un booléen mal typé.
       config: KillerConfig.create({
         startingLives: config.startingLives as number | undefined,
         selfHitCostsLives: config.selfHitCostsLives as boolean | undefined,
@@ -204,8 +171,6 @@ const versEvenement = (valeur: unknown): MatchEvent => {
       numbers: liste(valeur.numbers, 'numbers').map(versNumeroKiller),
       ...versOuverture(valeur, 'KillerStarted'),
     }
-    // Les règles de l'ouverture (2 à 6 joueurs, numéros uniques, longueurs
-    // égales…) vivent dans le domaine : on les appelle, on ne les recopie pas.
     KillerRules.start(event)
     return event
   }
@@ -229,12 +194,7 @@ const versEvenement = (valeur: unknown): MatchEvent => {
   throw new DomainError(`unknown event type: ${String(valeur.type)}`)
 }
 
-/**
- * Un profil venu du fichier. Le genre (lot `killer`) est facultatif : clé
- * absente = « non précisé », comme toute sauvegarde d'avant le lot. Présent,
- * il doit appartenir à la liste fermée (`PlayerGender.of`) : sinon le profil
- * est refusé, comme pour une couleur inconnue — compté, sans planter.
- */
+// Genre facultatif (clé absente = « non précisé ») ; un genre invalide refuse le profil.
 export const versPlayer = (valeur: unknown): Player => {
   if (!estObjet(valeur)) throw new DomainError('player must be an object')
 
@@ -258,9 +218,7 @@ export const versMatchRecord = (valeur: unknown): MatchRecord => {
   if (ouverture === undefined || !OUVERTURES.includes(ouverture)) {
     throw new DomainError(`a match journal must open with one of: ${OUVERTURES.join(', ')}`)
   }
-  // Le journal entier doit se rejouer (lot `killer`) : une volée après la fin
-  // de la partie, ou un événement d'un autre mode, refuse la partie — comptée
-  // dans `matchesSkipped`, sans planter.
+  // Le journal entier doit se rejouer, sinon la partie est refusée (comptée dans `matchesSkipped`).
   GameModes.project(events)
 
   return {
@@ -271,11 +229,7 @@ export const versMatchRecord = (valeur: unknown): MatchRecord => {
   }
 }
 
-/**
- * Vérifie l'enveloppe du fichier et rend ses deux listes **encore brutes** :
- * chaque entrée est validée une par une par l'appelant, pour qu'une partie
- * abîmée n'emporte pas tout le fichier avec elle.
- */
+/** Vérifie l'enveloppe et rend les deux listes brutes : l'appelant valide entrée par entrée. */
 export const ouvrirEnveloppe = (
   contenu: unknown,
 ): { players: readonly unknown[]; matches: readonly unknown[] } => {

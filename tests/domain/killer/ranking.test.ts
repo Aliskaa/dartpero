@@ -8,7 +8,6 @@ describe('Killer — classement', () => {
   const A_QUATRE = ouverture({ playerIds: [KEVIN, JULIEN, SARAH, PAUL] })
 
   it('partie finie : gagnant 1er, puis les éliminés dans l’ordre inverse, rangs distincts', () => {
-    // Kevin (8) élimine Julien (14), puis Paul (11), puis Sarah (3).
     const etat = jouer(A_QUATRE, [
       [Dart.double(8), Dart.triple(14)],
       [Dart.miss()],
@@ -28,7 +27,6 @@ describe('Killer — classement', () => {
   })
 
   it('en cours : vivants par vies décroissantes, ex æquo au même rang, ordre de jeu pour l’affichage', () => {
-    // Kevin killer retire 1 vie à Julien ; Kevin, Sarah et Paul ont 3 vies.
     const etat = jouer(A_QUATRE, [[Dart.double(8), Dart.single(14)]])
 
     expect(KillerRules.ranking(etat)).toEqual([

@@ -4,21 +4,11 @@ import { Avatar } from '@/ui/composants/commun/Avatar'
 import { type NomPictogramme, Pictogramme } from '@/ui/composants/commun/Pictogramme'
 import { LIBELLE_TOUT_VOIR, nomBascule, nomToutVoir } from '@/ui/labels'
 
-/**
- * LES CARTES DU PODIUM (lot `statistiques-podium`) — une carte par thème :
- * le premier en grand avec son chiffre, les N premiers en barres
- * proportionnelles, puis « Tout voir » qui ouvre la liste complète dans une
- * `Modale` (Révision 1). On n'y lit pas une grille, on y lit « qui mène, et de
- * combien ».
- */
+/** Cartes du podium : une par thème, le premier en grand puis les N premiers en barres. */
 
 type PropsCarte = {
   readonly titre: string
-  /**
-   * Le nom accessible, quand le titre visible est abrégé (« Moyenne 3 fl.,
-   * Moyenne 3 fléchettes ») : il contient le visible, et nomme le `<h2>`, donc
-   * la région.
-   */
+  /** Nom accessible quand le titre visible est abrégé ; il contient le visible. */
   readonly nom?: string
   readonly pictogramme: NomPictogramme
   /** À droite du titre : les bascules. */
@@ -26,13 +16,7 @@ type PropsCarte = {
   readonly children: ReactNode
 }
 
-/**
- * Une carte : une région nommée par son `<h2>`.
- *
- * ⚠️ Titre et pictogramme en `laiton`, comme la planche (U4) : en thème clair,
- * 4,40:1 sur `ardoise`, sous le plancher de 4,5:1. Risque accepté par
- * l'utilisateur, consigné dans la charte comme écart connu.
- */
+/** Une carte : région nommée par son `<h2>`. ⚠️ Titre en `laiton` : 4,40:1 en thème clair, écart connu de la charte. */
 export const CartePodium = ({ titre, nom, pictogramme, action, children }: PropsCarte) => {
   const idTitre = useId()
 
@@ -59,24 +43,7 @@ export const CartePodium = ({ titre, nom, pictogramme, action, children }: Props
   )
 }
 
-/**
- * Les bascules d'une carte : des puces, pas un rail — elles réordonnent la
- * carte, elles ne la dominent pas.
- *
- * Même API que `ChoixSegmente`. Le libellé visible est court (« F9 ») ; le
- * nom accessible dit le court puis le complet (« F9, First 9 », `nomBascule`).
- *
- * ⚠️ Visuel de la planche (une puce de 22 px de haut), mais **zone d'appui de
- * 48 px** : un pseudo-élément déborde de 14 px au-dessus et au-dessous. En
- * largeur, la puce garde la sienne (« F9 » ≈ 29 px) : écart connu, accepté
- * (charte, Q3).
- *
- * Deux dessins (`disposition`) : `espacees`, les puces du podium ; `jointives`,
- * celles de la carte Évolution (lot `courbe`, planche) — collées, bordures
- * confondues (`-ml-px`), 32 px visibles et toujours 48 px d'appui (8 px de
- * débord dessus et dessous). L'active passe au-dessus de ses voisines pour
- * que sa bordure laiton se voie en entier.
- */
+/** Bascules d'une carte (même API que `ChoixSegmente`). ⚠️ Zone d'appui de 48 px par pseudo-élément, puce visible plus petite. */
 const DISPOSITIONS_BASCULES = {
   espacees: {
     groupe: 'flex shrink-0 gap-1',
@@ -149,12 +116,7 @@ export type LigneClassement = {
   readonly complement?: string
 }
 
-/**
- * Le premier en grand : avatar 34 px, nom, chiffre `text-5xl`.
- *
- * Le chiffre est en `laiton-clair` seulement s'il y a un vrai premier ; sans
- * personne en tête, `craie-vive` (Q2) ; sans occasion, « — » en `craie-3`.
- */
+/** Le premier en grand : avatar, nom, chiffre ; `laiton-clair` seulement s'il y a un vrai premier. */
 export const GrandeLignePodium = ({
   premier,
   complement = premier.complement,
@@ -187,12 +149,7 @@ export const GrandeLignePodium = ({
   </p>
 )
 
-/**
- * ⚠️ Des colonnes de **largeur fixe** : les pistes de toutes les barres d'une
- * carte ont la même longueur, sinon une barre plus courte mentirait sur
- * l'écart (T12). La colonne des valeurs s'élargit quand une ligne porte un
- * complément (« 100 / 120 »).
- */
+/** ⚠️ Colonnes de largeur fixe : des pistes égales, sinon une barre courte mentirait sur l'écart. */
 const GRILLES = {
   simple: 'grid-cols-[24px_54px_1fr_44px]',
   avecComplement: 'grid-cols-[24px_54px_1fr_72px]',
@@ -202,12 +159,7 @@ const GRILLES = {
 export type Espacement = 'carte' | 'liste'
 const ECARTS: Record<Espacement, string> = { carte: 'gap-2', liste: 'gap-3.5' }
 
-/**
- * Tout le monde en barres — ou les seuls visibles d'une carte coupée.
- *
- * Ne connaît pas `PlayerCareer` : il reçoit des lignes prêtes. Barres et
- * avatars sont `aria-hidden` ; chaque valeur se lit en texte.
- */
+/** Tout le monde en barres, ou les seuls visibles d'une carte coupée ; reçoit des lignes prêtes. */
 export const BarresPodium = ({
   lignes,
   espacement = 'carte',
@@ -250,11 +202,7 @@ export const BarresPodium = ({
   )
 }
 
-/**
- * « Tout voir » : sous une carte coupée à ses N premiers. Discret (`craie-3`,
- * majuscules), pleine largeur, 48 px. Il ouvre un dialogue : `aria-haspopup`,
- * et un nom qui dit lequel (« Tout voir, Victoires »).
- */
+/** « Tout voir » : ouvre un dialogue (`aria-haspopup`), son nom dit lequel. */
 export const BoutonToutVoir = ({
   titre,
   onClick,

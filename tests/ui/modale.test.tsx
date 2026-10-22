@@ -21,7 +21,6 @@ describe('Modale — le <dialog> natif', () => {
     expect(dialogue(container).open).toBe(false)
     expect(screen.queryByText('Contenu de la liste')).toBeNull()
 
-    // Témoin : ouverte, le contenu est bien là.
     rerender(boite(true))
     expect(dialogue(container).open).toBe(true)
     expect(screen.getByText('Contenu de la liste')).toBeInTheDocument()
@@ -30,10 +29,7 @@ describe('Modale — le <dialog> natif', () => {
   it('TM-2 : jamais de `display` (flex, grid, block, inline-*) sur le <dialog> lui-même', () => {
     const { container } = render(boite(false))
     const classes = dialogue(container).className.split(/\s+/)
-    // Témoin : on lit bien la bonne liste de classes.
     expect(classes).toContain('m-auto')
-    // Sans variante (`open:flex` resterait permis) : une classe de `display`
-    // afficherait le `<dialog>` même fermé.
     const display =
       /^(?:flex|inline-flex|grid|inline-grid|block|inline-block|inline|contents|table)$/
     expect(classes.filter((classe) => display.test(classe))).toEqual([])
@@ -44,7 +40,6 @@ describe('Modale — le <dialog> natif', () => {
     const boiteOuverte = screen.getByRole('dialog', { name: 'Victoires' })
     expect(boiteOuverte).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Fermer' })).toHaveFocus()
-    // Le pictogramme est muet.
     expect(boiteOuverte.querySelector('svg[width="20"]')).toHaveAttribute('aria-hidden', 'true')
   })
 
@@ -71,7 +66,6 @@ describe('Modale — le <dialog> natif', () => {
     fireEvent(dialogue(container), new Event('close'))
     expect(onFermer).toHaveBeenCalledTimes(1)
 
-    // Fermée par la prop : `close()` émet `close`, qui ne doit rien relayer.
     rerender(boite(false, onFermer))
     expect(dialogue(container).open).toBe(false)
     expect(onFermer).toHaveBeenCalledTimes(1)
@@ -82,7 +76,6 @@ describe('Modale — le <dialog> natif', () => {
     const { container } = render(boite(true, onFermer))
     const d = dialogue(container)
     d.getBoundingClientRect = () => new DOMRect(20, 100, 300, 400)
-    // Le voile renvoie ses appuis au `<dialog>` lui-même, hors de sa boîte.
     fireEvent.pointerDown(d, { clientX: 5, clientY: 50 })
     fireEvent.click(d, { clientX: 5, clientY: 50 })
     expect(onFermer).toHaveBeenCalledTimes(1)
@@ -94,15 +87,11 @@ describe('Modale — le <dialog> natif', () => {
     const d = dialogue(container)
     d.getBoundingClientRect = () => new DOMRect(20, 100, 300, 400)
 
-    // Sur le contenu : la cible n'est pas le `<dialog>`.
     const contenu = screen.getByText('Contenu de la liste')
     fireEvent.pointerDown(contenu, { clientX: 50, clientY: 200 })
     fireEvent.click(contenu, { clientX: 50, clientY: 200 })
-    // Même hors du rectangle mesuré (un contenu qui déborde, une mesure en
-    // retard) : c'est la cible qui décide d'abord, pas les coordonnées.
     fireEvent.pointerDown(contenu, { clientX: 5, clientY: 50 })
     fireEvent.click(contenu, { clientX: 5, clientY: 50 })
-    // Sur la bordure : la cible est le `<dialog>`, mais le point est dans sa boîte.
     fireEvent.pointerDown(d, { clientX: 21, clientY: 101 })
     fireEvent.click(d, { clientX: 21, clientY: 101 })
 

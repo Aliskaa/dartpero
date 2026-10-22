@@ -41,12 +41,7 @@ const ENCRE: Record<TeinteVoyant, string> = {
   vert: 'text-vert-etat',
 }
 
-/**
- * L'action est soulignée en laiton, mais c'est le voyant ENTIER qui est la
- * cible : un pseudo-élément de l'action le recouvre (`after:inset-0`). La
- * valeur reste hors du contrôle — un `<output>` ne se met pas dans un bouton —
- * et l'anneau de focus suit la zone d'appui, pas le mot.
- */
+/** Action soulignée, mais le voyant ENTIER est la cible (pseudo-élément `after:inset-0`). */
 const CLASSES_ACTION = [
   'self-start font-score text-etiquette uppercase tracking-widest text-laiton-clair',
   'underline underline-offset-3',
@@ -55,10 +50,7 @@ const CLASSES_ACTION = [
   'disabled:opacity-40',
 ].join(' ')
 
-/**
- * Un voyant des Réglages (planche `#rg4`) : une étiquette en capitales, une
- * valeur en Oswald, une action facultative. Lu à 30 cm, pas à 3 m.
- */
+/** Un voyant des Réglages : étiquette en capitales, valeur en Oswald, action facultative. */
 export const Voyant = ({ etiquette, valeur, ton, teinte, action }: Props) => (
   <div className={`relative flex flex-col gap-1 border-t-3 bg-ardoise px-2 py-2.5 ${FILET[ton]}`}>
     <span className="font-score text-etiquette uppercase tracking-widest text-craie-3">

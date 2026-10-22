@@ -40,8 +40,7 @@ export const TourDuMondeEcran = () => {
 
   useWakeLock(state !== null && !termine)
 
-  // La boîte « Kevin boucle le parcours sur 25 ? » (lot `annulation-volee`) : au-dessus du
-  // chargement, comme toute boîte au retour (CONVENTIONS § 9).
+  // La boîte « Kevin boucle le parcours sur 25 ? » : au-dessus du chargement, comme toute boîte au retour.
   const confirmation = useConfirmationSortie({
     pret: partie.pret,
     enAttente: partie.sortieEnAttente,
@@ -55,8 +54,7 @@ export const TourDuMondeEcran = () => {
     if (partie.ajouterFlechette(dart)) confirmation.demander()
   }
 
-  // Le résumé attend que l'entrée de la boîte soit dépilée : la remplacer
-  // laisserait la partie derrière elle dans l'historique.
+  // Le résumé attend que l'entrée de la boîte soit dépilée, sinon la partie resterait dans l'historique.
   const auRepos = confirmation.auRepos
   useEffect(() => {
     if (termine && auRepos) navigate(`/partie/${identifiant}/resume`, { replace: true })
@@ -163,8 +161,7 @@ export const TourDuMondeEcran = () => {
           })}
         </FeuilleMatch>
 
-        {/* Sous la feuille en portrait : 44 px sur la dernière ligne en masqueraient
-            la cible et la volée (mesuré à quatre joueurs : 41 px sur 80). */}
+        {/* Sous la feuille en portrait : superposé, il masquerait la cible et la volée de la dernière ligne. */}
         <MomentCelebratif moment={moment} ancrage="sous" />
       </div>
       {partie.erreur && <MessageErreur>{partie.erreur}</MessageErreur>}{' '}

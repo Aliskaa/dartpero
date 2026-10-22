@@ -4,24 +4,13 @@ import type { Dart } from '@/core/domain/value-objects/Dart'
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { useServices } from '../providers/ServicesProvider'
 
-/**
- * Où en est une volée, d'après les règles du mode (lues sur son port de
- * prévisualisation, jamais recopiées) :
- * - `ouverte` : elle attend une fléchette de plus ;
- * - `en-attente` : la fléchette qui sort, gagne ou boucle attend *Valider* ;
- * - `close` : elle part au journal (trois fléchettes, bust, fin de manche
- *   d'entraînement).
- */
+/** Où en est une volée : `ouverte`, `en-attente` (sortie à valider) ou `close` (part au journal). */
 export type EtatVolee = 'ouverte' | 'en-attente' | 'close'
 
 /** Une seule référence pour « aucune fléchette » : les `useMemo` des hooks ne se recalculent pas pour rien. */
 const AUCUNE: readonly Dart[] = []
 
-/**
- * Une volée relue du disque n'est rendue que si chaque fléchette avant la
- * dernière la laissait ouverte, et si la dernière ne la clôt pas : une volée
- * close aurait dû partir au journal, elle n'a rien à faire en saisie.
- */
+/** Une volée relue n'est rendue que si elle est encore ouverte : une volée close aurait dû partir au journal. */
 const legale = <S>(
   base: S,
   darts: readonly Dart[],
@@ -34,25 +23,8 @@ const legale = <S>(
 }
 
 /**
- * La volée en cours, commune aux quatre hooks de mode (lot `volee-partielle`) :
- * l'état local de la saisie, doublé d'un **brouillon** hors du journal qui la
- * fait survivre à un rechargement ou à un aller-retour par l'Accueil.
- *
- * ⚠️ Ce qu'il faut tenir :
- * - **Lecture une fois par ouverture** de la partie, dès que son état est là.
- *   Une volée acceptée est posée **sans écriture, sans haptique, sans voix** :
- *   rien n'est dit ni célébré à la reprise. Refusée, elle est effacée. Tant que
- *   la lecture n'a pas répondu, `pret` est faux (l'écran garde son spinner).
- *   Sous `StrictMode`, la même lecture est partagée par les deux effets : un
- *   seul appel au dépôt, un seul résultat appliqué (drapeau `actif`).
- * - **Les écritures passent par une file** : chacune attend la précédente, dans
- *   l'ordre des appels. La fléchette qui clôt la volée est écrite, puis effacée
- *   après l'enregistrement, jamais l'inverse. Un échec est avalé : ni erreur
- *   affichée, ni pavé grisé — seule la reprise manquera.
- * - **L'estampille** est l'état affiché au moment du geste (`base`), jamais
- *   relu à l'écriture : voir `ManageVisitDraftUseCase.save`.
- * - `poser` hors de tout updater de `setState` (`StrictMode` le rejouerait, et
- *   l'écriture avec).
+ * La volée en cours des cinq hooks de mode, doublée d'un brouillon hors journal. ⚠️ Reprise silencieuse, lue une fois ;
+ * écritures en file (échec avalé) ; estampille = état affiché au geste ; `poser` hors de tout updater de `setState`.
  */
 export const useVoleeEnCours = <S extends AnyMatchState>(
   matchId: MatchId,
@@ -97,10 +69,7 @@ export const useVoleeEnCours = <S extends AnyMatchState>(
     lecture.current.resultat.then(
       (darts) => {
         if (!actif) return
-        // Les règles du mode jugent la volée relue : si elles levaient, `pret`
-        // resterait faux et l'écran garderait son spinner à chaque ouverture.
-        // Une volée qu'on ne sait pas juger est traitée comme refusée : effacée
-        // au mieux, et la partie s'ouvre sans elle.
+        // Une volée qu'on ne sait pas juger est traitée comme refusée, sinon `pret` resterait faux.
         try {
           if (darts.length > 0) {
             if (legale(base, darts, evaluerRef.current)) setSaisie({ matchId, darts })

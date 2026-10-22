@@ -11,10 +11,6 @@ export class GetPlayerProgressUseCase implements GetPlayerProgress {
     private readonly clock: Clock,
   ) {}
 
-  /**
-   * Rejouée depuis les journaux, comme le podium et avec le **même** filtre de
-   * période : rien n'est stocké, donc la courbe ne peut pas le contredire.
-   */
   async execute(period: StatsPeriod = 'ALL_TIME'): Promise<readonly PlayerProgress[]> {
     const records = await this.matches.listAll()
     return computeProgress(x01StatsInPeriod(records, period, this.clock.now()))

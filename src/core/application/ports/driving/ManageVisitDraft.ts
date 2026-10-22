@@ -16,23 +16,9 @@ export type RestoreVisitDraftQuery = {
   readonly base: AnyMatchState
 }
 
-/**
- * La volée en cours, gardée hors du journal (lot `volee-partielle`) : écrite à
- * chaque fléchette, relue à l'ouverture de la partie.
- *
- * Rien n'est dit, vibré ni célébré ici : c'est un simple dépôt de fléchettes,
- * que l'écran rend telles quelles. Le journal, lui, ne bouge pas.
- */
 export interface ManageVisitDraft {
-  /**
-   * Écrit (ou efface, sans fléchette) le brouillon de la partie. Peut rejeter :
-   * l'appelant avale l'échec, la saisie ne s'arrête jamais pour un brouillon.
-   */
+  /** Peut rejeter : l'appelant avale l'échec, la saisie ne s'arrête jamais pour un brouillon. */
   save(command: SaveVisitDraftCommand): Promise<void>
-  /**
-   * Les fléchettes à rendre à la saisie : `[]` si la partie n'a pas de
-   * brouillon, ou s'il est périmé ou incohérent avec le journal — il est alors
-   * effacé, jamais appliqué.
-   */
+  /** `[]` si absent, périmé ou incohérent avec le journal (alors effacé). */
   restore(query: RestoreVisitDraftQuery): Promise<readonly Dart[]>
 }

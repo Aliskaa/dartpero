@@ -54,30 +54,8 @@ import {
   valeurEvolution,
 } from '@/ui/labels'
 
-/**
- * LA CARTE ÉVOLUTION (lot `courbe`, planche `courbe.html`, piste A) — la courbe
- * du joueur du sélecteur sur la période : un carré par partie X01, la tendance
- * sur 3 parties en laiton, la moyenne de la période en pointillé.
- *
- * - **Deux SVG à la même échelle** : la gouttière (axe vertical, fixe,
- *   `aria-hidden`) et la fenêtre qui défile au-delà de 14 parties (le tracé,
- *   `role="img"` nommé). La largeur du tracé est un pourcentage de la fenêtre,
- *   hauteur `auto` : aucune mesure, aucun `ResizeObserver`.
- * - **À l'ouverture**, la fin de la courbe et la dernière partie sélectionnée.
- *   L'appelant remonte la carte (clé `joueur|période|nombre de points|dernière
- *   partie`, pour qu'une relecture en fond apportant une partie la remonte) ; un changement de
- *   mesure remet la sélection dans le gestionnaire et la vue en fin de courbe.
- * - **Appui seul** (N1) : un appui sélectionne la partie la plus proche, au
- *   lâcher ; un glissé ne sélectionne jamais — le navigateur fait défiler, et
- *   un `pointercancel` annule. La sélection reste sur sa partie hors de vue.
- * - **Clavier** : un `<input type="range">` masqué, **hors** de la fenêtre (son
- *   focus la ferait défiler), qui ramène la partie dans la vue au plus court.
- * - Défilement programmé **instantané** : `scrollLeft`, jamais `smooth` ni
- *   `scrollIntoView` (qui pourrait faire défiler la page).
- *
- * ⚠️ Texte des axes à 10,5 unités (≈ 10 px), comme la planche : décision de
- * l'utilisateur (U8), sous le plancher de 0,75 rem — écart connu de la charte.
- */
+/** Carte Évolution : courbe du joueur du sélecteur sur la période, tendance sur 3 parties en laiton. */
+// ⚠️ Texte des axes ≈ 10 px, sous le plancher de 0,75 rem : écart connu de la charte.
 
 type Props = {
   /** Le nom affiché du joueur (`nomJoueur`). */
@@ -122,9 +100,7 @@ export const CarteEvolution = ({ nom, progression, mesure: mesureChoisie, onMesu
     )
   }
 
-  // À l'ouverture (la carte remonte à chaque joueur et période) et à chaque
-  // mesure : la fin de la courbe, sans animation. Idempotent sous StrictMode.
-  // Une courbe qui tient ne défile pas : on n'y écrit rien.
+  // À l'ouverture et à chaque mesure : fin de la courbe, sans animation. Idempotent sous StrictMode.
   const defile = geometrie.defile
   // biome-ignore lint/correctness/useExhaustiveDependencies: la mesure est le déclencheur voulu ; le corps relit le DOM
   useLayoutEffect(() => {
@@ -196,12 +172,7 @@ export const CarteEvolution = ({ nom, progression, mesure: mesureChoisie, onMesu
     lireVue()
   }
 
-  /**
-   * Les touches du curseur, tenues ici plutôt que laissées au navigateur (qui
-   * les traiterait de façon variable) : ← ↓ la partie d'avant, → ↑ la suivante,
-   * Début / Fin la première et la dernière. `preventDefault` : un seul pas par
-   * touche. Un lecteur d'écran qui ajuste le curseur passe par `onChange`.
-   */
+  /** Touches du curseur tenues ici : ← ↓ avant, → ↑ après, Début / Fin ; `preventDefault` pour un seul pas. */
   const TOUCHES: Record<string, (rang: number) => number> = {
     ArrowLeft: (rang) => rang - 1,
     ArrowDown: (rang) => rang - 1,

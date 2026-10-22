@@ -22,15 +22,7 @@ const ONGLETS: readonly Onglet[] = [
   { to: '/reglages', libelle: LIBELLE_ONGLET_REGLAGES, Icone: Settings },
 ]
 
-/**
- * La barre de comptoir : quatre destinations, toujours au même endroit, en bas.
- * Les joueurs se gèrent depuis les Réglages ; on les ajoute à la volée en
- * créant une partie.
- *
- * Elle n'apparaît **pas** pendant une partie ni sur l'écran de configuration :
- * là, chaque pixel sert à jouer, et un onglet mal visé en pleine volée ferait
- * perdre la saisie en cours.
- */
+/** Barre de comptoir : quatre destinations, absente pendant une partie et sur l'écran de configuration. */
 export const NavigationBasse = () => (
   <nav
     aria-label={LIBELLE_NAVIGATION_PRINCIPALE}
@@ -56,7 +48,6 @@ export const NavigationBasse = () => (
           <>
             <Icone aria-hidden="true" className="size-5" />
             <span className="grave">{libelle}</span>
-            {/* Le trait de laiton sous l'onglet actif : lisible même de biais. */}
             <span
               aria-hidden="true"
               className={`h-[3px] w-8 ${isActive ? 'bg-laiton' : 'bg-transparent'}`}

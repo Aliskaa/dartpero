@@ -5,10 +5,7 @@ import {
 
 const PREFIXE = 'dartpero:'
 
-/**
- * `localStorage`, avec repli mémoire : en navigation privée sur certains
- * navigateurs, la simple lecture lève une exception.
- */
+/** `localStorage` avec repli mémoire (en navigation privée, la lecture peut lever). */
 export const createLocalStoragePreferences = (): Preferences => {
   const disponible = (() => {
     try {

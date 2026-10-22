@@ -63,11 +63,6 @@ describe('suggestCheckout — bogey numbers', () => {
     }
   })
 
-  /**
-   * Le test le plus important du module : il vérifie d'un coup que
-   * l'algorithme trouve TOUTES les sorties réelles, qu'aucune route proposée
-   * n'est fausse, et que la liste BOGEY_NUMBERS est exactement la bonne.
-   */
   it('propose une route valide pour tout reste finissable de 2 à 170', () => {
     const infinissables: number[] = []
 

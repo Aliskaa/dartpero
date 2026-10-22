@@ -20,11 +20,6 @@ const S1 = Dart.single(1)
 const RATE = [Dart.miss(), Dart.miss(), Dart.miss()]
 const libelles = (darts: readonly Dart[]): string[] => darts.map((dart) => Dart.label(dart))
 
-/**
- * Lot `annulation-volee` : un appui retire **une fléchette**, la dernière jouée.
- * Le use case tronque le journal, rejoue la projection, et rend les fléchettes
- * restantes de la volée pour qu'elles reviennent à la saisie locale.
- */
 describe('Annulation fléchette par fléchette (use cases)', () => {
   let services: Services
   let dependencies: Dependencies
@@ -53,7 +48,6 @@ describe('Annulation fléchette par fléchette (use cases)', () => {
       expect(libelles(darts)).toEqual(['T20', 'T19'])
       expect(state.currentPlayerIndex).toBe(0)
       expect(state.players[0]?.remaining).toBe(501)
-      // Le reste affiché suit les fléchettes encore posées : 501 − 117 = 384.
       const joueur = state.players[0]
       if (!joueur) throw new Error('joueur attendu')
       const apercu = services.previewVisit.execute({
@@ -64,7 +58,6 @@ describe('Annulation fléchette par fléchette (use cases)', () => {
       })
       expect(apercu.remainingAfter).toBe(384)
       expect(apercu.complete).toBe(false)
-      // La volée a quitté le journal : elle n'existe plus qu'en saisie.
       expect(await journal(id)).toHaveLength(1)
     })
 
@@ -79,7 +72,6 @@ describe('Annulation fléchette par fléchette (use cases)', () => {
 
     it('défait un bust : la volée rouverte n’est plus perdue', async () => {
       const id = await demarrer(X01Config.create({ startingScore: 50 }))
-      // S20 · S20 · S20 depuis 50 : bust sur la troisième.
       await services.recordVisit.execute({ matchId: id, darts: [S20, S20, S20] })
       expect((await services.getMatchState.execute(id)).history.at(-1)?.outcome).toBe('BUSTED')
 
@@ -129,7 +121,6 @@ describe('Annulation fléchette par fléchette (use cases)', () => {
 
     it('défait la volée qui gagne un set : sets, manches et main recalculés', async () => {
       const id = await demarrer(X01Config.create({ startingScore: 40, legsToWin: 1, setsToWin: 2 }))
-      // Kevin gagne le 1er set ; Julien, qui commence la 2e manche, gagne le 2e set : 1 partout.
       await services.recordVisit.execute({ matchId: id, darts: [Dart.double(20)] })
       await services.recordVisit.execute({ matchId: id, darts: [Dart.double(20)] })
       const avant = await services.getMatchState.execute(id)
@@ -143,7 +134,6 @@ describe('Annulation fléchette par fléchette (use cases)', () => {
       expect(state.players.map((joueur) => joueur.legsWonInSet)).toEqual([0, 0])
       expect(state.setNumber).toBe(1)
       expect(state.legNumber).toBe(1)
-      // La 2e manche, commencée par Julien : la main lui revient.
       expect(state.currentPlayerIndex).toBe(1)
       expect(state.players[1]?.remaining).toBe(40)
       expect(state.winnerId).toBeNull()
@@ -175,7 +165,6 @@ describe('Annulation fléchette par fléchette (use cases)', () => {
       const id = await demarrer()
       const record = await dependencies.matches.findById(id)
       if (!record) throw new Error('partie attendue')
-      // Une volée de quatre fléchettes : illégale, la projection lève.
       const corrompu = {
         ...record,
         events: [...record.events, { type: 'VisitRecorded' as const, darts: [S1, S1, S1, S1] }],
@@ -301,20 +290,11 @@ describe('Annulation fléchette par fléchette (use cases)', () => {
         'CheckoutPracticeStarted',
         'RoundStarted',
       ])
-      // Rejeu à froid : même reste à viser.
       expect((await services.playCheckoutPractice.getState(id)).current?.target).toBe(cible)
     })
   })
 })
 
-/**
- * L'invariant du lot, dans chaque mode : la volée rouverte n'est **jamais**
- * complète. Privée de sa dernière fléchette, une volée ne conclut pas — sans
- * quoi l'écran l'enverrait aussitôt au journal, et l'annulation ne ferait rien.
- *
- * Chaque mode joue une partie scénarisée (volée de trois, bust, sortie,
- * victoire, bouclage…), puis remonte tout le journal, une volée après l'autre.
- */
 describe.each(GAME_MODE_IDS)('Invariant : la volée rouverte n’est jamais complète (%s)', (mode) => {
   type Joue = {
     readonly id: MatchId
@@ -392,7 +372,6 @@ describe.each(GAME_MODE_IDS)('Invariant : la volée rouverte n’est jamais comp
         }
       }
       case 'KILLER': {
-        // Kevin a le 8, Julien le 14 : killer, une vie, puis l'élimination qui gagne.
         const id = await services.playKiller.start({
           playerIds: joueurs,
           config: KillerConfig.create({ selfHitCostsLives: true }),
@@ -422,7 +401,6 @@ describe.each(GAME_MODE_IDS)('Invariant : la volée rouverte n’est jamais comp
         })
         const viser = async () => (await services.playCheckoutPractice.getState(id)).current?.target
         await services.playCheckoutPractice.recordVisit(id, [S1, S1, S1])
-        // Bust : trois T20 depuis un reste de 41 à 170 crèvent forcément.
         await services.playCheckoutPractice.recordVisit(id, [T20, T20, T20])
         const reste = (await viser()) ?? 0
         const route = services.getCheckoutSuggestion.execute({
@@ -461,7 +439,6 @@ describe.each(GAME_MODE_IDS)('Invariant : la volée rouverte n’est jamais comp
       expect(rouverte.complete).toBe(false)
       rouvertes += 1
     }
-    // Le scénario a bien été remonté en entier (garde contre un test vide).
     expect(rouvertes).toBeGreaterThanOrEqual(3)
   })
 })

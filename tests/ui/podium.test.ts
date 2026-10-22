@@ -16,7 +16,6 @@ import {
   type MesurePodium,
 } from '@/ui/podium'
 
-/** Une liste déjà triée, réduite à ses clés : la coupure ne regarde qu'elles. */
 const couper = (cles: readonly (number | null)[], n: number) => {
   const { visibles, toutVoir } = apercuPodium(cles, n, (cle) => cle)
   return { nombre: visibles.length, toutVoir }
@@ -51,12 +50,8 @@ describe('apercuPodium — N premiers, puis « Tout voir » (Révision 1)', () =
   })
 
   it('les « — » sont égaux entre eux (R1-Q2) : la règle du groupe s’applique à eux aussi', () => {
-    // Les « — » ferment toujours la marche : deux à cheval sur la coupure, et
-    // rien derrière, tiennent dans N + 1…
     expect(couper([9, 8, 7, 6, null, null], 5)).toEqual({ nombre: 6, toutVoir: false })
-    // … trois ou plus forment un groupe : coupe net à N.
     expect(couper([9, 8, 7, 6, null, null, null], 5)).toEqual({ nombre: 5, toutVoir: true })
-    // Une valeur puis des « — » : pas d'égalité à la coupure.
     expect(couper([9, 8, 7, 6, 5, null, null], 5)).toEqual({ nombre: 5, toutVoir: true })
   })
 
@@ -117,7 +112,6 @@ describe('MESURE_GROSSES_VOLEES — classer sur un seuil (Révision 1)', () => {
   })
 })
 
-/** Une carrière de test : tout à zéro, sauf ce qu'on précise. */
 const carriere = (id: string, champs: Partial<PlayerCareer> = {}): PlayerCareer => ({
   playerId: id as PlayerId,
   name: id,
@@ -285,7 +279,6 @@ describe('classerPodium — le classement d’une carte', () => {
       MESURE_VICTOIRES,
     )
 
-    // Kevin vient avant Sarah dans l'ordre de `GetPlayerStats` : il garde la grande ligne.
     expect(ids(lignes)).toEqual(['kevin', 'sarah', 'julien'])
     expect(lignes.map((l) => l.enTete)).toEqual([true, true, false])
   })
@@ -300,7 +293,6 @@ describe('classerPodium — le classement d’une carte', () => {
       MESURE_FINITIONS.DOUBLES,
     )
 
-    // Égaux à l'écran : l'ordre reçu est conservé, et les deux sont en tête.
     expect(ids(lignes)).toEqual(['sarah', 'kevin', 'julien'])
     expect(lignes.map((l) => l.texte)).toEqual(['41 %', '41 %', '24 %'])
     expect(lignes.map((l) => l.enTete)).toEqual([true, true, false])

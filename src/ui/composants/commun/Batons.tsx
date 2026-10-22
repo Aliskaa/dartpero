@@ -5,15 +5,7 @@ type Props = {
   readonly libelle: string
 }
 
-/**
- * Le comptage en bâtons — quatre traits barrés par un cinquième.
- *
- * C'est le geste du pub, celui dont on compte les tournées, et il se lit mieux
- * à trois mètres qu'une rangée de losanges : l'œil reconnaît un paquet de cinq
- * sans compter. Les traits acquis sont en craie pleine, ceux qui restent à
- * gagner en tirets de craie à 55 % (2 px) — on voit d'un coup ce qu'il manque,
- * et le tireté se lit là où un trait à 25 % disparaissait à 3 m.
- */
+/** Comptage en bâtons : quatre traits barrés par un cinquième, tirets pour ce qui reste à gagner. */
 export const Batons = ({ gagnes, requis, libelle }: Props) => {
   const total = Math.max(requis, gagnes)
   const traits = Array.from({ length: total }, (_, rang) => ({

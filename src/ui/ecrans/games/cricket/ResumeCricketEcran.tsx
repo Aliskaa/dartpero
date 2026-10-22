@@ -50,11 +50,7 @@ export const ResumeCricketEcran = () => {
   const fermees = (marks: readonly number[]) =>
     marks.filter((marques) => marques >= MARKS_TO_CLOSE).length
 
-  /**
-   * Le classement suit la règle de la variante : au Cricket standard le plus
-   * gros score mène, en cut-throat c'est le plus petit. Les cibles fermées
-   * départagent — c'est ce qui reste à faire pour conclure.
-   */
+  /** Classement selon la variante : plus gros score en standard, plus petit en cut-throat ; les cibles fermées départagent. */
   const classement = [...state.players].sort((a, b) => {
     if (a.score !== b.score) return cutThroat ? a.score - b.score : b.score - a.score
     return fermees(b.marks) - fermees(a.marks)

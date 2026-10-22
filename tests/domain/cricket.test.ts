@@ -64,7 +64,6 @@ describe('Cricket — fermer les cibles', () => {
     const state = jouer([KEVIN], [[Dart.triple(12), Dart.miss(), Dart.single(20)]])
 
     expect(joueur(state, KEVIN).marks).toEqual([1, 0, 0])
-    // Les fléchettes sont bel et bien lancées : elles comptent dans le total.
     expect(joueur(state, KEVIN).dartsThrown).toBe(3)
   })
 
@@ -87,7 +86,6 @@ describe('Cricket — marquer des points', () => {
   it('convertit en points les marques qui dépassent la fermeture', () => {
     const state = jouer([KEVIN, JULIEN], [[Dart.double(20), Dart.triple(20)]])
 
-    // 2 marques puis 3 : la première ferme, les deux autres valent 20 chacune.
     expect(joueur(state, KEVIN).marks[0]).toBe(3)
     expect(joueur(state, KEVIN).score).toBe(40)
     expect(state.history[0]?.points).toBe(40)
@@ -96,16 +94,10 @@ describe('Cricket — marquer des points', () => {
   it('vaut 25 par marque sur la bulle', () => {
     const state = jouer([KEVIN, JULIEN], [[Dart.bullseye(), Dart.bullseye()]])
 
-    // 2 marques, puis 1 qui ferme et 1 qui rapporte.
     expect(joueur(state, KEVIN).marks[2]).toBe(3)
     expect(joueur(state, KEVIN).score).toBe(25)
   })
 
-  /**
-   * La règle qui donne son sel au jeu : une cible fermée par **tout le monde**
-   * est morte, elle ne rapporte plus rien — d'où la course à fermer avant
-   * l'autre plutôt qu'à empiler les points.
-   */
   it('ne rapporte plus rien sur une cible fermée par tous', () => {
     const state = jouer(
       [KEVIN, JULIEN],
@@ -122,7 +114,6 @@ describe('Cricket — marquer des points', () => {
       [[Dart.triple(20)], [Dart.triple(20)], RATE, [Dart.triple(20)]],
     )
 
-    // Paul n'a pas fermé le 20 : la cible vit encore, Kevin marque ses 60.
     expect(CricketRules.isDead(state, 0)).toBe(false)
     expect(joueur(state, KEVIN).score).toBe(60)
   })
@@ -135,18 +126,12 @@ describe('Cricket — marquer des points', () => {
 })
 
 describe('Cricket — cut-throat', () => {
-  /**
-   * Le renversement : les points ne sont pas gagnés, ils sont **infligés**. Ils
-   * vont à chaque adversaire qui n'a pas fermé la cible, et le plus petit score
-   * gagne. Marquer devient un choix de victime.
-   */
   it('donne les points aux adversaires plutôt qu’au lanceur', () => {
     const state = jouer([KEVIN, JULIEN, PAUL], [[Dart.triple(20), Dart.triple(20)]], COURT_CUT)
 
     expect(joueur(state, KEVIN).score).toBe(0)
     expect(joueur(state, JULIEN).score).toBe(60)
     expect(joueur(state, PAUL).score).toBe(60)
-    // La volée « vaut » 60 : c'est ce montant qui part chez chaque victime.
     expect(state.history[0]?.points).toBe(60)
   })
 
@@ -157,7 +142,6 @@ describe('Cricket — cut-throat', () => {
       COURT_CUT,
     )
 
-    // Julien a fermé le 20, il ne prend rien ; Paul encaisse.
     expect(joueur(state, JULIEN).score).toBe(0)
     expect(joueur(state, PAUL).score).toBe(60)
   })
@@ -183,22 +167,10 @@ describe('Cricket — victoire', () => {
     expect(state.winnerId).toBe(KEVIN)
   })
 
-  /**
-   * Le cas que les compteurs amateurs ratent : tout fermer ne suffit pas. Tant
-   * qu'on est derrière au score, la partie continue — il faut aller chercher
-   * les points sur les cibles que l'adversaire n'a pas encore fermées.
-   */
   it('ne se gagne pas en fermant tout si l’on est derrière au score', () => {
     const state = jouer(
       [KEVIN, JULIEN],
-      [
-        // Julien prend 57 d'avance sur le 19, que Kevin n'a pas encore fermé.
-        [Dart.triple(20)],
-        [Dart.triple(19), Dart.triple(19)],
-        [Dart.triple(19)],
-        RATE,
-        FERME_BULL,
-      ],
+      [[Dart.triple(20)], [Dart.triple(19), Dart.triple(19)], [Dart.triple(19)], RATE, FERME_BULL],
     )
 
     expect(CricketRules.closedAll(joueur(state, KEVIN))).toBe(true)
@@ -214,8 +186,6 @@ describe('Cricket — victoire', () => {
       COURT_CUT,
     )
 
-    // Julien a collé 57 à Kevin : Kevin ferme tout mais mène au score, donc perd
-    // le droit de conclure.
     expect(joueur(state, KEVIN).score).toBe(57)
     expect(joueur(state, JULIEN).score).toBe(0)
     expect(state.finished).toBe(false)
@@ -238,22 +208,13 @@ describe('Cricket — victoire', () => {
     expect(() => CricketRules.applyVisit(fini, RATE)).toThrow(DomainError)
   })
 
-  /**
-   * ⚠️ Le cas tordu du cut-throat, et la raison pour laquelle la victoire est
-   * aussi vérifiée en fin de volée pour les autres : un joueur qui a tout fermé
-   * ne reçoit plus jamais de points, tandis que ceux des autres montent. Il
-   * peut donc devenir le plus bas **pendant le tour de quelqu'un d'autre**.
-   */
   it('conclut même quand le vainqueur n’a pas lancé la dernière fléchette', () => {
     const avant = jouer(
       [KEVIN, JULIEN, PAUL],
       [
-        // Kevin ferme le 20 et la bulle.
         [Dart.triple(20), Dart.bullseye(), Dart.bull()],
-        // Julien ferme le 19 et colle 19 à Kevin comme à Paul.
         [Dart.triple(19), Dart.single(19)],
         RATE,
-        // Kevin ferme le 19 : tout est fermé, mais il mène au score (19 contre 0).
         [Dart.triple(19)],
       ],
       COURT_CUT,
@@ -269,10 +230,7 @@ describe('Cricket — victoire', () => {
         [Dart.triple(19), Dart.single(19)],
         RATE,
         [Dart.triple(19)],
-        // Julien envoie 20 à Paul (Kevin a fermé le 20, il est intouchable).
         [Dart.triple(20), Dart.single(20)],
-        // Paul envoie 25 à Julien sur la bulle : les deux passent devant Kevin,
-        // qui gagne sans avoir lancé.
         [Dart.bullseye(), Dart.bull(), Dart.bull()],
       ],
       COURT_CUT,
