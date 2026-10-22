@@ -30,5 +30,18 @@
       "PowerShell(git add --all *)",
       "PowerShell(git add .)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/biome-fichier.ps1"
+          }
+        ]
+      }
+    ]
   }
 }
