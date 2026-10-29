@@ -83,6 +83,13 @@ code, son nom ou son type le disent déjà.
 - Les ports de **prévisualisation** (`PreviewVisit`, `PreviewCricketVisit`,
   `PreviewTourDuMondeVisit`) sont **synchrones et sans dépendance** : le use case délègue
   directement à une fonction pure du domaine, sans constructeur à alimenter.
+- **Exception : les sessions** (`ShareMatchUseCase`, `WatchMatchUseCase`, lot `ecran-miroir`). Pas
+  d'`execute` : un état **synchrone avec abonnement** (`state()`, `subscribe`) et des actions
+  (`start`, `acceptAnswer`, `answer`, `stop`, `publish`) qui **ne lèvent ni ne rejettent jamais**.
+  Sans React, sans timer, sans `Date` : un délai (collecte ICE) vit dans l'adapter, un délai
+  d'affichage (5 s avant « perdu ») dans le hook. `publish` est **synchrone et `void`** ; inactive,
+  la session ne fait que retenir le dernier appel (aucune lecture). Fusion « le dernier gagne » :
+  au plus un message de chaque sorte en attente, `partie` toujours avant `volee`.
 
 ## 5 · Ports (`core/application/ports/`)
 
@@ -104,6 +111,17 @@ code, son nom ou son type le disent déjà.
   `useState` + `useEffect` qui raterait un changement entre rendu et abonnement. L'adapter pose
   ses écouteurs dans son constructeur, enveloppé de `try/catch`, et reçoit son `window` par le
   constructeur ; la garde `installationBoundary` interdit ses API ailleurs.
+- **Écran miroir** (lot `ecran-miroir`) : trois ports driven, chacun avec son null-object.
+  `PeerLinks` (`NullPeerLinks`) : `offer()` / `answer(token)` rendent un lien **ou un échec typé**
+  (`unavailable | unreadable | incompatible | no-local-candidate | failed`), jamais une exception ;
+  le jeton est **opaque** pour tout le reste du code. `QrScanner<Viewfinder>` (`NullQrScanner`,
+  état `absent`) est **générique sur le viseur** : le cœur ignore le DOM, `container.ts` lie
+  `QrScanner<HTMLVideoElement>`, l'adapter attache le flux au viseur et il n'en sort jamais.
+  `QrEncoder` (`NullQrEncoder`) : `encode(text)` rend une matrice ou `null`. Les ports driving
+  `ShareMatch` / `WatchMatch` sont des **sessions** (§ 4), lues dans l'UI par
+  `useSyncExternalStore` (`usePartage`, `useMiroir`), comme `AppInstallation`.
+  ⚠️ Ne jamais **nommer** les API WebRTC ou caméra hors de leur adapter, même en commentaire :
+  `reseauBoundary` lit les commentaires (piège de `QrScanner.ts:1`).
 - **Annonces vocales** (`Announcer`) : `say(Annonce)` reçoit des segments `{ texte, langue }` déjà
   écrits (`Annonce`, `Langue`, `fr()` / `en()` de `labels.ts`) ; le port ne traduit rien. **Un seul
   `say` par fin de volée** (l'adapter coupe l'énoncé en cours) : `annonceFinDeVolee(resultat,
@@ -133,6 +151,11 @@ code, son nom ou son type le disent déjà.
 - `Services.clock` (lot `nom-de-partie`) est **la même instance** que celle des use cases :
   l'UI lit l'heure courante par elle, jamais par `Date.now()` — `Date` n'y sert que de
   calendrier sur un instant donné. Garde : `tests/architecture/horlogeBoundary.test.ts`.
+- **Écran miroir** (lot `ecran-miroir`) : `Dependencies.peerLinks`, `devices.qrScanner`
+  (`QrScanner<HTMLVideoElement>`) et `devices.qrEncoder` (même exception que `screenLock`) ;
+  `Services.shareMatch` (dépôts en lecture + `peerLinks`) et `Services.watchMatch` (`peerLinks`
+  **seul**, aucun dépôt). Construire ces adapters n'ouvre ni lien, ni caméra, ni bibliothèque QR
+  (garde `miroirBoundary`) : tout attend un geste de l'utilisateur.
 - `createServices(deps)` est pure et injectable — c'est elle que `fakeServices()` appelle dans
   les tests, jamais une réimplémentation du câblage.
 - `createBrowserDependencies()` / `createBrowserServices()` sont les **seules** fonctions du
@@ -484,6 +507,24 @@ oublier `name?` sur l'ouverture ou l'appel à `nameField` dans le use case de la
 Reste hors de tout filet (R1) : la liste `OUVERTURES` de `tests/domain/matchName.test.ts`, à
 compléter à la main.
 
+⚠️ **Depuis le lot « ecran-miroir »**, un mode **apporte sa vue miroir** : `ecrans/games/<mode>/Miroir<Mode>.tsx`,
+nourrie **par props** (`MirrorView` : noms et couleurs du message, jamais `useProfils()`), muette, sans saisie.
+TypeScript le signale : `MiroirEcran` aiguille par un `switch (view.state.mode)` qui finit par `const jamais:
+never`, et `tests/ui/miroir.test.tsx` type sa liste par `satisfies Record<GameModeId, …>`. Il ne signale pas :
+le `lazy()` de la vue dans `MiroirEcran` (ajouter la vue à `lazyRoutes.test.ts`), son aperçu de volée (le même
+port `Preview<Mode>Visit` que la saisie, sous `try/catch`), ses bandeaux de moment (`momentMiroir`). **Fin,
+vainqueur, classement : du journal projeté seulement**, jamais de l'aperçu. Une valeur affichée à la fois par
+la saisie et le miroir passe par **une seule fonction** (`resteEntrainement`), jamais recopiée. Un mode qui
+lit le genre l'ajoute **nommément** à `genreBoundary` (`MiroirKiller.tsx`). Ne pas créer
+`ui/composants/miroir/` : `hexagonalBoundary` y verrait un mode empruntant les composants des autres.
+
+Briques du miroir (`composants/commun/Miroir.tsx`) : une carte de joueur prend `CLASSES_JOUEUR_MIROIR`
+(`border-t-5 bg-ardoise` + la transition du passage de tour, 180 ms) et `styleJoueurMiroir` ; le joueur actif
+porte `aria-current="true"` **et** `ALaLigne` (ou `barre` dans une colonne étroite) : jamais la couleur seule.
+Un mode neuf reprend ces trois, plus `VoleeMiroir` en bas. La seule statistique du miroir est la moyenne du
+X01, par `computeX01Stats(state)` (fonction pure du domaine, sur le journal projeté) ; toute autre statistique
+est une décision produit, pas un ajout de vue.
+
 ## 14 · Arborescence
 
 L'arbre de `src/` et `tests/`, déplacé de `CLAUDE.md` § Arborescence (qui n'en garde que les
@@ -496,7 +537,9 @@ invariants). Vérifié contre `src/` (`ls`) au lot « nom-de-partie », inchang�
 (`ManageVisitDraft`), 12 driven (`VisitDraftRepository`), 15 hooks (`useVoleeEnCours`) ; lot « killer » :
 29 ports driving (`PlayKiller`, `PreviewKillerVisit`, `DrawKillerNumbers`), 12 driven, 16 hooks (`useKiller`),
 `PlayerGender` (value object), 5 modes, 4 services transverses ; lot « courbe » : 30 ports driving
-(`GetPlayerProgress`).
+(`GetPlayerProgress`) ; lot « ecran-miroir » : 32 ports driving (`ShareMatch`, `WatchMatch`), 15 driven
+(`PeerLinks`, `QrScanner`, `QrEncoder`), 19 hooks (`usePartage`, `useMiroir`, `useScannerQr`), deux dossiers
+d'infrastructure (`peer/`, `qr/`).
 
 ```
 src/
@@ -528,10 +571,12 @@ src/
 │     │                   PlayCheckoutPractice, ShuffleOrder,
 │     │                   GetReplayableConfigurations,
 │     │                   GetDeviceContents (compte des parties et profils),
-│     │                   GetPlayerProgress (la courbe X01 de chaque joueur, par période)
+│     │                   GetPlayerProgress (la courbe X01 de chaque joueur, par période),
+│     │                   ShareMatch, WatchMatch (les deux sessions de l'écran miroir)
 │     ├─ ports/driven/    MatchRepository, PlayerRepository, Clock, IdGenerator,
 │     │                   Haptics, ScreenLock, Preferences, RandomSource, Announcer,
-│     │                   PersistentStorage, AppInstallation
+│     │                   PersistentStorage, AppInstallation, PeerLinks, QrScanner,
+│     │                   QrEncoder
 │     └─ use-cases/       + x01StatsInPeriod.ts (les parties X01 d'une période : le même
 │                           filtre pour GetPlayerStats et GetPlayerProgress)
 │                         + backupSchema.ts (validation d'un JSON importé)
@@ -540,7 +585,13 @@ src/
 │                         + rankPlayers.ts (rankPlayers, leadingPlayers — idem : le
 │                           classement des joueurs d'une carte, jamais recalculé dans l'UI)
 │                         + nameField.ts (`{}` ou `{ name }` : jamais `name: undefined`)
-├─ infrastructure/        dexie/ · device/ · memory/ · system/
+│                         + mirrorProtocol.ts (protocole v1 du miroir : `partie`, `volee`,
+│                           `arret` ; validation par versMatchRecord / versDart)
+├─ infrastructure/        dexie/ · device/ (+ CameraQrScanner, seul fichier caméra) ·
+│                         memory/ · system/ ·
+│                         peer/ (WebRtcPeerLinks, seul fichier WebRTC ; jetonDeJumelage,
+│                           trames : purs) · qr/ (bibliothequeQr, seul import() de la
+│                           bibliothèque ; LibraryQrEncoder)
 ├─ composition/           container.ts   ← seul point de câblage
 ├─ ui/
 │  ├─ composants/         commun/ (dont CartePartie, la ligne de feuille, MiniTableauPartie, FeuillePartie ; `ui/cartesPartie.ts` ouvre l'union ; et DispositionPartie,
@@ -552,11 +603,17 @@ src/
 │  │                      Phrase, une phrase de labels.ts en segments typés ;
 │  │                      Voyant, VignetteTheme, ListeReglages / LigneReglage, les
 │  │                      briques des Réglages ;
-│  │                      `ui/reglesDuJeu.ts` ouvre ReglesDeLaPartie)
+│  │                      `ui/reglesDuJeu.ts` ouvre ReglesDeLaPartie ;
+│  │                      CodeQr, Viseur, VoyantMiroir et Miroir, les briques de
+│  │                      l'écran miroir — jamais un dossier composants/miroir/)
 │  │                      x01/ · tour-du-monde/ · cricket/ · checkout-practice/
 │  ├─ ecrans/             games/ ← MÊME DÉCOUPAGE QUE LE DOMAINE
 │  │                        PartieEcran (aiguillage) · x01/ · tour-du-monde/ ·
-│  │                        cricket/ · checkout-practice/
+│  │                        cricket/ · checkout-practice/ · killer/
+│  │                        (chacun avec sa vue Miroir<Mode>)
+│  │                      miroir/ ← PartageEcran (/miroir/partager), MiroirEcran
+│  │                        (/miroir, aiguillage typé never), Jumelage, vueMiroir,
+│  │                        momentMiroir
 │  │                      nouvelle-partie/ ← le parcours en étapes (une route par
 │  │                        étape : EtapeJeu (« Rejouer » + rangée, ou tuiles), EtapeJoueurs (rangée, fiche
 │  │                        ReglagesJeu, ChampNom), EtapeOrdre (feuille, « Tirer au
@@ -582,7 +639,10 @@ src/
 │  │                      useKiller (cinquième mode : numéros, vies, killer, éliminés) ·
 │  │                      useVoleeEnCours (la volée en cours gardée dans le brouillon :
 │  │                        poser, pret, file d'écriture ; commun aux quatre modes) ·
-│  │                      useDialogueNatif (la discipline du <dialog>, partagée)
+│  │                      useDialogueNatif (la discipline du <dialog>, partagée) ·
+│  │                      usePartage, useMiroir (les sessions du miroir, par
+│  │                        useSyncExternalStore) · useScannerQr (la caméra sur un bouton) ·
+│  │                      resteEntrainement.ts (le reste affiché, partagé avec le miroir)
 │  └─ couleurs.ts (teintes) · labels.ts (tout le français, annonces comprises) ·
 │     theme.ts (clair / sombre / système) ·
 │     chemins.ts (slugs et URL du parcours Nouvelle partie) ·

@@ -47,8 +47,17 @@ paths:
   `name: undefined` (le clonage d'IndexedDB garderait la clé). Un ajout
   facultatif n'incrémente pas `BACKUP_VERSION` : l'ancienne sauvegarde
   reste valide telle quelle (lot `nom-de-partie`).
-- L'import JSON est la **seule entrée non fiable** de l'appli : validé
-  entièrement avant la moindre écriture.
+- L'import JSON est une **entrée non fiable** : validé entièrement avant la
+  moindre écriture. Depuis le lot `ecran-miroir`, il n'est plus la seule :
+  s'y ajoutent les deux **jetons scannés** (offre lue par le miroir,
+  réponse lue par la saisie) et les **messages reçus par le miroir**,
+  validés par `mirrorProtocol.ts` (qui réutilise `versMatchRecord` /
+  `versDart` de `backupSchema` **sans les modifier**).
+- ⚠️ **L'écran miroir ne persiste rien.** Le protocole (`partie`, `volee`,
+  `arret`) et le jeton de jumelage ne sont **jamais** écrits, ni exportés,
+  ni dans `backupSchema` ; `WatchMatchUseCase` n'a **aucun dépôt** ;
+  aucune clé de préférence, aucun `sessionStorage`. Rechargé, le miroir
+  refait le jumelage.
 - `localStorage` : préférences d'appareil seulement
   (`LocalStoragePreferences`, amorçage du thème). Jamais une donnée de
   partie ou de joueur.

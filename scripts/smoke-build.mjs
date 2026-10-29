@@ -219,6 +219,30 @@ const controlerBuild = () => {
     fautes.push(`précache : .well-known présent : ${wellKnownPrecache.join(', ')}`)
   }
 
+  // --- Bibliothèque QR : précachée (jumelage hors ligne), jamais chargée au démarrage ---
+  const chunksQr = urls.filter((url) => /^assets\/qr-[^/]+\.js$/.test(url))
+  if (chunksQr.length !== 1) {
+    fautes.push(
+      `bibliothèque QR : ${chunksQr.length} chunk(s) assets/qr-*.js précaché(s), attendu 1`,
+    )
+  } else {
+    const nomQr = chunksQr[0].slice('assets/'.length)
+    const index = readFileSync(join(ROOT, 'index.html'), 'utf8')
+    if (index.includes(nomQr)) fautes.push(`bibliothèque QR : ${nomQr} cité par index.html`)
+    const scripts = entreesDist()
+      .filter((e) => !e.dossier && /^assets\/.+\.js$/.test(e.relatif))
+      .map((e) => ({ relatif: e.relatif, texte: readFileSync(join(ROOT, e.relatif), 'utf8') }))
+    const nom = nomQr.replaceAll('.', '\\.')
+    const statique = new RegExp(`(?:\\bfrom|\\bimport)\\s*["'\`]\\./${nom}`)
+    const dynamique = new RegExp(`\\bimport\\(\\s*["'\`]\\./${nom}`)
+    for (const { relatif, texte } of scripts) {
+      if (statique.test(texte)) fautes.push(`bibliothèque QR : import statique dans ${relatif}`)
+    }
+    // Plancher : sans import() trouvé, le contrôle précédent serait vert à vide.
+    if (!scripts.some(({ texte }) => dynamique.test(texte)))
+      fautes.push(`bibliothèque QR : aucun import() de ${nomQr} trouvé`)
+  }
+
   // --- Repli de navigation du service worker ---
   const denylist = lireDenylist(sw)
   if (denylist === null) {
@@ -247,7 +271,7 @@ if (fautesBuild.length > 0) {
   process.exit(1)
 }
 console.log(
-  'Contrôles statiques OK — manifeste, précache (sans capture ni .well-known), assetlinks, entrées cachées, denylist du SW',
+  'Contrôles statiques OK — manifeste, précache (sans capture ni .well-known), bibliothèque QR hors démarrage, assetlinks, entrées cachées, denylist du SW',
 )
 
 const server = createServer((req, res) => {

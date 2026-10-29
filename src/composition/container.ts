@@ -4,9 +4,12 @@ import type { Clock } from '@/core/application/ports/driven/Clock'
 import type { Haptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
 import type { MatchRepository } from '@/core/application/ports/driven/MatchRepository'
+import type { PeerLinks } from '@/core/application/ports/driven/PeerLinks'
 import type { PersistentStorage } from '@/core/application/ports/driven/PersistentStorage'
 import type { PlayerRepository } from '@/core/application/ports/driven/PlayerRepository'
 import type { Preferences } from '@/core/application/ports/driven/Preferences'
+import type { QrEncoder } from '@/core/application/ports/driven/QrEncoder'
+import type { QrScanner } from '@/core/application/ports/driven/QrScanner'
 import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import type { ScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import type { VisitDraftRepository } from '@/core/application/ports/driven/VisitDraftRepository'
@@ -37,9 +40,11 @@ import type { PreviewTourDuMondeVisit } from '@/core/application/ports/driving/P
 import type { PreviewVisit } from '@/core/application/ports/driving/PreviewVisit'
 import type { RecordVisit } from '@/core/application/ports/driving/RecordVisit'
 import type { RestartMatch } from '@/core/application/ports/driving/RestartMatch'
+import type { ShareMatch } from '@/core/application/ports/driving/ShareMatch'
 import type { ShuffleOrder } from '@/core/application/ports/driving/ShuffleOrder'
 import type { StartMatch } from '@/core/application/ports/driving/StartMatch'
 import type { UndoLastVisit } from '@/core/application/ports/driving/UndoLastVisit'
+import type { WatchMatch } from '@/core/application/ports/driving/WatchMatch'
 import { DeleteMatchUseCase } from '@/core/application/use-cases/DeleteMatchUseCase'
 import { DrawKillerNumbersUseCase } from '@/core/application/use-cases/DrawKillerNumbersUseCase'
 import { GetCheckoutRangeUseCase } from '@/core/application/use-cases/GetCheckoutRangeUseCase'
@@ -67,10 +72,13 @@ import { PreviewTourDuMondeVisitUseCase } from '@/core/application/use-cases/Pre
 import { PreviewVisitUseCase } from '@/core/application/use-cases/PreviewVisitUseCase'
 import { RecordVisitUseCase } from '@/core/application/use-cases/RecordVisitUseCase'
 import { RestartMatchUseCase } from '@/core/application/use-cases/RestartMatchUseCase'
+import { ShareMatchUseCase } from '@/core/application/use-cases/ShareMatchUseCase'
 import { ShuffleOrderUseCase } from '@/core/application/use-cases/ShuffleOrderUseCase'
 import { StartMatchUseCase } from '@/core/application/use-cases/StartMatchUseCase'
 import { UndoLastVisitUseCase } from '@/core/application/use-cases/UndoLastVisitUseCase'
+import { WatchMatchUseCase } from '@/core/application/use-cases/WatchMatchUseCase'
 import { BrowserAppInstallation } from '@/infrastructure/device/BrowserAppInstallation'
+import { CameraQrScanner } from '@/infrastructure/device/CameraQrScanner'
 import { createLocalStoragePreferences } from '@/infrastructure/device/LocalStoragePreferences'
 import { NavigatorPersistentStorage } from '@/infrastructure/device/NavigatorPersistentStorage'
 import { SpeechAnnouncer } from '@/infrastructure/device/SpeechAnnouncer'
@@ -80,6 +88,8 @@ import { DexieMatchRepository } from '@/infrastructure/dexie/DexieMatchRepositor
 import { DexiePlayerRepository } from '@/infrastructure/dexie/DexiePlayerRepository'
 import { DexieVisitDraftRepository } from '@/infrastructure/dexie/DexieVisitDraftRepository'
 import { createDatabase } from '@/infrastructure/dexie/database'
+import { WebRtcPeerLinks } from '@/infrastructure/peer/WebRtcPeerLinks'
+import { LibraryQrEncoder } from '@/infrastructure/qr/LibraryQrEncoder'
 import { CryptoIdGenerator } from '@/infrastructure/system/CryptoIdGenerator'
 import { CryptoRandomSource } from '@/infrastructure/system/CryptoRandomSource'
 import { SystemClock } from '@/infrastructure/system/SystemClock'
@@ -94,6 +104,9 @@ export type Devices = {
   readonly persistentStorage: PersistentStorage
   /** ⚠️ L'adapter écoute dès sa construction : services créés une fois, dans `main.tsx`, avant `createRoot`. */
   readonly appInstallation: AppInstallation
+  /** Caméra ouverte seulement par `start`, sur un geste ; le flux reste dans l'adapter. */
+  readonly qrScanner: QrScanner<HTMLVideoElement>
+  readonly qrEncoder: QrEncoder
 }
 
 export type Dependencies = {
@@ -103,6 +116,8 @@ export type Dependencies = {
   readonly clock: Clock
   readonly ids: IdGenerator
   readonly random: RandomSource
+  /** Aucun lien n'est créé avant `offer` / `answer`. */
+  readonly peerLinks: PeerLinks
   readonly devices: Devices
 }
 
@@ -138,6 +153,8 @@ export type Services = {
   readonly previewTourDuMondeVisit: PreviewTourDuMondeVisit
   readonly previewCricketVisit: PreviewCricketVisit
   readonly previewKillerVisit: PreviewKillerVisit
+  readonly shareMatch: ShareMatch
+  readonly watchMatch: WatchMatch
   readonly devices: Devices
   /** Même instance que celle des use cases : l'UI propose un nom d'après l'heure sans `Date.now()`. */
   readonly clock: Clock
@@ -150,6 +167,7 @@ export const createServices = ({
   clock,
   ids,
   random,
+  peerLinks,
   devices,
 }: Dependencies): Services => {
   // « On remet ça » rappelle ces lancements tels quels. ⚠️ Une relance ne rebat pas l'ordre de passage.
@@ -197,6 +215,8 @@ export const createServices = ({
     previewTourDuMondeVisit: new PreviewTourDuMondeVisitUseCase(),
     previewCricketVisit: new PreviewCricketVisitUseCase(),
     previewKillerVisit: new PreviewKillerVisitUseCase(),
+    shareMatch: new ShareMatchUseCase(matches, players, peerLinks),
+    watchMatch: new WatchMatchUseCase(peerLinks),
     devices,
     clock,
   }
@@ -212,6 +232,7 @@ export const createBrowserDependencies = (): Dependencies => {
     clock: new SystemClock(),
     ids: new CryptoIdGenerator(),
     random: new CryptoRandomSource(),
+    peerLinks: new WebRtcPeerLinks(),
     devices: {
       screenLock: new WakeLockScreenLock(),
       haptics: new VibrationHaptics(),
@@ -219,6 +240,8 @@ export const createBrowserDependencies = (): Dependencies => {
       announcer: new SpeechAnnouncer(),
       persistentStorage: new NavigatorPersistentStorage(),
       appInstallation: new BrowserAppInstallation(),
+      qrScanner: new CameraQrScanner(),
+      qrEncoder: new LibraryQrEncoder(),
     },
   }
 }

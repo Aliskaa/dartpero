@@ -2415,3 +2415,42 @@ Session : `docs/lots/rejouer/` (niveau `light` à l'ouverture, **relevé à `hig
 - **Reste, vrai téléphone** : lisibilité du numéro à 38 / 32 px à 2-3 m, 6 lignes en paysage, rangée compacte à
   5 colonnes à 360 px, « Non précisé » sur deux lignes, classes Tailwind fractionnaires, contraste de
   `rouge-touche` sur le repère, comportement ouvert de la ligne « Genre ».
+
+### Décisions du lot « ecran-miroir » (un second téléphone affiche la partie)
+
+`high` (décision gravée « pas de réseau » rouverte, protocole entre appareils, caméra, politique publique,
+service worker). Détail : `docs/lots/ecran-miroir/`. Lot 1 d'un chantier scindé : **QR seul** ; Firebase (code
+court) serait un lot suivant, non écrit.
+
+- **« Pas de réseau » regravé** : une exception, le lien local WebRTC entre deux téléphones, sans serveur
+  (`iceServers: []`, ni signalisation ni STUN / TURN), jumelé par deux QR ; candidats filtrés « réseau local »
+  à l'encodage et au décodage du jeton ; caméra sur le bouton « Scanner » seulement. Un fichier par capacité,
+  listes fermées de `reseauBoundary`. Aucun import de `firebase` dans `src/`, toujours.
+- **Pas de port de signalisation** (Q18, écart assumé à la demande) : le jeton de jumelage est opaque, produit et
+  lu par `PeerLinks` seul ; le QR n'en est qu'un porteur (`QrEncoder`, `QrScanner<Viewfinder>` générique). Le
+  lot Firebase ajoutera un porteur, conçu face à deux implémentations réelles.
+- **Deux sessions applicatives** (`ShareMatch`, `WatchMatch`), synchrones avec abonnement, qui ne lèvent jamais ;
+  nouveau motif de port driving (CONVENTIONS § 4, 5). La saisie est sourde à tout message entrant ; le miroir
+  n'a aucun dépôt. Un seul effet de `useVoleeEnCours` publie l'état : aucun hook de mode touché.
+- **Protocole v1, trois messages** (`partie`, `volee`, `arret`) — le troisième ajouté par Dev pour distinguer
+  « Partage arrêté » de « Connexion perdue ». Jamais persisté ni exporté ; validé par `versMatchRecord` /
+  `versDart` de l'import, réutilisés sans modification ; plafond 4 Mo ; trames de 5 000 unités UTF-16 sans couper
+  une paire de substitution.
+- **Genre au Killer seulement** (Q11) : `gender` dans le message `partie` si l'ouverture est `KillerStarted` ;
+  `genreBoundary` gagne `mirrorProtocol.ts`, `WatchMatch.ts`, `MiroirKiller.tsx` (écart à la lettre de la demande).
+- **Une vue miroir par mode**, aiguillée par un `switch` typé `never` : un mode sans vue miroir ne compile pas
+  (CONVENTIONS § 13). Fin, vainqueur, classement : du journal seul ; la fléchette de sortie en attente en
+  pointillé, rien de célébré.
+- **Bibliothèque** : `@nuintun/qrcode@5.0.3` (porte V1-V7 passée, MIT, sans WASM), chunk `qr` séparé (groupe
+  `priority: 2` devant `vendor`, sinon aspirée au démarrage — mesuré), précaché, absent du démarrage (smoke).
+- **Jetons** : `qr-modules`, `qr-fond`, `sur-rouge`, constants à dessein (le QR reste sombre sur clair) ; deux
+  entrées de plus dans `themeBoundary` (six) et une garde d'égalité entre les deux thèmes. Trois paliers
+  typographiques `text-miroir-*`.
+- **Politique** `/confidentialite` : texte validé par l'utilisateur tel quel (Q17), « Mise à jour le
+  24 octobre 2026 », section « Écran miroir » ajoutée. Play Console : caméra probablement à déclarer, hors dépôt.
+- **Poids** (build de `main` contre build du lot, même machine) : démarrage 579 543 → 612 575 octets (gzip
+  171 809 → 183 955) ; précache 56 entrées / 949,85 KiB → 77 entrées / 1 067,43 KiB ; chunk QR 50,12 kB
+  (17,65 kB gzip) hors démarrage.
+- **Mesure sur téléphones** (spike jetable, ignoré par git) : Wi-Fi local Android + iPhone, jumelage par deux QR
+  dans les deux rôles (jeton 147 car., QR v6, collecte ICE 127-144 ms). **Reste, vrai téléphone** : partage de
+  connexion, mode avion, lumière faible, caméra refusée ; lisibilité à 2-3 m ; relecture `ecran`.

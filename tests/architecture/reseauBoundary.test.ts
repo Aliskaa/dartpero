@@ -47,6 +47,52 @@ const detecterAdresses = (source: string): string[] =>
     .filter(([adresse]) => !ESPACES_DE_NOMS.includes(adresse))
     .map(([adresse]) => adresse)
 
+/** Lien direct et caméra : chaque famille n'a droit qu'à son adapter, nommé ici, et à lui seul. */
+const FAMILLES: readonly {
+  readonly nom: string
+  readonly permis: readonly string[]
+  readonly detecteurs: readonly { readonly nom: string; readonly motif: RegExp }[]
+  /** Ce que le fichier permis doit contenir : la preuve qu'il est bien l'adapter. */
+  readonly attendus: readonly string[]
+}[] = [
+  {
+    nom: 'lien WebRTC',
+    permis: ['src/infrastructure/peer/WebRtcPeerLinks.ts'],
+    detecteurs: [
+      { nom: 'RTCPeerConnection', motif: /\w*RTCPeerConnection\b/ },
+      { nom: 'RTCDataChannel', motif: /\bRTCDataChannel\b/ },
+      { nom: 'createDataChannel', motif: /\bcreateDataChannel\b/ },
+      { nom: 'iceServers', motif: /\biceServers\b/ },
+    ],
+    attendus: ['RTCPeerConnection', 'createDataChannel', 'iceServers'],
+  },
+  {
+    nom: 'caméra',
+    permis: ['src/infrastructure/device/CameraQrScanner.ts'],
+    detecteurs: [
+      { nom: 'getUserMedia', motif: /getUserMedia/i },
+      { nom: 'mediaDevices', motif: /\bmediaDevices\b/ },
+      { nom: 'getDisplayMedia', motif: /getDisplayMedia/i },
+    ],
+    attendus: ['getUserMedia', 'mediaDevices'],
+  },
+  {
+    nom: 'serveur STUN / TURN',
+    permis: [],
+    detecteurs: [{ nom: 'stun: / turn:', motif: /\b(?:stuns?|turns?):[^\s'"`]/i }],
+    attendus: [],
+  },
+]
+
+const detecterFamille = (famille: (typeof FAMILLES)[number], source: string): string[] =>
+  famille.detecteurs.filter(({ motif }) => motif.test(source)).map(({ nom }) => nom)
+
+const famille = (nom: string) => {
+  const trouvee = FAMILLES.find((f) => f.nom === nom)
+  if (!trouvee) throw new Error(nom)
+  return trouvee
+}
+
 const MESSAGE_POLITIQUE =
   'la politique publiée à /confidentialite (src/ui/labels.ts, SECTIONS_CONFIDENTIALITE) ' +
   'affirme que rien n’est envoyé. Mettre le texte et sa date à jour DANS LE MÊME LOT, ' +
@@ -80,6 +126,60 @@ describe('Frontière réseau (la politique de confidentialité le promet)', () =
 
     expect(fautes, `Capacité réseau dans src/ : ${MESSAGE_POLITIQUE}`).toEqual([])
   })
+
+  it('les détecteurs du lien direct et de la caméra reconnaissent leur API, et pas ses faux amis', () => {
+    const webrtc = famille('lien WebRTC')
+    expect(detecterFamille(webrtc, 'new RTCPeerConnection({})')).toEqual(['RTCPeerConnection'])
+    expect(detecterFamille(webrtc, 'new webkitRTCPeerConnection()')).toEqual(['RTCPeerConnection'])
+    expect(detecterFamille(webrtc, 'const c: RTCDataChannel = x')).toEqual(['RTCDataChannel'])
+    expect(detecterFamille(webrtc, "pc.createDataChannel('x')")).toEqual(['createDataChannel'])
+    expect(detecterFamille(webrtc, '{ iceServers: [] }')).toEqual(['iceServers'])
+    // Le protocole SDP nomme le canal en minuscules : ce n'est pas l'API.
+    expect(detecterFamille(webrtc, "'m=application 9 UDP/DTLS/SCTP webrtc-datachannel'")).toEqual(
+      [],
+    )
+
+    const camera = famille('caméra')
+    expect(detecterFamille(camera, 'navigator.mediaDevices.getUserMedia(c)')).toEqual([
+      'getUserMedia',
+      'mediaDevices',
+    ])
+    expect(detecterFamille(camera, 'navigator.webkitGetUserMedia(c)')).toEqual(['getUserMedia'])
+    expect(detecterFamille(camera, 'navigator.getDisplayMedia()')).toEqual(['getDisplayMedia'])
+    expect(detecterFamille(camera, "const media = 'caméra'")).toEqual([])
+
+    const serveurs = famille('serveur STUN / TURN')
+    expect(detecterFamille(serveurs, "{ urls: 'stun:stun.example.org:19302' }")).toEqual([
+      'stun: / turn:',
+    ])
+    expect(detecterFamille(serveurs, "'turns:relais.example.org'")).toEqual(['stun: / turn:'])
+    expect(detecterFamille(serveurs, '{ turns: 3 }')).toEqual([])
+  })
+
+  it.each(FAMILLES.map((f) => [f.nom, f] as const))(
+    '%s : seule la liste fermée de fichiers y touche',
+    (_, { permis, attendus, ...f }) => {
+      const tous = fichiers(SRC)
+      expect(tous.length).toBeGreaterThanOrEqual(40)
+
+      // Chaque fichier permis existe et contient son API : sinon la liste est périmée.
+      for (const chemin of permis) {
+        const fichier = tous.find((candidat) => enRacine(candidat) === chemin)
+        expect(fichier, `${chemin} introuvable`).toBeDefined()
+        const source = readFileSync(fichier as string, 'utf8')
+        for (const api of attendus) expect(source, `${chemin} → ${api}`).toContain(api)
+      }
+
+      const fautes = tous
+        .filter((fichier) => !permis.includes(enRacine(fichier)))
+        .flatMap((fichier) =>
+          detecterFamille({ permis, attendus, ...f }, readFileSync(fichier, 'utf8')).map(
+            (nom) => `${enRacine(fichier)} → ${nom}`,
+          ),
+        )
+      expect(fautes, `Capacité hors de son adapter : ${MESSAGE_POLITIQUE}`).toEqual([])
+    },
+  )
 
   it('le détecteur d’adresses reconnaît une URL externe, et laisse passer l’espace de noms SVG', () => {
     expect(detecterAdresses("img.src = 'https://example.com/x'")).toEqual(['https://example.com/x'])

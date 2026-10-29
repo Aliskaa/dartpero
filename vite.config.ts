@@ -136,7 +136,14 @@ export default defineConfig(({ mode, command }) => {
           // API Rolldown de Vite 8 : `manualChunks`/`advancedChunks` sont
           // dépréciés. Isole ~350-400 kB de `node_modules` qui ne bougent
           // qu'aux montées de version, hors du hash de chaque déploiement.
-          codeSplitting: { groups: [{ name: 'vendor', test: /node_modules/ }] },
+          // ⚠️ La bibliothèque QR a son propre chunk, prioritaire : sous `vendor`, elle serait
+          // chargée au démarrage. Précachée quand même (`globPatterns`), pour jumeler hors ligne.
+          codeSplitting: {
+            groups: [
+              { name: 'qr', test: /[\\/]node_modules[\\/]@nuintun[\\/]qrcode[\\/]/, priority: 2 },
+              { name: 'vendor', test: /node_modules/, priority: 1 },
+            ],
+          },
         },
       },
     },

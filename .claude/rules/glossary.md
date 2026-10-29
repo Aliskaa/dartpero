@@ -35,6 +35,9 @@ ce que lit le joueur, la deuxième ce qu'écrit le code.
 | vie | `lives` | Killer : 3 par défaut, 5 au choix ; simple 1, double 2, triple 3 retirés, jamais sous 0. |
 | killer (statut) | `killer` | Joueur qui a touché le **double de son numéro** : il peut retirer des vies. Les fléchettes suivantes de la même volée comptent tout de suite. |
 | éliminé | `eliminated` / `eliminations` | Killer : joueur à 0 vie, sauté au tour de table ; « Éliminé(e) par X » se lit sur le journal. Classement par ordre d'élimination. |
+| écran miroir / miroir | `WatchMatch` / `MirrorView` | Second téléphone qui affiche la partie en grand, en lecture seule et muet ; ne stocke rien, rechargé il refait le jumelage. « Servir de miroir » dans les Réglages. |
+| partager (la partie) | `ShareMatch` | Côté saisie : « Partager la partie » ouvre le jumelage puis envoie la partie au miroir ; « Arrêter le partage » l'arrête (« Partage arrêté », distinct de « Connexion perdue »). |
+| jumeler / jumelage | `PeerLinks`, jeton de jumelage | Relier les deux téléphones en scannant deux QR (offre, puis réponse). Mot du code et de la doc : **à l'écran on dit « Scanner le code »**, jamais « jumeler ». Le jeton est opaque, le QR n'en est qu'un porteur. |
 | oche | — | La ligne de lancer. Contexte d'usage, pas un objet du code. |
 
 Prose en français. Symboles et types TypeScript déjà en anglais : les

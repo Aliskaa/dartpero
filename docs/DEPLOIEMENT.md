@@ -76,6 +76,17 @@ sous un onglet resté ouvert après déploiement — d'où l'écouteur `vite:pre
   `navigateFallbackDenylist: [/^\/\.well-known\//]` en exclut `/.well-known/`, qui n'est pas non
   plus précaché (`json` hors `globPatterns`, glob sans `dot`). Hors ligne, `assetlinks.json`
   donne donc une erreur réseau, pas l'app : c'est voulu.
+- **La bibliothèque QR** (`@nuintun/qrcode`, lot `ecran-miroir`) est **précachée mais hors
+  démarrage** : importée seulement par `import()` depuis `src/infrastructure/qr/bibliothequeQr.ts`,
+  elle a son groupe `qr` (motif `node_modules/@nuintun/qrcode/`, `priority: 2`) devant `vendor`
+  (`priority: 1`) dans `codeSplitting.groups`. ⚠️ Sans ce groupe, Rolldown l'aspire dans `vendor`,
+  chargé au démarrage (mesuré). `npm run smoke` vérifie que le chunk `assets/qr-*.js` est
+  précaché **et** absent de l'entrée et des `modulepreload` d'`index.html`. Précaché, le premier
+  jumelage marche hors ligne dès l'installation. Poids mesurés : `02-dev-notes.md` du lot.
+- **Écran miroir et réseau** : le lien WebRTC passe par le réseau local (Wi-Fi ou partage de
+  connexion), sans serveur ; `firebase.json` n'a ni `Permissions-Policy` ni CSP, et `index.html`
+  aucun `meta` qui interdirait la caméra. En ajouter un un jour = vérifier que la caméra reste
+  permise sur l'origine.
 
 ## Contexte sécurisé (dev, téléphone, iOS)
 
@@ -222,6 +233,15 @@ depuis Réglages, groupe Joueurs et appli), texte dans `src/ui/labels.ts` (`SECT
   `https?://` écrite en dur dans `src/` et `index.html` hors les deux URI d'espace de noms
   w3.org). Il ne voit ni une URL sans schéma (`//cdn…`) ni une URL assemblée à l'exécution, et
   le smoke n'ouvre que deux pages (R-c). Cookies, permissions, stockage : relecture seulement.
+  **Le lot `ecran-miroir` a fait arriver R5** : lien local WebRTC et caméra, texte et date mis à
+  jour (« Mise à jour le 24 octobre 2026 », section « Écran miroir »). Le fil-piège y gagne deux
+  familles à **liste fermée** : WebRTC (`RTCPeerConnection`, `RTCDataChannel`, `createDataChannel`,
+  `iceServers`) seulement dans `src/infrastructure/peer/WebRtcPeerLinks.ts`, caméra
+  (`getUserMedia`, `mediaDevices`, `getDisplayMedia`) seulement dans
+  `src/infrastructure/device/CameraQrScanner.ts`, et aucune URL `stun:` / `turn:` nulle part. Il lit
+  aussi les commentaires : ne jamais nommer ces API ailleurs. ⚠️ **Play Console** : la caméra est
+  probablement à déclarer (utilisée sans collecte) au formulaire « Sécurité des données » au
+  prochain dépôt — à vérifier par l'utilisateur, hors dépôt.
 - **Annonce vocale (R-d, accepté)** : `SpeechAnnouncer` prend la première voix `fr` sans
   regarder `localService` ; selon le navigateur, le texte annoncé (pseudo compris) peut être
   synthétisé en ligne. La politique le dit et renvoie à « Annoncer les volées » dans

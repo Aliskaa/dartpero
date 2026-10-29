@@ -143,11 +143,18 @@ chacune à un composant (garde `themeBoundary`, `rules/theme-colors.md` § Jeton
 | Vert en texte du voyant | `vert-etat` | `#6FCF97` | `#1F6B41` | « Installée », dans `Voyant` seulement — 8,5:1 (sombre) et 5,8:1 (clair) sur l'`ardoise` ; le filet du voyant reste `vert-cible` |
 | Aperçu sombre | `apercu-sombre-fond` · `-encre` · `-accent` | `#0E1A13` · `#F2E8D5` · `#C9A227` | **identiques** | Copies de `feutre`, `craie`, `laiton` sombres |
 | Aperçu clair | `apercu-clair-fond` · `-encre` · `-accent` | `#E3D9C1` · `#1F2D24` · `#8A6D12` | **identiques** | Copies de `feutre`, `craie`, `laiton` clairs |
+| Code QR du miroir | `qr-modules` · `qr-fond` | `#14110A` · `#FFFFFF` | **identiques** | Le QR de `CodeQr` seulement : **sombre sur clair dans les deux thèmes** (≈ 18,7:1, calcul) |
+| Blanc sur rouge du miroir | `sur-rouge` | `#FFFFFF` | **identique** | Texte et bordure posés sur `rouge-cible` (« Connexion perdue », bust du miroir) : 5,6:1 (sombre) et 7,4:1 (clair) ; `Miroir` et `MiroirEcran` seulement |
 
 ⚠️ Les six aperçus sont **constants à dessein** : redéfinis à l'identique sous le clair (la règle
 « le clair redéfinit tous les jetons » tient), ils ne suivent pas le thème — c'est leur rôle.
 Réservés à `VignetteTheme` ; une garde vérifie que chacun vaut le jeton qu'il montre, dans les
 deux blocs. Ce ne sont pas des textes : aucun contraste exigé.
+
+⚠️ **Les trois jetons du miroir aussi** (lot `ecran-miroir`) : en sombre, `craie-vive` sur `feutre`
+donnerait un QR **inversé**, que bien des lecteurs refusent ; le QR garde donc ses deux teintes et
+sa zone de silence (4 modules) dans les deux thèmes. Garde : `themeBoundary` (une entrée par
+famille, plus l'égalité des valeurs dans les deux blocs).
 
 ⚠️ **Le point critique du thème clair, c'est le laiton.** Le laiton vif fait **1,84:1** sur du
 papier : le filet de `.repere-lancer`, qui dit **qui est en train de lancer**, y deviendrait
@@ -258,6 +265,8 @@ exception, **hors classes** : le texte SVG des axes de la carte Évolution, ≈ 
 | `text-score-xl-portrait` / `-l-portrait` / `-m-portrait` | **4,5** / 4,05 / 3,1 rem | Le reste X01 selon le nombre de joueurs, **en portrait** (lot `match-x01`) |
 | `text-multiplicateur` | 0,8 rem | La valeur réelle dans le coin d'une touche armée (Double, Triple) |
 | `text-score-solo` | 4,5 rem | Le reste de l'entraînement (`Cartouche`, résumé) |
+| `text-miroir-xl` / `-l` | 8,5 / 6 rem | Le reste X01 du miroir **en paysage**, 2 joueurs / 3-4 joueurs, lu à 2-3 m (lot `ecran-miroir`) ; en portrait, `text-score-xl-portrait` |
+| `text-miroir-solo` | 10 rem | Le reste de l'entraînement sur le miroir |
 
 **Interlettrage** : large (jusqu'à `0.42em`) là où la place existe ; **resserré à 0,06 em au
 plus** là où 0,75 rem déborderait — `.bandeau-feuille .entete-colonne` (le tableau X01, colonne
@@ -697,6 +706,57 @@ JOUEUR · N° · VIES · STATUT (104 / 84 / 1fr / 80 px en portrait, 128 / 84 / 
   (« Non précisé · Modifier ▾ », 48 px) qui s'ouvre sur trois boutons **jointifs** ≥ 48 px, laiton plein pour la
   valeur choisie ; à la modification, les mêmes trois boutons sous la palette. Le genre n'est **jamais** montré
   sur la carte au repos.
+
+### L'écran miroir (lot `ecran-miroir`)
+
+Planche suivie : `docs/maquettes/ecran-miroir/planche.html` (ignorée par git), acceptée en bloc le 2026-10-24.
+
+- **Entrées** : groupe « Écran miroir » des Réglages (« Partager la partie », « Servir de miroir ») ; dans le
+  bandeau de partie, `VoyantMiroir`, un bouton de 48 px **à gauche du livre**, avec un carré vert
+  (`vert-cible`, connecté) ou rouge (`rouge-cible`, perdu depuis plus de 5 s), rien sinon. Le mot « jumeler »
+  ne s'affiche pas : on dit « Scanner le code ».
+- **Jumelage** : écran plein (le retour annule), jamais une boîte. `BarreEtapes` en tête. `CodeQr` : 311 px au
+  plus (`max-w-77.75`), jetons `qr-*` constants, zone de silence de 4 modules, consigne « montez la
+  luminosité ». `Viseur` : vidéo `playsInline muted`, caméra ouverte **sur le bouton** « Scanner » seulement.
+  Erreurs : les six libellés de la planche, en texte, **jamais une boîte**.
+- **Miroir** : mise en page dédiée **paysage** (portrait toléré), chiffres géants (`text-miroir-*`), nom de
+  partie discret en bandeau ; ni suggestion de checkout, ni livre des règles. La fléchette de sortie en attente
+  apparaît **en pointillé laiton**, le reste ne bouge pas, rien de célébré. **Une seule statistique : la
+  moyenne du X01** (« Moyenne », 3 fléchettes, `computeX01Stats` sur les volées enregistrées, « — » sans
+  fléchette) ; la volée en cours ne la fait pas bouger.
+- **Lecture à 2-3 m** : ce qui n'est pas le chiffre géant reste gros. Bande du haut 36 px (`h-9`) : règles et
+  nom à 14 px, **où l'on en est** (« Manche 2 », « Volée 7 ») à 18 px gras. « Volée de X » 20 px ; manches,
+  sets et moyenne du X01 : libellé 18 px, chiffre 30 px (`chiffres`) ; badge Killer 16 px gras, motif
+  d'élimination 18 px, vies 24 px ; compteur de fléchettes du Tour du monde 30 px ; texte d'un `VoileMiroir`
+  20 px. Plancher d'une information de jeu : 14 px, jamais `text-etiquette` (12 px).
+- **Qui joue, sans la couleur seule** : l'anneau interne de 3 px et la teinte à 14 % ne suffisent pas. Les
+  quatre modes posent `aria-current="true"` sur le joueur actif ; X01, Killer et Tour du monde y ajoutent
+  l'étiquette `ALaLigne` à sa couleur ; le Cricket à 3-4 joueurs (colonnes de 60 à 80 px) une **barre pleine**
+  de 24 px à sa couleur (`ALaLigne barre`, libellé en `sr-only`), dans une rangée de hauteur fixe pour que les
+  colonnes restent alignées. Cricket en portrait : nom au-dessus du score (en-tête 80 px), côte à côte en
+  paysage (56 px).
+- **Zones de sécurité** : `<main>` du miroir et bandeaux portent `env(safe-area-inset-*)` (`viewport-fit=cover`
+  est posé) ; sans elles, la bande du haut passe sous l'encoche en paysage.
+- **Moments** : bandeaux **muets** d'environ 2,5 s (bust en `rouge-cible` + `sur-rouge`, 180, manche gagnée,
+  « Partie ! » en laiton) ; jamais à l'entraînement. **Ancrés en bas**, au-dessus de la barre de volée
+  (`bottom-24`) : le centre, c'est le reste géant. Entrée `animate-monter` ; fondu de sortie de 150 ms
+  (opacité seule, sur une couche extérieure, car le `both` de l'entrée empêche l'intérieur de s'éteindre) ;
+  `key={moment.cle}` pour rejouer l'entrée entre deux moments. Fin de partie (vainqueur, classement) seulement
+  quand le journal la contient ; l'écran reste affiché.
+- **Coupure** : moins de 5 s, rien ; au-delà, bandeau `rouge-cible` « Connexion perdue » **en bas** (les noms de
+  l'image figée restent lisibles), bouton « Refaire le code » (bordure `sur-rouge`). « Partage arrêté » est
+  distinct de « perdu » et offre une sortie : « Scanner à nouveau » et « Retour ». **Aucun bouton pendant la
+  partie** : le voyant reste muet.
+- **Mouvement** (`--duration-*`, `--ease-sec`, jamais `transition: all`) : le passage de tour glisse d'un fond à
+  l'autre en 180 ms (`CLASSES_JOUEUR_MIROIR`, `background-color` et `box-shadow`) ; case de volée 100 ms ; vie
+  Killer 100 ms ; appui du retour et du voyant 90 ms, par inversion nette, **sans `scale`** (la charte n'a ni
+  rayon ni gonflement). **Le chiffre géant ne s'anime jamais** : il change à chaque fléchette, les chiffres
+  tabulaires évitent déjà le saut.
+- **Killer** : « éliminé / éliminée » accordé selon le genre reçu ; éliminé en `craie-3` barré, vies en
+  `rouge-cible`. Pas de bandeau « devient killer » ni « éliminé » : le chiffre barré et le motif le disent.
+- ⚠️ **Angles morts, à relire sur téléphone** : Killer à 6 en paysage, Cricket à 4 en portrait (colonnes de
+  60 px, nom tronqué), thème clair, `laiton-clair` sur `feutre-nuit`, cases de volée tronquées, bandeau de
+  moment sur une barre de volée haute en portrait.
 
 ### Saisie
 

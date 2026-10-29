@@ -23,8 +23,9 @@ Ouvre `CLAUDE.md` à la section indiquée pour vérifier une citation sur le dif
 ## Ce que « sécurité » veut dire ici
 
 Dartpéro est **100 % local, hors ligne, sans compte**. Il n'y a ni serveur,
-ni authentification, ni secret applicatif. La surface est donc petite —
-mais elle existe, et elle est précise. Ne plaque pas une checklist de SaaS
+ni authentification, ni secret applicatif. La seule liaison est le **lien
+local** de l'écran miroir (WebRTC entre deux téléphones, sans serveur,
+jumelé par QR). La surface est donc petite — mais elle existe, et elle est précise. Ne plaque pas une checklist de SaaS
 sur une appli de fléchettes : un constat sur une surface qui n'existe pas
 est un faux positif.
 
@@ -50,7 +51,7 @@ est un faux positif.
 À parcourir **sur le diff et le code touché**, pas en inventant une
 surface qui n'existe pas :
 
-- **Zéro réseau.** Aucun `fetch`, `XMLHttpRequest`, `WebSocket`,
+- **Zéro réseau vers un serveur.** Aucun `fetch`, `XMLHttpRequest`, `WebSocket`,
   `sendBeacon`, `EventSource`, ni import de `firebase` dans `src/` —
   décision gravée. Aucune ressource runtime chargée depuis un CDN
   (polices et icônes sont embarquées). Aucune télémétrie.
@@ -58,7 +59,20 @@ surface qui n'existe pas :
   `src/ui/labels.ts`) l'affirme : toute capacité réseau, permission,
   cookie ou donnée stockée nouvelle la met à jour, **avec sa date**, dans
   le même lot. Relire chaque phrase touchée contre le code.
-- **Import JSON = la seule entrée non fiable.** Le fichier peut venir d'un
+- **Lien local de l'écran miroir** (lot `ecran-miroir`) : WebRTC
+  seulement dans `infrastructure/peer/WebRtcPeerLinks.ts`, caméra
+  seulement dans `infrastructure/device/CameraQrScanner.ts` (listes
+  fermées de `reseauBoundary`) ; `iceServers: []`, aucune URL `stun:` /
+  `turn:` ; filtre « réseau local » des candidats à l'encodage **et** au
+  décodage du jeton ; la saisie **ignore tout message entrant** ; le
+  miroir n'a aucun dépôt ; un seul lien à la fois. Le genre ne voyage
+  qu'au Killer.
+- **Entrées non fiables : l'import JSON, les deux jetons scannés et les
+  messages reçus par le miroir.** Jetons : texte plafonné avant analyse,
+  sha-256 seul, version refusée proprement. Messages : `mirrorProtocol`
+  (version `v` = 1 exactement, plafond 4 Mo réassemblé, objets
+  reconstruits champ par champ, joueurs ≤ 6 et dans `playerIds`), un
+  message invalide est ignoré sans plantage. Le fichier d'import peut venir d'un
   autre téléphone, d'une vieille version, ou avoir été édité à la main.
   `backupSchema` le valide **entièrement avant** d'écrire quoi que ce
   soit ; clés inattendues (`__proto__`, `constructor`) sans effet ; un
@@ -81,9 +95,12 @@ surface qui n'existe pas :
   cassé fige l'appli chez tout le monde. `ignore` de `firebase.json` :
   jamais de motif `!` ; `/.well-known/` hors repli de navigation et hors
   précache ; la garde `REMPLIR` du smoke n'a aucun contournement.
-- **Permissions navigateur** : Wake Lock et vibration seulement. Une
-  nouvelle permission (caméra, micro, géolocalisation, notifications) est
-  une décision produit, pas un détail de lot.
+- **Permissions navigateur** : Wake Lock, vibration et, depuis le lot
+  `ecran-miroir`, la **caméra** — ouverte seulement dans le geste
+  « Scanner », arrêtée à la première lecture, à `stop` et au masquage de
+  l'onglet ; aucune image stockée ni envoyée. Une nouvelle permission
+  (micro, géolocalisation, notifications) est une décision produit, pas
+  un détail de lot.
 - **Stockage local** (`localStorage`, `sessionStorage`) : jamais de donnée
   qui devrait vivre dans IndexedDB derrière un port.
 - **Dépendances** : nouvelle dépendance runtime = surface nouvelle.

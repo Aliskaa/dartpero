@@ -151,12 +151,13 @@ describe('Réglages — une page rangée par usage', () => {
     expect(titre.parentElement?.querySelector('p')).toBeNull()
   })
 
-  it('les trois groupes de la planche, et aucun autre', async () => {
+  it('les quatre groupes des planches (Écran miroir au-dessus de Sauvegarde), et aucun autre', async () => {
     ouvrir()
     await voyantSauvegarde()
 
     expect(screen.getAllByRole('heading', { level: 2 }).map((titre) => titre.textContent)).toEqual([
       'Affichage',
+      'Écran miroir',
       'Sauvegarde',
       'Joueurs et appli',
     ])

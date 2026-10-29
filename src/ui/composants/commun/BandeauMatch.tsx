@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { LivreRegles } from '@/ui/composants/commun/LivreRegles'
 import { type NomPictogramme, Pictogramme } from '@/ui/composants/commun/Pictogramme'
+import { VoyantMiroir } from '@/ui/composants/commun/VoyantMiroir'
 import type { ReglesDeLaPartie } from '@/ui/reglesDuJeu'
 
 /** Étiquette cerclée du bandeau (DI, DO, « Dernier tour »). */
@@ -64,7 +65,8 @@ export const BandeauMatch = ({
       </div>
     )}
 
-    <div className="-my-1 -mr-1 shrink-0 paysage:-mb-0.5">
+    <div className="-my-1 -mr-1 flex shrink-0 gap-2 paysage:-mb-0.5">
+      <VoyantMiroir />
       <LivreRegles regles={regles} hauteur="moitie" />
     </div>
   </>

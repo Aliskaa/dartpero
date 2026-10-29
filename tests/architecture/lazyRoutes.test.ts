@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const APP = resolve(RACINE, 'src/App.tsx')
 const PARTIE_ECRAN = resolve(RACINE, 'src/ui/ecrans/games/PartieEcran.tsx')
+const MIROIR_ECRAN = resolve(RACINE, 'src/ui/ecrans/miroir/MiroirEcran.tsx')
 
 const IMPORT_STATIQUE = /import\s*\{([^}]*)\}\s*from\s*['"][^'"]+['"]/g
 const LAZY_IMPORT = /\blazy\(\s*\(\)\s*=>\s*import\(/g
@@ -38,6 +39,8 @@ const ECRANS_ROUTES = [
   'NouvellePartieEcran',
   'PartieEcran',
   'ResumePartieEcran',
+  'PartageEcran',
+  'MiroirEcran',
 ]
 
 const ECRANS_MODE = [
@@ -53,6 +56,15 @@ const ECRANS_MODE = [
   'ResumeEntrainementEcran',
 ]
 
+// Une vue miroir par mode, chacune dans son chunk (lot `ecran-miroir`).
+const VUES_MIROIR = [
+  'MiroirX01',
+  'MiroirTourDuMonde',
+  'MiroirCricket',
+  'MiroirKiller',
+  'MiroirEntrainement',
+]
+
 describe('Découpage par route (bundle-par-route)', () => {
   it('analyse réellement les fichiers vérifiés', () => {
     const appSource = readFileSync(APP, 'utf8')
@@ -65,7 +77,7 @@ describe('Découpage par route (bundle-par-route)', () => {
     expect(nomsImportesStatiquement(appSource)).toContain('AccueilEcran')
   })
 
-  it('src/App.tsx n’importe jamais statiquement un des 8 écrans de route', () => {
+  it('src/App.tsx n’importe jamais statiquement un des 10 écrans de route', () => {
     const source = readFileSync(APP, 'utf8')
     const noms = nomsImportesStatiquement(source)
     const fautes = ECRANS_ROUTES.filter((ecran) => noms.includes(ecran))
@@ -73,10 +85,10 @@ describe('Découpage par route (bundle-par-route)', () => {
     expect(fautes).toEqual([])
   })
 
-  it('src/App.tsx déclare au moins 8 lazy(() => import(', () => {
+  it('src/App.tsx déclare au moins 10 lazy(() => import(', () => {
     const source = readFileSync(APP, 'utf8')
 
-    expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(8)
+    expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(10)
   })
 
   it('PartieEcran.tsx n’importe jamais statiquement un des 10 écrans de mode', () => {
@@ -91,5 +103,14 @@ describe('Découpage par route (bundle-par-route)', () => {
     const source = readFileSync(PARTIE_ECRAN, 'utf8')
 
     expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(10)
+  })
+
+  it('MiroirEcran.tsx n’importe jamais statiquement une des 5 vues miroir', () => {
+    const source = readFileSync(MIROIR_ECRAN, 'utf8')
+    const noms = nomsImportesStatiquement(source)
+
+    expect(source.length).toBeGreaterThan(500)
+    expect(VUES_MIROIR.filter((vue) => noms.includes(vue))).toEqual([])
+    expect(nombreDeLazy(source)).toBeGreaterThanOrEqual(VUES_MIROIR.length)
   })
 })

@@ -14,10 +14,19 @@ import type { Clock } from '@/core/application/ports/driven/Clock'
 import { NullHaptics } from '@/core/application/ports/driven/Haptics'
 import type { IdGenerator } from '@/core/application/ports/driven/IdGenerator'
 import type {
+  PeerAnswerResult,
+  PeerLink,
+  PeerLinkState,
+  PeerLinks,
+  PeerOfferResult,
+} from '@/core/application/ports/driven/PeerLinks'
+import type {
   PersistentStorage,
   StorageProtection,
 } from '@/core/application/ports/driven/PersistentStorage'
 import { createMemoryPreferences } from '@/core/application/ports/driven/Preferences'
+import type { QrEncoder, QrMatrix } from '@/core/application/ports/driven/QrEncoder'
+import type { QrScanner, QrScanState } from '@/core/application/ports/driven/QrScanner'
 import type { RandomSource } from '@/core/application/ports/driven/RandomSource'
 import { NullScreenLock } from '@/core/application/ports/driven/ScreenLock'
 import { InMemoryMatchRepository } from '@/infrastructure/memory/InMemoryMatchRepository'
@@ -271,6 +280,186 @@ export class FakeAnnouncer implements Announcer {
   }
 }
 
+/** Une extrémité d'un lien en mémoire ; livre ses messages tout de suite, et seulement ouvert. */
+export class FakePeerLink implements PeerLink {
+  etat: PeerLinkState = 'connecting'
+  pair: FakePeerLink | null = null
+  envois: string[] = []
+  private readonly abonnes = new Set<() => void>()
+  private readonly ecouteurs = new Set<(texte: string) => void>()
+
+  state(): PeerLinkState {
+    return this.etat
+  }
+
+  subscribe(onChange: () => void): () => void {
+    this.abonnes.add(onChange)
+    return () => {
+      this.abonnes.delete(onChange)
+    }
+  }
+
+  send(texte: string): void {
+    if (this.etat !== 'open') return
+    this.envois.push(texte)
+    if (this.pair?.etat === 'open') this.pair.livrer(texte)
+  }
+
+  onMessage(listener: (texte: string) => void): () => void {
+    this.ecouteurs.add(listener)
+    return () => {
+      this.ecouteurs.delete(listener)
+    }
+  }
+
+  close(): void {
+    if (this.etat === 'closed') return
+    this.regler('closed')
+    // L'autre bout voit seulement le lien tomber.
+    if (this.pair && this.pair.etat !== 'closed') this.pair.regler('lost')
+  }
+
+  /** Le nombre d'écouteurs de messages : la saisie doit rester à zéro. */
+  get ecoutes(): number {
+    return this.ecouteurs.size
+  }
+
+  livrer(texte: string): void {
+    for (const ecouteur of [...this.ecouteurs]) ecouteur(texte)
+  }
+
+  regler(etat: PeerLinkState): void {
+    if (this.etat === 'closed' || this.etat === etat) return
+    this.etat = etat
+    for (const abonne of [...this.abonnes]) abonne()
+  }
+}
+
+/** Le réseau local en mémoire, partagé par deux `fakeServices` : offres, réponses, coupures. */
+export class ReseauFactice {
+  private compteur = 0
+  readonly offres = new Map<string, FakePeerLink>()
+  readonly reponses = new Map<string, { offre: string; lien: FakePeerLink }>()
+  /** Les paires établies, la plus récente en dernier. */
+  readonly paires: { saisie: FakePeerLink; miroir: FakePeerLink }[] = []
+
+  jeton(prefixe: string): string {
+    this.compteur += 1
+    return `${prefixe}-${this.compteur}`
+  }
+
+  get derniere(): { saisie: FakePeerLink; miroir: FakePeerLink } {
+    const paire = this.paires.at(-1)
+    if (!paire) throw new Error('aucun lien établi')
+    return paire
+  }
+
+  couper(): void {
+    for (const lien of Object.values(this.derniere)) lien.regler('lost')
+  }
+
+  retablir(): void {
+    for (const lien of Object.values(this.derniere)) lien.regler('open')
+  }
+}
+
+export class FakePeerLinks implements PeerLinks {
+  offresFaites = 0
+  reponsesFaites = 0
+
+  constructor(
+    readonly reseau = new ReseauFactice(),
+    private readonly options: { readonly indisponible?: boolean } = {},
+  ) {}
+
+  async offer(): Promise<PeerOfferResult> {
+    this.offresFaites += 1
+    if (this.options.indisponible) return { ok: false, reason: 'unavailable' }
+    const reseau = this.reseau
+    const token = reseau.jeton('OFFRE')
+    const lien = new FakePeerLink()
+    reseau.offres.set(token, lien)
+    return {
+      ok: true,
+      offer: {
+        token,
+        link: lien,
+        accept: async (answerToken) => {
+          if (answerToken === 'INCOMPATIBLE') return 'incompatible'
+          const reponse = reseau.reponses.get(answerToken)
+          if (!reponse || reponse.offre !== token) return 'unreadable'
+          lien.pair = reponse.lien
+          reponse.lien.pair = lien
+          reseau.paires.push({ saisie: lien, miroir: reponse.lien })
+          lien.regler('open')
+          reponse.lien.regler('open')
+          return null
+        },
+      },
+    }
+  }
+
+  async answer(offerToken: string): Promise<PeerAnswerResult> {
+    this.reponsesFaites += 1
+    if (this.options.indisponible) return { ok: false, reason: 'unavailable' }
+    if (offerToken === 'INCOMPATIBLE') return { ok: false, reason: 'incompatible' }
+    if (!this.reseau.offres.has(offerToken)) return { ok: false, reason: 'unreadable' }
+    const token = this.reseau.jeton('REPONSE')
+    const lien = new FakePeerLink()
+    this.reseau.reponses.set(token, { offre: offerToken, lien })
+    return { ok: true, token, link: lien }
+  }
+}
+
+/** Le scanner en mémoire : `lire(texte)` simule un QR vu par la caméra. */
+export class FakeQrScanner implements QrScanner<unknown> {
+  demarrages = 0
+  private etat: QrScanState = { status: 'idle' }
+  private readonly abonnes = new Set<() => void>()
+
+  state(): QrScanState {
+    return this.etat
+  }
+
+  subscribe(onChange: () => void): () => void {
+    this.abonnes.add(onChange)
+    return () => {
+      this.abonnes.delete(onChange)
+    }
+  }
+
+  start(): void {
+    this.demarrages += 1
+    this.regler({ status: 'scanning' })
+  }
+
+  stop(): void {
+    this.regler({ status: 'idle' })
+  }
+
+  lire(texte: string): void {
+    this.regler({ status: 'read', text: texte })
+  }
+
+  regler(etat: QrScanState): void {
+    this.etat = etat
+    for (const abonne of [...this.abonnes]) abonne()
+  }
+}
+
+export class FakeQrEncoder implements QrEncoder {
+  readonly textes: string[] = []
+
+  async encode(texte: string): Promise<QrMatrix | null> {
+    this.textes.push(texte)
+    return {
+      size: 21,
+      version: 1,
+      modules: Array.from({ length: 21 }, () => Array(21).fill(false)),
+    }
+  }
+}
+
 export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Dependencies => ({
   matches: new InMemoryMatchRepository(),
   players: new InMemoryPlayerRepository(),
@@ -278,6 +467,7 @@ export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Depend
   clock: new TickingClock(),
   ids: new SequentialIdGenerator(),
   random: new CyclingRandomSource(),
+  peerLinks: new FakePeerLinks(),
   devices: {
     screenLock: NullScreenLock,
     haptics: NullHaptics,
@@ -285,6 +475,8 @@ export const fakeDependencies = (surcharges: Partial<Dependencies> = {}): Depend
     announcer: NullAnnouncer,
     persistentStorage: new FakePersistentStorage(),
     appInstallation: NullAppInstallation,
+    qrScanner: new FakeQrScanner(),
+    qrEncoder: new FakeQrEncoder(),
   },
   ...surcharges,
 })
