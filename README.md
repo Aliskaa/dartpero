@@ -3,12 +3,13 @@
 # 🎯 Dartpéro
 
 **Le compteur de fléchettes entre potes.**
-X01, Tour du monde, Cricket, Killer et entraînement au checkout —
-saisie fléchette par fléchette, suggestions de checkout, stats et historique.
+Le **X01** (301 / 501 / 701) joué comme au pub : saisie fléchette par fléchette,
+suggestions de checkout, stats de carrière et historique.
+Et, quand on veut changer : Tour du monde, Cricket, Killer, entraînement au checkout.
 
 **100 % local · hors ligne · sans compte · sans pub**
 
-[**▶ Ouvrir l'app**](https://dartpero.web.app) · [Charte graphique](docs/CHARTE_GRAPHIQUE.md) · [Plan détaillé](docs/PROJECT_PLAN.md)
+[**▶ Ouvrir l'app**](https://dartpero.web.app) · [Charte graphique](docs/CHARTE_GRAPHIQUE.md) · [Plan détaillé](docs/PROJECT_PLAN.md) · [Déploiement](docs/DEPLOIEMENT.md) · [Décisions gravées](CLAUDE.md)
 
 <img src="docs/captures/partie-x01.png" alt="L'écran de partie X01 : le tableau en haut, le pavé de saisie en bas" width="330">
 
@@ -31,15 +32,15 @@ activé.
 
 ## Ce que ça fait
 
-### Cinq modes de jeu
+### Le X01 d'abord, quatre autres modes
 
 | | Mode | Ce que c'est |
 | --- | ---- | ------------ |
-| 🎯 | **X01** | 301 / 501 / 701, double in et double out, premier à N manches, sets en option. Le mode principal. |
+| 🎯 | **X01** | **Le mode principal.** 301 / 501 / 701, premier à N manches, sets en option, double in et double out en option (checkout libre par défaut). Suggestion de checkout, moyenne, first 9, % de doubles, carte des impacts, courbe d'évolution : tout ce que l'app calcule est pensé pour lui. |
 | 🌍 | **Tour du monde** | Du 20 à la bulle, 21 cibles. On finit le tour de table, et le moins de fléchettes gagne. |
 | ✖️ | **Cricket** | Sept cibles à fermer, variantes **standard** et **cut-throat** (où le plus petit score gagne). |
-| 🎯 | **Killer** | 2 à 6 joueurs, un numéro et des vies chacun : on devient killer sur le double de son numéro, puis on retire les vies des autres. Le dernier en vie gagne. |
-| 🎓 | **Entraînement** | Un reste tiré au sort entre 41 et 170, trois fléchettes pour faire le checkout. En solo. |
+| 🔫 | **Killer** | 2 à 6 joueurs, un numéro et des vies chacun : on devient killer sur le double de son numéro, puis on retire les vies des autres. Le dernier en vie gagne. |
+| 🎓 | **Entraînement** | Un reste tiré au sort entre 41 et 170, trois fléchettes pour faire le checkout. En solo, 5, 10 ou 20 checkouts. |
 
 ### Pendant la partie
 
@@ -51,13 +52,30 @@ activé.
 - **Les règles au livre ouvert** : un appui sur le livre, à la création de partie ou en plein
   match, ouvre les règles du jeu par-dessus l'écran — celles que l'app applique, avec les
   réglages de ce soir. La volée en cours ne bouge pas.
-- **Annulation illimitée et fiable** : le bouton retire la fléchette qu'on vient de taper, ou
-  la dernière volée enregistrée — même si elle avait gagné une manche.
+- **Annulation fléchette par fléchette** : chaque appui sur « Annuler » retire la **dernière
+  fléchette jouée**, même si la volée était déjà enregistrée — et même si elle avait gagné une
+  manche. Une fléchette qui **gagne** (checkout X01, victoire au Cricket ou au Killer, Tour du
+  monde bouclé) n'est écrite qu'après un **« Valider la sortie »** : on se trompe de case plus
+  souvent qu'on ne le croit.
+- **La volée en cours survit** à un rechargement ou à un retour du téléphone : ses fléchettes
+  sont gardées à part du journal, et reprises sans bruit.
 - **L'écran ne s'éteint pas** (Wake Lock), le téléphone **vibre** à la validation, et une
-  **voix française** annonce le score puis appelle le joueur suivant.
+  **voix française** annonce le score puis appelle le joueur suivant — « checkout » et « bust » en
+  anglais au milieu de la phrase, comme à la table.
 - **Mode paysage** automatique quand on couche le téléphone : lecture à gauche, pavé à droite.
+- **Rejouer en un tap** : l'écran de choix du jeu propose les trois configurations les plus
+  récentes (mode, réglages, joueurs), lues sur l'historique ; « On remet ça » relance la partie
+  qui vient de finir.
 - **Un nom pour chaque partie** — « Finale des potes », ou à défaut « Dimanche soir » : on la
   retrouve dans l'historique, en tête du résumé et sous le bandeau.
+
+### Un second téléphone en miroir
+
+« Partager la partie » sur le téléphone de saisie, « Servir de miroir » sur un second : il affiche
+la partie **en grand, en lecture seule et muet**, pour qu'on la lise du fond de la pièce pendant
+que l'autre reste dans la main. Le lien passe **directement entre les deux téléphones du même
+réseau local** (WebRTC, aucun serveur) et se jumelle en scannant **deux QR** ; la caméra ne
+s'ouvre que sur un bouton. Le miroir ne stocke rien.
 
 ### Après la partie
 
@@ -69,29 +87,39 @@ activé.
 - **L'accueil en parties récentes** — celles d'aujourd'hui puis de la semaine, en cartes, la
   partie en cours épinglée en tête ; une partie laissée en plan est marquée « Abandonnée »,
   mais se reprend toujours d'un tap.
-- **Statistiques de carrière** filtrables par période, historique filtrable par mode.
+- **Statistiques de carrière** filtrables par période, historique filtrable par mode — et une
+  **courbe d'évolution** de la moyenne, partie après partie, avec sa tendance.
 - **Export / import JSON** de toute la base — le seul moyen de changer de téléphone sans tout
-  perdre, puisqu'il n'y a pas de serveur.
+  perdre, puisqu'il n'y a pas de serveur. Les Réglages rappellent la **date du dernier export**
+  et demandent au navigateur de **protéger** la base (ce qui n'est pas une sauvegarde).
 
 ---
 
 ## Les écrans
 
+### Le X01
+
 <table>
 <tr>
-<td width="33%" align="center"><img src="docs/captures/accueil.png" alt="Écran d'accueil" width="240"><br><sub><b>L'accueil</b><br>Les parties de la semaine, la partie en cours en tête</sub></td>
+<td width="33%" align="center"><img src="docs/captures/partie-x01.png" alt="Partie de X01 en cours : trois joueurs, suggestion de checkout" width="240"><br><sub><b>La partie</b><br>Chiffres géants, checkout suggéré</sub></td>
 <td width="33%" align="center"><img src="docs/captures/resume-x01.png" alt="Résumé d'une partie X01" width="240"><br><sub><b>Le résumé</b><br>La feuille transposée, meneur par ligne</sub></td>
 <td width="33%" align="center"><img src="docs/captures/impacts.png" alt="Carte des impacts sur un plateau" width="240"><br><sub><b>Les impacts</b><br>Le plateau réduit à sa structure</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="docs/captures/cricket.png" alt="Partie de Cricket en cours" width="240"><br><sub><b>Cricket</b><br>Sept cibles, marques et points</sub></td>
-<td align="center"><img src="docs/captures/tour-du-monde.png" alt="Résumé d'un Tour du monde" width="240"><br><sub><b>Tour du monde</b><br>Départagé aux fléchettes</sub></td>
-<td align="center"><img src="docs/captures/entrainement.png" alt="Lancement d'un entraînement au checkout" width="240"><br><sub><b>Entraînement</b><br>Jamais un reste impossible</sub></td>
-</tr>
-<tr>
-<td align="center"><img src="docs/captures/statistiques.png" alt="Statistiques de carrière" width="240"><br><sub><b>Statistiques</b><br>Classées, filtrables par période</sub></td>
+<td align="center"><img src="docs/captures/evolution.png" alt="Carte Évolution : la moyenne de chaque partie" width="240"><br><sub><b>Évolution</b><br>La moyenne partie après partie</sub></td>
+<td align="center"><img src="docs/captures/accueil.png" alt="Écran d'accueil" width="240"><br><sub><b>L'accueil</b><br>La partie en cours en tête, puis celles de la semaine</sub></td>
 <td align="center"><img src="docs/captures/historique.png" alt="Historique des parties" width="240"><br><sub><b>Historique</b><br>Filtrable par mode</sub></td>
-<td align="center"><img src="docs/captures/nouvelle-partie.png" alt="Configuration d'une nouvelle partie" width="240"><br><sub><b>Nouvelle partie</b><br>Joueurs, règles, lancer</sub></td>
+</tr>
+</table>
+
+### Les autres modes
+
+<table>
+<tr>
+<td width="25%" align="center"><img src="docs/captures/cricket.png" alt="Partie de Cricket en cours" width="190"><br><sub><b>Cricket</b><br>Sept cibles, marques et points</sub></td>
+<td width="25%" align="center"><img src="docs/captures/tour-du-monde.png" alt="Tour du monde" width="190"><br><sub><b>Tour du monde</b><br>Départagé aux fléchettes</sub></td>
+<td width="25%" align="center"><img src="docs/captures/killer.png" alt="Partie de Killer en cours" width="190"><br><sub><b>Killer</b><br>Numéros, vies, statut</sub></td>
+<td width="25%" align="center"><img src="docs/captures/entrainement.png" alt="Entraînement au checkout" width="190"><br><sub><b>Entraînement</b><br>Jamais un reste impossible</sub></td>
 </tr>
 </table>
 
@@ -105,8 +133,9 @@ feutre. Le sombre reste le défaut : le cadrage, c'est un garage mal éclairé.
 
 <table>
 <tr>
-<td width="50%" align="center"><img src="docs/captures/accueil-clair.png" alt="L'accueil en thème clair" width="240"></td>
-<td width="50%" align="center"><img src="docs/captures/reglages.png" alt="Écran des réglages" width="240"></td>
+<td width="33%" align="center"><img src="docs/captures/accueil-clair.png" alt="L'accueil en thème clair" width="240"><br><sub><b>Thème clair</b></sub></td>
+<td width="33%" align="center"><img src="docs/captures/reglages.png" alt="Écran des réglages" width="240"><br><sub><b>Réglages</b></sub></td>
+<td width="33%" align="center"><img src="docs/captures/miroir.png" alt="Écran miroir : le QR à scanner sur l'autre téléphone" width="240"><br><sub><b>Écran miroir</b><br>Un QR, la partie en grand</sub></td>
 </tr>
 </table>
 
@@ -121,9 +150,14 @@ Il n'y a rien à installer depuis un store : c'est une **PWA**.
 | **Android** | Ouvrir [dartpero.web.app](https://dartpero.web.app) dans Chrome → menu → *Ajouter à l'écran d'accueil*. |
 | **iPhone** | Ouvrir dans **Safari** (et non Chrome, qui ne sait pas installer de PWA sur iOS) → Partager → *Sur l'écran d'accueil*. |
 
+L'Accueil et les Réglages proposent l'installation (« Installer » sur Android, un guide pas à pas
+sur iPhone), sans jamais s'inviter pendant une partie.
+
 Une fois installée, elle fonctionne **entièrement hors ligne**. Les parties, les profils et les
 statistiques vivent dans l'IndexedDB du téléphone — rien ne part sur un serveur, il n'y a pas
-de compte à créer.
+de compte à créer. **Seule exception**, et seulement si on la demande : le lien local de
+l'écran miroir, de téléphone à téléphone sur le même réseau. La
+[politique de confidentialité](https://dartpero.web.app/confidentialite) le dit noir sur blanc.
 
 ⚠️ **Corollaire assumé** : perdre le téléphone, c'est perdre l'historique. D'où l'export JSON
 dans les Réglages, qui est le filet de sécurité.
@@ -148,16 +182,18 @@ npm run dev:mobile   # https://<IP-du-PC>:5173 — accepter le certificat auto-s
 
 | Commande | Ce qu'elle fait |
 | -------- | --------------- |
-| `npm test` | La suite Vitest — **765 tests** |
+| `npm test` | La suite Vitest — **2116 tests** |
 | `npm run test:watch` | La même, en continu |
 | `npm run lint` | Biome (lint + format). **Jamais ESLint ni Prettier.** |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` | Typecheck puis build de production |
+| `npm run smoke` | Vérifie `dist/` (identité du manifeste, mentions légales, chunks du démarrage) |
 | `npm run icons` | Régénère les icônes PWA depuis `scripts/icon.svg` |
 | `npm run firebase:deploy` | Build + smoke test + déploiement sur Firebase Hosting |
 
 **Stack** : React 19 · TypeScript 7 · Vite 8 · Tailwind CSS 4 · React Router 8 · TanStack Query ·
-Dexie (IndexedDB) · Vitest + Testing Library · Biome · `vite-plugin-pwa`.
+Dexie (IndexedDB) · Vitest + Testing Library · Biome · `vite-plugin-pwa` · `@nuintun/qrcode`
+(chargé à la demande, pour l'écran miroir).
 
 ---
 
@@ -169,7 +205,7 @@ Le cœur est en **architecture hexagonale** (ports & adapters). Les dépendances
 ```
    ui / infrastructure  ──►  application (ports + use cases)  ──►  domain
    React, Dexie,             ce que l'app sait faire,              les règles,
-   Wake Lock, voix           et ce dont elle a besoin              pures et testables
+   Wake Lock, voix, WebRTC    et ce dont elle a besoin              pures et testables
 ```
 
 - **`src/core/domain/`** — zéro import externe. Ni React, ni Dexie, ni API navigateur, **ni
@@ -178,12 +214,14 @@ Le cœur est en **architecture hexagonale** (ports & adapters). Les dépendances
 - **`src/core/application/`** — les ports (ce que l'UI peut demander, ce dont le cœur a besoin)
   et les use cases qui les implémentent.
 - **`src/infrastructure/`** — les adapters : Dexie, Wake Lock, vibration, `localStorage`,
-  synthèse vocale. Chacun a une doublure in-memory pour les tests.
+  synthèse vocale, lien WebRTC, lecture de QR. Chacun a une doublure in-memory pour les tests.
 - **`src/composition/container.ts`** — le **seul** point de câblage ports → adapters.
 
-Deux garde-fous vérifient que ça tient : un `override` **Biome** sur `src/core/**` qui refuse
+Trois garde-fous vérifient que ça tient : un `override` **Biome** sur `src/core/**` qui refuse
 les imports externes dans l'éditeur, et un **test d'architecture** qui lit les imports réels de
-`src/` et attrape ce que la liste de paquets bannis n'avait pas prévu.
+`src/` et attrape ce que la liste de paquets bannis n'avait pas prévu. Le troisième garde le réseau : WebRTC
+et la caméra n'existent chacun que dans **un seul fichier**, et aucun `import` de `firebase` n'entre
+jamais dans `src/` (Firebase Hosting ne sert que des fichiers statiques).
 
 ### Le choix qui structure tout : le match est un journal
 
@@ -213,7 +251,7 @@ Chaque mode a son **propre** événement d'ouverture, ses règles et son état c
 mis en facteur artificiellement : `domain/games/index.ts` ne fait qu'**aiguiller** sur le
 discriminant `mode`, et TypeScript garantit qu'aucun cas n'est oublié.
 
-Le prix a été mesuré trois fois (Tour du monde, entraînement, Cricket) et il ne bouge pas : un
+Le prix a été mesuré quatre fois (Tour du monde, entraînement, Cricket, Killer) et il ne bouge pas : un
 dossier `games/<mode>/`, un événement d'ouverture, trois lignes dans chaque aiguillage, un
 dossier de composants et un écran.
 
@@ -227,7 +265,7 @@ src/
 │  ├─ domain/          games/ (un dossier par mode) · value-objects/ · entities/
 │  │                   events/ · services/ (transverses : checkout, bust, impacts)
 │  └─ application/     ports/driving · ports/driven · use-cases/
-├─ infrastructure/     dexie/ · device/ · memory/ · system/
+├─ infrastructure/     dexie/ · device/ · memory/ · system/ · peer/ · qr/
 ├─ composition/        container.ts   ← seul point de câblage
 └─ ui/                 composants/ · ecrans/ · hooks/ · theme.ts · labels.ts
 tests/                 domain/ · use-cases/ · infrastructure/ · architecture/ · ui/
@@ -281,8 +319,8 @@ volontairement documenté ici :
 Projet **personnel**, pour jouer entre potes. Pas de licence publiée, pas de contribution
 attendue — mais le code est lisible et les décisions sont écrites.
 
-Il reste une chose que les 765 tests ne peuvent pas couvrir : **la validation sur vrai
+Il reste une chose que les 2116 tests ne peuvent pas couvrir : **la validation sur vrai
 matériel** — la lisibilité à 3 mètres dans un vrai garage, le confort des cibles au pouce
-debout, la tenue du wake lock sur une partie entière, et un passage sur un vrai iPhone.
+debout, la tenue du wake lock sur une partie entière, et un passage sur un vrai iPhone — notamment pour le lien de l'écran miroir.
 
 <div align="center"><sub>Fait pour un garage, une cible et quelques bières.</sub></div>
