@@ -43,18 +43,30 @@ Nom affiché : **Dartpéro** (fléchettes + apéro). Slug technique : `dartpero`
 d'accueil ». Pas de passage par les stores.
 - **Backend = architecture hexagonale (Ports & Adapters) + SOLID.** Exigence forte de
 l'utilisateur, à respecter strictement.
-- **PAS de Firebase DANS L'APP, PAS d'authentification, PAS de réseau.** Décidé. Une partie se
+- **PAS de Firebase DANS L'APP, PAS d'authentification, PAS de serveur.** Décidé. Une partie se
 joue hors ligne, autour d'un seul téléphone : un écran de login serait rédhibitoire. Toute la
 persistance passe par **Dexie (IndexedDB)** derrière les ports `MatchRepository` /
 `PlayerRepository`. Une éventuelle sync cloud serait **un adapter de plus**, jamais une
 dépendance du cœur.
+⚠️ **« Pas de réseau » rouvert puis regravé au lot `ecran-miroir`** : une seule exception, le
+**lien local** de l'écran miroir — WebRTC (`RTCDataChannel`) entre deux téléphones du même
+réseau local, **sans serveur** (ni signalisation, ni STUN / TURN : `iceServers: []`), jumelé par
+**deux QR** scannés. Candidats filtrés « réseau local » à l'encodage et au décodage du jeton
+(IPv4 privées, ULA et lien IPv6, `.local` ; jamais une adresse publique). La **caméra** ne
+s'ouvre que **sur un bouton** (« Scanner le code » / « Scanner la réponse ») et se referme à la
+lecture. **Un fichier par capacité** : WebRTC dans `infrastructure/peer/WebRtcPeerLinks.ts`
+seul, caméra dans `infrastructure/device/CameraQrScanner.ts` seul (fil-piège
+`reseauBoundary.test.ts`). Ce qui voyage, en sens unique saisie → miroir : **trois messages**
+(`partie`, `volee`, `arret`) ; le **genre** n'est envoyé **qu'au Killer** ; **rien n'est stocké
+sur le miroir**. « Aucun import de `firebase` dans `src/` » reste en vigueur.
 ⚠️ **Firebase *Hosting* est une exception qui n'en est pas une** (voir § Déploiement) : c'est
 un serveur de fichiers statiques, il ne met pas un octet de SDK dans le bundle. Aucun
 `import` de `firebase` dans `src/`, jamais — ni Auth, ni Firestore, ni Functions.
 ⚠️ **La politique publique `/confidentialite` affirme ce « pas de réseau »** (URL donnée à la Play Console, texte
 dans `SECTIONS_CONFIDENTIALITE`, `src/ui/labels.ts`). Toute capacité réseau, permission, cookie
-ou donnée stockée nouvelle se livre **avec** la mise à jour de ce texte et de sa date. Seul le
-réseau a un fil-piège (`tests/architecture/reseauBoundary.test.ts`) ; le reste, c'est la relecture.
+ou donnée stockée nouvelle se livre **avec** la mise à jour de ce texte et de sa date (dernière :
+24 octobre 2026, section « Écran miroir »). Le réseau, le lien WebRTC et la caméra ont un fil-piège
+(`tests/architecture/reseauBoundary.test.ts`) ; le reste, c'est la relecture.
 - **Les joueurs sont des profils LOCAUX**, pas des comptes : pseudo + couleur (+ un **genre**
 facultatif, lot `killer`), créés en 2 secondes, portant leurs stats **sur cet appareil**. Filet de
 sécurité obligatoire : **export / import JSON** de toute la base (lot 4).
@@ -67,8 +79,12 @@ accorder « éliminé / éliminée » aux textes du Killer (pastille, case de vo
 lecteurs d'écran, voix). Jamais lu ailleurs (garde `tests/architecture/genreBoundary.test.ts`), jamais
 montré au repos, jamais dans une statistique ni un classement. Pas de `db.version` (champ non indexé),
 `BACKUP_VERSION` inchangé ; un genre invalide dans un fichier fait ignorer **le profil** (compté dans
-`playersSkipped`). La politique `/confidentialite` le dit (lignes de `labels.ts` : 438, 448, 457, date du
-21 octobre 2026) : donnée stockée nouvelle = texte **et** date.
+`playersSkipped`). La politique `/confidentialite` le dit (`SECTIONS_CONFIDENTIALITE`, `labels.ts`) :
+donnée stockée nouvelle = texte **et** date.
+⚠️ **L'écran miroir le transporte, au Killer seulement** (lot `ecran-miroir`) : `gender` n'entre dans le
+message `partie` que si l'ouverture est `KillerStarted`, pour accorder « éliminé / éliminée » sur le
+miroir. `genreBoundary` nomme `mirrorProtocol.ts`, `WatchMatch.ts` et `MiroirKiller.tsx` ; la politique
+le dit (section « Écran miroir », 24 octobre 2026).
 - **Le match est une liste d'événements** (`MatchEvent[]`), l'état affiché est une
 **projection** rejouée depuis ces événements. C'est le choix qui rend l'**annulation**
 triviale et fiable (on se trompe de saisie très souvent en pleine partie).
@@ -125,7 +141,10 @@ sans toucher une seule classe de `src/ui`.
 - **TypeScript partout.**
 - **Stack frontend figée** : React 19 + TS + **Vite** (`vite-plugin-pwa`), **React Router**,
 **TanStack Query**, **Tailwind CSS v4** + design system maison dans
-`src/ui/composants/commun/`, **Dexie.js**, **Vitest** + Testing Library, **lucide-react**.
+`src/ui/composants/commun/`, **Dexie.js**, **Vitest** + Testing Library, **lucide-react**, et
+**`@nuintun/qrcode`** (lot `ecran-miroir` : une seule bibliothèque qui encode **et** décode, JS pur
+sans WASM, MIT) — importée **seulement par `import()`** depuis `infrastructure/qr/bibliothequeQr.ts`,
+chunk `qr-*.js` séparé, **précaché** mais **absent du démarrage** (vérifié par `npm run smoke`).
 - ⚠️ **TanStack Query n'orchestre PAS le match en cours.** Query sert à l'historique, aux
 profils et aux stats (lecture async). Le match en cours est un **état local synchrone**
 ultra-réactif (tap → score) : `useReducer` + Context dans `src/ui/hooks/useMatch.ts`, qui
@@ -251,6 +270,22 @@ Fermer sans choisir (retour, Échap, voile) vaut *Corriger*. Même mécanisme qu
   (un glissé ne sélectionne jamais) ; mesure **jamais mémorisée** (aucune clé, politique
   inchangée). ⚠️ Texte d'axe ≈ 10 px : écart connu de la charte, réservé à cet écran de
   consultation. Détail : CHARTE § Composants.
+- **Écran miroir** (lot `ecran-miroir`) : un second téléphone affiche la partie en grand, **lecture
+  seule, muet** (ni voix ni vibration), Wake Lock actif. Entrées : groupe « Écran miroir » des Réglages
+  (« Partager la partie », « Servir de miroir ») et bouton de 48 px à côté du livre des règles, avec son
+  voyant (vert connecté, rouge perdu après 5 s, rien sinon). Routes `/miroir/partager` et `/miroir`
+  (écran plein, le retour annule). ⚠️ **Pas de port de signalisation** : le jeton de jumelage est une
+  chaîne **opaque**, produite et lue par `PeerLinks` seul ; le QR n'en est qu'un porteur (`QrEncoder`,
+  `QrScanner`). Deux sessions applicatives dans `Services` : `shareMatch` (saisie, nourrie par **un seul**
+  effet de `useVoleeEnCours`, sourde à tout message entrant) et `watchMatch` (miroir, **aucun dépôt** :
+  il ne peut rien écrire). Protocole v1, **jamais persisté ni exporté** : `partie` (journal + profils de
+  la partie), `volee` (0 à 3 fléchettes, clé `visitCount`), `arret` (« Partage arrêté », distinct de
+  « Connexion perdue ») ; `v` ≠ 1 = refus propre ; validation par `versMatchRecord` / `versDart` de
+  l'import. Fin, vainqueur, classement : **du journal seul**, jamais de l'aperçu (la fléchette de sortie
+  en attente se montre en pointillé, rien de célébré). Le miroir suit seul la partie suivante et garde la
+  dernière entre deux. **Une seule statistique** au miroir : la moyenne du X01 (3 fléchettes, volées enregistrées). Le joueur actif se
+repère par une étiquette ou une barre, jamais la couleur seule (`aria-current`). Un mode nouveau **apporte sa vue miroir** (`MiroirEcran` aiguille par un `switch`
+  typé `never`). Détail : CONVENTIONS § 5, 13 ; CHARTE § Écran miroir.
 
 ---
 
@@ -481,7 +516,7 @@ détail complet dans la charte graphique.
 src/core/domain/games/<mode>/  ← UN DOSSIER PAR MODE DE JEU ; games/index.ts = la couture
 src/core/domain/services/      ⚠️ TRANSVERSES : un mode n'importe jamais un autre mode
 src/core/application/          ports/driving · ports/driven · use-cases (+ backupSchema.ts)
-src/infrastructure/            dexie/ · device/ · memory/ · system/
+src/infrastructure/            dexie/ · device/ · memory/ · system/ · peer/ (WebRTC) · qr/
 src/composition/               container.ts   ← seul point de câblage
 src/ui/ecrans/games/           ← MÊME DÉCOUPAGE QUE LE DOMAINE (PartieEcran aiguille)
 ```

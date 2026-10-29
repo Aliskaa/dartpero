@@ -31,7 +31,7 @@ export const useVoleeEnCours = <S extends AnyMatchState>(
   state: S | null,
   evaluer: (state: S, darts: readonly Dart[]) => EtatVolee,
 ) => {
-  const { manageVisitDraft } = useServices()
+  const { manageVisitDraft, shareMatch } = useServices()
   /** La partie de la volée : celle d'une autre partie n'est jamais rendue. */
   const [saisie, setSaisie] = useState<{
     readonly matchId: MatchId
@@ -100,10 +100,19 @@ export const useVoleeEnCours = <S extends AnyMatchState>(
     [matchId, ecrire],
   )
 
+  const darts = saisie.matchId === matchId ? saisie.darts : AUCUNE
+  const pret = pretPour === matchId
+
+  // Le miroir suit l'état affiché ; inactive, la session ne fait que retenir le dernier appel.
+  useEffect(() => {
+    if (!pret || state === null) return
+    shareMatch.publish({ matchId, base: state, darts })
+  }, [shareMatch, matchId, state, darts, pret])
+
   return {
-    darts: saisie.matchId === matchId ? saisie.darts : AUCUNE,
+    darts,
     poser,
     /** Le brouillon de cette partie a été relu (ou écarté) : la saisie peut commencer. */
-    pret: pretPour === matchId,
+    pret,
   }
 }

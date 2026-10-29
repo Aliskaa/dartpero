@@ -66,6 +66,7 @@
                   "@tanstack/react-query": "Frontière hexagonale : le cœur ne connaît pas la couche async de l'UI.",
                   "lucide-react": "Frontière hexagonale : pas d'icônes dans le cœur.",
                   "dexie": "Frontière hexagonale : la persistance passe par un port (MatchRepository / PlayerRepository).",
+                  "@nuintun/qrcode": "Frontière hexagonale : le QR passe par les ports QrEncoder / QrScanner.",
                   "sharp": "Frontière hexagonale : outillage de build uniquement."
                 }
               }

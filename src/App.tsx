@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router'
-import { cheminNouvellePartie } from '@/ui/chemins'
+import { CHEMIN_MIROIR, CHEMIN_PARTAGE, cheminNouvellePartie } from '@/ui/chemins'
 import { Spinner } from '@/ui/composants/commun/Etats'
 import { LayoutPrincipal } from '@/ui/composants/commun/LayoutPrincipal'
 import { AccueilEcran } from '@/ui/ecrans/AccueilEcran'
@@ -34,6 +34,12 @@ const PartieEcran = lazy(() =>
 )
 const ResumePartieEcran = lazy(() =>
   import('@/ui/ecrans/games/PartieEcran').then((m) => ({ default: m.ResumePartieEcran })),
+) // Écran miroir : deux écrans pleins, hors de la barre du bas.
+const PartageEcran = lazy(() =>
+  import('@/ui/ecrans/miroir/PartageEcran').then((m) => ({ default: m.PartageEcran })),
+)
+const MiroirEcran = lazy(() =>
+  import('@/ui/ecrans/miroir/MiroirEcran').then((m) => ({ default: m.MiroirEcran })),
 )
 
 /** Écrans de navigation (barre du bas) et écrans de partie en plein écran ; le thème est posé ici, à la racine. */
@@ -65,6 +71,8 @@ export default function App() {
         {/* Une seule URL par partie : c'est son mode qui décide de l'écran. */}
         <Route path="/partie/:matchId" element={<PartieEcran />} />
         <Route path="/partie/:matchId/resume" element={<ResumePartieEcran />} />
+        <Route path={CHEMIN_PARTAGE} element={<PartageEcran />} />
+        <Route path={CHEMIN_MIROIR} element={<MiroirEcran />} />
       </Routes>
     </Suspense>
   )

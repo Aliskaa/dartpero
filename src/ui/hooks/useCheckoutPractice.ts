@@ -5,6 +5,7 @@ import { type Dart, Dart as DartVO, type Multiplier } from '@/core/domain/value-
 import type { MatchId } from '@/core/domain/value-objects/ids'
 import { annonceIssue, libelleAnnulation, nomJoueur } from '@/ui/labels'
 import { useServices } from '../providers/ServicesProvider'
+import { resteEntrainement } from './resteEntrainement'
 import { useVoix } from './useAppareil'
 import { useProfils } from './useJoueurs'
 import { usePauseAnnulation } from './usePauseAnnulation'
@@ -33,7 +34,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
   const evaluer = useCallback((base: CheckoutPracticeState, darts: readonly Dart[]): EtatVolee => {
     const cibleDeLaManche = base.current?.target ?? null
     if (cibleDeLaManche === null) return 'close'
-    const reste = darts.reduce((total, lancee) => total - DartVO.points(lancee), cibleDeLaManche)
+    const reste = resteEntrainement(cibleDeLaManche, darts)
     return darts.length >= 3 || reste <= 1 ? 'close' : 'ouverte'
   }, [])
   const volee = useVoleeEnCours(matchId, state, evaluer)
@@ -48,8 +49,7 @@ export const useCheckoutPractice = (matchId: MatchId) => {
   const termine = state?.finished ?? false
 
   /** Le reste affiché suit chaque fléchette, sans consulter le domaine. */
-  const resteAffiche =
-    cible === null ? 0 : dartsEnCours.reduce((reste, dart) => reste - DartVO.points(dart), cible)
+  const resteAffiche = resteEntrainement(cible, dartsEnCours)
 
   const enregistrer = useCallback(
     async (darts: readonly Dart[]) => {

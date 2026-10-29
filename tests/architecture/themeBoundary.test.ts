@@ -118,6 +118,18 @@ describe('Frontière des thèmes', () => {
       fichiers: ['composants/commun/VignetteTheme.tsx'],
       temoin: 6,
     },
+    {
+      famille: 'code QR',
+      motif: utilitaires(['qr-[a-z-]+']),
+      fichiers: ['composants/commun/CodeQr.tsx'],
+      temoin: 2,
+    },
+    {
+      famille: 'blanc sur rouge du miroir',
+      motif: utilitaires(['sur-rouge']),
+      fichiers: ['composants/commun/Miroir.tsx', 'ecrans/miroir/MiroirEcran.tsx'],
+      temoin: 2,
+    },
   ] as const
 
   it.each(RESERVES)(
@@ -219,6 +231,30 @@ describe('Frontière des thèmes', () => {
       expect(sombre.get(apercu), `${apercu} (sombre)`).toBe(attendu)
       expect(clair.get(apercu), `${apercu} (clair)`).toBe(attendu)
     }
+  })
+
+  it('les jetons du miroir sont constants : le QR reste sombre sur clair dans les deux thèmes', () => {
+    const css = readFileSync(resolve(RACINE, 'src/index.css'), 'utf8')
+    const valeur = (depuis: string, jeton: string): string | undefined => {
+      const debut = css.indexOf(depuis)
+      expect(debut).toBeGreaterThan(-1)
+      const fin = css.indexOf('\n}', debut)
+      return css
+        .slice(debut, fin)
+        .match(new RegExp(`--color-${jeton}:\\s*([^;]+);`))?.[1]
+        ?.trim()
+    }
+    for (const [jeton, attendu] of [
+      ['qr-modules', '#14110a'],
+      ['qr-fond', '#ffffff'],
+      ['sur-rouge', '#ffffff'],
+    ] as const) {
+      expect(valeur('@theme {', jeton), `${jeton} (sombre)`).toBe(attendu)
+      expect(valeur('html[data-theme="clair"] {', jeton), `${jeton} (clair)`).toBe(attendu)
+    }
+    expect('fill-qr-modules'.match(utilitaires(['qr-[a-z-]+']))).not.toBeNull()
+    expect('text-sur-rouge'.match(utilitaires(['sur-rouge']))).not.toBeNull()
+    expect('text-sur-laiton'.match(utilitaires(['sur-rouge']))).toBeNull()
   })
 
   it('rouge-touche est défini dans les deux thèmes et sert la touche Hors', () => {

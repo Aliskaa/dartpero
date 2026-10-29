@@ -27,6 +27,9 @@ const AUTORISES = new Set([
   'core/application/ports/driving/ManageBackup.ts',
   'core/application/use-cases/ManageBackupUseCase.ts',
   'core/application/use-cases/backupSchema.ts',
+  // Écran miroir : le genre voyage pour le seul Killer (accord « éliminée » sur le miroir).
+  'core/application/ports/driving/WatchMatch.ts',
+  'core/application/use-cases/mirrorProtocol.ts',
   'infrastructure/dexie/database.ts',
   'infrastructure/dexie/DexiePlayerRepository.ts',
   'ui/labels.ts',
@@ -34,6 +37,7 @@ const AUTORISES = new Set([
   'ui/composants/killer/FeuilleKiller.tsx',
   'ui/ecrans/games/killer/KillerEcran.tsx',
   'ui/ecrans/games/killer/ResumeKillerEcran.tsx',
+  'ui/ecrans/games/killer/MiroirKiller.tsx',
   'ui/composants/commun/ChoixGenre.tsx',
   'ui/ecrans/nouvelle-partie/DialogueNouveauJoueur.tsx',
   'ui/ecrans/JoueursEcran.tsx',
@@ -56,7 +60,7 @@ describe('Frontière du genre', () => {
 
   it('seule une liste fermée de fichiers cite le genre', () => {
     expect(tous.length).toBeGreaterThan(40)
-    expect(lecteurs.length).toBeGreaterThanOrEqual(18)
+    expect(lecteurs.length).toBeGreaterThanOrEqual(21)
 
     const fautes = lecteurs.map(enSrc).filter((chemin) => !AUTORISES.has(chemin))
     expect(fautes).toEqual([])

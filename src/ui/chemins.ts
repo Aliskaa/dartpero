@@ -40,3 +40,15 @@ export const vientDuParcours = (state: unknown): boolean =>
   typeof state === 'object' &&
   state !== null &&
   (state as { readonly parcours?: unknown }).parcours === true
+
+/** Écran miroir : le partage côté saisie, l'affichage côté miroir (écrans pleins, le retour annule). */
+export const CHEMIN_PARTAGE = '/miroir/partager'
+export const CHEMIN_MIROIR = '/miroir'
+
+/** Posé par le bouton du bandeau de partie : « Retour à la partie » plutôt que « Retour ». */
+export const ETAT_DEPUIS_PARTIE = { depuisPartie: true } as const
+
+export const vientDeLaPartie = (state: unknown): boolean =>
+  typeof state === 'object' &&
+  state !== null &&
+  (state as { readonly depuisPartie?: unknown }).depuisPartie === true

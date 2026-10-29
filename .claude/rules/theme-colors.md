@@ -54,9 +54,9 @@ Lot `killer` : sert aussi la perte de vie (« −N », effet « éliminé ») de
 
 ## Jetons réservés
 
-Trois familles de sens, chacune à ses fichiers ; **quatre entrées** dans la garde (le `voile` a la sienne depuis le lot `annulation-volee`) ; la garde est une table
+Quatre familles de sens, chacune à ses fichiers ; **six entrées** dans la garde (le `voile` a la sienne depuis le lot `annulation-volee`, l'écran miroir deux depuis le lot `ecran-miroir`) ; la garde est une table
 jetons → fichiers (`themeBoundary.test.ts`, « les jetons réservés … ne
-servent qu'à leurs fichiers »), un témoin par entrée (quatre).
+servent qu'à leurs fichiers »), un témoin par entrée (six).
 
 ### La feuille de règles
 
@@ -91,6 +91,18 @@ et `LivreRegles.tsx` — sauf `voile`, que la garde autorise à `FeuilleRegles.t
   `laiton` de chaque thème. Une seconde garde vérifie l'égalité avec le
   jeton montré, dans les deux blocs. Changer une valeur de palette =
   changer son aperçu dans les deux blocs.
+
+### L'écran miroir (lot `ecran-miroir`)
+
+- `qr-modules` `#14110a`, `qr-fond` `#ffffff` : **seulement** dans `CodeQr.tsx`
+  (`fill-qr-*`). ⚠️ Constants à dessein, identiques dans les deux blocs : le
+  QR reste **sombre sur clair** dans les deux thèmes (en sombre,
+  `craie-vive` sur `feutre` l'inverserait).
+- `sur-rouge` `#ffffff` : le texte et la bordure posés sur `rouge-cible`
+  (bandeau bust, « Connexion perdue », « Refaire le code » ; 5,6 / 7,4:1),
+  **seulement** dans `Miroir.tsx` et `ecrans/miroir/MiroirEcran.tsx`.
+- Deux entrées dans la garde (« code QR », « blanc sur rouge du miroir ») et
+  un test d'égalité des trois valeurs entre les deux blocs.
 
 ## Exceptions (documentées dans le garde lui-même)
 

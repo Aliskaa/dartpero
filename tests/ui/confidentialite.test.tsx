@@ -46,6 +46,7 @@ describe('Confidentialité — en accès direct', () => {
       'Sur votre appareil',
       'Garder la main',
       'Fonctions du téléphone',
+      'Écran miroir',
       'Hébergement',
     ]) {
       expect(screen.getByRole('heading', { level: 2, name: section })).toBeInTheDocument()
@@ -73,7 +74,36 @@ describe('Confidentialité — en accès direct', () => {
     ouvrir('/confidentialite')
     await titre()
 
-    expect(screen.getAllByText('Mise à jour le 21 octobre 2026')).toHaveLength(1)
+    expect(screen.getAllByText('Mise à jour le 24 octobre 2026')).toHaveLength(1)
+  })
+
+  it('décrit l’écran miroir : réseau local, caméra sur le bouton, rien d’enregistré (lot ecran-miroir)', async () => {
+    ouvrir('/confidentialite')
+    await titre()
+
+    const miroir = screen
+      .getByRole('heading', { level: 2, name: 'Écran miroir' })
+      .closest('section') as HTMLElement
+    expect(
+      within(miroir).getByText(/ni serveur de signalisation ni serveur de relais/),
+    ).toBeInTheDocument()
+    expect(within(miroir).getByText(/jamais une adresse publique/)).toBeInTheDocument()
+    expect(
+      within(miroir).getByText(/Au Killer, il reçoit aussi le genre choisi pour chaque profil/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/^Trois cas font sortir quelque chose du téléphone/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/La caméra ne s’ouvre que lorsque vous touchez « Scanner le code »/),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/n’utilise jamais la caméra/)).toBeNull()
+    expect(
+      screen.getByText(/ni la partie reçue, ni le jumelage ne sont enregistrés/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('L’écran miroir, lui, n’a besoin que du réseau local.'),
+    ).toBeInTheDocument()
   })
 
   it('cite le genre du profil, stocké sur l’appareil et exporté (lot killer)', async () => {

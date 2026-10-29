@@ -15,7 +15,7 @@ import {
 /** Sur un tableau de pub, la bulle s'écrit « B » : la colonne doit rester étroite. */
 export const libelleColonne = (cible: Segment): string => (cible === 'BULL' ? 'B' : String(cible))
 
-const etatLisible = (marques: number, morte: boolean): string => {
+export const etatLisible = (marques: number, morte: boolean): string => {
   if (morte) return 'cible morte'
   if (marques >= 3) return 'fermée'
   if (marques === 0) return 'rien'
@@ -23,21 +23,24 @@ const etatLisible = (marques: number, morte: boolean): string => {
 }
 
 /** Marques d'une cible à l'ardoise : barre, croix, croix cerclée (fermé) ; fermée en laiton, morte en `craie-decor`. */
-const Marques = ({
+export const Marques = ({
   marques,
   morte,
   petite,
+  grande = false,
 }: {
   readonly marques: number
   readonly morte: boolean
   /** À quatre joueurs : 26 px (planche), les colonnes sont plus étroites que 28. */
   readonly petite: boolean
+  /** L'écran miroir, lu à 2-3 m. */
+  readonly grande?: boolean
 }) => (
   <svg
     viewBox="0 0 24 24"
     aria-hidden="true"
     className={[
-      petite ? 'size-6.5' : 'size-7',
+      grande ? 'size-10' : petite ? 'size-6.5' : 'size-7',
       morte ? 'text-craie-decor' : marques >= 3 ? 'text-laiton' : 'text-craie-vive',
     ].join(' ')}
     fill="none"

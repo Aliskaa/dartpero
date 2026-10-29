@@ -320,7 +320,7 @@ export const LIEN_CONFIDENTIALITE = 'Confidentialité et mentions légales'
 export const TITRE_CONFIDENTIALITE = 'Confidentialité'
 export const SOUS_TITRE_CONFIDENTIALITE = 'Politique et mentions légales'
 
-export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 21 octobre 2026'
+export const DATE_MISE_A_JOUR_CONFIDENTIALITE = 'Mise à jour le 24 octobre 2026'
 
 export const RETOUR_REGLAGES = 'Retour aux réglages'
 
@@ -336,7 +336,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
     paragraphes: [
       'Dartpéro est un compteur de fléchettes qui fonctionne entièrement sur votre téléphone. Il n’y a pas de compte à créer : les joueurs sont de simples profils locaux.',
       'L’éditeur ne collecte aucune donnée : Dartpéro n’a ni serveur ni compte, et ne lui transmet rien. Aucune mesure d’audience, aucune publicité, aucun cookie.',
-      'Deux cas techniques, qui ne dépendent pas de l’éditeur, font sortir quelque chose du téléphone ; ils sont décrits plus bas : l’hébergeur, qui reçoit les requêtes quand il sert les fichiers de l’application, et la voix de l’annonce vocale qui, selon votre navigateur, peut être synthétisée en ligne. Le fichier d’export, lui, n’est envoyé nulle part par Dartpéro.',
+      'Trois cas font sortir quelque chose du téléphone ; ils sont décrits plus bas. Deux ne dépendent pas de l’éditeur : l’hébergeur, qui reçoit les requêtes quand il sert les fichiers de l’application, et la voix de l’annonce vocale qui, selon votre navigateur, peut être synthétisée en ligne. Le troisième ne dépend que de vous : l’écran miroir, qui relie deux téléphones, et seulement si vous l’ouvrez. Le fichier d’export, lui, n’est envoyé nulle part par Dartpéro.',
     ],
   },
   {
@@ -347,6 +347,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
       'Si une mise à jour de l’application ne parvient pas à se charger, un marqueur technique est posé dans le stockage de session (sessionStorage), pour ne recharger la page qu’une seule fois.',
       'Une copie des fichiers de l’application est gardée en cache par le navigateur, pour qu’elle fonctionne hors ligne.',
       'Au démarrage, Dartpéro demande au navigateur de protéger ce stockage, pour qu’il ne l’efface pas de lui-même quand la place vient à manquer. Cette protection n’est pas une sauvegarde.',
+      'L’écran miroir n’ajoute rien à ce stockage : ni la partie reçue, ni le jumelage ne sont enregistrés sur l’appareil qui sert de miroir.',
     ],
   },
   {
@@ -360,8 +361,18 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
   {
     titre: 'Fonctions du téléphone',
     paragraphes: [
-      'Pendant une partie, Dartpéro garde l’écran allumé et peut faire vibrer le téléphone (pas sur iPhone). Il n’utilise jamais la caméra, le micro, la localisation, les contacts ni les notifications.',
+      'Pendant une partie, Dartpéro garde l’écran allumé et peut faire vibrer le téléphone (pas sur iPhone). Un téléphone qui sert de miroir garde aussi son écran allumé, sans voix ni vibration. La caméra ne s’ouvre que lorsque vous touchez « Scanner le code » ou « Scanner la réponse » dans l’écran miroir, pour lire un code QR : l’image n’est ni enregistrée, ni envoyée, et la caméra se referme dès que le code est lu ou que vous quittez l’écran. Dartpéro n’utilise jamais le micro, la localisation, les contacts ni les notifications.',
       'L’annonce vocale lit les scores et le pseudo du joueur suivant avec une voix fournie par le navigateur. Selon le navigateur, cette voix peut être synthétisée en ligne par son fournisseur, qui reçoit alors le texte annoncé, pseudos compris — au Killer, « éliminé » ou « éliminée » y est accordé selon le genre choisi pour le profil. Pour l’éviter, coupez « Annoncer les volées » dans Réglages → Affichage.',
+    ],
+  },
+  {
+    titre: 'Écran miroir',
+    paragraphes: [
+      'L’écran miroir montre la partie en cours en grand sur un second téléphone. Il ne s’ouvre jamais de lui-même : il faut choisir « Partager la partie » sur un téléphone et « Servir de miroir » sur l’autre, puis scanner deux codes QR.',
+      'Les deux téléphones se parlent directement, sur le même réseau local (Wi-Fi ou partage de connexion), par une liaison chiffrée de type WebRTC. Aucun serveur n’y participe, pas même celui de l’éditeur : Dartpéro n’utilise ni serveur de signalisation ni serveur de relais, et rien ne passe par Internet.',
+      'Chaque code QR contient les identifiants temporaires de cette liaison et les adresses réseau locales du téléphone qui l’affiche (celles de votre Wi-Fi ou de votre partage de connexion, jamais une adresse publique). Il ne sert qu’à ce jumelage : ne le montrez qu’à l’appareil que vous voulez relier.',
+      'Le miroir reçoit la partie partagée : son nom s’il y en a un, les pseudos et les couleurs des joueurs, chaque fléchette saisie et la volée en cours. Au Killer, il reçoit aussi le genre choisi pour chaque profil, qui sert seulement à accorder « éliminé / éliminée ». Rien de tout cela n’est enregistré par le miroir : si vous le rechargez, vous refaites le jumelage. Ces messages ne sont ni exportés, ni envoyés à l’éditeur.',
+      'Le partage s’arrête quand vous touchez « Arrêter le partage », quand vous fermez l’application ou quand le réseau est coupé.',
     ],
   },
   {
@@ -369,6 +380,7 @@ export const SECTIONS_CONFIDENTIALITE: readonly SectionPolitique[] = [
     paragraphes: [
       'Les fichiers de l’application sont servis par Firebase Hosting (Google). Comme tout hébergeur, il reçoit l’adresse IP et les informations techniques de chaque requête, et peut les journaliser selon ses propres règles. L’éditeur ne les exploite pas.',
       'Une fois l’application en cache, elle fonctionne sans réseau.',
+      'L’écran miroir, lui, n’a besoin que du réseau local.',
     ],
   },
 ]
@@ -2632,3 +2644,141 @@ export const phraseVictoire = (graine: string): string => {
   const index = Math.abs(hash) % PHRASE_VICTOIRE.length
   return PHRASE_VICTOIRE[index] ?? PHRASE_VICTOIRE[0]
 }
+
+// ── Écran miroir (lot `ecran-miroir`) : textes de la planche validée ──
+
+export const TITRE_GROUPE_MIROIR = 'Écran miroir'
+export const TITRE_ECRAN_MIROIR = 'Écran miroir'
+export const LIEN_PARTAGER_PARTIE = 'Partager la partie'
+export const AIDE_PARTAGER_PARTIE = 'La montrer en grand sur un autre téléphone'
+export const LIEN_SERVIR_DE_MIROIR = 'Servir de miroir'
+export const AIDE_SERVIR_DE_MIROIR = 'Afficher la partie d’un autre téléphone'
+export const SOUS_TITRE_SERVIR_DE_MIROIR = 'Afficher une partie'
+
+export const ETAPES_PARTAGE = ['Montrer', 'Scanner'] as const
+export const ETAPES_MIROIR = ['Scanner', 'Montrer'] as const
+
+export const CONSIGNE_MONTRER_OFFRE =
+  'Sur l’autre téléphone : Réglages › Servir de miroir › Scanner le code.'
+export const AIDE_LUMINOSITE =
+  'Montez la luminosité de l’écran et tenez les deux téléphones à 30 cm.'
+export const LIBELLE_SCANNER_REPONSE = 'Scanner la réponse'
+export const CONSIGNE_VISER = 'Visez le code affiché sur l’autre téléphone.'
+export const LIEN_REVOIR_CODE = 'Revoir mon code'
+export const TITRE_MIROIR_CONNECTE = 'Miroir connecté'
+export const TEXTE_MIROIR_CONNECTE =
+  'L’autre téléphone affiche la partie. Rien n’est enregistré sur lui.'
+export const LIBELLE_RETOUR_PARTIE = 'Retour à la partie'
+export const LIBELLE_RETOUR = 'Retour'
+export const LIBELLE_ARRETER_PARTAGE = 'Arrêter le partage'
+export const TITRE_MIROIR_PERDU = 'Miroir perdu'
+export const TEXTE_MIROIR_PERDU =
+  'L’autre téléphone n’est plus joignable. La partie continue normalement ici.'
+export const LIBELLE_REFAIRE_CODE = 'Refaire le code'
+export const PRESENTATION_MIROIR =
+  'Ce téléphone affichera la partie d’un autre, en grand et sans pouvoir la modifier.'
+export const RIEN_ENREGISTRE = 'Rien n’est enregistré.'
+export const CONSIGNE_SCANNER_SAISIE =
+  'Sur le téléphone de saisie : Réglages › Partager la partie, puis ici : Scanner le code.'
+export const LIBELLE_SCANNER_CODE = 'Scanner le code'
+export const CONSIGNE_MONTRER_REPONSE =
+  'Sur le téléphone de saisie : Scanner la réponse, puis montrez-lui ce code, face à sa caméra.'
+export const LIBELLE_SCANNER_A_NOUVEAU = 'Scanner à nouveau'
+export const ATTENTE_CONNEXION = 'En attente de la connexion…'
+export const ETIQUETTE_CODE_QR = 'Code à scanner'
+export const ERREUR_CODE_QR = 'Le code n’a pas pu s’afficher. Recommencez.'
+export const ETIQUETTE_VISEUR = 'Image de la caméra'
+
+export const LIBELLE_REESSAYER = 'Réessayer'
+export const LIBELLE_RECOMMENCER = 'Recommencer'
+
+/** Les six erreurs de la planche : un message dans l'écran, jamais une boîte. */
+export type ErreurMiroir =
+  | 'camera-refusee'
+  | 'sans-camera'
+  | 'code-illisible'
+  | 'versions'
+  | 'navigateur'
+  | 'connexion'
+
+export const ERREURS_MIROIR: Record<
+  ErreurMiroir,
+  { readonly titre: string; readonly texte: string }
+> = {
+  'camera-refusee': {
+    titre: 'Caméra refusée',
+    texte:
+      'Le miroir lit un code avec la caméra, rien d’autre. Autorisez la caméra dans les réglages du navigateur, puis recommencez.',
+  },
+  'sans-camera': {
+    titre: 'Pas de caméra',
+    texte: 'Ce téléphone ne peut pas servir de miroir : il faut une caméra pour lire le code.',
+  },
+  'code-illisible': {
+    titre: 'Code illisible',
+    texte:
+      'Approchez ou éloignez le téléphone, montez la luminosité de l’autre écran, évitez les reflets.',
+  },
+  versions: {
+    titre: 'Versions différentes',
+    texte:
+      'L’autre téléphone n’a pas la même version de Dartpéro. Mettez les deux à jour, puis recommencez.',
+  },
+  navigateur: {
+    titre: 'Navigateur incompatible',
+    texte: 'Ce navigateur ne sait pas relier deux téléphones. Essayez Chrome ou Safari à jour.',
+  },
+  connexion: {
+    titre: 'Connexion impossible',
+    texte:
+      'Les deux téléphones doivent être sur le même réseau (Wi-Fi ou partage de connexion). Recommencez depuis le début.',
+  },
+}
+
+/** « Pas de caméra » vu du téléphone de saisie : il lui faut aussi lire la réponse. */
+export const TEXTE_SANS_CAMERA_PARTAGE =
+  'Ce téléphone ne peut pas partager la partie : il faut une caméra pour lire la réponse.'
+
+export const LIBELLE_CONNECTE = 'Connecté'
+export const ATTENTE_PARTIE = 'En attente d’une partie sur l’autre téléphone'
+export const TITRE_PARTAGE_ARRETE = 'Partage arrêté'
+export const TEXTE_PARTAGE_ARRETE = 'Le téléphone de saisie a arrêté le partage'
+export const TITRE_CONNEXION_PERDUE = 'Connexion perdue'
+export const TEXTE_IMAGE_FIGEE = 'Dernière image figée'
+
+/** Le nom du bouton du bandeau de partie, selon le voyant. */
+export const etiquetteBoutonMiroir = (voyant: 'connecte' | 'perdu' | null): string =>
+  voyant === 'connecte'
+    ? `${TITRE_ECRAN_MIROIR}, ${LIBELLE_CONNECTE.toLowerCase()}`
+    : voyant === 'perdu'
+      ? `${TITRE_ECRAN_MIROIR}, ${TITRE_CONNEXION_PERDUE.toLowerCase()}`
+      : TITRE_ECRAN_MIROIR
+
+export const LIBELLE_A_LA_LIGNE = 'À la ligne'
+export const LIBELLE_MOYENNE = 'Moyenne'
+export const libelleVoleeNumero = (numero: number): string => `Volée ${numero}`
+/** « X01 · 501 · premier à 2 manches · terminée ». */
+export const bandeauTermine = (texte: string): string =>
+  `${texte} · ${LIBELLE_TERMINEE.toLowerCase()}`
+export const LIBELLE_FLECHETTES = 'Fléchettes'
+export const LIBELLE_REUSSIS = 'Réussis'
+export const LIBELLE_TAUX = 'Taux'
+export const LIBELLE_CIBLES = 'Cibles'
+export const LIBELLE_SETS = 'Sets'
+export const plusMarques = (marques: number): string => `+ ${pluriel(marques, 'marque')}`
+export const plusCibles = (cibles: number): string => `+ ${pluriel(cibles, 'cible')}`
+export const reussisSur = (reussis: number, joues: number): string => `${reussis} / ${joues}`
+export const libelleEntrainementMiroir = (manches: number): string =>
+  `${TITRE_BANDEAU_ENTRAINEMENT} · ${pluriel(manches, 'checkout')}`
+export const libelleCricketMiroir = (variante: 'STANDARD' | 'CUT_THROAT'): string =>
+  `${TITRE_BANDEAU_CRICKET} · ${LIBELLE_VARIANTE_CRICKET[variante].toLowerCase()}`
+
+/** Les bandeaux muets du miroir, environ 2,5 s. */
+export const TITRE_MOMENT_PARTIE = 'Partie !'
+export const TITRE_MOMENT_BUST = 'Bust'
+export const TITRE_MOMENT_180 = '180 !'
+export const resteA = (nom: string, reste: number): string => `${nom} reste à ${reste}`
+export const etiquetteResteDe = (nom: string): string => `Score restant de ${nom}`
+export const etiquettePointsDe = (nom: string): string => `Points de ${nom}`
+export const etiquetteCibleDe = (nom: string): string => `Cible de ${nom}`
+export const ETIQUETTE_RESTE_ENTRAINEMENT = 'Reste à faire'

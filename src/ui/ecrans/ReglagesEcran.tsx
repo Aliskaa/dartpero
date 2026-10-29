@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
 import type { InstallState } from '@/core/application/ports/driven/AppInstallation'
 import type { ImportReport } from '@/core/application/ports/driving/ManageBackup'
+import { CHEMIN_MIROIR, CHEMIN_PARTAGE } from '@/ui/chemins'
 import { CLE_CONTENU_APPAREIL } from '@/ui/clesRequetes'
 import { Button } from '@/ui/composants/commun/Button'
 import { EnTeteEcran } from '@/ui/composants/commun/EnTeteEcran'
@@ -20,6 +21,8 @@ import {
   ACTION_EXPORTER,
   AIDE_ANNONCER_VOLEES,
   AIDE_GERER_JOUEURS,
+  AIDE_PARTAGER_PARTIE,
+  AIDE_SERVIR_DE_MIROIR,
   contenuAppareil,
   ERREUR_EXPORT,
   ERREUR_JSON_ILLISIBLE,
@@ -43,6 +46,8 @@ import {
   LIBELLE_RESTAURER,
   LIEN_CONFIDENTIALITE,
   LIEN_GERER_JOUEURS,
+  LIEN_PARTAGER_PARTIE,
+  LIEN_SERVIR_DE_MIROIR,
   libelleDureeSauvegarde,
   NOM_ACTION_COMMENT_INSTALLER,
   NOM_ACTION_EXPORTER,
@@ -57,6 +62,7 @@ import {
   TITRE_ESSAYER_VOIX,
   TITRE_GROUPE_AFFICHAGE,
   TITRE_GROUPE_JOUEURS_APPLI,
+  TITRE_GROUPE_MIROIR,
   TITRE_GROUPE_SAUVEGARDE,
   TITRE_REGLAGES,
   TITRE_RESUME_IMPORT,
@@ -217,6 +223,7 @@ export const ReglagesEcran = () => {
   const champFichier = useRef<HTMLInputElement>(null)
   const idChamp = useId()
   const idAffichage = useId()
+  const idMiroir = useId()
   const idSauvegarde = useId()
   const idJoueurs = useId()
   const [voix, setVoix] = usePreference(CLE_VOIX, true)
@@ -371,6 +378,21 @@ export const ReglagesEcran = () => {
           </ListeReglages>
         </section>
 
+        <section aria-labelledby={idMiroir} className="flex flex-col gap-3">
+          <TitreGroupe id={idMiroir}>{TITRE_GROUPE_MIROIR}</TitreGroupe>
+          <ListeReglages>
+            <LigneReglage
+              titre={LIEN_PARTAGER_PARTIE}
+              aide={AIDE_PARTAGER_PARTIE}
+              action={{ type: 'lien', vers: CHEMIN_PARTAGE }}
+            />
+            <LigneReglage
+              titre={LIEN_SERVIR_DE_MIROIR}
+              aide={AIDE_SERVIR_DE_MIROIR}
+              action={{ type: 'lien', vers: CHEMIN_MIROIR }}
+            />
+          </ListeReglages>
+        </section>
         <section aria-labelledby={idSauvegarde} className="flex flex-col gap-3">
           <TitreGroupe id={idSauvegarde}>{TITRE_GROUPE_SAUVEGARDE}</TitreGroupe>
           <div className="grid grid-cols-2 gap-1.5">

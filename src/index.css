@@ -89,6 +89,12 @@
   --color-apercu-clair-encre: #1f2d24;
   --color-apercu-clair-accent: #8a6d12;
 
+  /* L'ÉCRAN MIROIR (lot `ecran-miroir`), CONSTANTS À DESSEIN : le QR reste sombre sur clair dans les deux
+     thèmes (`CodeQr.tsx` seul) ; `sur-rouge` est le blanc posé sur `rouge-cible` (5,6 / 7,4:1, `Miroir*`). */
+  --color-qr-modules: #14110a;
+  --color-qr-fond: #ffffff;
+  --color-sur-rouge: #ffffff;
+
   /* ANGLE VIF PARTOUT - decision de charte, pas un oubli.
      Aucun objet du decor n'a de coin rond : ni l'ardoise, ni la plaque de
      laiton, ni la feuille de match punaisee derriere le bar. Les tokens de
@@ -137,6 +143,11 @@
   --text-numero-m: 2.625rem;
   --text-numero-s: 2.375rem;
   --text-numero-xs: 2rem;
+  /* L'écran miroir (lot `ecran-miroir`), lu à 2-3 m en paysage : le reste à deux joueurs, à trois ou
+     quatre, et le reste seul de l'entraînement (planche : 8,6 et 11 rem). */
+  --text-miroir-xl: 8.5rem;
+  --text-miroir-l: 6rem;
+  --text-miroir-solo: 10rem;
 
   /* Mouvement : court, sec, sans rebond. Tout est neutralisé plus bas si
      l'utilisateur a demandé moins d'animations. */
@@ -277,6 +288,11 @@ html[data-theme="clair"] {
   --color-apercu-clair-fond: #e3d9c1;
   --color-apercu-clair-encre: #1f2d24;
   --color-apercu-clair-accent: #8a6d12;
+
+  /* L'écran miroir : identiques à dessein (voir `@theme`). */
+  --color-qr-modules: #14110a;
+  --color-qr-fond: #ffffff;
+  --color-sur-rouge: #ffffff;
 
   --teinte-relief: rgb(255 255 255 / 0.85);
   --ombre-plaque: rgb(90 62 36 / 0.3);
